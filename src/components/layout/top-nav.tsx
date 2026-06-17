@@ -730,7 +730,7 @@ export function TopNav() {
   function closeAll() { notif.close(); create.close(); calendar.close(); }
 
   return (
-    <header className="sticky top-0 z-20 px-4 mx-6 sm:px-5 lg:px-6 pt-8 pb-12">
+    <header className="sticky top-0 z-20 px-4 md:sm:px-5 lg:px-6 pt-8 pb-12">
 
       {/* ── Desktop Bar ──────────────────────────────────────── */}
       <div className={cn(
