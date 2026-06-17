@@ -81,11 +81,11 @@ export function UnifiedMarketBoard() {
     const vacantPercent = 100 - occupiedPercent;
 
     // Top agents specific to this filter (shuffle/slice to simulate changing ranks)
-    const agents = Object.values(AGENTS).sort(() => Math.random() - 0.5).slice(0, 5);
+    const agents = Object.values(AGENTS).sort((a, b) => a.name.length - b.name.length + Math.sin(totalProps)).slice(0, 5);
 
     return {
       revenue: currentRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-      growth: `+${(Math.random() * 20 + 5).toFixed(1)}`,
+      growth: `+${(Math.abs(Math.sin(totalProps)) * 20 + 5).toFixed(1)}`,
       totalProps: totalProps.toLocaleString(),
       occupiedPercent,
       vacantPercent,
@@ -156,8 +156,8 @@ export function UnifiedMarketBoard() {
               {/* Dynamic Bar Chart representation */}
               {Array.from({ length: 47 }).map((_, i) => {
                 const h = activeType === "All Properties"
-                  ? Math.max(20, Math.sin(i * 0.2) * 40 + 50 + (Math.random() * 10 - 5))
-                  : Math.max(10, Math.sin(i * 0.4) * 30 + 40 + (Math.random() * 20 - 10));
+                  ? Math.max(20, Math.sin(i * 0.2) * 40 + 50 + (Math.sin(i * 0.5) * 10 - 5))
+                  : Math.max(10, Math.sin(i * 0.4) * 30 + 40 + (Math.sin(i * 0.8) * 20 - 10));
                 return (
                   <div key={i} className="w-full bg-[#15464e] rounded-t-[2px] transition-all duration-700 hover:opacity-80" style={{ height: `${h}%` }}></div>
                 )
@@ -193,8 +193,8 @@ export function UnifiedMarketBoard() {
                 <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f8fafc" strokeWidth="16" />
                 <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0f766e" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'House' || activeType === 'All Properties' ? '150.72' : '251.2'} className="transition-all duration-700" />
                 <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0ea5e9" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Apartment' || activeType === 'All Properties' ? '200.96' : '251.2'} transform="rotate(144 50 50)" className="transition-all duration-700" />
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#d97706" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Townhouse' || activeType === 'All Properties' ? '221.05' : '251.2'} transform="rotate(216 50 50)" className="transition-all duration-700" />
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#4f46e5" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Office' || activeType === 'All Properties' ? '231.1' : '251.2'} transform="rotate(259 50 50)" className="transition-all duration-700" />
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#d97706" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Villa' || activeType === 'All Properties' ? '221.05' : '251.2'} transform="rotate(216 50 50)" className="transition-all duration-700" />
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#4f46e5" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Commercial' || activeType === 'All Properties' ? '231.1' : '251.2'} transform="rotate(259 50 50)" className="transition-all duration-700" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-full m-[22px] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                 <span className="text-[18px] font-mono font-medium text-slate-800 leading-none mb-1 tracking-tight">{analytics.totalProps}</span>
@@ -211,10 +211,10 @@ export function UnifiedMarketBoard() {
                 <p className="text-[13px] text-slate-800 font-mono font-medium leading-none">1,514</p>
               </div>
             </div>
-            <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Townhouse' ? 'opacity-30' : 'opacity-100')}>
+            <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Villa' ? 'opacity-30' : 'opacity-100')}>
               <div className="size-[34px] rounded-xl bg-[#d97706] flex items-center justify-center text-[11px] font-medium text-white shadow-sm">12%</div>
               <div>
-                <p className="text-[11px] text-slate-500 font-medium leading-none mb-1">Townhouse</p>
+                <p className="text-[11px] text-slate-500 font-medium leading-none mb-1">Villa</p>
                 <p className="text-[13px] text-slate-800 font-mono font-medium leading-none">454</p>
               </div>
             </div>
@@ -225,10 +225,10 @@ export function UnifiedMarketBoard() {
                 <p className="text-[13px] text-slate-800 font-mono font-medium leading-none">757</p>
               </div>
             </div>
-            <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Office' ? 'opacity-30' : 'opacity-100')}>
+            <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Commercial' ? 'opacity-30' : 'opacity-100')}>
               <div className="size-[34px] rounded-xl bg-[#4f46e5] flex items-center justify-center text-[11px] font-medium text-white shadow-sm">8%</div>
               <div>
-                <p className="text-[11px] text-slate-500 font-medium leading-none mb-1">Office</p>
+                <p className="text-[11px] text-slate-500 font-medium leading-none mb-1">Commercial</p>
                 <p className="text-[13px] text-slate-800 font-mono font-medium leading-none">303</p>
               </div>
             </div>

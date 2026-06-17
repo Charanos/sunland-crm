@@ -186,8 +186,11 @@ export function SunlandNav() {
 
   // Close dropdowns on route change
   useEffect(() => {
-    setIsSwitcherOpen(false);
-    setIsProfileOpen(false);
+    const t = setTimeout(() => {
+      setIsSwitcherOpen(false);
+      setIsProfileOpen(false);
+    }, 0);
+    return () => clearTimeout(t);
   }, [pathname]);
 
   const activeNavItem = getActiveNavItem(pathname);
