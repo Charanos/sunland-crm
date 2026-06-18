@@ -32,7 +32,6 @@ import {
 } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils/cn";
 import { formatCompactKES } from "@/lib/utils/format";
@@ -197,17 +196,20 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const [prevContext, setPrevContext] = useState(context);
+
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 0);
     return () => clearTimeout(t);
   }, []);
 
-  // Reset listings when entity changes
-  useEffect(() => {
+  // Reset listings when entity changes (adjusted during render to avoid cascading updates)
+  if (context !== prevContext) {
+    setPrevContext(context);
     setListings(INITIAL_LISTINGS[context] ?? INITIAL_LISTINGS.group);
     setCurrentPage(1);
     setListingSearch("");
-  }, [context]);
+  }
 
   // Context metrics (KES standardized)
   const isComm = context === "commercial";
@@ -275,7 +277,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
     setCurrentPage(1);
   };
 
-  const handleCreateProperty = (data: any) => {
+  const handleCreateProperty = (data: { name: string; location: string; type: string; status: PropertyListing["status"]; roi?: string; price: string; imageUrl?: string }) => {
     const newProp: PropertyListing = {
       id: `p${Date.now()}`,
       name: data.name,
@@ -290,7 +292,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
     setCurrentPage(1);
   };
 
-  const handleEditProperty = (data: any) => {
+  const handleEditProperty = (data: { name: string; location: string; type: string; status: PropertyListing["status"]; roi?: string; price: string; imageUrl?: string }) => {
     setListings((prev) =>
       prev.map((p) =>
         p.id === editingProperty?.id
@@ -354,7 +356,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               Refresh
             </button>
             <div className="relative group">
-              <button className="flex items-center gap-1.5 text-[12px] font-medium text-white bg-[#15464e] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#0f343a] transition-colors">
+              <button className="flex items-center gap-1.5 text-[12px] font-medium text-[#151936] bg-[#f3df27] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#e6d220] transition-colors">
                 <IconPlus size={13} stroke={2.5} />
                 Quick Action
               </button>
@@ -391,14 +393,14 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
           <Link href="/admin/properties" className="animate-fade-in-up stagger-1">
             <div className="relative p-5 rounded-[20px] bg-[#e1f3f6] h-[155px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
               <div className="flex items-center gap-2">
-                <div className="size-[22px] rounded-full bg-[#15464e] flex items-center justify-center text-white">
+                <div className="size-[22px] rounded-full bg-[#151936] flex items-center justify-center text-white">
                   <IconBuildingSkyscraper size={12} stroke={2.5} />
                 </div>
                 <span className="text-[13.5px] font-normal text-[#2e626a] tracking-wide">Active Listings</span>
                 <IconArrowUpRight size={12} className="ml-auto text-[#2e626a] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[32px] font-medium text-[#15464e] tracking-tight font-mono leading-none">{metrics.activeListings}</span>
+                <span className="text-[32px] font-medium text-[#151936] tracking-tight font-mono leading-none">{metrics.activeListings}</span>
                 <span className="text-[11px] font-medium text-[#2e626a] mb-0.5">{metrics.activeTrend}</span>
               </div>
               <div className="h-[4px] bg-[#c3e3e8] rounded-full overflow-hidden w-full">
@@ -540,7 +542,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
 
             <div className="flex items-center gap-10 mb-6 flex-wrap">
               <div className="flex items-start gap-3">
-                <div className="size-[34px] rounded-[10px] bg-[#e1f3f6] flex items-center justify-center text-[#15464e]"><IconCoin size={18} stroke={2} /></div>
+                <div className="size-[34px] rounded-[10px] bg-[#e1f3f6] flex items-center justify-center text-[#151936]"><IconCoin size={18} stroke={2} /></div>
                 <div>
                   <p className="text-[12.5px] text-slate-500 font-medium mb-0.5">Income</p>
                   <div className="flex items-center gap-2">
@@ -676,7 +678,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 {activeTab === "listings" && (
                   <button
                     onClick={() => { setPropertyModalMode("create"); setEditingProperty(null); setPropertyModalOpen(true); }}
-                    className="flex items-center gap-1.5 text-[12px] font-medium text-white bg-[#15464e] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#0f343a] transition-colors"
+                    className="flex items-center gap-1.5 text-[12px] font-medium text-[#151936] bg-[#f3df27] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#e6d220] transition-colors"
                   >
                     <IconPlus size={13} stroke={2.5} />
                     Add Property
@@ -695,7 +697,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                   value={listingSearch}
                   onChange={(e) => { setListingSearch(e.target.value); setCurrentPage(1); }}
                   onKeyDown={(e) => { if (e.key === "Escape") setListingSearch(""); }}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-100 bg-slate-50/50 text-[12.5px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#15464e]/30 transition-colors"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-100 bg-slate-50/50 text-[12.5px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/30 transition-colors"
                 />
               </div>
             )}
@@ -740,7 +742,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                           </div>
                           <button
                             onClick={() => setDrawerProperty(listing)}
-                            className="truncate max-w-[150px] tracking-wide text-[13px] hover:text-[#15464e] transition-colors text-left"
+                            className="truncate max-w-[150px] tracking-wide text-[13px] hover:text-[#151936] transition-colors text-left"
                           >
                             {listing.name}
                           </button>
@@ -787,7 +789,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                           <div className="flex flex-col items-center gap-2">
                             <IconBuildingSkyscraper size={28} className="text-slate-300" />
                             <p className="text-[13px] text-slate-500 font-medium">No properties match your search.</p>
-                            <button onClick={() => setListingSearch("")} className="text-[12px] text-[#15464e] font-medium hover:underline">Clear search</button>
+                            <button onClick={() => setListingSearch("")} className="text-[12px] text-[#151936] font-medium hover:underline">Clear search</button>
                           </div>
                         </td>
                       </tr>
@@ -817,7 +819,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                         onClick={() => setCurrentPage(p)}
                         className={cn(
                           "size-8 flex items-center justify-center rounded-lg text-[12px] font-medium transition-colors",
-                          p === currentPage ? "bg-[#15464e] text-white" : "text-slate-500 hover:bg-slate-100"
+                          p === currentPage ? "bg-[#151936] text-white" : "text-slate-500 hover:bg-slate-100"
                         )}
                       >
                         {p}
@@ -885,7 +887,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 </div>
               )}
               <Link href="/admin/finance" className="block mt-4">
-                <button className="w-full text-center text-[12px] font-medium text-[#15464e] hover:text-[#0f343a] transition-colors py-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center gap-1.5">
+                <button className="w-full text-center text-[12px] font-medium text-[#151936] hover:text-[#0f343a] transition-colors py-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center gap-1.5">
                   View Full Ledger <IconArrowRight size={13} />
                 </button>
               </Link>

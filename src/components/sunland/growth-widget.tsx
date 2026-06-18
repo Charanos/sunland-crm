@@ -49,7 +49,7 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
 
       <div className="mt-8 pt-4 border-t border-slate-100">
         <Link href="/admin/reports" className="block w-full">
-          <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-[#15464e] hover:text-white text-slate-700 border border-slate-200 hover:border-[#15464e] transition-all group">
+          <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-[#151936] hover:text-white text-slate-700 border border-slate-200 hover:border-[#151936] transition-all group">
             <span className="text-[13px] font-medium flex items-center gap-2">
               <IconChartLine size={16} className="text-slate-400 group-hover:text-white/70" />
               View Detailed Growth Report

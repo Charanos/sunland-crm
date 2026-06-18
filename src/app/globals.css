@@ -35,6 +35,7 @@
   --vacant: #879087;
 }
 
+/* stylelint-disable-next-line at-rule-no-unknown */
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--on-surface);
