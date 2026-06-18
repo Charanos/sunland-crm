@@ -30,7 +30,7 @@ type UIStore = {
   closeDrawer: () => void;
   setActiveEntityId: (id: string) => void;
   setSwitchingToEntityId: (id: string | null) => void;
-  openModal: (type: ModalType, recordId?: string, recordType?: string) => void;
+  openModal: (type: ModalType, recordId?: string | null, recordType?: string | null) => void;
   closeModal: () => void;
   setDashboardLoading: (loading: boolean) => void;
 };
@@ -59,8 +59,8 @@ export const useUIStore = create<UIStore>((set) => ({
   openModal: (type, recordId = null, recordType = null) =>
     set({
       activeModal: type,
-      selectedRecordId: recordId ?? null,
-      selectedRecordType: recordType ?? null,
+      selectedRecordId: recordId,
+      selectedRecordType: recordType,
     }),
   closeModal: () =>
     set({ activeModal: null, selectedRecordId: null, selectedRecordType: null }),
