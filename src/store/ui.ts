@@ -20,6 +20,8 @@ type UIStore = {
   selectedRecordId: string | null;
   selectedRecordType: string | null;
   dashboardLoading: boolean;
+  chatOpen: boolean;
+  selectedChatDMId: string | null;
   // Actions
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -33,6 +35,10 @@ type UIStore = {
   openModal: (type: ModalType, recordId?: string | null, recordType?: string | null) => void;
   closeModal: () => void;
   setDashboardLoading: (loading: boolean) => void;
+  toggleChat: () => void;
+  openChat: () => void;
+  closeChat: () => void;
+  setSelectedChatDMId: (id: string | null) => void;
 };
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -46,6 +52,8 @@ export const useUIStore = create<UIStore>((set) => ({
   selectedRecordId: null,
   selectedRecordType: null,
   dashboardLoading: false,
+  chatOpen: false,
+  selectedChatDMId: null,
   toggleSidebar: () =>
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -65,4 +73,8 @@ export const useUIStore = create<UIStore>((set) => ({
   closeModal: () =>
     set({ activeModal: null, selectedRecordId: null, selectedRecordType: null }),
   setDashboardLoading: (loading) => set({ dashboardLoading: loading }),
+  toggleChat: () => set((state) => ({ chatOpen: !state.chatOpen })),
+  openChat: () => set({ chatOpen: true }),
+  closeChat: () => set({ chatOpen: false }),
+  setSelectedChatDMId: (id) => set({ selectedChatDMId: id, chatOpen: id !== null }),
 }));

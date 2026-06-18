@@ -61,6 +61,9 @@
 
 html {
   height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -68,6 +71,9 @@ body {
   background: var(--bg);
   color: var(--on-surface);
   font-family: var(--font-outfit), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 button {
@@ -180,26 +186,49 @@ button:disabled {
 
 /* ── Custom Scrollbar ─────────────────────────────────── */
 
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.08) transparent;
+/* Global Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 4px;
+::-webkit-scrollbar-thumb {
+  background: rgba(21, 25, 54, 0.15); /* Theme navy at low opacity */
+  border-radius: 9999px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(21, 25, 54, 0.3);
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(21, 25, 54, 0.15) transparent;
+}
+
+/* Custom scrollbar utility class (for backwards compatibility) */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(21, 25, 54, 0.15) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(21, 25, 54, 0.15);
+  border-radius: 9999px;
+}
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(21, 25, 54, 0.3);
 }
 
 /* ── Animations & Keyframes ───────────────────────────── */

@@ -27,22 +27,22 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 const toneStyles: Record<ToastTone, { border: string; icon: string; bg: string }> = {
   success: {
-    border: "border-l-[var(--success)]",
+    border: "border border-emerald-100",
     icon: "text-[var(--success)]",
     bg: "bg-[#f0faf4]",
   },
   warning: {
-    border: "border-l-[var(--warning)]",
+    border: "border border-amber-100",
     icon: "text-[var(--warning)]",
     bg: "bg-[#fffbf0]",
   },
   error: {
-    border: "border-l-[var(--error)]",
+    border: "border border-rose-100",
     icon: "text-[var(--error)]",
     bg: "bg-[#fef2f2]",
   },
   info: {
-    border: "border-l-[var(--tertiary)]",
+    border: "border border-blue-100",
     icon: "text-[var(--tertiary)]",
     bg: "bg-[#f0f4ff]",
   },
@@ -105,7 +105,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div
               className={cn(
-                "relative overflow-hidden rounded-xl border-l-4 p-4 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-all duration-280",
+                "relative overflow-hidden rounded-xl p-4 shadow-[0_12px_36px_rgba(0,0,0,0.06)] backdrop-blur-md transition-all duration-280",
                 styles.border,
                 styles.bg,
                 isExiting

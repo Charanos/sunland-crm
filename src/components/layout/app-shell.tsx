@@ -4,6 +4,7 @@ import { MobileBottomNav, MobileNavigationDrawer } from "@/components/layout/mob
 import { SunlandNav } from "@/components/layout/sunland-nav";
 import { TopNav } from "@/components/layout/top-nav";
 import { EntitySwitchOverlay } from "@/components/layout/entity-switch-overlay";
+import { GlobalChatWidget } from "@/components/layout/global-chat-widget";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
 
@@ -26,6 +27,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <MobileBottomNav />
+      <GlobalChatWidget />
       <EntitySwitchOverlay />
     </div>
   );

@@ -1,16 +1,23 @@
-import { IconUsersGroup } from "@tabler/icons-react";
-import { ModulePage } from "@/components/sunland/module-page";
+"use client";
+
+import { useUIStore } from "@/store/ui";
+import { ContactsBoard } from "@/components/sunland/contacts-board";
 
 export default function ContactsPage() {
+  const { activeEntityId } = useUIStore();
+
   return (
-    <ModulePage
-      action="Add contact"
-      description="Manage landlords, tenants, buyers, sellers, contractors, and business contacts with assignment and activity history."
-      emptyDescription="Contacts you manage or are assigned to will appear here."
-      emptyTitle="No contacts yet"
-      eyebrow="Client intelligence"
-      icon={IconUsersGroup}
-      title="Contacts"
-    />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-medium font-serif tracking-tight text-slate-900">
+          Directory & Relationships
+        </h1>
+        <p className="text-slate-500 max-w-2xl">
+          Manage landlords, tenants, contractors, and partners across the organization.
+        </p>
+      </div>
+
+      <ContactsBoard entityId={activeEntityId} />
+    </div>
   );
 }
