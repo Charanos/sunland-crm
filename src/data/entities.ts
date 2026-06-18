@@ -27,7 +27,7 @@ export const ENTITIES: Entity[] = [
     description: "Group-level operations and consolidated reporting across all divisions",
     avatarUrl:
       "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=160&h=160&fit=crop",
-    stats: { properties: 47, contacts: 312, revenue: "KES 284M" },
+    stats: { properties: 48, contacts: 215, revenue: "KES 42.8M" },
   },
   {
     id: "commercial",
@@ -36,7 +36,7 @@ export const ENTITIES: Entity[] = [
     description: "Office spaces, retail units and commercial property portfolio",
     avatarUrl:
       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=160&h=160&fit=crop",
-    stats: { properties: 18, contacts: 145, revenue: "KES 112M" },
+    stats: { properties: 12, contacts: 85, revenue: "KES 16.7M" },
   },
   {
     id: "residential",
@@ -45,7 +45,16 @@ export const ENTITIES: Entity[] = [
     description: "Residential estates, apartments and premium housing units",
     avatarUrl:
       "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=160&h=160&fit=crop",
-    stats: { properties: 29, contacts: 167, revenue: "KES 172M" },
+    stats: { properties: 36, contacts: 130, revenue: "KES 26.1M" },
+  },
+  {
+    id: "valuations",
+    name: "Sunland Valuers Ltd",
+    subtitle: "Valuation & Advisory",
+    description: "Professional property valuation and real estate advisory services",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=160&h=160&fit=crop",
+    stats: { properties: 84, contacts: 45, revenue: "KES 8.2M" },
   },
 ];
 

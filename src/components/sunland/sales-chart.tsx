@@ -10,32 +10,42 @@ interface ChartDataPoint {
   Visitors: number;
 }
 
-export default function SalesChart({ data }: { data: ChartDataPoint[] }) {
+export default function SalesChart({
+  data,
+  activeFilter = "all",
+}: {
+  data: ChartDataPoint[];
+  activeFilter?: "all" | "Revenue" | "Sales" | "Visitors";
+}) {
   // Custom tooltip component matching glassmorphism light aesthetics
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md">
+        <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
           <p className="text-[12px] font-medium text-slate-400 uppercase tracking-wider mb-2">{label}</p>
           <div className="space-y-1.5 text-sm font-medium">
-            <p className="text-[var(--tertiary)] flex items-center justify-between gap-4">
-              <span>Revenue:</span>
-              <span className="font-mono text-slate-800">{formatCompactKES(payload[0].value)}</span>
-            </p>
-            <p className="text-[#8884d8] flex items-center justify-between gap-4">
-              <span>Sales:</span>
-              <span className="font-mono text-slate-800">{payload[1].value} units</span>
-            </p>
-            <p className="text-[#82ca9d] flex items-center justify-between gap-4">
-              <span>Visitors:</span>
-              <span className="font-mono text-slate-800">{payload[2].value} clients</span>
-            </p>
+            {payload.map((entry: any, i: number) => (
+              <p key={i} className="flex items-center justify-between gap-4" style={{ color: entry.color }}>
+                <span>{entry.name}:</span>
+                <span className="font-mono text-slate-800">
+                  {entry.name === "Revenue"
+                    ? formatCompactKES(entry.value)
+                    : entry.name === "Sales"
+                      ? `${entry.value} units`
+                      : `${entry.value} clients`}
+                </span>
+              </p>
+            ))}
           </div>
         </div>
       );
     }
     return null;
   };
+
+  const showRevenue = activeFilter === "all" || activeFilter === "Revenue";
+  const showSales = activeFilter === "all" || activeFilter === "Sales";
+  const showVisitors = activeFilter === "all" || activeFilter === "Visitors";
 
   return (
     <div className="h-72 w-full text-[12px]">
@@ -70,24 +80,36 @@ export default function SalesChart({ data }: { data: ChartDataPoint[] }) {
             iconType="circle"
             formatter={(value) => <span className="text-slate-500 font-medium text-sm">{value}</span>}
           />
-          <Bar
-            dataKey="Revenue"
-            fill="var(--tertiary)"
-            radius={[4, 4, 0, 0]}
-            maxBarSize={16}
-          />
-          <Bar
-            dataKey="Sales"
-            fill="#a78bfa"
-            radius={[4, 4, 0, 0]}
-            maxBarSize={16}
-          />
-          <Bar
-            dataKey="Visitors"
-            fill="#338f70"
-            radius={[4, 4, 0, 0]}
-            maxBarSize={16}
-          />
+          {showRevenue && (
+            <Bar
+              dataKey="Revenue"
+              fill="var(--tertiary)"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={16}
+              animationDuration={800}
+              animationEasing="ease-out"
+            />
+          )}
+          {showSales && (
+            <Bar
+              dataKey="Sales"
+              fill="#a78bfa"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={16}
+              animationDuration={800}
+              animationEasing="ease-out"
+            />
+          )}
+          {showVisitors && (
+            <Bar
+              dataKey="Visitors"
+              fill="#338f70"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={16}
+              animationDuration={800}
+              animationEasing="ease-out"
+            />
+          )}
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -1,5 +1,13 @@
 import { create } from "zustand";
 
+type ModalType =
+  | "create-property"
+  | "edit-property"
+  | "create-event"
+  | "edit-event"
+  | "delete-confirm"
+  | null;
+
 type UIStore = {
   sidebarCollapsed: boolean;
   mobileNavOpen: boolean;
@@ -7,6 +15,12 @@ type UIStore = {
   activeDrawer: string | null;
   activeEntityId: string;
   switchingToEntityId: string | null;
+  // Dashboard-level state
+  activeModal: ModalType;
+  selectedRecordId: string | null;
+  selectedRecordType: string | null;
+  dashboardLoading: boolean;
+  // Actions
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   openMobileNav: () => void;
@@ -16,6 +30,9 @@ type UIStore = {
   closeDrawer: () => void;
   setActiveEntityId: (id: string) => void;
   setSwitchingToEntityId: (id: string | null) => void;
+  openModal: (type: ModalType, recordId?: string, recordType?: string) => void;
+  closeModal: () => void;
+  setDashboardLoading: (loading: boolean) => void;
 };
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -25,6 +42,10 @@ export const useUIStore = create<UIStore>((set) => ({
   activeDrawer: null,
   activeEntityId: "group",
   switchingToEntityId: null,
+  activeModal: null,
+  selectedRecordId: null,
+  selectedRecordType: null,
+  dashboardLoading: false,
   toggleSidebar: () =>
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -35,5 +56,13 @@ export const useUIStore = create<UIStore>((set) => ({
   closeDrawer: () => set({ activeDrawer: null }),
   setActiveEntityId: (id) => set({ activeEntityId: id }),
   setSwitchingToEntityId: (id) => set({ switchingToEntityId: id }),
+  openModal: (type, recordId = null, recordType = null) =>
+    set({
+      activeModal: type,
+      selectedRecordId: recordId ?? null,
+      selectedRecordType: recordType ?? null,
+    }),
+  closeModal: () =>
+    set({ activeModal: null, selectedRecordId: null, selectedRecordType: null }),
+  setDashboardLoading: (loading) => set({ dashboardLoading: loading }),
 }));
-

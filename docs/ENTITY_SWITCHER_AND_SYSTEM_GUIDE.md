@@ -1,69 +1,45 @@
-# Sunland CRM — Entity Switcher & Layout Architecture Guide
+# Sunland CRM Entity Switcher & System Guide
 
-This document registers the completed layout overhauls, typography fixes, and the entity switcher state synchronization flow implemented in June 2026.
+## Context & Architecture
+The CRM handles multiple business divisions ("Entities") within the Sunland Group:
+1. **Sunland Group** (Consolidated Headquarters)
+2. **Sunland Commercial** (Offices, Retail, Industrial)
+3. **Sunland Residential** (Villas, Apartments, Estates)
+4. **Sunland Valuers Ltd** (Valuation & Advisory)
 
-## Completed Architecture Overview
+To prevent data leakage and operational confusion, the system employs a **Global Entity Context**. When a user switches an entity, the entire dashboard and routing system immediately reflects the new context.
 
-We have integrated a centralized workspace context system that aligns the sidebar switcher, the header indicators, and the main dashboard views.
+## State Management (`useUIStore`)
+Entity state is managed globally via Zustand in `src/store/ui.ts`:
+- `activeEntityId`: The currently active division.
+- `switchingToEntityId`: Temporary state during transition animations.
+- `dashboardLoading`: Global loading state during heavy context switches.
 
-```mermaid
-sequenceDiagram
-    participant Nav as Sidebar Switcher
-    participant Store as Zustand UI Store
-    participant Overlay as Entity Switch Overlay
-    participant Route as Next.js Router (Url)
-    participant Page as Admin Page (Server Component)
-    participant Dashboard as Dashboard Overview
+## Transition Overlay (`entity-switch-overlay.tsx`)
+When switching, an overlay hijacks the screen for 2.5 seconds.
+1. It reads the target entity from `ENTITIES` registry.
+2. Displays the entity's Unsplash image, description, and stats.
+3. Updates the URL query parameter (`?entity=commercial`).
+4. Next.js `page.tsx` catches the param and passes it to the `DashboardOverview`.
+5. The `DashboardOverview` re-renders with the new context data.
 
-    Nav->>Store: setSwitchingToEntityId(entityId)
-    Store->>Overlay: Fades in (switchingToEntityId !== null)
-    Note over Overlay: Animates progress bar & stats (1.8s)
-    Overlay->>Route: router.push('/admin?entity=entityId')
-    Overlay->>Store: setActiveEntityId(entityId)
-    Overlay->>Store: setSwitchingToEntityId(null) (Fades out)
-    Route->>Page: Resolves searchParams.entity
-    Page->>Dashboard: Renders with entityId
-    Note over Dashboard: Dynamically filters & scales metrics
-```
+## Dashboard Overview Integration
+The `DashboardOverview` component is deeply integrated with the entity context:
+1. **KPI Cards**: Dynamically pull data specific to the entity.
+2. **Revenue Chart**: Updates the dataset based on division.
+3. **Listing Board**: Filters the property array by the selected division.
+4. **Market Insights**: Normalizes property insights based on division.
 
-## Implemented System Components
+## Production-Grade UI Primitives Added
+1. **Toast System**: Slide-in/out animations, auto-dismiss progress bar, and 4 tones.
+2. **Modal System**: Size variants, scroll locks, scale-in animations, and backdrop closing.
+3. **Drawer System**: Side-panel slides, sticky footers, scroll locking.
+4. **Confirm Dialog**: Action validation with loading state spinners.
 
-### 1. Centralized State Store
-- **File**: [ui.ts](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/store/ui.ts)
-- **State Added**:
-  - `activeEntityId`: Keeps track of the currently selected division context (`"group"`, `"commercial"`, `"residential"`).
-  - `switchingToEntityId`: Triggers the fullscreen transition overlay and targets the loading stats.
-  - Setters: `setActiveEntityId` and `setSwitchingToEntityId`.
+## Implementation Details
+All financial data has been standardized to **KES**. Formatting is handled by `formatCompactKES()` inside `src/lib/utils/format.ts` to ensure consistency.
+Pagination has been implemented on all major data tables, keeping views limited to 5-8 items per page to maintain the clean layout.
 
-### 2. Full-Screen Context Switching Overlay
-- **File**: [entity-switch-overlay.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/layout/entity-switch-overlay.tsx)
-- **Features**:
-  - Fades in a blurred backdrop (`backdrop-blur-xl bg-[#070919]/90`) blocking UI clicks.
-  - Previews division statistics (Properties count, contact load, and revenue target) retrieved from the shared entity registry.
-  - Runs a loading progress bar with descriptive status updates (e.g. "Fetching consolidated ledger...").
-  - Automatically redirects URL queries using Next.js routing on completion to trigger server-side re-validation.
-  - Wrapped in a React `<Suspense>` boundary to maintain static page generation compatibility for other app routes.
-
-### 3. Navigation Header (Top Nav) Context
-- **File**: [top-nav.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/layout/top-nav.tsx)
-- **Features**:
-  - Renders a live `EntityBadge` next to the breadcrumbs displaying the active division name.
-  - Features a pulsing green indicator light signifying that database context is active and synchronized.
-
-### 4. Command Sidebar Refinements
-- **File**: [sunland-nav.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/layout/sunland-nav.tsx)
-- **Features**:
-  - Integrates the global `useUIStore` state hook.
-  - Adds a horizontal separator divider (`bg-white/[0.05]`) above the switcher to distinguish it from the logo area.
-  - Upgrades the collapse chevron toggle to use a high-contrast yellow background (`bg-[var(--primary)] text-[var(--on-primary)]`) so it pops visually against the dark sidebar.
-  - Resolves avatar component type errors by utilizing `"rounded-lg"` shapes.
-
-### 5. Revamped Dashboard Overview (Command Center)
-- **File**: [dashboard-overview.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/sunland/dashboard-overview.tsx)
-- **Features**:
-  - Implements the grid layout matched to the design mockup: left column double-stacked metrics, center double-width featured property, right-middle double-stacked metrics, and right column radial target progress.
-  - **Dynamic Scaling & Data Adaptation**: A query-aware data filter `getAdaptedDashboard` intercepts the mock database payload, dynamically adjusting expected rent collection, lead visits, and pipeline values, and filtering lists of opportunities, lease expiries, property listings, and maintenance tickets depending on the selected division context.
-  - **Client-Side Dynamic Charts**: Imports Recharts-based [sales-chart.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/sunland/sales-chart.tsx) with Next.js dynamic routing (`ssr: false`) to render robust, error-free interactive bar charts on the light-themed workspace surface.
-  - **SVG Radial Progress Arc**: Created [radial-progress.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/sunland/radial-progress.tsx) drawing responsive vector circular gauges that track target completion per active context.
-  - **Thumbnail Active Table**: Integrates property list cards directly inside the active list table including miniature building photo avatars, status badges, and localized ROI rates.
-
+### Recent Fixes
+- **Hydration Mismatch**: Fixed a Next.js hydration error in `dashboard-overview.tsx` caused by rendering `new Date()` directly on the server by wrapping the timestamp rendering in a `mounted` check.
+- **Missing Imports**: Resolved an issue in `internal-operations-board.tsx` where `IconEdit` was used but not imported from `@tabler/icons-react`.
