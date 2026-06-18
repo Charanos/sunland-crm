@@ -30,7 +30,8 @@ import {
 } from "@/components/layout/nav-model";
 import { Avatar } from "@/components/ui/avatar";
 import { ENTITIES, getEntityById } from "@/data/entities";
-const TEAM_MEMBERS = [
+import Image from "next/image";
+export const TEAM_MEMBERS = [
   {
     id: 1,
     name: "Esther Howard",
@@ -165,7 +166,17 @@ export function SunlandNav() {
     toggleSidebar,
     activeEntityId,
     setSwitchingToEntityId,
+    setSelectedChatDMId,
   } = useUIStore();
+
+  const handleOpenTeamChat = (memberName: string) => {
+    const nameMap: Record<string, string> = {
+      "Esther Howard": "dm1",
+      "Jacob Jones": "dm2",
+      "Cody Fisher": "dm3",
+    };
+    setSelectedChatDMId(nameMap[memberName] || "dm1");
+  };
 
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -227,29 +238,24 @@ export function SunlandNav() {
         <Link
           href="/admin"
           aria-label="Sunland CRM dashboard"
-          className="focus-ring flex items-center gap-3 rounded-xl p-2 transition hover:bg-white/[0.03]"
+          className={cn(
+            "focus-ring flex items-center transition hover:bg-white/[0.03] rounded-xl",
+            sidebarCollapsed ? "justify-center p-2" : "p-1.5"
+          )}
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition">
-            <IconBuildingCommunity aria-hidden size={18} stroke={1.5} />
-          </span>
-          <AnimatePresence>
-            {!sidebarCollapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -6 }}
-                transition={{ duration: 0.18 }}
-                className="min-w-0"
-              >
-                <p className="text-[13.5px] font-medium leading-tight tracking-tight text-white/90">
-                  Sunland CRM
-                </p>
-                <p className="text-[10px] font-medium uppercase tracking-widest text-white/35">
-                  Estate Intelligence
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {sidebarCollapsed ? (
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#f3df27]/10 text-[#f3df27] border border-[#f3df27]/25 shadow-sm transition">
+              <IconBuildingCommunity aria-hidden size={20} stroke={1.75} />
+            </span>
+          ) : (
+            <Image
+              src="/logo.png"
+              width={250}
+              height={155}
+              alt="Sunland CRM Logo"
+              className="w-auto h-14"
+            />
+          )}
         </Link>
 
         {/* Line separator above entity switcher */}
@@ -257,26 +263,46 @@ export function SunlandNav() {
 
         {/* Entity Switcher */}
         <div className="relative mt-2" ref={switcherRef}>
-          <button
-            type="button"
-            aria-haspopup="listbox"
-            aria-expanded={isSwitcherOpen}
-            aria-label="Switch entity"
-            onClick={() => { setIsSwitcherOpen((v) => !v); setIsProfileOpen(false); }}
-            className={cn(
-              "focus-ring flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors",
-              isSwitcherOpen ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
-              sidebarCollapsed && "justify-center",
-            )}
-          >
-            <Avatar
-              src={activeEntity.avatarUrl}
-              fallback={activeEntity.name.substring(0, 2)}
-              shape="rounded-lg"
-              className="size-7 shrink-0"
-            />
-            <AnimatePresence>
-              {!sidebarCollapsed && (
+          {sidebarCollapsed ? (
+            <NavTooltip label={`Switch Workspace (${activeEntity.name})`}>
+              <button
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={isSwitcherOpen}
+                aria-label="Switch entity"
+                onClick={() => { setIsSwitcherOpen((v) => !v); setIsProfileOpen(false); }}
+                className={cn(
+                  "focus-ring flex w-full items-center gap-2.5 rounded-xl px-2 py-2 transition-colors",
+                  isSwitcherOpen ? "bg-white/[0.06]" : "hover:bg-white/[0.03] justify-center",
+                )}
+              >
+                <Avatar
+                  src={activeEntity.avatarUrl}
+                  fallback={activeEntity.name.substring(0, 2)}
+                  shape="rounded-lg"
+                  className="size-7 shrink-0"
+                />
+              </button>
+            </NavTooltip>
+          ) : (
+            <button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={isSwitcherOpen}
+              aria-label="Switch entity"
+              onClick={() => { setIsSwitcherOpen((v) => !v); setIsProfileOpen(false); }}
+              className={cn(
+                "focus-ring flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors",
+                isSwitcherOpen ? "bg-white/[0.06]" : "hover:bg-white/[0.03]",
+              )}
+            >
+              <Avatar
+                src={activeEntity.avatarUrl}
+                fallback={activeEntity.name.substring(0, 2)}
+                shape="rounded-lg"
+                className="size-7 shrink-0"
+              />
+              <AnimatePresence>
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -294,9 +320,9 @@ export function SunlandNav() {
                     aria-hidden
                   />
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
+              </AnimatePresence>
+            </button>
+          )}
 
           {/* Entity Switcher Dropdown */}
           <AnimatePresence>
@@ -498,7 +524,7 @@ export function SunlandNav() {
                     >
                       <div className="relative mt-0.5 ml-5 space-y-0.5 pb-1.5">
                         {/* Vertical rail */}
-                        <div className="absolute left-0 top-1 bottom-3 w-px bg-white/[0.06]" />
+                        <div className="absolute left-0 top-1 bottom-3 w-px bg-[#f3df27]/30" />
 
                         {section.items.map((item) => {
                           const isActive = activeNavItem?.href === item.href;
@@ -514,7 +540,10 @@ export function SunlandNav() {
                               )}
                             >
                               {/* Horizontal connector */}
-                              <span className="absolute left-0 top-1/2 -translate-y-1/2 h-px w-3 bg-white/[0.06]" />
+                              <span className={cn(
+                                "absolute left-0 top-1/2 -translate-y-1/2 h-px w-3",
+                                isActive ? "bg-[#f3df27]" : "bg-[#f3df27]/35"
+                              )} />
 
                               {isActive && (
                                 <motion.div
@@ -574,6 +603,7 @@ export function SunlandNav() {
                   <button
                     type="button"
                     aria-label={member.name}
+                    onClick={() => handleOpenTeamChat(member.name)}
                     className="flex size-10 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.04]"
                   >
                     <Avatar
@@ -589,6 +619,7 @@ export function SunlandNav() {
                   key={member.id}
                   type="button"
                   aria-label={`Message ${member.name}`}
+                  onClick={() => handleOpenTeamChat(member.name)}
                   className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
                 >
                   <Avatar
@@ -680,26 +711,46 @@ export function SunlandNav() {
         </AnimatePresence>
 
         {/* Profile trigger button */}
-        <button
-          type="button"
-          aria-haspopup="dialog"
-          aria-expanded={isProfileOpen}
-          aria-label="Open account menu"
-          onClick={() => { setIsProfileOpen((v) => !v); setIsSwitcherOpen(false); }}
-          className={cn(
-            "focus-ring flex w-full items-center gap-3 rounded-xl transition-colors hover:bg-white/[0.04]",
-            isProfileOpen && "bg-white/[0.05]",
-            sidebarCollapsed ? "justify-center p-1.5" : "p-2",
-          )}
-        >
-          <Avatar
-            src={USER.avatarUrl}
-            fallback="DM"
-            status="online"
-            className="size-9 shrink-0"
-          />
-          <AnimatePresence>
-            {!sidebarCollapsed && (
+        {sidebarCollapsed ? (
+          <NavTooltip label="Account Menu">
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={isProfileOpen}
+              aria-label="Open account menu"
+              onClick={() => { setIsProfileOpen((v) => !v); setIsSwitcherOpen(false); }}
+              className={cn(
+                "focus-ring flex w-full items-center justify-center rounded-xl p-1.5 transition-colors hover:bg-white/[0.04]",
+                isProfileOpen && "bg-white/[0.05]"
+              )}
+            >
+              <Avatar
+                src={USER.avatarUrl}
+                fallback="DM"
+                status="online"
+                className="size-9 shrink-0"
+              />
+            </button>
+          </NavTooltip>
+        ) : (
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={isProfileOpen}
+            aria-label="Open account menu"
+            onClick={() => { setIsProfileOpen((v) => !v); setIsSwitcherOpen(false); }}
+            className={cn(
+              "focus-ring flex w-full items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/[0.04]",
+              isProfileOpen && "bg-white/[0.05]"
+            )}
+          >
+            <Avatar
+              src={USER.avatarUrl}
+              fallback="DM"
+              status="online"
+              className="size-9 shrink-0"
+            />
+            <AnimatePresence>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -707,9 +758,9 @@ export function SunlandNav() {
                 transition={{ duration: 0.15 }}
                 className="flex flex-1 items-start justify-between min-w-0"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 text-left">
                   <p className="truncate text-[13.5px] text-white/92">{USER.name}</p>
-                  <p className="truncate text-[10.5px] text-white/45 uppercase tracking-wider">{USER.role}</p>
+                  <p className="truncate text-[10.5px] text-white/40 lowercase leading-none mt-1">{USER.email}</p>
                 </div>
                 <IconChevronDown
                   size={13}
@@ -717,9 +768,9 @@ export function SunlandNav() {
                   className={cn("shrink-0 text-white/25 transition-transform duration-200 mt-0.5", isProfileOpen && "rotate-180")}
                 />
               </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
+            </AnimatePresence>
+          </button>
+        )}
       </div>
     </aside>
   );

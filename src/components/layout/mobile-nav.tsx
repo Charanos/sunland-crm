@@ -9,6 +9,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
 import { mobilePrimaryNav, navSections, getActiveNavItem } from "@/components/layout/nav-model";
+import { TEAM_MEMBERS } from "./sunland-nav";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -53,7 +54,7 @@ export function MobileBottomNav() {
 
 export function MobileNavigationDrawer() {
   const pathname = usePathname();
-  const { closeMobileNav, mobileNavOpen } = useUIStore();
+  const { closeMobileNav, mobileNavOpen, setSelectedChatDMId } = useUIStore();
   const activeNavItem = getActiveNavItem(pathname);
 
   if (!mobileNavOpen) {
@@ -69,12 +70,14 @@ export function MobileNavigationDrawer() {
         type="button"
       />
       <aside className="absolute inset-y-0 left-0 flex w-[min(22rem,92vw)] flex-col border-r border-white/5 bg-[var(--sidebar)] text-white shadow-2xl">
-        <div className="flex h-16 items-center gap-3 border-b border-white/[0.08] px-4">
-          <Avatar fallback="SR" className="size-9" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium tracking-tight">Sunland CRM</p>
-            <p className="body-sm text-white/60">Mobile command</p>
-          </div>
+        <div className="flex h-16 items-center justify-between border-b border-white/[0.08] px-4">
+          <Link href="/admin" onClick={closeMobileNav}>
+            <img
+              src="/logo.png"
+              className="h-8 w-auto max-w-[160px] object-contain pl-1"
+              alt="Sunland CRM Logo"
+            />
+          </Link>
           <IconButton
             aria-label="Close navigation"
             className="size-9 border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
@@ -130,6 +133,49 @@ export function MobileNavigationDrawer() {
                 </div>
               </section>
             ))}
+
+            {/* ── Divider ── */}
+            <div className="my-2">
+              <div className="h-px bg-white/10" />
+            </div>
+
+            {/* ── Team Section ── */}
+            <div>
+              <div className="flex items-center justify-between mb-2 pl-2 pr-1">
+                <p className="label-caps tracking-widest text-white/60 text-[11px] uppercase font-semibold">Team</p>
+              </div>
+              <div className="space-y-0.5">
+                {TEAM_MEMBERS.map((member) => (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => {
+                      const nameMap: Record<string, string> = {
+                        "Esther Howard": "dm1",
+                        "Jacob Jones": "dm2",
+                        "Cody Fisher": "dm3",
+                      };
+                      setSelectedChatDMId(nameMap[member.name] || "dm1");
+                      closeMobileNav();
+                    }}
+                    className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-white/[0.04] text-left"
+                  >
+                    <Avatar
+                      src={member.avatarUrl}
+                      fallback={member.name.substring(0, 2)}
+                      status={member.status}
+                      className="size-8 shrink-0"
+                    />
+                    <div className="min-w-0 text-left">
+                      <p className="truncate text-[13px] text-white/75 group-hover:text-white/95 transition-colors">
+                        {member.name}
+                      </p>
+                      <p className="truncate text-[11px] text-white/40">{member.role}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </nav>
       </aside>
