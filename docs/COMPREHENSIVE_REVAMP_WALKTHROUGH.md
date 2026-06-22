@@ -74,7 +74,43 @@ To increase user trust and make details drawers highly engaging:
 
 ---
 
-## 4. Verification & Safety Gates
+## 4. People & Statutory Dashboard Revamps
+
+Dedicated, interactive dashboards were created for **Payroll** and **Affordable Housing** under `/fin/payroll` and `/fin/affordable-housing` to replace standard generic tables:
+
+1. **Interactive Payroll Control (`/fin/payroll`):**
+   - **Visuals:** Features a deep satin dark indigo gradient header with a glowing digital "Disbursement Console" displaying MTD net outlays.
+   - **Runs tab:** Lists cycles. Detail drawer displays a simulated **Payroll Run Handoff Sheet** with department breakdowns and audit logs.
+   - **Disbursement Approval Policy:** Create/draft actions are permitted for Line Officers, but the primary "Approve & Disburse" sign-off is restricted to GM and CEO roles.
+   - **Payslips tab:** Searchable employee database. Click opens a simulated **Payslip Voucher** displaying basic earnings, deductions, and secure QR marks.
+   - **Remittances tab:** Statutory returns control. The "Mark Remitted" modal requires typing payment references and bank accounts to settle obligations.
+
+2. **Affordable Housing Control (`/fin/affordable-housing`):**
+   - **Visuals:** Features a green/teal architectural blueprint header aggregates total contributions.
+   - **Units tab:** Register units in projects. Registering under new schemes automatically triggers the CEO approval gate, setting status to `Pending` with an amber hold badge.
+   - **Allocations tab:** Applicant list. Detail drawer renders the simulated **Eligibility Card** detailing national IDs and scores, with inline assign unit and reject triggers (rejections require notes).
+   - **Levy tab:** Displays statutory 3.0% housing levy contributions calculated from payroll disbursements.
+
+---
+
+## 5. Finance Assurance Command Center Revamp
+
+A non-generic, creative reports dashboard was created under `/fin/reports` to manage statements verification:
+
+1. **Assurance Drafting Desk (`/fin/reports/generate`):**
+   - Renders a split-screen control desk. Left side displays report type chips (Balance Sheet, Cash Flow, Trial Balance, Mandates, Payroll).
+   - Right side features a high-tech **Live Compilation Console** printing progressive compile outputs and generating SHA-256 tokens.
+
+2. **Audit Vault Archive (`/fin/reports/library`):**
+   - Renders generated reports as visual folder dossiers in a grid instead of a table. Clicking open a folder card displays a statement preview and QR proof.
+
+3. **Cryptographic Authenticator (`/fin/reports/verify`):**
+   - Features a high-tech authenticator scanning terminal with scanning laser animations.
+   - Verifying genuine hashes returns signed certified authenticity certificates detailing exactly signed values. Verifying dummy/invalid hashes flags a red integrity breach caution card.
+
+---
+
+## 6. Verification & Safety Gates
 
 - **Type Safety:** Running `npm run typecheck` completes with **0 compilation errors**, confirming all React nodes and Tabler icons have correct TypeScript bindings.
 - **Realtime / DB Integrity:** Submissions dynamically post records into the PostgreSQL schema, recalculating metric cards immediately on page reload.
