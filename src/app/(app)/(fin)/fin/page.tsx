@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { FinanceOverviewScaffold } from "@/components/finance/finance-overview-scaffold";
 
-export default function FinanceRolePage() {
-  redirect("/admin/finance");
+export default function FinanceOverviewPage() {
+  return <FinanceOverviewScaffold />;
 }

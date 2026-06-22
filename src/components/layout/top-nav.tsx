@@ -36,9 +36,14 @@ import {
   IconTrash,
   IconUsersGroup,
   IconX,
+  IconUser,
+  IconLogout,
+  IconShieldLock,
   type Icon,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import { Avatar } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
 import { getEntityById } from "@/data/entities";
@@ -219,9 +224,9 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span style={{ fontSize: "13px" }} className="text-slate-800">Notifications</span>
+          <span className="text-label text-slate-800">Notifications</span>
           {unread > 0 && (
-            <span style={{ fontSize: "10px" }} className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 text-white">
+            <span className="text-tiny flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 text-white">
               {unread}
             </span>
           )}
@@ -231,8 +236,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => setItems((p) => p.map((n) => ({ ...n, read: true })))}
-              style={{ fontSize: "12px" }}
-              className="rounded-lg px-2 py-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="text-caption rounded-lg px-2 py-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
             >
               Mark all read
             </button>
@@ -253,7 +257,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-slate-400">
             <IconCircleCheckFilled size={28} className="mb-2 text-slate-200" aria-hidden />
-            <p style={{ fontSize: "12px" }}>You&apos;re all caught up</p>
+            <p className="text-caption">You&apos;re all caught up</p>
           </div>
         ) : (
           items.map((n) => (
@@ -268,11 +272,11 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
             >
               <span className={cn("mt-[6px] size-[6px] shrink-0 rounded-full transition-opacity", toneRing[n.tone], n.read && "opacity-0")} />
               <div className="min-w-0 flex-1">
-                <p style={{ fontSize: "13px" }} className={cn("leading-snug", n.read ? "text-slate-600" : "text-slate-800")}>
+                <p className={cn("text-label leading-snug", n.read ? "text-slate-600" : "text-slate-800")}>
                   {n.title}
                 </p>
-                <p style={{ fontSize: "12px" }} className="mt-0.5 text-slate-500 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">{n.body}</p>
-                <p style={{ fontSize: "11px" }} className="mt-1 flex items-center gap-1 text-slate-400">
+                <p className="text-caption mt-0.5 text-slate-500 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">{n.body}</p>
+                <p className="text-tiny mt-1 flex items-center gap-1 text-slate-400">
                   <IconClockHour4 size={10} aria-hidden />
                   {n.time}
                 </p>
@@ -287,8 +291,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
         <Link
           href="/admin/notifications"
           onClick={onClose}
-          style={{ fontSize: "12px" }}
-          className="flex items-center gap-1 text-[var(--tertiary)] transition-opacity hover:opacity-70"
+          className="text-caption flex items-center gap-1 text-[var(--tertiary)] transition-opacity hover:opacity-70"
         >
           View all notifications
           <IconChevronRight size={13} aria-hidden />
@@ -304,8 +307,8 @@ function QuickCreatePanel({ onClose }: { onClose: () => void }) {
   return (
     <PanelShell width="w-60" align="right">
       <div className="border-b border-slate-100 px-4 py-3">
-        <p style={{ fontSize: "13px" }} className="text-slate-800">Quick Create</p>
-        <p style={{ fontSize: "11.5px" }} className="text-slate-500">Start something new</p>
+        <p className="text-label text-slate-800">Quick Create</p>
+        <p className="text-caption text-slate-500">Start something new</p>
       </div>
       <div className="p-1.5">
         {QUICK_ACTIONS.map((action) => (
@@ -318,9 +321,9 @@ function QuickCreatePanel({ onClose }: { onClose: () => void }) {
             <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
               <action.icon size={14} aria-hidden />
             </span>
-            <span style={{ fontSize: "13px" }} className="flex-1 text-slate-700">{action.label}</span>
+            <span className="text-label flex-1 text-slate-700">{action.label}</span>
             {action.shortcut && (
-              <kbd style={{ fontSize: "9px" }} className="select-none rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-slate-400">
+              <kbd className="text-tiny select-none rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-slate-400">
                 ⌘{action.shortcut}
               </kbd>
             )}
@@ -368,7 +371,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
         <div className="flex items-center gap-2">
           <IconCalendar size={15} className="text-slate-500" aria-hidden />
-          <span style={{ fontSize: "13px" }} className="text-slate-800">Schedule</span>
+          <span className="text-label text-slate-800">Schedule</span>
         </div>
         <button
           type="button"
@@ -393,7 +396,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
             >
               <IconChevronLeft size={14} aria-hidden />
             </button>
-            <span style={{ fontSize: "13px" }} className="text-slate-700">
+            <span className="text-label text-slate-700">
               {format(month, "MMMM yyyy")}
             </span>
             <button
@@ -409,7 +412,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
           {/* Day labels */}
           <div className="mb-2 grid grid-cols-7">
             {WEEKDAYS.map((d) => (
-              <div key={d} style={{ fontSize: "10px" }} className="text-center font-medium uppercase tracking-wider text-slate-400">
+              <div key={d} className="text-tiny text-center font-medium uppercase tracking-wider text-slate-400">
                 {d}
               </div>
             ))}
@@ -441,7 +444,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                           : "text-slate-400 hover:bg-slate-50",
                   )}
                 >
-                  <span style={{ fontSize: "13px" }}>{format(day, "d")}</span>
+                  <span className="text-label">{format(day, "d")}</span>
                   {dayEvts.length > 0 && (
                     <span className={cn(
                       "absolute bottom-1 size-[4px] rounded-full",
@@ -458,8 +461,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => { setMonth(new Date()); setSelected(new Date()); }}
-              style={{ fontSize: "12px" }}
-              className="text-[var(--tertiary)] transition-opacity hover:opacity-70"
+              className="text-caption text-[var(--tertiary)] transition-opacity hover:opacity-70"
             >
               Jump to today
             </button>
@@ -470,10 +472,10 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
         <div className="flex w-[44%] flex-col px-4 py-4">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <p style={{ fontSize: "13px" }} className="text-slate-800">
+              <p className="text-label text-slate-800">
                 {format(selected, "EEE, MMM d")}
               </p>
-              <p style={{ fontSize: "11.5px" }} className="text-slate-500">
+              <p className="text-caption text-slate-500">
                 {dayEvents.length === 0 ? "No events" : `${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""}`}
               </p>
             </div>
@@ -494,7 +496,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
             {dayEvents.length === 0 && !isAdding ? (
               <div className="flex flex-col items-center justify-center py-8 text-slate-300">
                 <IconCalendar size={24} aria-hidden className="mb-2" />
-                <p style={{ fontSize: "11.5px" }} className="text-slate-400">No events scheduled</p>
+                <p className="text-caption text-slate-400">No events scheduled</p>
               </div>
             ) : (
               dayEvents.map((ev) => (
@@ -504,17 +506,17 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                 >
                   <span className={cn("mt-[3px] size-[7px] shrink-0 rounded-full", EVENT_COLORS[ev.type])} />
                   <div className="min-w-0 flex-1">
-                    <p style={{ fontSize: "13px" }} className="text-slate-800">{ev.title}</p>
+                    <p className="text-label text-slate-800">{ev.title}</p>
                     {ev.time && (
-                      <p style={{ fontSize: "11px" }} className="mt-0.5 flex items-center gap-1 text-slate-500">
+                      <p className="text-tiny mt-0.5 flex items-center gap-1 text-slate-500">
                         <IconClockHour4 size={9} aria-hidden />
                         {ev.time}
                       </p>
                     )}
                     {ev.description && (
-                      <p style={{ fontSize: "12px" }} className="mt-1 text-slate-600">{ev.description}</p>
+                      <p className="text-caption mt-1 text-slate-600">{ev.description}</p>
                     )}
-                    <p style={{ fontSize: "10px" }} className={cn("mt-1 uppercase tracking-wide", EVENT_LABEL_COLORS[ev.type])}>
+                    <p className={cn("text-tiny mt-1 uppercase tracking-wide", EVENT_LABEL_COLORS[ev.type])}>
                       {ev.type}
                     </p>
                   </div>
@@ -543,7 +545,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                 className="mt-2 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3"
               >
                 <div className="flex items-center justify-between">
-                  <span style={{ fontSize: "12.5px" }} className="text-slate-700">New event</span>
+                  <span className="text-caption text-slate-700">New event</span>
                   <button type="button" onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600">
                     <IconX size={13} aria-hidden />
                   </button>
@@ -555,8 +557,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   placeholder="Event title"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  style={{ fontSize: "13px" }}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:outline-none"
+                  className="text-label w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:outline-none"
                 />
 
                 <div className="flex gap-2">
@@ -564,14 +565,12 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                     type="time"
                     value={form.time}
                     onChange={(e) => setForm({ ...form, time: e.target.value })}
-                    style={{ fontSize: "12.5px" }}
-                    className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-700 focus:border-slate-300 focus:outline-none"
+                    className="text-caption flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-700 focus:border-slate-300 focus:outline-none"
                   />
                   <select
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value as CalendarEvent["type"] })}
-                    style={{ fontSize: "12.5px" }}
-                    className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-700 focus:border-slate-300 focus:outline-none"
+                    className="text-caption flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-700 focus:border-slate-300 focus:outline-none"
                   >
                     <option value="meeting">Meeting</option>
                     <option value="viewing">Viewing</option>
@@ -585,23 +584,20 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={2}
-                  style={{ fontSize: "12.5px" }}
-                  className="w-full resize-none rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:outline-none"
+                  className="text-caption w-full resize-none rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:outline-none"
                 />
 
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setIsAdding(false)}
-                    style={{ fontSize: "12.5px" }}
-                    className="flex-1 rounded-lg border border-slate-200 bg-white py-1.5 text-slate-600 transition-colors hover:bg-slate-50"
+                    className="text-caption flex-1 rounded-lg border border-slate-200 bg-white py-1.5 text-slate-600 transition-colors hover:bg-slate-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    style={{ fontSize: "12.5px" }}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--sidebar)] py-1.5 text-white transition-opacity hover:opacity-80"
+                    className="text-caption flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--sidebar)] py-1.5 text-white transition-opacity hover:opacity-80"
                   >
                     <IconCheck size={12} aria-hidden />
                     Save
@@ -656,14 +652,11 @@ function SearchBar() {
         placeholder="Search anything..."
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        /* inline style bypasses Tailwind v4 text-scale cascade */
-        style={{ fontSize: "12.5px" }}
-        className="flex-1 bg-transparent text-slate-700 placeholder:text-slate-400/80 focus:outline-none"
+        className="text-caption flex-1 bg-transparent text-slate-700 placeholder:text-slate-400/80 focus:outline-none"
       />
       <kbd
-        style={{ fontSize: "9px" }}
         className={cn(
-          "pointer-events-none select-none rounded border px-1.5 py-0.5 font-mono transition-opacity",
+          "text-tiny pointer-events-none select-none rounded border px-1.5 py-0.5 font-mono transition-opacity",
           focused ? "opacity-0" : "border-slate-200 bg-white text-slate-400",
         )}
       >
@@ -685,7 +678,7 @@ function EntityBadge() {
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--secondary)] opacity-75" />
         <span className="relative inline-flex size-1.5 rounded-full bg-[var(--secondary)]" />
       </span>
-      <span style={{ fontSize: "12px" }} className="font-medium text-slate-700">{activeEntity.name}</span>
+      <span className="text-caption font-medium text-slate-700">{activeEntity.name}</span>
     </div>
   );
 }
@@ -703,11 +696,11 @@ function Breadcrumb() {
     <nav aria-label="Breadcrumb" className="hidden items-center gap-1.5 xl:flex">
       {activeSection && !isFlat && (
         <>
-          <span style={{ fontSize: "12px" }} className="text-slate-400">{activeSection.label}</span>
+          <span className="text-caption text-slate-400">{activeSection.label}</span>
           <IconChevronRight size={10} className="text-slate-300" aria-hidden />
         </>
       )}
-      <span style={{ fontSize: "12px" }} className="text-slate-700">{activeItem.label}</span>
+      <span className="text-caption text-slate-700">{activeItem.label}</span>
     </nav>
   );
 }
@@ -716,6 +709,43 @@ function Breadcrumb() {
 
 export function TopNav() {
   const { openMobileNav } = useUIStore();
+
+  const [currentUser, setCurrentUser] = useState({
+    name: "Paul Amos",
+    role: "ceo",
+    avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
+  });
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user) {
+          setCurrentUser({
+            name: data.user.name || "Paul Amos",
+            role: data.user.role || "ceo",
+            avatarUrl: data.user.avatarUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
+          });
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  const formatRole = (role: string) => {
+    return role
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+      .replace("Ceo", "CEO")
+      .replace("Gm", "GM");
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch { }
+    window.location.href = "/login";
+  };
 
   const notifRef = useRef<HTMLDivElement>(null);
   const createRef = useRef<HTMLDivElement>(null);
@@ -741,8 +771,8 @@ export function TopNav() {
 
         {/* Left: breadcrumb + search */}
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <EntityBadge />
-          <div className="h-4 w-px bg-slate-200/80" aria-hidden />
+          <div className="hidden"><EntityBadge /></div>
+          <div className="hidden h-4 w-px bg-slate-200/80" aria-hidden />
           <Breadcrumb />
           <div className="hidden h-4 w-px bg-slate-200/80 xl:block" aria-hidden />
           <SearchBar />
@@ -807,19 +837,48 @@ export function TopNav() {
           {/* Divider */}
           <div className="mx-2 h-5 w-px bg-slate-200/80" aria-hidden />
 
-          {/* User chip — read-only, full profile is in sidebar */}
-          <div className="flex items-center gap-2 rounded-xl px-2 py-1.5">
-            <Avatar
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face"
-              fallback="DM"
-              status="online"
-              className="size-7 shrink-0"
-            />
-            <div className="hidden flex-col leading-tight xl:flex">
-              <span style={{ fontSize: "13px" }} className="text-slate-800">Paul Amos</span>
-              <span style={{ fontSize: "11px" }} className="text-slate-500">CEO</span>
+          {/* User dropdown menu — role-aware */}
+          <DropdownMenu
+            align="right"
+            label="User menu"
+            trigger={
+              <div className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 hover:bg-slate-50 transition cursor-pointer select-none">
+                <Avatar
+                  src={currentUser.avatarUrl}
+                  fallback={currentUser.name ? currentUser.name.split(" ").map((n) => n[0]).join("") : "DM"}
+                  status="online"
+                  className="size-7 shrink-0"
+                />
+                <div className="hidden flex-col leading-tight xl:flex text-left">
+                  <span className="text-label text-slate-800">{currentUser.name}</span>
+                  <span className="text-tiny text-slate-500">{formatRole(currentUser.role)}</span>
+                </div>
+                <IconChevronDown size={14} className="text-slate-400 ml-1 hidden xl:block" />
+              </div>
+            }
+          >
+            <div className="px-3 py-2 border-b border-slate-100 mb-1">
+              <p className="text-base font-medium text-slate-800 truncate">{currentUser.name}</p>
+              <p className="text-sm  text-slate-450 truncate mt-0.5">{formatRole(currentUser.role)}</p>
             </div>
-          </div>
+            <DropdownItem onClick={() => window.location.href = "/admin/profile"}>
+              <IconUser size={15} stroke={1.8} className="text-slate-500" />
+              <span>My Profile</span>
+            </DropdownItem>
+            <DropdownItem onClick={() => window.location.href = "/admin/settings"}>
+              <IconSettings size={15} stroke={1.8} className="text-slate-500" />
+              <span>System Settings</span>
+            </DropdownItem>
+            <DropdownItem onClick={() => window.location.href = "/admin/security"}>
+              <IconShieldLock size={15} stroke={1.8} className="text-slate-500" />
+              <span>Security & Keys</span>
+            </DropdownItem>
+            <div className="my-1 border-t border-slate-100" />
+            <DropdownItem onClick={handleLogout}>
+              <IconLogout size={15} stroke={1.8} className="text-rose-500" />
+              <span className="text-rose-600">Logout</span>
+            </DropdownItem>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -839,7 +898,7 @@ export function TopNav() {
         </button>
 
         <label className="relative min-w-0 flex-1">
-          <span className="sr-only">Search Sunland CRM</span>
+          <span className="sr-only">Search Sunland ERP</span>
           <IconSearch
             aria-hidden
             size={13}
@@ -849,8 +908,7 @@ export function TopNav() {
           <input
             type="search"
             placeholder="Search..."
-            style={{ fontSize: "12.5px" }}
-            className="h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/80 pl-8 pr-3 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-none transition-all"
+            className="text-caption h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/80 pl-8 pr-3 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-none transition-all"
           />
         </label>
 

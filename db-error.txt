@@ -1,0 +1,36 @@
+No errors. DB connection and tables list verified successfully.
+[
+  {
+    "table_name": "entities"
+  },
+  {
+    "table_name": "activity_logs"
+  },
+  {
+    "table_name": "users"
+  },
+  {
+    "table_name": "approval_requests"
+  },
+  {
+    "table_name": "contacts"
+  },
+  {
+    "table_name": "leads"
+  },
+  {
+    "table_name": "properties"
+  },
+  {
+    "table_name": "leases"
+  },
+  {
+    "table_name": "maintenance_requests"
+  },
+  {
+    "table_name": "notifications"
+  },
+  {
+    "table_name": "transactions"
+  }
+]

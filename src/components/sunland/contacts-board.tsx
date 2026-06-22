@@ -2,27 +2,28 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { 
-  IconSearch, 
-  IconPlus, 
-  IconPhone, 
-  IconMail, 
-  IconBuilding, 
+import {
+  IconSearch,
+  IconPlus,
+  IconPhone,
+  IconMail,
+  IconBuilding,
   IconUserCircle,
   IconDotsVertical,
   IconX,
   IconTrash,
   IconEdit,
   IconMessageCircle,
-  IconChevronRight,
-  IconChevronLeft,
   IconUsers,
-  IconArrowUpRight,
   IconAlertTriangle,
   IconClipboardList
 } from "@tabler/icons-react";
 import { Avatar } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
+import {
+  BoardPanel,
+  KpiCard,
+  PaginationControls,
+} from "@/components/ui/erp-primitives";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
 import { ContactDetailDrawer } from "./contact-detail-drawer";
@@ -34,7 +35,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 
-export type ContactType = 
+export type ContactType =
   | "landlord"
   | "property_owner"
   | "investor"
@@ -47,7 +48,7 @@ export type ContactType =
   | "valuer"
   | "government_agency";
 
-export type ContactSource = 
+export type ContactSource =
   | "referral"
   | "walk_in"
   | "website"
@@ -365,10 +366,10 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
-  
+
   // Simulated Roles: "CEO" (sees everything) or "Agent" (sees only Amina Wanjiku's assignments)
   const [role, setRole] = useState<"CEO" | "Agent">("CEO");
-  
+
   // Sorting & Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("name");
@@ -413,7 +414,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
       const matchesRole = role === "CEO" || c.assignedAgent === "Amina Wanjiku";
 
       // 2. Search Box
-      const matchesSearch = 
+      const matchesSearch =
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.phone.includes(searchQuery);
@@ -447,7 +448,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
       if (bVal === undefined || bVal === null) return -1;
 
       if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDir === "asc" 
+        return sortDir === "asc"
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
       } else {
@@ -489,9 +490,9 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
   // Checkbox row toggler
   const toggleSelectRow = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) 
-        ? prev.filter(item => item !== id) 
+    setSelectedIds(prev =>
+      prev.includes(id)
+        ? prev.filter(item => item !== id)
         : [...prev, id]
     );
   };
@@ -520,10 +521,10 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
   const confirmBulkDelete = () => {
     setContacts(prev => prev.filter(c => !selectedIds.includes(c.id)));
-    pushToast({ 
-      tone: "success", 
-      title: "Batch Action Completed", 
-      body: `Successfully deleted ${selectedIds.length} contact records from the CRM.` 
+    pushToast({
+      tone: "success",
+      title: "Batch Action Completed",
+      body: `Successfully deleted ${selectedIds.length} contact records from the CRM.`
     });
     setSelectedIds([]);
     setIsBulkDeleteConfirmOpen(false);
@@ -531,22 +532,22 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
 
   const handleBulkStatusChange = (newStatus: ContactStatus) => {
-    setContacts(prev => prev.map(c => 
+    setContacts(prev => prev.map(c =>
       selectedIds.includes(c.id) ? { ...c, status: newStatus } : c
     ));
-    pushToast({ 
-      tone: "success", 
-      title: "Batch Action Completed", 
-      body: `Status updated to "${STATUS_LABELS[newStatus]}" for ${selectedIds.length} contacts.` 
+    pushToast({
+      tone: "success",
+      title: "Batch Action Completed",
+      body: `Status updated to "${STATUS_LABELS[newStatus]}" for ${selectedIds.length} contacts.`
     });
     setSelectedIds([]);
   };
 
   const handleBulkMessage = () => {
-    pushToast({ 
-      tone: "success", 
-      title: "Direct Broadcast Dispatched", 
-      body: `Dispatched chat invitations to ${selectedIds.length} selected recipients.` 
+    pushToast({
+      tone: "success",
+      title: "Direct Broadcast Dispatched",
+      body: `Dispatched chat invitations to ${selectedIds.length} selected recipients.`
     });
     setSelectedIds([]);
   };
@@ -555,14 +556,14 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
   const handleCreateOrUpdate = (payload: Partial<Contact>) => {
     if (editingContact) {
       // Update
-      setContacts(prev => prev.map(c => 
-        c.id === editingContact.id 
-          ? { 
-              ...c, 
-              ...payload, 
-              financials: payload.financials || c.financials, 
-              associatedProperties: payload.associatedProperties || c.associatedProperties 
-            } 
+      setContacts(prev => prev.map(c =>
+        c.id === editingContact.id
+          ? {
+            ...c,
+            ...payload,
+            financials: payload.financials || c.financials,
+            associatedProperties: payload.associatedProperties || c.associatedProperties
+          }
           : c
       ));
       pushToast({ tone: "success", title: "Record Updated", body: `Changes saved for "${payload.name}".` });
@@ -598,10 +599,10 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
     if (!deleteConfirmId) return;
     const contact = contacts.find(c => c.id === deleteConfirmId);
     setContacts(prev => prev.filter(c => c.id !== deleteConfirmId));
-    pushToast({ 
-      tone: "success", 
-      title: "Record Deleted", 
-      body: `"${contact?.name || 'Contact'}" has been successfully scrubbed from CRM.` 
+    pushToast({
+      tone: "success",
+      title: "Record Deleted",
+      body: `"${contact?.name || 'Contact'}" has been successfully scrubbed from CRM.`
     });
     setDeleteConfirmId(null);
   };
@@ -629,133 +630,75 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      
+
       {/* ── Operations Control Hub Navigator ── */}
-      <div className="flex items-center justify-between flex-wrap gap-4 bg-white border border-slate-100 p-4 rounded-[20px] shadow-sm">
+      <BoardPanel className="flex flex-wrap items-center justify-between gap-4 p-4">
         <div className="flex items-center gap-2">
           <div className="size-8 rounded-lg bg-indigo-50 text-indigo-650 flex items-center justify-center">
             <IconClipboardList size={16} />
           </div>
           <div>
-            <h3 className="text-[13px] font-medium text-slate-800 leading-none">Operations Control Hub</h3>
-            <p className="text-[11px] text-slate-400 mt-1">Navigate across property CRM ops segments.</p>
+            <h3 className="text-base font-medium text-slate-800 leading-none">Operations Control Hub</h3>
+            <p className="text-sm text-slate-400 mt-1">Navigate across property CRM ops segments.</p>
           </div>
         </div>
 
         <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
           <Link
             href="/admin/contacts"
-            className="px-3.5 py-1.5 text-[11.5px] font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
+            className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
           >
             <span>Contacts</span>
-            <span className="bg-[#f3df27] text-[#151936] text-[9px] px-1.5 py-0.2 rounded-full font-medium">Active</span>
+            <span className="bg-[#f3df27] text-[#151936] text-xs  px-1.5 py-0.2 rounded-full font-medium">Active</span>
           </Link>
           <Link
             href="/admin/pipeline"
-            className="px-3.5 py-1.5 text-[11.5px] font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Deals Pipeline</span>
-            <span className="bg-slate-200 text-slate-650 text-[9px] px-1.5 py-0.2 rounded-full font-medium">Deals</span>
+            <span className="bg-slate-200 text-slate-650 text-xs  px-1.5 py-0.2 rounded-full font-medium">Deals</span>
           </Link>
           <Link
             href="/admin/leases"
-            className="px-3.5 py-1.5 text-[11.5px] font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Leases</span>
-            <span className="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.2 rounded-full font-medium">Tenancies</span>
+            <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">Tenancies</span>
           </Link>
           <Link
             href="/admin/maintenance"
-            className="px-3.5 py-1.5 text-[11.5px] font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Maintenance</span>
-            <span className="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.2 rounded-full font-medium">Tickets</span>
+            <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">Tickets</span>
           </Link>
         </div>
-      </div>
+      </BoardPanel>
 
       {/* ── Top Analytics KPI Tier ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* KPI 1 */}
-        <div className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
-          <div className="flex items-center gap-2">
-            <div className="size-[22px] rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-              <IconUsers size={13} />
-            </div>
-            <span className="text-[12.5px] font-medium text-slate-500 tracking-wide uppercase">Total Contacts</span>
-          </div>
-          <div className="flex items-end justify-between mt-auto mb-2">
-            <span className="text-[32px] font-medium text-slate-800 tracking-tight font-mono leading-none">{stats.total}</span>
-            <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              +12% <IconArrowUpRight size={10} />
-            </span>
-          </div>
-          <div className="h-[3px] bg-slate-100 rounded-full w-full overflow-hidden">
-            <div className="h-full bg-indigo-500 rounded-full w-[80%] transition-all duration-1000" />
-          </div>
-        </div>
 
-        {/* KPI 2 */}
-        <div className="bg-indigo-50/70 p-5 rounded-[20px] border border-indigo-100/50 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
-          <div className="flex items-center gap-2">
-            <div className="size-[22px] rounded-full bg-indigo-500 text-white flex items-center justify-center">
-              <IconBuilding size={13} />
-            </div>
-            <span className="text-[12.5px] font-medium text-indigo-700 tracking-wide uppercase">Landlords & Owners</span>
-          </div>
-          <div className="flex items-end justify-between mt-auto mb-2">
-            <span className="text-[32px] font-medium text-indigo-900 tracking-tight font-mono leading-none">{stats.landlords}</span>
-            <span className="text-[11px] text-indigo-600 font-medium">32 Units Owned</span>
-          </div>
-          <div className="h-[3px] bg-indigo-200/50 rounded-full w-full overflow-hidden">
-            <div className="h-full bg-indigo-600 rounded-full w-[65%] transition-all duration-1000" />
-          </div>
-        </div>
-
-        {/* KPI 3 */}
-        <div className="bg-emerald-50/70 p-5 rounded-[20px] border border-emerald-100/50 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
-          <div className="flex items-center gap-2">
-            <div className="size-[22px] rounded-full bg-emerald-500 text-white flex items-center justify-center">
-              <IconUsers size={13} />
-            </div>
-            <span className="text-[12.5px] font-medium text-emerald-700 tracking-wide uppercase">Active Tenants</span>
-          </div>
-          <div className="flex items-end justify-between mt-auto mb-2">
-            <span className="text-[32px] font-medium text-emerald-900 tracking-tight font-mono leading-none">{stats.tenants}</span>
-            <span className="text-[11px] text-emerald-600 font-medium">92% Occupancy</span>
-          </div>
-          <div className="h-[3px] bg-emerald-200/50 rounded-full w-full overflow-hidden">
-            <div className="h-full bg-emerald-600 rounded-full w-[92%] transition-all duration-1000" />
-          </div>
-        </div>
-
-        {/* KPI 4 */}
-        <div className="bg-amber-50/70 p-5 rounded-[20px] border border-amber-100/50 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
-          <div className="flex items-center gap-2">
-            <div className="size-[22px] rounded-full bg-amber-500 text-white flex items-center justify-center">
-              <IconAlertTriangle size={13} />
-            </div>
-            <span className="text-[12.5px] font-medium text-amber-700 tracking-wide uppercase">Blacklisted / Risks</span>
-          </div>
-          <div className="flex items-end justify-between mt-auto mb-2">
-            <span className="text-[32px] font-medium text-amber-900 tracking-tight font-mono leading-none">{stats.blacklisted}</span>
-            <span className="text-[11px] text-amber-750 font-medium">Arrears: {formatCompactKES(stats.arrears)}</span>
-          </div>
-          <div className="h-[3px] bg-amber-200/50 rounded-full w-full overflow-hidden">
-            <div className="h-full bg-amber-600 rounded-full w-[15%] transition-all duration-1000" />
-          </div>
-        </div>
+        <KpiCard icon={IconUsers} label="Total Contacts" progress={80} tone="neutral" trend="+12%" value={stats.total} />
+        <KpiCard icon={IconBuilding} label="Landlords & Owners" progress={65} tone="data" trend="32 Units Owned" value={stats.landlords} />
+        <KpiCard icon={IconUsers} label="Active Tenants" progress={92} tone="success" trend="92% Occupancy" value={stats.tenants} />
+        <KpiCard
+          icon={IconAlertTriangle}
+          label="Blacklisted / Risks"
+          progress={15}
+          tone="warning"
+          trend={`Arrears: ${formatCompactKES(stats.arrears)}`}
+          value={stats.blacklisted}
+        />
 
       </div>
 
       {/* ── Main Data Board ── */}
-      <Card className="flex flex-col overflow-hidden border border-slate-100 shadow-sm bg-white rounded-3xl">
-        
+      <BoardPanel className="flex flex-col overflow-hidden p-0">
+
         {/* Controls Header */}
         <div className="p-5 border-b border-slate-100 space-y-4 bg-white shrink-0">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            
+
             {/* Left search */}
             <div className="relative flex-1 min-w-[240px] max-w-sm">
               <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -764,11 +707,11 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                 placeholder="Search CRM Directory..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); resetPagination(); }}
-                className="pl-10 pr-4 py-2 w-full bg-slate-50 border border-slate-200/60 rounded-xl text-[13px] focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-all placeholder:text-slate-400"
+                className="pl-10 pr-4 py-2 w-full bg-slate-50 border border-slate-200/60 rounded-xl text-base focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-all placeholder:text-slate-400"
               />
               {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery("")} 
+                <button
+                  onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                 >
                   <IconX size={14} />
@@ -778,7 +721,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
             {/* Right filter dropdowns & actions */}
             <div className="flex items-center gap-2 flex-wrap">
-              
+
               {/* Type Select */}
               <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600">
                 <span className="text-slate-400">Type:</span>
@@ -831,7 +774,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
               </div>
 
               {/* New Contact Trigger */}
-              <button 
+              <button
                 onClick={() => { setEditingContact(undefined); setIsModalOpen(true); }}
                 className="flex items-center gap-1.5 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl text-[12.5px] font-medium hover:bg-[#e6d220] transition-colors shadow-sm cursor-pointer"
               >
@@ -844,41 +787,41 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
           {/* Active Filter Chips */}
           {(typeFilter !== "all" || statusFilter !== "all" || sourceFilter !== "all" || searchQuery !== "") && (
             <div className="flex items-center gap-2 flex-wrap pt-2 animate-fade-in">
-              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Active Filters:</span>
-              
+              <span className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active Filters:</span>
+
               {searchQuery && (
-                <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-[12px] font-medium border border-slate-200/40">
+                <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
                   Search: &quot;{searchQuery}&quot;
                   <button onClick={() => setSearchQuery("")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
               {typeFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-[12px] font-medium border border-indigo-200/40">
+                <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-base font-medium border border-indigo-200/40">
                   Type: {TYPE_LABELS[typeFilter as ContactType]}
                   <button onClick={() => setTypeFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
               {statusFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-slate-150 text-slate-700 px-2.5 py-1 rounded-lg text-[12px] font-medium border border-slate-200/40">
+                <span className="flex items-center gap-1 bg-slate-150 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
                   Status: {STATUS_LABELS[statusFilter as ContactStatus]}
                   <button onClick={() => setStatusFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
               {sourceFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-[12px] font-medium border border-amber-200/40">
+                <span className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-base font-medium border border-amber-200/40">
                   Source: {SOURCE_LABELS[sourceFilter as ContactSource]}
                   <button onClick={() => setSourceFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
 
-              <button 
+              <button
                 onClick={() => {
                   setSearchQuery("");
                   setTypeFilter("all");
                   setStatusFilter("all");
                   setSourceFilter("all");
                 }}
-                className="text-[11px] font-medium text-slate-500 hover:text-slate-800 underline ml-1"
+                className="text-sm font-medium text-slate-500 hover:text-slate-800 underline ml-1"
               >
                 Clear all
               </button>
@@ -890,11 +833,11 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
         <div className="overflow-x-auto min-h-[300px]">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100 text-[11px] font-medium text-slate-400 uppercase tracking-widest select-none">
+              <tr className="bg-slate-50/50 border-b border-slate-100 text-sm font-medium text-slate-400 uppercase tracking-widest select-none">
                 <th className="py-4 pl-6 pr-2 w-10 text-center">
-                  <input 
-                    type="checkbox" 
-                    onChange={toggleSelectAll} 
+                  <input
+                    type="checkbox"
+                    onChange={toggleSelectAll}
                     checked={paginatedContacts.length > 0 && paginatedContacts.every(c => selectedIds.includes(c.id))}
                     className="rounded border-slate-300 text-[#151936] focus:ring-[#151936]/20 size-4 cursor-pointer"
                   />
@@ -916,7 +859,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                 <th className="py-4 px-6 font-medium text-right w-20">Actions</th>
               </tr>
             </thead>
-            
+
             <tbody className="divide-y divide-slate-50 bg-white relative">
               <AnimatePresence mode="wait">
                 {isLoading ? (
@@ -953,22 +896,22 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                   ))
                 ) : paginatedContacts.length > 0 ? (
                   paginatedContacts.map((contact, idx) => (
-                    <motion.tr 
-                      key={contact.id} 
+                    <motion.tr
+                      key={contact.id}
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.15, delay: idx * 0.02 }}
                       className={cn(
-                        "hover:bg-slate-50/50 transition-colors cursor-pointer group text-[13px] text-slate-700",
+                        "hover:bg-slate-50/50 transition-colors cursor-pointer group text-base text-slate-700",
                         selectedIds.includes(contact.id) && "bg-indigo-50/20"
                       )}
                       onClick={() => setSelectedContactId(contact.id)}
                     >
                       {/* Checkbox column */}
                       <td className="py-4 pl-6 pr-2 text-center" onClick={(e) => e.stopPropagation()}>
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={selectedIds.includes(contact.id)}
                           onChange={() => toggleSelectRow(contact.id)}
                           className="rounded border-slate-300 text-[#151936] focus:ring-[#151936]/20 size-4 cursor-pointer"
@@ -989,7 +932,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                             <span className="font-normal text-[14px] text-slate-900 group-hover:text-[#151936] transition-colors leading-snug block">
                               {contact.name}
                             </span>
-                            <span className="text-[11px] text-slate-400 mt-0.5 block font-medium capitalize">
+                            <span className="text-sm text-slate-400 mt-0.5 block font-medium capitalize">
                               Owner: {contact.assignedAgent?.replace("CEO", "Admin")}
                             </span>
                           </div>
@@ -998,10 +941,10 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
                       {/* Type badge / Source column */}
                       <td className="py-4 px-4 space-y-1.5">
-                        <span className={cn("px-2.5 py-0.5 text-[11px] font-medium rounded-full border block w-fit whitespace-nowrap", TYPE_COLORS[contact.type])}>
+                        <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full border block w-fit whitespace-nowrap", TYPE_COLORS[contact.type])}>
                           {TYPE_LABELS[contact.type]}
                         </span>
-                        <span className={cn("px-2.5 py-0.5 text-[11px] font-medium rounded-full block w-fit", SOURCE_COLORS[contact.source])}>
+                        <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full block w-fit", SOURCE_COLORS[contact.source])}>
                           {SOURCE_LABELS[contact.source]}
                         </span>
                       </td>
@@ -1025,24 +968,24 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                         {contact.associatedProperties.length > 0 ? (
                           <div className="flex flex-wrap gap-1 max-w-[200px]">
                             {contact.associatedProperties.map((p) => (
-                              <span key={p.id} className="bg-slate-50 hover:bg-slate-100 hover:text-slate-800 transition-colors border border-slate-200/60 rounded px-1.5 py-0.5 text-[10.5px] font-medium text-slate-600 block truncate max-w-[120px]">
+                              <span key={p.id} className="bg-slate-50 hover:bg-slate-100 hover:text-slate-800 transition-colors border border-slate-200/60 rounded px-1.5 py-0.5 text-sm font-medium text-slate-600 block truncate max-w-[120px]">
                                 {p.name}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-slate-450 italic text-[11.5px]">No Properties</span>
+                          <span className="text-slate-450 italic text-sm ">No Properties</span>
                         )}
                       </td>
 
                       {/* Financial values (Paid & Arrears) */}
                       <td className="py-4 px-4 text-right">
                         <div className="space-y-0.5">
-                          <span className="text-[13px] font-medium font-mono text-emerald-600 block leading-tight">
+                          <span className="text-base font-medium font-mono text-emerald-600 block leading-tight">
                             {formatCompactKES(contact.financials.paid)} Paid
                           </span>
                           {contact.financials.arrears > 0 && (
-                            <span className="text-[11px] font-medium font-mono text-rose-500 block leading-tight">
+                            <span className="text-sm font-medium font-mono text-rose-500 block leading-tight">
                               {formatCompactKES(contact.financials.arrears)} Arrears
                             </span>
                           )}
@@ -1056,33 +999,33 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
                       {/* Row actions */}
                       <td className="py-4 px-6 text-right relative" onClick={e => e.stopPropagation()}>
-                        <button 
+                        <button
                           onClick={() => setRowMenuId(rowMenuId === contact.id ? null : contact.id)}
                           className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                         >
                           <IconDotsVertical size={16} />
                         </button>
-                        
+
                         {rowMenuId === contact.id && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setRowMenuId(null)} />
                             <div className="absolute right-6 top-10 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 text-left animate-scale-in">
-                              <button 
+                              <button
                                 onClick={() => { setSelectedContactId(contact.id); setRowMenuId(null); }}
                                 className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                               >
                                 <IconUserCircle size={14} /> View Details
                               </button>
-                              <button 
+                              <button
                                 onClick={() => { setEditingContact(contact); setIsModalOpen(true); setRowMenuId(null); }}
                                 className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                               >
                                 <IconEdit size={14} /> Edit Profile
                               </button>
-                              <button 
-                                onClick={() => { 
-                                  setSelectedChatDMId(getDMIdForContact(contact.name)); 
-                                  setRowMenuId(null); 
+                              <button
+                                onClick={() => {
+                                  setSelectedChatDMId(getDMIdForContact(contact.name));
+                                  setRowMenuId(null);
                                 }}
                                 className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                               >
@@ -1090,7 +1033,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                               </button>
                               <div className="border-t border-slate-100 my-1" />
 
-                              <button 
+                              <button
                                 onClick={() => { handleDeleteContact(contact.id); setRowMenuId(null); }}
                                 className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-red-650 hover:bg-red-50 font-medium transition-colors"
                               >
@@ -1111,8 +1054,8 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                           <IconUserCircle size={28} />
                         </div>
                         <h4 className="text-[14px] font-medium text-slate-800 leading-none">No contact records found</h4>
-                        <p className="text-[12px] text-slate-400 mt-2 leading-relaxed">
-                          Your current search filters or security scope returned zero matches. 
+                        <p className="text-base text-slate-400 mt-2 leading-relaxed">
+                          Your current search filters or security scope returned zero matches.
                         </p>
                         <button
                           onClick={() => {
@@ -1135,96 +1078,65 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
         </div>
 
         {/* Board Footer / Pagination */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
-          <span className="text-[12px] text-slate-400 font-medium font-mono">
-            Showing {sortedContacts.length > 0 ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0}-
-            {Math.min(currentPage * ROWS_PER_PAGE, sortedContacts.length)} of {sortedContacts.length} records
-          </span>
-
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1 || isLoading}
-              className="p-1.5 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors shadow-sm"
-            >
-              <IconChevronLeft size={16} />
-            </button>
-            
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={cn(
-                  "size-8 rounded-lg text-[12.5px] font-medium transition-colors font-mono",
-                  currentPage === i + 1 
-                    ? "bg-[#151936] text-white shadow-sm" 
-                    : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                )}
-              >
-                {i + 1}
-              </button>
-            ))}
-
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || isLoading}
-              className="p-1.5 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors shadow-sm"
-            >
-              <IconChevronRight size={16} />
-            </button>
-          </div>
+        <div className="px-6 py-1">
+          <PaginationControls
+            currentPage={currentPage}
+            label={`Showing ${sortedContacts.length > 0 ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0}-${Math.min(currentPage * ROWS_PER_PAGE, sortedContacts.length)} of ${sortedContacts.length} records`}
+            onPageChange={setCurrentPage}
+            totalPages={totalPages}
+          />
         </div>
 
-      </Card>
+      </BoardPanel>
 
       {/* ── Sliding Bulk Actions Bar ── */}
       <AnimatePresence>
         {selectedIds.length > 0 && (
-          <motion.div 
+          <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             className="fixed bottom-6 inset-x-0 mx-auto w-full max-w-2xl bg-[#151936] text-white p-4 rounded-2xl shadow-[0_20px_50px_rgba(21,25,54,0.3)] flex items-center justify-between z-[70] border border-slate-800/40"
           >
             <div className="flex items-center gap-3">
-              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center text-[12px] font-mono font-medium">
+              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center text-base font-mono font-medium">
                 {selectedIds.length}
               </span>
               <div>
                 <p className="text-[12.5px] font-medium leading-none">Contacts Selected</p>
-                <p className="text-[11px] text-slate-400 mt-1">Batch actions apply to selected records only.</p>
+                <p className="text-sm text-slate-400 mt-1">Batch actions apply to selected records only.</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={handleBulkMessage}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-[12px] font-medium rounded-xl transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-base font-medium rounded-xl transition-all"
               >
                 <IconMessageCircle size={14} /> Broadcast
               </button>
 
               {/* Bulk Status Select */}
-              <div className="relative group/status px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-[12px] font-medium rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
+              <div className="relative group/status px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-base font-medium rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
                 <span>Set Status</span>
-                <span className="text-[10px]">▼</span>
+                <span className="text-sm ">▼</span>
                 <div className="absolute bottom-full right-0 mb-2 w-36 bg-white border border-slate-200 rounded-xl shadow-lg text-slate-700 py-1 hidden group-hover/status:block animate-scale-in">
-                  <button onClick={() => handleBulkStatusChange("active")} className="w-full text-left px-3.5 py-2 text-[12px] hover:bg-slate-50 font-medium transition-colors">Active</button>
-                  <button onClick={() => handleBulkStatusChange("inactive")} className="w-full text-left px-3.5 py-2 text-[12px] hover:bg-slate-50 font-medium transition-colors">Inactive</button>
-                  <button onClick={() => handleBulkStatusChange("blacklisted")} className="w-full text-left px-3.5 py-2 text-[12px] hover:bg-slate-50 text-red-650 hover:bg-red-50 font-medium transition-colors">Blacklisted</button>
+                  <button onClick={() => handleBulkStatusChange("active")} className="w-full text-left px-3.5 py-2 text-base hover:bg-slate-50 font-medium transition-colors">Active</button>
+                  <button onClick={() => handleBulkStatusChange("inactive")} className="w-full text-left px-3.5 py-2 text-base hover:bg-slate-50 font-medium transition-colors">Inactive</button>
+                  <button onClick={() => handleBulkStatusChange("blacklisted")} className="w-full text-left px-3.5 py-2 text-base hover:bg-slate-50 text-red-650 hover:bg-red-50 font-medium transition-colors">Blacklisted</button>
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={handleBulkDelete}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-[12px] font-medium rounded-xl transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-base font-medium rounded-xl transition-all"
               >
                 <IconTrash size={14} /> Scrub Batch
               </button>
 
               <div className="w-[1px] h-6 bg-slate-700 mx-1" />
 
-              <button 
+              <button
                 onClick={() => setSelectedIds([])}
                 className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
               >
@@ -1236,14 +1148,14 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
       </AnimatePresence>
 
       {/* ── Drawers & Modals ── */}
-      <ContactDetailDrawer 
-        contactId={selectedContactId} 
+      <ContactDetailDrawer
+        contactId={selectedContactId}
         onClose={() => setSelectedContactId(null)}
         contactData={contacts.find(c => c.id === selectedContactId)}
         onUpdateContact={handleUpdateContact}
       />
 
-      <ContactFormModal 
+      <ContactFormModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateOrUpdate}

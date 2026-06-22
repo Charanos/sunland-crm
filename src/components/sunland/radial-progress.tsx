@@ -90,13 +90,13 @@ export default function RadialProgress({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in">
-          <span style={{ fontSize: "20px" }} className="font-mono font-medium text-slate-800">{displayValue}%</span>
-          <span style={{ fontSize: "10px" }} className="text-slate-400 uppercase tracking-widest mt-0.5">achieved</span>
+          <span className="font-mono font-medium text-slate-800 text-[20px]">{displayValue}%</span>
+          <span className="text-tiny text-slate-400 uppercase tracking-widest mt-0.5">achieved</span>
         </div>
       </div>
       <div className="mt-4 text-center animate-fade-in-up stagger-2">
-        <p style={{ fontSize: "24px" }} className="font-mono font-medium text-slate-800 leading-none">{valueLabel}</p>
-        <p style={{ fontSize: "11px" }} className="text-slate-400 font-medium uppercase tracking-wider mt-2.5 leading-snug max-w-[140px] mx-auto">{subtitle}</p>
+        <p className="font-mono font-medium text-slate-800 leading-none text-[24px]">{valueLabel}</p>
+        <p className="text-caption text-slate-400 font-medium uppercase tracking-wider mt-2.5 leading-snug max-w-[140px] mx-auto">{subtitle}</p>
       </div>
     </div>
   );

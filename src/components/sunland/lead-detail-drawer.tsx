@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  IconX, 
-  IconMessageCircle, 
-  IconPhoneCall, 
+import {
+  IconX,
+  IconMessageCircle,
+  IconPhoneCall,
   IconMail,
   IconEdit,
   IconClock,
@@ -34,9 +34,9 @@ interface LeadDetailDrawerProps {
   onUpdateLead?: (updated: Lead) => void;
 }
 
-export function LeadDetailDrawer({ 
-  leadId, 
-  onClose, 
+export function LeadDetailDrawer({
+  leadId,
+  onClose,
   leadData,
   onUpdateLead
 }: LeadDetailDrawerProps) {
@@ -94,16 +94,16 @@ export function LeadDetailDrawer({
       width="30rem" // 480px is 30rem
       footer={
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={openChat}
-            className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#151936] text-white hover:bg-[#1f2552] rounded-xl text-[13px] font-medium transition-colors shadow-sm"
+            className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#151936] text-white hover:bg-[#1f2552] rounded-xl text-base font-medium transition-colors shadow-sm"
           >
-            <IconMessageCircle size={16} /> 
+            <IconMessageCircle size={16} />
             <span>Send Message</span>
           </button>
           <a
             href={`tel:${leadData.phone}`}
-            className="flex-1 flex items-center justify-center gap-2 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-[13px] font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-base font-medium transition-colors"
           >
             <IconPhoneCall size={16} />
             <span>Call Lead</span>
@@ -112,18 +112,18 @@ export function LeadDetailDrawer({
       }
     >
       <div className="space-y-6">
-        
+
         {/* Property Visual Cover */}
         <div className="relative h-36 w-full rounded-2xl overflow-hidden border border-slate-150 shadow-sm bg-slate-100 shrink-0">
-          <img 
-            src={getPropertyImage(leadData.propertyInterest)} 
-            alt={leadData.propertyInterest} 
+          <img
+            src={getPropertyImage(leadData.propertyInterest)}
+            alt={leadData.propertyInterest}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end p-4">
             <div>
-              <p className="text-[10px] text-[#f3df27] font-medium tracking-widest uppercase">Property Interest</p>
-              <h4 className="text-white text-[15px] font-medium leading-tight mt-0.5">{leadData.propertyInterest}</h4>
+              <p className="text-sm  text-[#f3df27] font-medium tracking-widest uppercase">Property Interest</p>
+              <h4 className="text-white text-base  font-medium leading-tight mt-0.5">{leadData.propertyInterest}</h4>
             </div>
           </div>
         </div>
@@ -131,24 +131,24 @@ export function LeadDetailDrawer({
         {/* Profile Header */}
         <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-5 flex flex-col items-center text-center">
           <div className="relative mb-3">
-            <Avatar 
-              fallback={leadData.clientName[0]} 
-              className="size-20 border-4 border-white shadow-md text-xl bg-[#151936] text-[#f3df27] font-serif font-medium" 
+            <Avatar
+              fallback={leadData.clientName[0]}
+              className="size-20 border-4 border-white shadow-md text-xl bg-[#151936] text-[#f3df27] font-serif font-medium"
             />
           </div>
 
           <h3 className="text-[18px] font-medium text-slate-900 leading-snug">
             {leadData.clientName}
           </h3>
-          <p className="text-[12px] text-slate-400 font-medium mt-0.5 capitalize">
+          <p className="text-base text-slate-400 font-medium mt-0.5 capitalize">
             Assigned Broker: {leadData.assignedAgent || "Unassigned"}
           </p>
 
           <div className="flex items-center gap-2 mt-3 flex-wrap justify-center">
-            <span className={cn("px-2.5 py-0.5 text-[11px] font-medium rounded-full border uppercase tracking-wider", STAGE_COLORS[leadData.stage])}>
+            <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full border uppercase tracking-wider", STAGE_COLORS[leadData.stage])}>
               {STAGE_LABELS[leadData.stage]}
             </span>
-            <span className="px-2.5 py-0.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 capitalize">
+            <span className="px-2.5 py-0.5 text-sm font-medium rounded-full border border-slate-200 bg-white text-slate-600 capitalize">
               Source: {leadData.source}
             </span>
           </div>
@@ -167,31 +167,31 @@ export function LeadDetailDrawer({
 
         {/* Opportunity Metrics */}
         <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest leading-none">Deal Valuation</p>
-          
+          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest leading-none">Deal Valuation</p>
+
           <div className="p-4 bg-amber-50/40 border border-amber-100/50 rounded-xl flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-medium text-amber-800 block mb-1">Estimated Budget</span>
+              <span className="text-sm font-medium text-amber-800 block mb-1">Estimated Budget</span>
               <span className="text-[20px] font-medium font-mono text-slate-800 tracking-tight leading-none">
                 {formatKES(leadData.budget)}
               </span>
             </div>
-            <div className="size-10 rounded-full bg-white flex items-center justify-center text-amber-600 border border-amber-100 shadow-sm font-mono font-medium text-[15px]">
+            <div className="size-10 rounded-full bg-white flex items-center justify-center text-amber-600 border border-amber-100 shadow-sm font-mono font-medium text-base ">
               KES
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 flex flex-col justify-center gap-1">
-              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Property Interest</span>
-              <span className="text-[13px] font-medium text-slate-800 truncate flex items-center gap-1.5">
+              <span className="text-sm  text-slate-400 font-medium uppercase tracking-wider">Property Interest</span>
+              <span className="text-base font-medium text-slate-800 truncate flex items-center gap-1.5">
                 <IconBuilding size={14} className="text-slate-400 shrink-0" />
                 <span className="truncate">{leadData.propertyInterest}</span>
               </span>
             </div>
             <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 flex flex-col justify-center gap-1">
-              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Created Date</span>
-              <span className="text-[13px] font-medium text-slate-800 font-mono flex items-center gap-1.5">
+              <span className="text-sm  text-slate-400 font-medium uppercase tracking-wider">Created Date</span>
+              <span className="text-base font-medium text-slate-800 font-mono flex items-center gap-1.5">
                 <IconCalendarEvent size={14} className="text-slate-400 shrink-0" />
                 <span>{leadData.createdDate}</span>
               </span>
@@ -201,8 +201,8 @@ export function LeadDetailDrawer({
 
         {/* Notes log */}
         {leadData.notes && (
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-[13px] text-slate-600 leading-relaxed">
-            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-base text-slate-600 leading-relaxed">
+            <p className="text-sm  font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
               <IconTag size={12} /> Specific Requirements
             </p>
             {leadData.notes}
@@ -211,18 +211,18 @@ export function LeadDetailDrawer({
 
         {/* Engagement Timeline */}
         <div className="space-y-4">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">Engagement Timeline</p>
-          
+          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest">Engagement Timeline</p>
+
           {/* Quick Note Form */}
           <form onSubmit={handleAddNote} className="flex gap-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Add deal log or interaction update..."
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10"
             />
-            <button 
+            <button
               type="submit"
               className="px-4 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] rounded-xl text-[12.5px] font-medium transition-colors cursor-pointer"
             >
@@ -233,11 +233,11 @@ export function LeadDetailDrawer({
           {/* Timeline List */}
           <div className="relative pl-3 space-y-4 pt-2">
             <div className="absolute top-2 bottom-2 left-[19px] w-[1px] bg-slate-100" />
-            
+
             <AnimatePresence initial={false}>
               {timeline.map((log) => (
-                <motion.div 
-                  key={log.id} 
+                <motion.div
+                  key={log.id}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
@@ -246,14 +246,14 @@ export function LeadDetailDrawer({
                   <div className="size-[14px] rounded-full bg-white border-[3px] border-[#151936] shadow-sm z-10 shrink-0 mt-1" />
                   <div className="flex-1 bg-slate-50/50 border border-slate-100 rounded-xl p-3">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-800">
+                      <div className="flex items-center gap-1.5 text-base font-medium text-slate-800">
                         {getLogIcon(log.type)}
                         <span>{log.summary}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono">{log.date}</span>
+                      <span className="text-sm  text-slate-400 font-mono">{log.date}</span>
                     </div>
                     {log.details && (
-                      <p className="text-[12px] text-slate-500 leading-relaxed mt-1">
+                      <p className="text-base text-slate-500 leading-relaxed mt-1">
                         {log.details}
                       </p>
                     )}

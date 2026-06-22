@@ -66,7 +66,7 @@ export function CalendarModal({
     const startDate = startOfWeek(currentMonth, { weekStartsOn: 1 });
     for (let i = 0; i < 7; i++) {
       days.push(
-        <div key={i} className="text-center font-medium text-sm text-[var(--on-surface-dim)] mb-2">
+        <div key={i} className="text-center font-medium text-sm  text-[var(--on-surface-dim)] mb-2">
           {format(addDays(startDate, i), "EEE")}
         </div>
       );
@@ -109,7 +109,7 @@ export function CalendarModal({
               setIsAdding(false);
             }}
           >
-            <span className="text-sm">{formattedDate}</span>
+            <span className="text-sm ">{formattedDate}</span>
             {dayEvents.length > 0 && (
               <div className="flex gap-0.5 mt-0.5">
                 {dayEvents.slice(0, 3).map((_, idx) => (
@@ -184,14 +184,14 @@ export function CalendarModal({
           {isAdding ? (
             <form onSubmit={handleAddEvent} className="flex flex-col gap-3 flex-1 bg-white p-3 rounded-lg border border-[var(--outline)]">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-medium text-sm">New Event</span>
+                <span className="font-medium text-sm ">New Event</span>
                 <IconButton size="sm" onClick={() => setIsAdding(false)}>
                   <IconX size={14} />
                 </IconButton>
               </div>
               <input
                 autoFocus
-                className="w-full text-sm p-2 rounded-md border border-[var(--outline)]"
+                className="w-full text-sm  p-2 rounded-md border border-[var(--outline)]"
                 placeholder="Event title"
                 value={newEvent.title}
                 onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
@@ -200,12 +200,12 @@ export function CalendarModal({
               <div className="flex gap-2">
                 <input
                   type="time"
-                  className="flex-1 text-sm p-2 rounded-md border border-[var(--outline)]"
+                  className="flex-1 text-sm  p-2 rounded-md border border-[var(--outline)]"
                   value={newEvent.time}
                   onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
                 />
                 <select
-                  className="flex-1 text-sm p-2 rounded-md border border-[var(--outline)]"
+                  className="flex-1 text-sm  p-2 rounded-md border border-[var(--outline)]"
                   value={newEvent.type}
                   onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
                 >
@@ -216,7 +216,7 @@ export function CalendarModal({
                 </select>
               </div>
               <textarea
-                className="w-full text-sm p-2 rounded-md border border-[var(--outline)] min-h-[80px]"
+                className="w-full text-sm  p-2 rounded-md border border-[var(--outline)] min-h-[80px]"
                 placeholder="Description (optional)"
                 value={newEvent.description}
                 onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
@@ -227,7 +227,7 @@ export function CalendarModal({
             <div className="flex-1 overflow-y-auto pr-2">
               {selectedEvents.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-[var(--on-surface-dim)] py-8">
-                  <p className="text-sm">No events for this date</p>
+                  <p className="text-sm ">No events for this date</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -242,10 +242,10 @@ export function CalendarModal({
                                 ev.type === "viewing" ? "bg-[var(--primary)]" :
                                   ev.type === "deadline" ? "bg-[var(--error)]" : "bg-gray-400"
                             )} />
-                            <h4 className="font-medium text-sm">{ev.title}</h4>
+                            <h4 className="font-medium text-sm ">{ev.title}</h4>
                           </div>
-                          {ev.time && <p className="text-sm text-[var(--on-surface-dim)] mt-1">{ev.time}</p>}
-                          {ev.description && <p className="text-sm text-[var(--on-surface-dim)] mt-2">{ev.description}</p>}
+                          {ev.time && <p className="text-sm  text-[var(--on-surface-dim)] mt-1">{ev.time}</p>}
+                          {ev.description && <p className="text-sm  text-[var(--on-surface-dim)] mt-2">{ev.description}</p>}
                         </div>
                         <IconButton size="sm" className="opacity-0 group-hover:opacity-100 text-[var(--error)] transition" onClick={() => deleteEvent(ev.id)}>
                           <IconTrash size={16} />

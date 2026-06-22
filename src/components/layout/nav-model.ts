@@ -1,11 +1,15 @@
 import type { Icon } from "@tabler/icons-react";
 import {
   IconBell,
+  IconBuildingBank,
   IconBuildingCommunity,
   IconCalendarDollar,
+  IconCashBanknote,
   IconChartBar,
+  IconClipboardCheck,
   IconClipboardList,
   IconFileAnalytics,
+  IconHomeDollar,
   IconHomeStats,
   IconReportAnalytics,
   IconSettings,
@@ -21,6 +25,7 @@ export type NavItem = {
   label: string;
   icon: Icon;
   badge?: string;
+  group?: string;
 };
 
 export type NavSection = {
@@ -36,6 +41,58 @@ export const navSections: NavSection[] = [
     label: "Command",
     icon: IconHomeStats,
     items: [{ href: "/admin", label: "Overview", icon: IconHomeStats }],
+  },
+  {
+    id: "finance-command",
+    label: "Finance Command",
+    icon: IconChartBar,
+    items: [
+      { href: "/fin", label: "Overview", icon: IconChartBar },
+    ],
+  },
+  {
+    id: "finance-core",
+    label: "Core Accounting",
+    icon: IconWallet,
+    items: [
+      { href: "/fin/ledger", label: "Ledger & Accounts", icon: IconWallet, badge: "1" },
+    ],
+  },
+  {
+    id: "finance-revenue",
+    label: "Property Revenue",
+    icon: IconHomeDollar,
+    items: [
+      { href: "/fin/rentals", label: "Rentals", icon: IconHomeDollar, badge: "12" },
+      { href: "/fin/mandates", label: "Mandates", icon: IconClipboardCheck, badge: "3" },
+      { href: "/fin/fees", label: "Service Fees", icon: IconCashBanknote },
+    ],
+  },
+  {
+    id: "finance-treasury",
+    label: "Treasury Control",
+    icon: IconBuildingBank,
+    items: [
+      { href: "/fin/ap-ar", label: "Payables & Receivables", icon: IconClipboardList, badge: "2" },
+      { href: "/fin/cheques", label: "Cheques", icon: IconBuildingBank, badge: "1" },
+    ],
+  },
+  {
+    id: "finance-people",
+    label: "People & Statutory",
+    icon: IconUsersGroup,
+    items: [
+      { href: "/fin/payroll", label: "Payroll", icon: IconUsersGroup },
+      { href: "/fin/affordable-housing", label: "Affordable Housing", icon: IconBuildingCommunity },
+    ],
+  },
+  {
+    id: "finance-assurance",
+    label: "Finance Assurance",
+    icon: IconFileAnalytics,
+    items: [
+      { href: "/fin/reports", label: "Reports", icon: IconReportAnalytics },
+    ],
   },
   {
     id: "operations",
@@ -58,15 +115,6 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    id: "finance",
-    label: "Finance",
-    icon: IconWallet,
-    items: [
-      { href: "/admin/finance", label: "Transactions", icon: IconWallet },
-      { href: "/admin/reports", label: "Reports", icon: IconReportAnalytics },
-    ],
-  },
-  {
     id: "admin",
     label: "Admin",
     icon: IconUserCog,
@@ -78,27 +126,33 @@ export const navSections: NavSection[] = [
   },
 ];
 
+const findNavItem = (secId: string, href: string) => {
+  const sec = navSections.find((s) => s.id === secId);
+  return sec?.items.find((i) => i.href === href);
+};
+
 export const mobilePrimaryNav = [
-  navSections[0].items[0],
-  navSections[1].items[0],
-  navSections[1].items[1],
-  navSections[2].items[0],
-  navSections[3].items[0],
-];
+  findNavItem("command", "/admin"),
+  findNavItem("operations", "/admin/contacts"),
+  findNavItem("finance-command", "/fin"),
+  findNavItem("finance-revenue", "/fin/rentals"),
+  findNavItem("portfolio", "/admin/properties"),
+].filter((item): item is NavItem => !!item);
 
 export const collapsedNavItems = [
-  navSections[0].items[0],
-  navSections[1].items[0],
-  navSections[1].items[1],
-  navSections[2].items[0],
-  navSections[3].items[0],
-  navSections[4].items[0],
-];
+  findNavItem("command", "/admin"),
+  findNavItem("operations", "/admin/contacts"),
+  findNavItem("finance-command", "/fin"),
+  findNavItem("finance-core", "/fin/ledger"),
+  findNavItem("finance-revenue", "/fin/rentals"),
+  findNavItem("finance-treasury", "/fin/ap-ar"),
+  findNavItem("portfolio", "/admin/properties"),
+].filter((item): item is NavItem => !!item);
 
 export function getActiveNavItem(pathname: string): NavItem | null {
   const allItems = navSections.flatMap((section) => section.items);
   const matches = allItems.filter((item) =>
-    item.href === "/admin"
+    item.href === "/admin" || item.href === "/fin"
       ? pathname === item.href
       : pathname.startsWith(item.href),
   );

@@ -51,9 +51,9 @@ export function GlobalChatWidget() {
     function handleClickOutside(event: MouseEvent) {
       if (!chatOpen) return;
       if (
-        panelRef.current && 
+        panelRef.current &&
         !panelRef.current.contains(event.target as Node) &&
-        fabRef.current && 
+        fabRef.current &&
         !fabRef.current.contains(event.target as Node)
       ) {
         closeChat();
@@ -104,14 +104,14 @@ export function GlobalChatWidget() {
                     </div>
                     <div>
                       <h4 className="text-[14px] font-medium leading-none mb-1">{MOCK_DMS.find(d => d.id === activeChatId)?.name}</h4>
-                      <p className="text-[10px] text-white/60 leading-none">Online</p>
+                      <p className="text-sm  text-white/60 leading-none">Online</p>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div>
                   <h3 className="text-[16px] font-medium tracking-tight">Internal Comms</h3>
-                  <p className="text-[12px] text-white/60">3 unread messages</p>
+                  <p className="text-base text-white/60">3 unread messages</p>
                 </div>
               )}
 
@@ -138,7 +138,7 @@ export function GlobalChatWidget() {
               <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
                   <div className="text-center mb-2">
-                    <span className="text-[10px] uppercase tracking-widest text-slate-400 font-medium bg-slate-200/50 px-3 py-1 rounded-full">Today</span>
+                    <span className="text-sm  uppercase tracking-widest text-slate-400 font-medium bg-slate-200/50 px-3 py-1 rounded-full">Today</span>
                   </div>
 
                   {MOCK_MESSAGES.map((msg) => (
@@ -147,14 +147,14 @@ export function GlobalChatWidget() {
                         <Avatar src={MOCK_DMS[0].avatar} fallback="A" className="size-6 mr-2 mt-auto shrink-0" />
                       )}
                       <div className={cn(
-                        "p-3 rounded-2xl text-[13px] shadow-sm leading-relaxed",
+                        "p-3 rounded-2xl text-base shadow-sm leading-relaxed",
                         msg.isMe
                           ? "bg-[#151936] text-white rounded-br-sm"
                           : "bg-white border border-slate-100 text-slate-800 rounded-bl-sm"
                       )}>
                         {msg.text}
                         <div className={cn(
-                          "flex items-center justify-end gap-1 mt-1 text-[10px]",
+                          "flex items-center justify-end gap-1 mt-1 text-sm ",
                           msg.isMe ? "text-white/50" : "text-slate-400"
                         )}>
                           {msg.time}
@@ -172,7 +172,7 @@ export function GlobalChatWidget() {
                     <input
                       type="text"
                       placeholder="Type a message..."
-                      className="flex-1 bg-transparent px-2 text-[13px] text-slate-800 focus:outline-none placeholder:text-slate-400"
+                      className="flex-1 bg-transparent px-2 text-base text-slate-800 focus:outline-none placeholder:text-slate-400"
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyDown={(e) => {
@@ -203,7 +203,7 @@ export function GlobalChatWidget() {
                       key={tab}
                       onClick={() => setActiveTab(tab)}
                       className={cn(
-                        "px-4 py-2 text-[13px] font-medium border-b-2 transition-colors",
+                        "px-4 py-2 text-base font-medium border-b-2 transition-colors",
                         activeTab === tab
                           ? "border-[#151936] text-[#151936]"
                           : "border-transparent text-slate-500 hover:text-slate-800"
@@ -231,12 +231,12 @@ export function GlobalChatWidget() {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-0.5">
                           <h4 className="text-[14px] font-medium text-slate-800 truncate group-hover:text-[#151936]">{dm.name}</h4>
-                          <span className="text-[11px] text-slate-400">10:28 AM</span>
+                          <span className="text-sm text-slate-400">10:28 AM</span>
                         </div>
-                        <p className="text-[12px] text-slate-500 truncate pr-4">{dm.lastMessage}</p>
+                        <p className="text-base text-slate-500 truncate pr-4">{dm.lastMessage}</p>
                       </div>
                       {dm.unread > 0 && (
-                        <div className="shrink-0 size-5 rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
+                        <div className="shrink-0 size-5 rounded-full bg-[#f3df27] flex items-center justify-center text-sm  font-medium text-[#151936]">
                           {dm.unread}
                         </div>
                       )}
@@ -253,10 +253,10 @@ export function GlobalChatWidget() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-[14px] font-medium text-slate-800 truncate group-hover:text-[#151936]">{ch.name}</h4>
-                        <p className="text-[12px] text-slate-500 truncate">Latest update in channel...</p>
+                        <p className="text-base text-slate-500 truncate">Latest update in channel...</p>
                       </div>
                       {ch.unread > 0 && (
-                        <div className="shrink-0 size-5 rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
+                        <div className="shrink-0 size-5 rounded-full bg-[#f3df27] flex items-center justify-center text-sm  font-medium text-[#151936]">
                           {ch.unread}
                         </div>
                       )}
@@ -307,7 +307,7 @@ export function GlobalChatWidget() {
         {/* Unread Badge */}
         {!chatOpen && (
           <div className="absolute top-0 right-0 size-4 bg-[#f3df27] rounded-full border-2 border-[#151936] flex items-center justify-center">
-            <span className="text-[8px] font-bold text-[#151936]">3</span>
+            <span className="text-sm  font-medium text-[#151936]">3</span>
           </div>
         )}
       </motion.button>

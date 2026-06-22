@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Playfair_Display, JetBrains_Mono, Outfit } from "next/font/google";
+import { Cormorant_Garamond, JetBrains_Mono, Nunito } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
   weight: ["300", "400", "500"],
 });
@@ -15,16 +15,16 @@ const jetbrains = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
   style: ["normal", "italic"],
-  weight: ["400", "500", "600"],
+  weight: ["300", "400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "Sunland CRM",
-  description: "Internal CRM dashboard for Sunland Real Estates.",
+  title: "Sunland ERP",
+  description: "Internal Real Estate ERP for Sunland Real Estates.",
 };
 
 export default function RootLayout({
@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${jetbrains.variable} ${playfair.variable} h-full antialiased`}
+      className={`${nunito.variable} ${jetbrains.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <AppProviders>{children}</AppProviders>

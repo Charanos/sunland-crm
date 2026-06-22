@@ -38,6 +38,7 @@ import { formatCompactKES } from "@/lib/utils/format";
 import { useToast } from "@/components/ui/toast-provider";
 import { PropertyFormModal } from "./property-form-modal";
 import { PropertyDetailDrawer } from "./property-detail-drawer";
+import { ApprovalQueue } from "./approval-queue";
 
 // Dynamically import client-side chart and helper components with SSR disabled
 const SalesChart = dynamic(() => import("./sales-chart"), { ssr: false });
@@ -198,8 +199,20 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
 
   const [prevContext, setPrevContext] = useState(context);
 
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 0);
+
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user?.role) {
+          setCurrentUserRole(data.user.role);
+        }
+      })
+      .catch(() => { });
+
     return () => clearTimeout(t);
   }, []);
 
@@ -325,7 +338,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
   // Sort indicator
   const SortIndicator = ({ field }: { field: keyof PropertyListing }) => (
     sortField === field ? (
-      <span className="ml-1 text-[9px]">{sortDir === "asc" ? "▲" : "▼"}</span>
+      <span className="ml-1 text-xs ">{sortDir === "asc" ? "▲" : "▼"}</span>
     ) : null
   );
 
@@ -338,7 +351,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             <Badge tone="primary" className="font-medium tracking-wide">
               {isComm ? "Commercial Operations" : isRes ? "Residential Operations" : "Consolidated Group"}
             </Badge>
-            <span className="text-[12px] font-mono text-slate-400 font-medium hidden sm:inline">
+            <span className="text-base font-mono text-slate-400 font-medium hidden sm:inline">
               Updated {mounted ? lastRefreshed.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }) : "--:--"}
             </span>
           </div>
@@ -347,7 +360,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               onClick={handleRefresh}
               disabled={isRefreshing}
               className={cn(
-                "flex items-center gap-1.5 text-[12px] font-medium text-slate-500 hover:text-slate-800 transition-colors bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow",
+                "flex items-center gap-1.5 text-base font-medium text-slate-500 hover:text-slate-800 transition-colors bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow",
                 isRefreshing && "opacity-60"
               )}
               aria-label="Refresh dashboard"
@@ -356,7 +369,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               Refresh
             </button>
             <div className="relative group">
-              <button className="flex items-center gap-1.5 text-[12px] font-medium text-[#151936] bg-[#f3df27] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#e6d220] transition-colors">
+              <button className="flex items-center gap-1.5 text-base font-medium text-[#151936] bg-[#f3df27] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#e6d220] transition-colors">
                 <IconPlus size={13} stroke={2.5} />
                 Quick Action
               </button>
@@ -367,7 +380,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 <Link href="/admin/contacts" className="flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors">
                   <IconPlus size={14} /> Add Contact
                 </Link>
-                <Link href="/admin/finance" className="flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors">
+                <Link href="/fin" className="flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors">
                   <IconReceipt size={14} /> Record Payment
                 </Link>
                 <Link href="/admin/pipeline" className="flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors">
@@ -380,11 +393,18 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
         <h1 className="title-serif text-slate-900 mt-2">
           {isComm ? "Commercial Portfolio Command" : isRes ? "Residential Portfolio Command" : "Real Estate Management Command"}
         </h1>
-        <p className="text-[13.5px] text-slate-500 max-w-3xl leading-relaxed mt-1">
+        <p className="text-base text-slate-500 max-w-3xl leading-relaxed mt-1">
           Monitor transactional metrics, manage dynamic property listings, evaluate sales analytics
           pipelines, and coordinate operational tasks from this unified command center.
         </p>
       </section>
+
+      {/* Dynamic Approvals Queue for CEO and GM */}
+      {(currentUserRole === "ceo" || currentUserRole === "general_manager") && (
+        <section className="w-full mt-2" aria-label="Approvals Queue">
+          <ApprovalQueue />
+        </section>
+      )}
 
       {/* ── Grid Row 1: Key Performance Metrics ── */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 my-10" aria-label="Key performance indicators">
@@ -396,12 +416,12 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 <div className="size-[22px] rounded-full bg-[#151936] flex items-center justify-center text-white">
                   <IconBuildingSkyscraper size={12} stroke={2.5} />
                 </div>
-                <span className="text-[13.5px] font-normal text-[#2e626a] tracking-wide">Active Listings</span>
+                <span className="text-base font-normal text-[#2e626a] tracking-wide">Active Listings</span>
                 <IconArrowUpRight size={12} className="ml-auto text-[#2e626a] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
                 <span className="text-[32px] font-medium text-[#151936] tracking-tight font-mono leading-none">{metrics.activeListings}</span>
-                <span className="text-[11px] font-medium text-[#2e626a] mb-0.5">{metrics.activeTrend}</span>
+                <span className="text-sm font-medium text-[#2e626a] mb-0.5">{metrics.activeTrend}</span>
               </div>
               <div className="h-[4px] bg-[#c3e3e8] rounded-full overflow-hidden w-full">
                 <div className="h-full bg-[#3f919d] rounded-full w-[75%] transition-all duration-1000" />
@@ -409,18 +429,18 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             </div>
           </Link>
 
-          <Link href="/admin/finance" className="animate-fade-in-up stagger-2">
+          <Link href="/fin" className="animate-fade-in-up stagger-2">
             <div className="relative p-5 rounded-[20px] bg-[#e6f4ea] h-[155px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
               <div className="flex items-center gap-2">
                 <div className="size-[22px] rounded-full bg-[#1b431e] flex items-center justify-center text-white">
                   <IconCoin size={13} stroke={2.5} />
                 </div>
-                <span className="text-[13.5px] font-normal text-[#336336] tracking-wide">Total Revenue</span>
+                <span className="text-base font-normal text-[#336336] tracking-wide">Total Revenue</span>
                 <IconArrowUpRight size={12} className="ml-auto text-[#336336] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
                 <span className="text-[32px] font-medium text-[#1b431e] tracking-tight font-mono leading-none">{metrics.revenueMtd}</span>
-                <span className="text-[11px] font-medium text-[#336336] mb-0.5">{metrics.revenueTrend}</span>
+                <span className="text-sm font-medium text-[#336336] mb-0.5">{metrics.revenueTrend}</span>
               </div>
               <div className="h-[4px] bg-[#c6e0c7] rounded-full overflow-hidden w-full">
                 <div className="h-full bg-[#48954b] rounded-full w-[82%] transition-all duration-1000" />
@@ -436,8 +456,8 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-950/30" />
           </div>
           <div className="absolute top-0 inset-x-0 p-4 flex items-center justify-between z-10">
-            <span className="backdrop-blur-md bg-white/10 text-white border border-white/20 text-[11px] px-2.5 py-1 rounded-md tracking-wider uppercase font-medium">Featured Property</span>
-            <Link href="/admin/properties" className="backdrop-blur-md bg-white/10 text-white hover:bg-white/20 border border-white/20 text-[11px] px-2.5 py-1 rounded-md font-medium flex items-center gap-1 transition-all">
+            <span className="backdrop-blur-md bg-white/10 text-white border border-white/20 text-sm px-2.5 py-1 rounded-md tracking-wider uppercase font-medium">Featured Property</span>
+            <Link href="/admin/properties" className="backdrop-blur-md bg-white/10 text-white hover:bg-white/20 border border-white/20 text-sm px-2.5 py-1 rounded-md font-medium flex items-center gap-1 transition-all">
               View All <IconArrowUpRight size={13} />
             </Link>
           </div>
@@ -445,14 +465,14 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             <div>
               <p className="font-mono text-[var(--primary)] text-2xl sm:text-[26px] tracking-tight leading-none font-medium">{featured.price}</p>
               <h3 className="text-lg font-medium text-white mt-1.5 leading-snug">{featured.name}</h3>
-              <p className="text-[11.5px] text-slate-300 font-medium mt-0.5 uppercase tracking-wide">{featured.location}</p>
+              <p className="text-sm  text-slate-300 font-medium mt-0.5 uppercase tracking-wide">{featured.location}</p>
             </div>
             <div className="flex items-center gap-3 mt-4 pt-3 border-t border-white/10">
-              <span className={cn("text-[10px] px-2.5 py-0.5 rounded-full border font-medium uppercase tracking-wider", STATUS_DARK_TONES[featured.status])}>{featured.status}</span>
-              <span className="text-sm font-mono text-slate-300 font-medium">{featured.roi}</span>
+              <span className={cn("text-sm  px-2.5 py-0.5 rounded-full border font-medium uppercase tracking-wider", STATUS_DARK_TONES[featured.status])}>{featured.status}</span>
+              <span className="text-sm  font-mono text-slate-300 font-medium">{featured.roi}</span>
               <button
                 onClick={() => setDrawerProperty({ id: "featured", ...featured, roi: featured.roi.replace(" ROI", "").replace(" Yield", ""), type: "Premium Estate" })}
-                className="focus-ring ml-auto inline-flex h-8.5 items-center justify-center rounded-lg bg-white text-slate-900 px-4 text-sm font-medium transition hover:bg-slate-100"
+                className="focus-ring ml-auto inline-flex h-8.5 items-center justify-center rounded-lg bg-white text-slate-900 px-4 text-sm  font-medium transition hover:bg-slate-100"
               >
                 More Details
               </button>
@@ -466,12 +486,12 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             <div className="relative p-5 rounded-[20px] bg-[#fcf0e4] h-[155px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
               <div className="flex items-center gap-2">
                 <div className="size-[22px] rounded-full bg-[#5e2b17] flex items-center justify-center text-white"><IconFileCheck size={13} stroke={2.5} /></div>
-                <span className="text-[13.5px] font-normal text-[#824429] tracking-wide">Closed Deals</span>
+                <span className="text-base font-normal text-[#824429] tracking-wide">Closed Deals</span>
                 <IconArrowUpRight size={12} className="ml-auto text-[#824429] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
                 <span className="text-[32px] font-medium text-[#5e2b17] tracking-tight font-mono leading-none">{metrics.closedDeals}</span>
-                <span className="text-[11px] font-medium text-[#824429] mb-0.5">{metrics.closedTrend}</span>
+                <span className="text-sm font-medium text-[#824429] mb-0.5">{metrics.closedTrend}</span>
               </div>
               <div className="h-[4px] bg-[#f2d8c9] rounded-full overflow-hidden w-full"><div className="h-full bg-[#c96f45] rounded-full w-[60%]" /></div>
             </div>
@@ -481,12 +501,12 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             <div className="relative p-5 rounded-[20px] bg-[#eef2f6] h-[155px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
               <div className="flex items-center gap-2">
                 <div className="size-[22px] rounded-full bg-[#24354a] flex items-center justify-center text-white"><IconHomePlus size={13} stroke={2.5} /></div>
-                <span className="text-[13.5px] font-normal text-[#415671] tracking-wide">New Deals</span>
+                <span className="text-base font-normal text-[#415671] tracking-wide">New Deals</span>
                 <IconArrowUpRight size={12} className="ml-auto text-[#415671] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
                 <span className="text-[32px] font-medium text-[#24354a] tracking-tight font-mono leading-none">{metrics.newDeals}</span>
-                <span className="text-[11px] font-medium text-[#415671] mb-0.5">{metrics.newDealsTrend}</span>
+                <span className="text-sm font-medium text-[#415671] mb-0.5">{metrics.newDealsTrend}</span>
               </div>
               <div className="h-[4px] bg-[#d2dde8] rounded-full overflow-hidden w-full"><div className="h-full bg-[#5a7c9f] rounded-full w-[45%]" /></div>
             </div>
@@ -495,7 +515,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
 
         {/* Col 5: Radial */}
         <Card className="p-5 flex flex-col justify-between items-center h-[326px] bg-white border border-slate-100 hover:shadow-md transition-all animate-fade-in-up stagger-6">
-          <p className="text-[13px] font-medium text-slate-500 uppercase tracking-wider">New Units Added</p>
+          <p className="text-base font-medium text-slate-500 uppercase tracking-wider">New Units Added</p>
           {mounted ? (
             <RadialProgress percentage={metrics.radialPct} valueLabel={metrics.radialVal} subtitle={metrics.radialSub} />
           ) : (
@@ -512,7 +532,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
       {/* ── Revenue Analytics ─ */}
       <div className="pt-6 border-t border-slate-200/60 my-4">
         <h2 className="title-serif text-slate-900 text-[22px]">Operational Analytics & Insights</h2>
-        <p className="text-[12px] text-slate-500 font-medium tracking-wide mt-1">Deep-dive into revenue trends and core performance metrics.</p>
+        <p className="text-base text-slate-500 font-medium tracking-wide mt-1">Deep-dive into revenue trends and core performance metrics.</p>
       </div>
 
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch" aria-label="Revenue analytics">
@@ -524,7 +544,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 {/* Period selector */}
                 <div className="flex items-center gap-1 bg-slate-50/80 p-1 rounded-lg">
                   {(["week", "month", "quarter"] as const).map((p) => (
-                    <button key={p} onClick={() => setChartPeriod(p)} className={cn("text-[11px] px-2.5 py-1 rounded-md font-medium transition-all capitalize", chartPeriod === p ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700")}>
+                    <button key={p} onClick={() => setChartPeriod(p)} className={cn("text-sm px-2.5 py-1 rounded-md font-medium transition-all capitalize", chartPeriod === p ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700")}>
                       This {p}
                     </button>
                   ))}
@@ -532,7 +552,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 {/* Data filter */}
                 <div className="flex items-center gap-1 bg-slate-50/80 p-1 rounded-lg">
                   {(["all", "Revenue", "Sales", "Visitors"] as const).map((f) => (
-                    <button key={f} onClick={() => setChartFilter(f)} className={cn("text-sm px-3 py-1.5 rounded-md transition-all font-medium tracking-wide", chartFilter === f ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700")}>
+                    <button key={f} onClick={() => setChartFilter(f)} className={cn("text-sm  px-3 py-1.5 rounded-md transition-all font-medium tracking-wide", chartFilter === f ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700")}>
                       {f === "all" ? "All" : f}
                     </button>
                   ))}
@@ -547,7 +567,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                   <p className="text-[12.5px] text-slate-500 font-medium mb-0.5">Income</p>
                   <div className="flex items-center gap-2">
                     <span className="text-[22px] text-slate-800 font-medium font-mono leading-none tracking-tight">{formatCompactKES(metrics.income)}</span>
-                    <span className="text-[11px] font-medium text-emerald-600 flex items-center">{metrics.incomeGrowth}% <IconTrendingUp size={12} className="ml-0.5" /></span>
+                    <span className="text-sm font-medium text-emerald-600 flex items-center">{metrics.incomeGrowth}% <IconTrendingUp size={12} className="ml-0.5" /></span>
                   </div>
                 </div>
               </div>
@@ -558,7 +578,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                   <p className="text-[12.5px] text-slate-500 font-medium mb-0.5">Expenses</p>
                   <div className="flex items-center gap-2">
                     <span className="text-[22px] text-slate-800 font-medium font-mono leading-none tracking-tight">{formatCompactKES(metrics.expenses)}</span>
-                    <span className="text-[11px] font-medium text-rose-600 flex items-center">{Math.abs(metrics.expenseGrowth)}% <IconTrendingDown size={12} className="ml-0.5" /></span>
+                    <span className="text-sm font-medium text-rose-600 flex items-center">{Math.abs(metrics.expenseGrowth)}% <IconTrendingDown size={12} className="ml-0.5" /></span>
                   </div>
                 </div>
               </div>
@@ -569,7 +589,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                   <p className="text-[12.5px] text-slate-500 font-medium mb-0.5">Profit</p>
                   <div className="flex items-center gap-2">
                     <span className="text-[22px] text-slate-800 font-medium font-mono leading-none tracking-tight">{formatCompactKES(metrics.profit)}</span>
-                    <span className="text-[11px] font-medium text-emerald-600 flex items-center">{metrics.profitGrowth}% <IconTrendingUp size={12} className="ml-0.5" /></span>
+                    <span className="text-sm font-medium text-emerald-600 flex items-center">{metrics.profitGrowth}% <IconTrendingUp size={12} className="ml-0.5" /></span>
                   </div>
                 </div>
               </div>
@@ -584,7 +604,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
         {/* Stats Column */}
         <div className="xl:col-span-4 flex flex-col gap-3">
           {/* Sales Statistic — KES */}
-          <Link href="/admin/finance" className="block">
+          <Link href="/fin" className="block">
             <div className="p-6 bg-white rounded-[20px] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all h-[132px] group cursor-pointer">
               <div className="flex items-center justify-between">
                 <h3 className="text-[14px] text-slate-800 font-medium tracking-wide">Sales Performance</h3>
@@ -594,14 +614,14 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 <div className="flex items-center gap-3">
                   <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500"><IconCoin size={20} stroke={1.5} /></div>
                   <div>
-                    <p className="text-[11.5px] text-slate-400 font-medium mb-0.5">Total Profit</p>
+                    <p className="text-sm  text-slate-400 font-medium mb-0.5">Total Profit</p>
                     <p className="text-[22px] text-slate-800 font-medium font-mono leading-none tracking-tight">{formatCompactKES(metrics.profit)}</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
                   <div className="flex items-center gap-2 mb-2">
-                    <p className="text-[11.5px] text-slate-400 font-medium">Target</p>
-                    <span className="text-[11px] font-medium text-emerald-600 flex items-center bg-emerald-50 px-1.5 rounded">{formatCompactKES(metrics.income)} <IconTrendingUp size={10} className="ml-0.5" /></span>
+                    <p className="text-sm  text-slate-400 font-medium">Target</p>
+                    <span className="text-sm font-medium text-emerald-600 flex items-center bg-emerald-50 px-1.5 rounded">{formatCompactKES(metrics.income)} <IconTrendingUp size={10} className="ml-0.5" /></span>
                   </div>
                   <div className="w-[100px] h-[3px] bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full w-[65%]" /></div>
                 </div>
@@ -614,13 +634,13 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             <h3 className="text-[14px] text-slate-800 font-medium tracking-wide">Site Inquiries</h3>
             <div className="flex items-end justify-between mt-2">
               <div className="flex-1">
-                <p className="text-[11px] text-slate-400 font-medium mb-2">Property inquiries this week</p>
+                <p className="text-sm text-slate-400 font-medium mb-2">Property inquiries this week</p>
                 <div className="flex items-center gap-3">
                   <span className="text-[18px] text-slate-800 font-medium font-mono leading-none tracking-tight">{metrics.siteInquiries}</span>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-[11.5px] text-slate-400 font-medium mb-0.5">Conversion</p>
+                <p className="text-sm  text-slate-400 font-medium mb-0.5">Conversion</p>
                 <p className="text-[20px] text-[#5a7c9f] font-medium font-mono leading-none tracking-tight bg-[#eef2f6] px-2 py-1 rounded-md">{metrics.inquiryRate}</p>
               </div>
             </div>
@@ -631,14 +651,14 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             <div className="p-6 bg-white rounded-[20px] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all h-[132px] group cursor-pointer">
               <div className="flex items-center justify-between">
                 <h3 className="text-[14px] text-slate-800 font-medium tracking-wide">New Leads</h3>
-                <span className="text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">{metrics.newLeads}</span>
+                <span className="text-sm font-medium text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">{metrics.newLeads}</span>
               </div>
               <div className="flex items-end justify-between mt-2">
                 <div>
-                  <p className="text-[11px] text-slate-400 font-medium max-w-[120px] leading-snug mb-2">Pipeline conversion this month.</p>
+                  <p className="text-sm text-slate-400 font-medium max-w-[120px] leading-snug mb-2">Pipeline conversion this month.</p>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[18px] text-slate-800 font-medium font-mono leading-none tracking-tight">{metrics.newLeads}</span>
-                    <span className="text-[11px] font-medium text-emerald-600 flex items-center bg-emerald-50 px-1.5 rounded"><IconTrendingUp size={10} className="mr-0.5" /> {metrics.newLeadsGrowth}</span>
+                    <span className="text-sm font-medium text-emerald-600 flex items-center bg-emerald-50 px-1.5 rounded"><IconTrendingUp size={10} className="mr-0.5" /> {metrics.newLeadsGrowth}</span>
                   </div>
                 </div>
                 <div className="flex items-end gap-1.5 h-12">
@@ -667,7 +687,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                       key={tab}
                       onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
                       className={cn(
-                        "text-[12px] px-3 py-1.5 rounded-md transition-all font-medium tracking-wide capitalize",
+                        "text-base px-3 py-1.5 rounded-md transition-all font-medium tracking-wide capitalize",
                         activeTab === tab ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700"
                       )}
                     >
@@ -678,7 +698,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 {activeTab === "listings" && (
                   <button
                     onClick={() => { setPropertyModalMode("create"); setEditingProperty(null); setPropertyModalOpen(true); }}
-                    className="flex items-center gap-1.5 text-[12px] font-medium text-[#151936] bg-[#f3df27] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#e6d220] transition-colors"
+                    className="flex items-center gap-1.5 text-base font-medium text-[#151936] bg-[#f3df27] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#e6d220] transition-colors"
                   >
                     <IconPlus size={13} stroke={2.5} />
                     Add Property
@@ -709,7 +729,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               <div className="flex-1 overflow-x-auto [scrollbar-width:thin] mt-1">
                 <table className="w-full text-left border-collapse min-w-[600px]">
                   <thead>
-                    <tr className="border-b border-slate-100/60 text-[11px] font-medium text-slate-400 uppercase tracking-widest">
+                    <tr className="border-b border-slate-100/60 text-sm font-medium text-slate-400 uppercase tracking-widest">
                       {([
                         ["name", "Property Name"],
                         ["location", "Location"],
@@ -733,7 +753,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                     {paginatedListings.length > 0 ? paginatedListings.map((listing, idx) => (
                       <tr
                         key={listing.id}
-                        className="text-[13px] text-slate-700 hover:bg-slate-50/40 transition-colors group animate-fade-in-up"
+                        className="text-base text-slate-700 hover:bg-slate-50/40 transition-colors group animate-fade-in-up"
                         style={{ animationDelay: `${idx * 30}ms` }}
                       >
                         <td className="py-3 pr-2 flex items-center gap-3 font-medium text-slate-800">
@@ -742,7 +762,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                           </div>
                           <button
                             onClick={() => setDrawerProperty(listing)}
-                            className="truncate max-w-[150px] tracking-wide text-[13px] hover:text-[#151936] transition-colors text-left"
+                            className="truncate max-w-[150px] tracking-wide text-base hover:text-[#151936] transition-colors text-left"
                           >
                             {listing.name}
                           </button>
@@ -750,7 +770,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                         <td className="py-3 px-2 text-slate-500 font-medium text-[12.5px]">{listing.location}</td>
                         <td className="py-3 px-2 text-slate-500 font-medium text-[12.5px]">{listing.type}</td>
                         <td className="py-3 px-2">
-                          <span className={cn("text-[10px] px-2.5 py-1 rounded-md font-medium tracking-wide whitespace-nowrap", TABLE_STATUS_STYLES[listing.status])}>
+                          <span className={cn("text-sm  px-2.5 py-1 rounded-md font-medium tracking-wide whitespace-nowrap", TABLE_STATUS_STYLES[listing.status])}>
                             {listing.status}
                           </span>
                         </td>
@@ -788,8 +808,8 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                         <td colSpan={7} className="py-12 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <IconBuildingSkyscraper size={28} className="text-slate-300" />
-                            <p className="text-[13px] text-slate-500 font-medium">No properties match your search.</p>
-                            <button onClick={() => setListingSearch("")} className="text-[12px] text-[#151936] font-medium hover:underline">Clear search</button>
+                            <p className="text-base text-slate-500 font-medium">No properties match your search.</p>
+                            <button onClick={() => setListingSearch("")} className="text-base text-[#151936] font-medium hover:underline">Clear search</button>
                           </div>
                         </td>
                       </tr>
@@ -801,7 +821,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               {/* Pagination */}
               {filteredListings.length > ROWS_PER_PAGE && (
                 <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100">
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <p className="text-sm text-slate-400 font-medium">
                     Showing {(currentPage - 1) * ROWS_PER_PAGE + 1}–{Math.min(currentPage * ROWS_PER_PAGE, filteredListings.length)} of {filteredListings.length}
                   </p>
                   <div className="flex items-center gap-1">
@@ -818,7 +838,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                         key={p}
                         onClick={() => setCurrentPage(p)}
                         className={cn(
-                          "size-8 flex items-center justify-center rounded-lg text-[12px] font-medium transition-colors",
+                          "size-8 flex items-center justify-center rounded-lg text-base font-medium transition-colors",
                           p === currentPage ? "bg-[#151936] text-white" : "text-slate-500 hover:bg-slate-100"
                         )}
                       >
@@ -854,7 +874,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12.5px] text-slate-700 leading-snug font-medium">{log.text}</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">{log.time}</p>
+                      <p className="text-sm text-slate-400 mt-0.5">{log.time}</p>
                     </div>
                   </div>
                 );
@@ -875,7 +895,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[12.5px] text-slate-700 leading-snug font-medium">{log.text}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">{log.time}</p>
+                        <p className="text-sm text-slate-400 mt-0.5">{log.time}</p>
                       </div>
                     </div>
                   );
@@ -883,11 +903,11 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <IconReceipt size={28} className="text-slate-300 mb-2" />
-                  <p className="text-[13px] text-slate-500 font-medium">No recent transactions.</p>
+                  <p className="text-base text-slate-500 font-medium">No recent transactions.</p>
                 </div>
               )}
-              <Link href="/admin/finance" className="block mt-4">
-                <button className="w-full text-center text-[12px] font-medium text-[#151936] hover:text-[#0f343a] transition-colors py-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center gap-1.5">
+              <Link href="/fin" className="block mt-4">
+                <button className="w-full text-center text-base font-medium text-[#151936] hover:text-[#0f343a] transition-colors py-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center gap-1.5">
                   View Full Ledger <IconArrowRight size={13} />
                 </button>
               </Link>

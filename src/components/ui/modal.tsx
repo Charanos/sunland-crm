@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { IconX } from "@tabler/icons-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils/cn";
@@ -31,6 +32,12 @@ export function Modal({
   title: string;
   size?: ModalSize;
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
 
@@ -49,11 +56,11 @@ export function Modal({
     };
   }, [onClose, open]);
 
-  if (!open) {
+  if (!open || !mounted) {
     return null;
   }
 
-  return (
+  return createPortal(
     <div
       aria-modal="true"
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in"
@@ -88,6 +95,7 @@ export function Modal({
         </div>
         <div className="mt-5">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

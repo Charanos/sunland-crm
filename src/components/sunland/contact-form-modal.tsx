@@ -94,10 +94,10 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
     // Map associatedPropsInput into the proper object format
     const props = formData.associatedPropsInput
       ? formData.associatedPropsInput.split(",").map((p: string, index: number) => ({
-          id: `prop-${index}-${Date.now()}`,
-          name: p.trim(),
-          role: formData.type === "landlord" ? "Landlord" : "Tenant"
-        }))
+        id: `prop-${index}-${Date.now()}`,
+        name: p.trim(),
+        role: formData.type === "landlord" ? "Landlord" : "Tenant"
+      }))
       : [];
 
     const payload: Partial<Contact> = {
@@ -137,7 +137,7 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
         onClick={onClose}
         type="button"
       />
-      
+
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-[0_20px_60px_rgba(21,25,54,0.1)] overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
@@ -149,10 +149,10 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
               <h2 className="text-[16px] font-medium text-slate-900 tracking-tight">
                 {initialData ? "Modify Contact Profile" : "Enlist New Contact"}
               </h2>
-              <p className="text-[12px] text-slate-500 mt-0.5">Define CRM metadata, relations, and financials.</p>
+              <p className="text-base text-slate-500 mt-0.5">Define CRM metadata, relations, and financials.</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
@@ -162,18 +162,18 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
 
         {/* Scrollable Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
-          
+
           {/* Main info */}
           <div className="space-y-4">
             <div>
               <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Full Name / Organization</label>
-              <input 
+              <input
                 required
                 type="text"
                 placeholder="e.g. David Kimani or Prime Properties Ltd"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-[13.5px] bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
               />
             </div>
 
@@ -183,7 +183,7 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
                 <select
                   value={formData.type}
                   onChange={e => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[13.5px] bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
                 >
                   {CONTACT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
@@ -193,7 +193,7 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
                 <select
                   value={formData.source}
                   onChange={e => setFormData({ ...formData, source: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[13.5px] bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
                 >
                   {CONTACT_SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
@@ -206,7 +206,7 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
                 <select
                   value={formData.status}
                   onChange={e => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[13.5px] bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm animate-none"
+                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm animate-none"
                 >
                   {CONTACT_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
@@ -216,7 +216,7 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
                 <select
                   value={formData.assignedAgent}
                   onChange={e => setFormData({ ...formData, assignedAgent: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[13.5px] bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
                 >
                   <option value="Amina Wanjiku">Amina Wanjiku</option>
                   <option value="John Mwangi">John Mwangi</option>
@@ -228,24 +228,24 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
-                <input 
+                <input
                   required
                   type="email"
                   placeholder="name@domain.com"
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[13.5px] bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
                 />
               </div>
               <div>
                 <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Phone Number</label>
-                <input 
+                <input
                   required
                   type="tel"
                   placeholder="+254 7XX XXX XXX"
                   value={formData.phone}
                   onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[13.5px] bg-white border border-slate-200 rounded-xl font-mono focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl font-mono focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
                 />
               </div>
             </div>
@@ -253,45 +253,45 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
             {/* Property Associations Input */}
             <div>
               <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Associated Properties (Comma-separated)</label>
-              <input 
+              <input
                 type="text"
                 placeholder="e.g. Karen Ridge House, Runda Grove Villa"
                 value={formData.associatedPropsInput}
                 onChange={e => setFormData({ ...formData, associatedPropsInput: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-[13.5px] bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
               />
             </div>
 
             {/* Financial Overview Inputs */}
             <div className="border-t border-slate-100 pt-4 space-y-4">
-              <h4 className="text-[12px] font-medium text-slate-800">Financial Setup (KES)</h4>
-              
+              <h4 className="text-base font-medium text-slate-800">Financial Setup (KES)</h4>
+
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Total Paid</label>
-                  <input 
+                  <label className="block text-sm font-medium text-slate-400 uppercase tracking-wider mb-1">Total Paid</label>
+                  <input
                     type="number"
                     value={formData.paid}
                     onChange={e => setFormData({ ...formData, paid: e.target.value })}
-                    className="w-full px-3 py-2 text-[13.5px] bg-white border border-slate-200 rounded-lg focus:outline-none font-mono"
+                    className="w-full px-3 py-2 text-base bg-white border border-slate-200 rounded-lg focus:outline-none font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Arrears</label>
-                  <input 
+                  <label className="block text-sm font-medium text-slate-400 uppercase tracking-wider mb-1">Arrears</label>
+                  <input
                     type="number"
                     value={formData.arrears}
                     onChange={e => setFormData({ ...formData, arrears: e.target.value })}
-                    className="w-full px-3 py-2 text-[13.5px] bg-white border border-slate-200 rounded-lg focus:outline-none font-mono"
+                    className="w-full px-3 py-2 text-base bg-white border border-slate-200 rounded-lg focus:outline-none font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Est. Portfolio</label>
-                  <input 
+                  <label className="block text-sm font-medium text-slate-400 uppercase tracking-wider mb-1">Est. Portfolio</label>
+                  <input
                     type="number"
                     value={formData.portfolioValue}
                     onChange={e => setFormData({ ...formData, portfolioValue: e.target.value })}
-                    className="w-full px-3 py-2 text-[13.5px] bg-white border border-slate-200 rounded-lg focus:outline-none font-mono"
+                    className="w-full px-3 py-2 text-base bg-white border border-slate-200 rounded-lg focus:outline-none font-mono"
                   />
                 </div>
               </div>
@@ -301,16 +301,16 @@ export function ContactFormModal({ open, onClose, onSubmit, initialData }: Conta
 
           {/* Footer inside drawer scrolling */}
           <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 sticky bottom-0 bg-white">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={onClose}
-              className="px-4 py-2 text-[13px] font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              className="px-4 py-2 text-base font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
-              className="px-5 py-2 text-[13px] font-medium bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] rounded-xl transition-colors shadow-sm"
+              className="px-5 py-2 text-base font-medium bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] rounded-xl transition-colors shadow-sm"
             >
               {initialData ? "Save Changes" : "Create Contact"}
             </button>

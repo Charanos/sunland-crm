@@ -125,11 +125,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   <IconComponent aria-hidden size={18} stroke={2} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-medium text-slate-800">
+                  <p className="text-base font-medium text-slate-800">
                     {toast.title}
                   </p>
                   {toast.body ? (
-                    <p className="mt-0.5 text-[12px] text-slate-500 leading-relaxed">
+                    <p className="mt-0.5 text-base text-slate-500 leading-relaxed">
                       {toast.body}
                     </p>
                   ) : null}

@@ -80,7 +80,7 @@ export function EventFormModal({
   return (
     <Modal
       open={open}
-      onClose={isSubmitting ? () => {} : onClose}
+      onClose={isSubmitting ? () => { } : onClose}
       title={mode === "create" ? "Schedule Event" : "Edit Event"}
       description="Add to the executive calendar"
       size="md"
@@ -91,14 +91,14 @@ export function EventFormModal({
           <label className="label-caps text-slate-500 mb-1.5 block">Event Title</label>
           <input
             className={cn(
-              "w-full rounded-lg border bg-white px-3 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+              "w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
               errors.title ? "border-red-300 bg-red-50/30" : "border-slate-200"
             )}
             placeholder="e.g. HNW Viewing - Karen Ridge"
             value={form.title}
             onChange={(e) => updateField("title", e.target.value)}
           />
-          {errors.title && <p className="text-[11px] text-red-500 mt-1">{errors.title}</p>}
+          {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
         </div>
 
         {/* Date + Time + Duration */}
@@ -108,7 +108,7 @@ export function EventFormModal({
             <input
               type="date"
               className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2.5 text-[13px] text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                "w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors",
                 errors.date ? "border-red-300 bg-red-50/30" : "border-slate-200"
               )}
               value={form.date}
@@ -120,7 +120,7 @@ export function EventFormModal({
             <input
               type="time"
               className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2.5 text-[13px] font-mono text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                "w-full rounded-lg border bg-white px-3 py-2.5 text-base font-mono text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors",
                 errors.time ? "border-red-300 bg-red-50/30" : "border-slate-200"
               )}
               value={form.time}
@@ -130,7 +130,7 @@ export function EventFormModal({
           <div>
             <label className="label-caps text-slate-500 mb-1.5 block">Duration</label>
             <select
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.duration}
               onChange={(e) => updateField("duration", e.target.value)}
             >
@@ -151,7 +151,7 @@ export function EventFormModal({
                 type="button"
                 onClick={() => updateField("type", t.value)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-lg text-[12px] font-medium border transition-all",
+                  "px-3.5 py-1.5 rounded-lg text-base font-medium border transition-all",
                   form.type === t.value
                     ? cn(t.color, "ring-1 ring-offset-1 ring-slate-300")
                     : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
@@ -167,7 +167,7 @@ export function EventFormModal({
         <div>
           <label className="label-caps text-slate-500 mb-1.5 block">Notes (optional)</label>
           <textarea
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors resize-none h-20"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors resize-none h-20"
             placeholder="Add any relevant notes or agenda items..."
             value={form.description}
             onChange={(e) => updateField("description", e.target.value)}

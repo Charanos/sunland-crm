@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { canAccess, getDefaultPortal } from "./src/lib/auth/roles";
+import type { UserRole } from "./src/types";
 
 const protectedPrefixes = ["/admin", "/ops", "/fin", "/hr"];
 
@@ -28,7 +30,19 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, new TextEncoder().encode(secret));
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    const user = payload.user as { role: UserRole } | undefined;
+    if (!user || !user.role) {
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete("sunland_session");
+      return response;
+    }
+
+    if (!canAccess(user.role, pathname)) {
+      const portal = getDefaultPortal(user.role);
+      return NextResponse.redirect(new URL(portal, request.url));
+    }
+
     return NextResponse.next();
   } catch {
     const response = NextResponse.redirect(new URL("/login", request.url));

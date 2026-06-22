@@ -7,5 +7,5 @@ export function Card({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <section className={cn("crm-card", className)}>{children}</section>;
+  return <section className={cn("erp-card", className)}>{children}</section>;
 }

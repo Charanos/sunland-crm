@@ -48,7 +48,7 @@ export const ENTITIES: Entity[] = [
     stats: { properties: 36, contacts: 130, revenue: "KES 26.1M" },
   },
   {
-    id: "valuations",
+    id: "valuers",
     name: "Sunland Valuers Ltd",
     subtitle: "Valuation & Advisory",
     description: "Professional property valuation and real estate advisory services",

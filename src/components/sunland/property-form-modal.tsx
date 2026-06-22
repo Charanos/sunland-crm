@@ -97,7 +97,7 @@ export function PropertyFormModal({
   return (
     <Modal
       open={open}
-      onClose={isSubmitting ? () => {} : onClose}
+      onClose={isSubmitting ? () => { } : onClose}
       title={mode === "create" ? "Add New Property" : "Edit Property"}
       description={mode === "create" ? "Add a new listing to the portfolio" : "Update property details"}
       size="lg"
@@ -108,14 +108,14 @@ export function PropertyFormModal({
           <label className="label-caps text-slate-500 mb-1.5 block">Property Name</label>
           <input
             className={cn(
-              "w-full rounded-lg border bg-white px-3 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+              "w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
               errors.name ? "border-red-300 bg-red-50/30" : "border-slate-200"
             )}
             placeholder="e.g. Runda Grove Villa"
             value={form.name}
             onChange={(e) => updateField("name", e.target.value)}
           />
-          {errors.name && <p className="text-[11px] text-red-500 mt-1">{errors.name}</p>}
+          {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
         </div>
 
         {/* Location + Type */}
@@ -124,19 +124,19 @@ export function PropertyFormModal({
             <label className="label-caps text-slate-500 mb-1.5 block">Location</label>
             <input
               className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                "w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
                 errors.location ? "border-red-300 bg-red-50/30" : "border-slate-200"
               )}
               placeholder="e.g. Runda, Nairobi"
               value={form.location}
               onChange={(e) => updateField("location", e.target.value)}
             />
-            {errors.location && <p className="text-[11px] text-red-500 mt-1">{errors.location}</p>}
+            {errors.location && <p className="text-sm text-red-500 mt-1">{errors.location}</p>}
           </div>
           <div>
             <label className="label-caps text-slate-500 mb-1.5 block">Property Type</label>
             <select
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.type}
               onChange={(e) => updateField("type", e.target.value)}
             >
@@ -153,19 +153,19 @@ export function PropertyFormModal({
             <label className="label-caps text-slate-500 mb-1.5 block">Price (KES)</label>
             <input
               className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2.5 text-[13px] font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                "w-full rounded-lg border bg-white px-3 py-2.5 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
                 errors.price ? "border-red-300 bg-red-50/30" : "border-slate-200"
               )}
               placeholder="e.g. KES 21.3M"
               value={form.price}
               onChange={(e) => updateField("price", e.target.value)}
             />
-            {errors.price && <p className="text-[11px] text-red-500 mt-1">{errors.price}</p>}
+            {errors.price && <p className="text-sm text-red-500 mt-1">{errors.price}</p>}
           </div>
           <div>
             <label className="label-caps text-slate-500 mb-1.5 block">ROI / Yield</label>
             <input
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
               placeholder="e.g. 12.0%"
               value={form.roi}
               onChange={(e) => updateField("roi", e.target.value)}
@@ -183,7 +183,7 @@ export function PropertyFormModal({
                 type="button"
                 onClick={() => updateField("status", s)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all",
+                  "px-3 py-1.5 rounded-lg text-base font-medium border transition-all",
                   form.status === s
                     ? cn(STATUS_COLORS[s], "ring-1 ring-offset-1 ring-slate-300")
                     : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
@@ -199,7 +199,7 @@ export function PropertyFormModal({
         <div>
           <label className="label-caps text-slate-500 mb-1.5 block">Image URL</label>
           <input
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
             placeholder="https://images.unsplash.com/..."
             value={form.imageUrl}
             onChange={(e) => updateField("imageUrl", e.target.value)}

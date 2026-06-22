@@ -2,11 +2,11 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { 
-  IconSearch, 
-  IconFilter, 
-  IconPlus, 
-  IconBuilding, 
+import {
+  IconSearch,
+  IconFilter,
+  IconPlus,
+  IconBuilding,
   IconDotsVertical,
   IconX,
   IconTrash,
@@ -42,7 +42,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 
-export type PipelineStage = 
+export type PipelineStage =
   | "inquiry"
   | "qualification"
   | "viewing"
@@ -51,7 +51,7 @@ export type PipelineStage =
   | "closed_won"
   | "closed_lost";
 
-export type PipelineSource = 
+export type PipelineSource =
   | "referral"
   | "walk_in"
   | "website"
@@ -309,12 +309,12 @@ const INITIAL_LEADS: Lead[] = [
 
 const ROWS_PER_PAGE = 5;
 
-export function PipelineBoard({ 
-  defaultView = "kanban", 
-  isFullPageFocus = false 
-}: { 
-  defaultView?: "kanban" | "list"; 
-  isFullPageFocus?: boolean; 
+export function PipelineBoard({
+  defaultView = "kanban",
+  isFullPageFocus = false
+}: {
+  defaultView?: "kanban" | "list";
+  isFullPageFocus?: boolean;
 }) {
   const { pushToast } = useToast();
   const { setSelectedChatDMId } = useUIStore();
@@ -324,7 +324,7 @@ export function PipelineBoard({
   const [viewMode, setViewMode] = useState<"kanban" | "list">(defaultView);
   const [role, setRole] = useState<"CEO" | "Agent">("CEO");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  
+
   // Confirmation States
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
@@ -385,7 +385,7 @@ export function PipelineBoard({
       const matchesRole = role === "CEO" || lead.assignedAgent === "Amina Wanjiku";
 
       // 2. Search
-      const matchesSearch = 
+      const matchesSearch =
         lead.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.propertyInterest.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchQuery.toLowerCase());
@@ -433,7 +433,7 @@ export function PipelineBoard({
     const viewings = scoped.filter(l => l.stage === "viewing").length;
     const closedWon = scoped.filter(l => l.stage === "closed_won");
     const totalClosed = scoped.filter(l => l.stage === "closed_won" || l.stage === "closed_lost").length;
-    
+
     const winRate = totalClosed > 0 ? Math.round((closedWon.length / totalClosed) * 100) : 0;
     const pendingOffers = scoped.filter(l => l.stage === "offer" || l.stage === "negotiation").reduce((acc, l) => acc + l.budget, 0);
 
@@ -459,7 +459,7 @@ export function PipelineBoard({
     if (nextIndex < 0 || nextIndex >= stageSequence.length) return;
 
     const newStage = stageSequence[nextIndex];
-    
+
     // Append stage movement to timeline log
     const movementLog = {
       id: `log-${Date.now()}`,
@@ -469,23 +469,23 @@ export function PipelineBoard({
       details: `Admin advanced stage from ${STAGE_LABELS[lead.stage]} to ${STAGE_LABELS[newStage]}.`
     };
 
-    setLeads(prev => prev.map(l => 
-      l.id === leadId 
+    setLeads(prev => prev.map(l =>
+      l.id === leadId
         ? { ...l, stage: newStage, timeline: [movementLog, ...(l.timeline || [])] }
         : l
     ));
 
-    pushToast({ 
-      tone: "success", 
-      title: "Opportunity Advanced", 
-      body: `"${lead.clientName}" is now in stage "${STAGE_LABELS[newStage]}".` 
+    pushToast({
+      tone: "success",
+      title: "Opportunity Advanced",
+      body: `"${lead.clientName}" is now in stage "${STAGE_LABELS[newStage]}".`
     });
   };
 
   const handleCreateOrUpdate = (payload: Partial<Lead>) => {
     if (editingLead) {
       // Update
-      setLeads(prev => prev.map(l => 
+      setLeads(prev => prev.map(l =>
         l.id === editingLead.id ? { ...l, ...payload } : l
       ));
       pushToast({ tone: "success", title: "Deal Updated", body: `Opportunity details saved for "${payload.clientName}".` });
@@ -520,17 +520,17 @@ export function PipelineBoard({
     if (!deleteConfirmId) return;
     const lead = leads.find(l => l.id === deleteConfirmId);
     setLeads(prev => prev.filter(l => l.id !== deleteConfirmId));
-    pushToast({ 
-      tone: "success", 
-      title: "Opportunity Cleared", 
-      body: `"${lead?.clientName || 'Record'}" was successfully scrubbed from CRM.` 
+    pushToast({
+      tone: "success",
+      title: "Opportunity Cleared",
+      body: `"${lead?.clientName || 'Record'}" was successfully scrubbed from CRM.`
     });
     setDeleteConfirmId(null);
   };
 
   // Bulk Handlers
   const handleBulkStageChange = (newStage: PipelineStage) => {
-    setLeads(prev => prev.map(l => 
+    setLeads(prev => prev.map(l =>
       selectedIds.includes(l.id) ? { ...l, stage: newStage } : l
     ));
     pushToast({ tone: "success", title: "Batch Updated", body: `Moved ${selectedIds.length} deals to stage "${STAGE_LABELS[newStage]}".` });
@@ -558,24 +558,24 @@ export function PipelineBoard({
       "flex flex-col gap-6",
       isFullPageFocus && "fixed inset-0 z-50 bg-slate-50 p-6 overflow-hidden h-screen w-screen"
     )}>
-      
+
       {isFullPageFocus && (
         <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-2 shrink-0">
           <div className="flex items-center gap-3">
-            <Link 
-              href="/admin/pipeline" 
+            <Link
+              href="/admin/pipeline"
               className="flex items-center gap-1.5 text-[12.5px] font-medium text-slate-550 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 border border-slate-200 rounded-xl shadow-sm animate-fade-in"
             >
               <IconChevronLeft size={15} />
               <span>Exit Focus Mode</span>
             </Link>
             <div className="h-4 w-px bg-slate-200" />
-            <h1 className="text-[15px] font-medium text-slate-800 tracking-tight font-serif">
+            <h1 className="text-base  font-medium text-slate-800 tracking-tight font-serif">
               Deals Pipeline Focus Deck
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <span className="bg-[#f3df27]/20 text-[#151936] text-[10px] px-2.5 py-0.5 rounded-full font-medium border border-[#f3df27]/40 uppercase tracking-wider">
+            <span className="bg-[#f3df27]/20 text-[#151936] text-sm  px-2.5 py-0.5 rounded-full font-medium border border-[#f3df27]/40 uppercase tracking-wider">
               CEO / Admin Control
             </span>
           </div>
@@ -590,39 +590,39 @@ export function PipelineBoard({
               <IconClipboardList size={16} />
             </div>
             <div>
-              <h3 className="text-[13px] font-medium text-slate-800 leading-none">Operations Control Hub</h3>
-              <p className="text-[11px] text-slate-400 mt-1">Navigate across property CRM ops segments.</p>
+              <h3 className="text-base font-medium text-slate-800 leading-none">Operations Control Hub</h3>
+              <p className="text-sm text-slate-400 mt-1">Navigate across property CRM ops segments.</p>
             </div>
           </div>
 
           <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
             <Link
               href="/admin/contacts"
-              className="px-3.5 py-1.5 text-[11.5px] font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Contacts</span>
-              <span className="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.2 rounded-full font-medium">CRM</span>
+              <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">CRM</span>
             </Link>
             <Link
               href="/admin/pipeline"
-              className="px-3.5 py-1.5 text-[11.5px] font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
+              className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
             >
               <span>Deals Pipeline</span>
-              <span className="bg-[#f3df27] text-[#151936] text-[9px] px-1.5 py-0.2 rounded-full font-medium">Active</span>
+              <span className="bg-[#f3df27] text-[#151936] text-xs  px-1.5 py-0.2 rounded-full font-medium">Active</span>
             </Link>
             <Link
               href="/admin/leases"
-              className="px-3.5 py-1.5 text-[11.5px] font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Leases</span>
-              <span className="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.2 rounded-full font-medium">Tenancies</span>
+              <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">Tenancies</span>
             </Link>
             <Link
               href="/admin/maintenance"
-              className="px-3.5 py-1.5 text-[11.5px] font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Maintenance</span>
-              <span className="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.2 rounded-full font-medium">Tickets</span>
+              <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">Tickets</span>
             </Link>
           </div>
         </div>
@@ -631,20 +631,20 @@ export function PipelineBoard({
       {/* ── Top Analytics KPI Tier ── */}
       {!isFullPageFocus && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
+
           {/* KPI 1 */}
           <div className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
             <div className="flex items-center gap-2">
               <div className="size-[22px] rounded-full bg-slate-100 flex items-center justify-center text-slate-550">
                 <IconChartBar size={13} />
               </div>
-              <span className="text-[12px] font-medium text-slate-400 tracking-wider uppercase">Active Pipeline Value</span>
+              <span className="text-base font-medium text-slate-400 tracking-wider uppercase">Active Pipeline Value</span>
             </div>
             <div className="flex items-end justify-between mt-auto mb-2">
               <span className="text-[26px] sm:text-[28px] font-medium text-slate-800 tracking-tight font-mono leading-none">
                 {formatCompactKES(stats.activeValue)}
               </span>
-              <span className="text-[11px] text-emerald-650 font-medium">Active Leads: {stats.total}</span>
+              <span className="text-sm text-emerald-650 font-medium">Active Leads: {stats.total}</span>
             </div>
             <div className="h-[3px] bg-slate-100 rounded-full w-full overflow-hidden">
               <div className="h-full bg-indigo-500 rounded-full w-[72%] transition-all duration-1000" />
@@ -657,11 +657,11 @@ export function PipelineBoard({
               <div className="size-[22px] rounded-full bg-indigo-500 text-white flex items-center justify-center animate-none">
                 <IconBuilding size={13} />
               </div>
-              <span className="text-[12px] font-medium text-indigo-700 tracking-wider uppercase">Active Viewings</span>
+              <span className="text-base font-medium text-indigo-700 tracking-wider uppercase">Active Viewings</span>
             </div>
             <div className="flex items-end justify-between mt-auto mb-2">
               <span className="text-[32px] font-medium text-indigo-900 tracking-tight font-mono leading-none">{stats.viewings}</span>
-              <span className="text-[11px] text-indigo-650 font-medium">Tours this month</span>
+              <span className="text-sm text-indigo-650 font-medium">Tours this month</span>
             </div>
             <div className="h-[3px] bg-indigo-200/50 rounded-full w-full overflow-hidden">
               <div className="h-full bg-indigo-600 rounded-full w-[45%] transition-all duration-1000" />
@@ -674,11 +674,11 @@ export function PipelineBoard({
               <div className="size-[22px] rounded-full bg-emerald-500 text-white flex items-center justify-center">
                 <IconCheck size={13} />
               </div>
-              <span className="text-[12px] font-medium text-emerald-700 tracking-wider uppercase">Win Conversion Rate</span>
+              <span className="text-base font-medium text-emerald-700 tracking-wider uppercase">Win Conversion Rate</span>
             </div>
             <div className="flex items-end justify-between mt-auto mb-2">
               <span className="text-[32px] font-medium text-emerald-900 tracking-tight font-mono leading-none">{stats.winRate}%</span>
-              <span className="text-[11px] text-emerald-650 font-medium">Won vs Lost ratio</span>
+              <span className="text-sm text-emerald-650 font-medium">Won vs Lost ratio</span>
             </div>
             <div className="h-[3px] bg-emerald-200/50 rounded-full w-full overflow-hidden">
               <div className="h-full bg-emerald-600 rounded-full w-[80%] transition-all duration-1000" />
@@ -691,13 +691,13 @@ export function PipelineBoard({
               <div className="size-[22px] rounded-full bg-amber-500 text-white flex items-center justify-center">
                 <IconAlertTriangle size={13} />
               </div>
-              <span className="text-[12px] font-medium text-amber-700 tracking-wider uppercase">Pending Offers Value</span>
+              <span className="text-base font-medium text-amber-700 tracking-wider uppercase">Pending Offers Value</span>
             </div>
             <div className="flex items-end justify-between mt-auto mb-2">
               <span className="text-[26px] sm:text-[28px] font-medium text-amber-900 tracking-tight font-mono leading-none">
                 {formatCompactKES(stats.pendingOffers)}
               </span>
-              <span className="text-[11px] text-amber-750 font-medium">Offers & Negotiation</span>
+              <span className="text-sm text-amber-750 font-medium">Offers & Negotiation</span>
             </div>
             <div className="h-[3px] bg-amber-200/50 rounded-full w-full overflow-hidden">
               <div className="h-full bg-amber-600 rounded-full w-[60%] transition-all duration-1000" />
@@ -712,14 +712,14 @@ export function PipelineBoard({
         "flex flex-col overflow-hidden border border-slate-100 shadow-sm bg-white rounded-3xl",
         isFullPageFocus ? "flex-1 h-full" : ""
       )}>
-        
+
         {/* Controls Bar */}
         <div className="p-5 border-b border-slate-100 space-y-4 bg-white shrink-0">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            
+
             {/* View switcher & Search */}
             <div className="flex items-center gap-3 flex-wrap flex-1 min-w-[280px]">
-              
+
               {/* Kanban / List Toggle */}
               <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
                 <button
@@ -752,14 +752,14 @@ export function PipelineBoard({
                   placeholder="Search opportunities..."
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); resetPagination(); }}
-                  className="pl-10 pr-4 py-2 w-full bg-slate-50 border border-slate-200/60 rounded-xl text-[13px] focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-all placeholder:text-slate-400"
+                  className="pl-10 pr-4 py-2 w-full bg-slate-50 border border-slate-200/60 rounded-xl text-base focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-all placeholder:text-slate-400"
                 />
               </div>
             </div>
 
             {/* Dropdown filters */}
             <div className="flex items-center gap-2 flex-wrap">
-              
+
               {/* Stage select (List view only) */}
               {viewMode === "list" && (
                 <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600">
@@ -801,7 +801,7 @@ export function PipelineBoard({
               </div>
 
               {/* Add Lead button */}
-              <button 
+              <button
                 onClick={() => { setEditingLead(undefined); setIsModalOpen(true); }}
                 className="flex items-center gap-1.5 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl text-[12.5px] font-medium hover:bg-[#e6d220] transition-colors shadow-sm cursor-pointer"
               >
@@ -825,26 +825,26 @@ export function PipelineBoard({
           {/* Active filter chips */}
           {(stageFilter !== "all" || sourceFilter !== "all" || searchQuery !== "") && (
             <div className="flex items-center gap-2 flex-wrap pt-2 animate-fade-in">
-              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Active Filters:</span>
+              <span className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active Filters:</span>
               {searchQuery && (
-                <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-[12px] font-medium border border-slate-200/40">
+                <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
                   Search: "{searchQuery}"
                   <button onClick={() => setSearchQuery("")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
               {stageFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-[12px] font-medium border border-indigo-200/40">
+                <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-base font-medium border border-indigo-200/40">
                   Stage: {STAGE_LABELS[stageFilter as PipelineStage]}
                   <button onClick={() => setStageFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
               {sourceFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-[12px] font-medium border border-amber-200/40 font-medium">
+                <span className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-base font-medium border border-amber-200/40 font-medium">
                   Source: {sourceFilter}
                   <button onClick={() => setSourceFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
-              <button onClick={() => { setSearchQuery(""); setStageFilter("all"); setSourceFilter("all"); }} className="text-[11px] font-medium text-slate-500 hover:text-slate-800 underline ml-1">
+              <button onClick={() => { setSearchQuery(""); setStageFilter("all"); setSourceFilter("all"); }} className="text-sm font-medium text-slate-500 hover:text-slate-800 underline ml-1">
                 Clear all
               </button>
             </div>
@@ -853,9 +853,9 @@ export function PipelineBoard({
 
         {/* ── MAIN CONTENT DUAL VIEWS ── */}
         <div className="flex-1 min-h-[400px]">
-          
+
           <AnimatePresence mode="wait">
-            
+
             {isLoading ? (
               // Simple unified skeleton loader screen
               <div key="loading" className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
@@ -870,10 +870,10 @@ export function PipelineBoard({
                 ))}
               </div>
             ) : viewMode === "kanban" ? (
-              
+
               // ── Kanban Board View ──
-              <div 
-                key="kanban" 
+              <div
+                key="kanban"
                 className={cn(
                   "p-6 overflow-x-auto flex gap-4 custom-scrollbar select-none align-stretch",
                   isFullPageFocus ? "flex-1 overflow-y-hidden" : ""
@@ -885,17 +885,17 @@ export function PipelineBoard({
 
                   return (
                     <div key={stage} className="flex-1 min-w-[280px] bg-slate-50/50 rounded-2xl p-3 flex flex-col border border-slate-100">
-                      
+
                       {/* Column Header */}
                       <div className="flex items-center justify-between mb-3 px-1">
                         <div className="flex items-center gap-2">
-                          <span className={cn("px-2 py-0.5 rounded-md text-[11px] font-medium border uppercase tracking-wider font-medium", STAGE_COLORS[stage])}>
+                          <span className={cn("px-2 py-0.5 rounded-md text-sm font-medium border uppercase tracking-wider font-medium", STAGE_COLORS[stage])}>
                             {STAGE_LABELS[stage]}
                           </span>
-                          <span className="text-[12px] font-mono text-slate-400 font-medium">({stageLeads.length})</span>
+                          <span className="text-base font-mono text-slate-400 font-medium">({stageLeads.length})</span>
                         </div>
                         {columnBudget > 0 && (
-                          <span className="text-[11.5px] font-mono font-medium text-slate-500">{formatCompactKES(columnBudget)}</span>
+                          <span className="text-sm  font-mono font-medium text-slate-500">{formatCompactKES(columnBudget)}</span>
                         )}
                       </div>
 
@@ -906,16 +906,16 @@ export function PipelineBoard({
                       )}>
                         {stageLeads.length > 0 ? (
                           stageLeads.map((lead) => (
-                            <div 
+                            <div
                               key={lead.id}
                               onClick={() => setSelectedLeadId(lead.id)}
                               className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-slate-300 hover:shadow-md transition-all cursor-pointer group flex flex-col min-h-[180px] shadow-sm"
                             >
                               {/* Header Property Visual */}
                               <div className="relative h-[65px] w-full bg-slate-100 overflow-hidden">
-                                <img 
-                                  src={getPropertyImage(lead.propertyInterest)} 
-                                  alt={lead.propertyInterest} 
+                                <img
+                                  src={getPropertyImage(lead.propertyInterest)}
+                                  alt={lead.propertyInterest}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
                                 <div className="absolute top-2 right-2">
@@ -928,11 +928,11 @@ export function PipelineBoard({
                               {/* Card Content & Footer */}
                               <div className="p-3 flex-1 flex flex-col justify-between">
                                 <div className="space-y-1">
-                                  <h4 className="text-[13px] font-normal text-slate-900 group-hover:text-[#151936] transition-colors leading-snug truncate">
+                                  <h4 className="text-base font-normal text-slate-900 group-hover:text-[#151936] transition-colors leading-snug truncate">
                                     {lead.clientName}
                                   </h4>
-                                  <p className="text-[11.5px] text-slate-500 flex items-center gap-1 font-normal truncate">
-                                    <IconBuilding size={12} className="text-slate-400 shrink-0" /> 
+                                  <p className="text-sm  text-slate-500 flex items-center gap-1 font-normal truncate">
+                                    <IconBuilding size={12} className="text-slate-400 shrink-0" />
                                     <span>{lead.propertyInterest}</span>
                                   </p>
                                 </div>
@@ -940,16 +940,16 @@ export function PipelineBoard({
                                 <div className="mt-3 pt-2.5 border-t border-slate-100/70 flex items-center justify-between">
                                   {/* Budget & Agent Row */}
                                   <div className="flex items-center gap-2">
-                                    <Avatar 
-                                      src={getAgentAvatar(lead.assignedAgent)} 
-                                      fallback={lead.assignedAgent[0]} 
-                                      className="size-5 shrink-0 border border-slate-100 shadow-sm" 
+                                    <Avatar
+                                      src={getAgentAvatar(lead.assignedAgent)}
+                                      fallback={lead.assignedAgent[0]}
+                                      className="size-5 shrink-0 border border-slate-100 shadow-sm"
                                     />
-                                    <span className="text-[12px] font-medium font-mono text-slate-800 leading-none">
+                                    <span className="text-base font-medium font-mono text-slate-800 leading-none">
                                       {formatCompactKES(lead.budget)}
                                     </span>
                                   </div>
-                                  
+
                                   {/* Manual stage adjustments and editing buttons */}
                                   <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                                     <button
@@ -983,7 +983,7 @@ export function PipelineBoard({
                           ))
                         ) : (
                           <div className="h-full border border-dashed border-slate-200 rounded-xl flex items-center justify-center p-6 text-center text-slate-400 min-h-[100px]">
-                            <p className="text-[11.5px] font-medium">Drag-free space</p>
+                            <p className="text-sm  font-medium">Drag-free space</p>
                           </div>
                         )}
                       </div>
@@ -992,15 +992,15 @@ export function PipelineBoard({
                 })}
               </div>
             ) : (
-              
+
               // ── List View (DataTable) ──
               <div key="list" className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[1000px]">
                   <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100 text-[11px] font-medium text-slate-400 uppercase tracking-widest select-none">
+                    <tr className="bg-slate-50/50 border-b border-slate-100 text-sm font-medium text-slate-400 uppercase tracking-widest select-none">
                       <th className="py-4 pl-6 pr-2 w-10 text-center">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           onChange={() => {
                             const paginatedIds = paginatedLeads.map(l => l.id);
                             const allSelected = paginatedIds.every(id => selectedIds.includes(id));
@@ -1027,25 +1027,25 @@ export function PipelineBoard({
                       <th className="py-4 px-6 text-right w-20">Actions</th>
                     </tr>
                   </thead>
-                  
+
                   <tbody className="divide-y divide-slate-50 bg-white">
                     {paginatedLeads.length > 0 ? (
                       paginatedLeads.map((lead, idx) => (
-                        <motion.tr 
-                          key={lead.id} 
+                        <motion.tr
+                          key={lead.id}
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.15, delay: idx * 0.02 }}
                           className={cn(
-                            "hover:bg-slate-50/50 transition-colors cursor-pointer text-[13px] text-slate-700 group",
+                            "hover:bg-slate-50/50 transition-colors cursor-pointer text-base text-slate-700 group",
                             selectedIds.includes(lead.id) && "bg-indigo-50/20"
                           )}
                           onClick={() => setSelectedLeadId(lead.id)}
                         >
                           <td className="py-4 pl-6 pr-2 text-center" onClick={e => e.stopPropagation()}>
-                            <input 
-                              type="checkbox" 
+                            <input
+                              type="checkbox"
                               checked={selectedIds.includes(lead.id)}
                               onChange={() => setSelectedIds(prev => prev.includes(lead.id) ? prev.filter(id => id !== lead.id) : [...prev, lead.id])}
                               className="rounded border-slate-300 text-[#151936] focus:ring-[#151936]/20 size-4 cursor-pointer"
@@ -1053,23 +1053,23 @@ export function PipelineBoard({
                           </td>
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
-                              <Avatar 
-                                src={getClientAvatar(lead.clientName)} 
-                                fallback={lead.clientName[0]} 
-                                className="size-9 shrink-0 border border-slate-100 shadow-sm" 
+                              <Avatar
+                                src={getClientAvatar(lead.clientName)}
+                                fallback={lead.clientName[0]}
+                                className="size-9 shrink-0 border border-slate-100 shadow-sm"
                               />
                               <div>
                                 <span className="font-normal text-[14px] text-slate-900 group-hover:text-[#151936] transition-colors leading-snug block">
                                   {lead.clientName}
                                 </span>
-                                <span className="text-[11px] text-slate-400 font-mono mt-0.5 block font-normal">
+                                <span className="text-sm text-slate-400 font-mono mt-0.5 block font-normal">
                                   Created: {lead.createdDate}
                                 </span>
                               </div>
                             </div>
                           </td>
                           <td className="py-4 px-4">
-                            <span className={cn("px-2.5 py-0.5 text-[11px] font-medium rounded-full border uppercase tracking-wider font-medium", STAGE_COLORS[lead.stage])}>
+                            <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full border uppercase tracking-wider font-medium", STAGE_COLORS[lead.stage])}>
                               {STAGE_LABELS[lead.stage]}
                             </span>
                           </td>
@@ -1084,54 +1084,54 @@ export function PipelineBoard({
                           </td>
                           <td className="py-4 px-4 text-slate-600 font-normal">
                             <div className="flex items-center gap-2">
-                              <Avatar 
-                                src={getAgentAvatar(lead.assignedAgent)} 
-                                fallback={lead.assignedAgent[0]} 
-                                className="size-5 shrink-0 border border-slate-100 shadow-sm" 
+                              <Avatar
+                                src={getAgentAvatar(lead.assignedAgent)}
+                                fallback={lead.assignedAgent[0]}
+                                className="size-5 shrink-0 border border-slate-100 shadow-sm"
                               />
                               <span>{lead.assignedAgent?.replace("CEO", "Admin")}</span>
                             </div>
                           </td>
                           <td className="py-4 px-4">
-                            <span className={cn("px-2.5 py-0.5 text-[11px] font-medium rounded-full capitalize block w-fit", SOURCE_COLORS[lead.source])}>
+                            <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full capitalize block w-fit", SOURCE_COLORS[lead.source])}>
                               {lead.source}
                             </span>
                           </td>
                           <td className="py-4 px-6 text-right relative" onClick={e => e.stopPropagation()}>
-                            <button 
+                            <button
                               onClick={() => setRowMenuId(rowMenuId === lead.id ? null : lead.id)}
                               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                             >
                               <IconDotsVertical size={16} />
                             </button>
-                            
+
                             {rowMenuId === lead.id && (
                               <>
                                 <div className="fixed inset-0 z-10" onClick={() => setRowMenuId(null)} />
                                 <div className="absolute right-6 top-10 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 text-left animate-scale-in">
-                                  <button 
+                                  <button
                                     onClick={() => { setSelectedLeadId(lead.id); setRowMenuId(null); }}
                                     className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                                   >
                                     <IconCircleDot size={14} /> View Details
                                   </button>
-                                  <button 
+                                  <button
                                     onClick={() => { setEditingLead(lead); setIsModalOpen(true); setRowMenuId(null); }}
                                     className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                                   >
                                     <IconEdit size={14} /> Edit Lead
                                   </button>
-                                  <button 
-                                    onClick={() => { 
-                                      setSelectedChatDMId(getDMIdForContact(lead.clientName)); 
-                                      setRowMenuId(null); 
+                                  <button
+                                    onClick={() => {
+                                      setSelectedChatDMId(getDMIdForContact(lead.clientName));
+                                      setRowMenuId(null);
                                     }}
                                     className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                                   >
                                     <IconMessageCircle size={14} /> Send Message
                                   </button>
                                   <div className="border-t border-slate-100 my-1" />
-                                  <button 
+                                  <button
                                     onClick={() => { handleDeleteLead(lead.id); setRowMenuId(null); }}
                                     className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-red-650 hover:bg-red-50 font-medium transition-colors"
                                   >
@@ -1176,7 +1176,7 @@ export function PipelineBoard({
         {/* List Pagination (List view only) */}
         {viewMode === "list" && (
           <div className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
-            <span className="text-[12px] text-slate-400 font-medium font-mono">
+            <span className="text-base text-slate-400 font-medium font-mono">
               Showing {sortedLeads.length > 0 ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0}-
               {Math.min(currentPage * ROWS_PER_PAGE, sortedLeads.length)} of {sortedLeads.length} deals
             </span>
@@ -1189,7 +1189,7 @@ export function PipelineBoard({
               >
                 <IconChevronLeft size={16} />
               </button>
-              
+
               {Array.from({ length: totalPages }).map((_, i) => (
                 <button
                   key={i}
@@ -1219,51 +1219,51 @@ export function PipelineBoard({
       {/* ── Sliding Bulk Actions Bar ── */}
       <AnimatePresence>
         {selectedIds.length > 0 && (
-          <motion.div 
+          <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             className="fixed bottom-6 inset-x-0 mx-auto w-full max-w-2xl bg-[#151936] text-white p-4 rounded-2xl shadow-[0_20px_50px_rgba(21,25,54,0.3)] flex items-center justify-between z-[70] border border-slate-800/40"
           >
             <div className="flex items-center gap-3">
-              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center text-[12px] font-mono font-medium">
+              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center text-base font-mono font-medium">
                 {selectedIds.length}
               </span>
               <div>
                 <p className="text-[12.5px] font-medium leading-none">Deals Selected</p>
-                <p className="text-[11px] text-slate-400 mt-1">Batch actions will apply to marked deals.</p>
+                <p className="text-sm text-slate-400 mt-1">Batch actions will apply to marked deals.</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={handleBulkMessage}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-[12px] font-medium rounded-xl transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-base font-medium rounded-xl transition-all"
               >
                 <IconMessageCircle size={14} /> Message
               </button>
 
               {/* Set Stage Dropdown */}
-              <div className="relative group/stage px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-[12px] font-medium rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
+              <div className="relative group/stage px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-base font-medium rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
                 <span>Set Stage</span>
-                <span className="text-[10px]">▼</span>
+                <span className="text-sm ">▼</span>
                 <div className="absolute bottom-full right-0 mb-2 w-40 bg-white border border-slate-200 rounded-xl shadow-lg text-slate-700 py-1 hidden group-hover/stage:block animate-scale-in max-h-[160px] overflow-y-auto custom-scrollbar">
                   {Object.entries(STAGE_LABELS).map(([k, v]) => (
-                    <button key={k} onClick={() => handleBulkStageChange(k as PipelineStage)} className="w-full text-left px-3.5 py-2 text-[12px] hover:bg-slate-50 font-medium transition-colors">{v}</button>
+                    <button key={k} onClick={() => handleBulkStageChange(k as PipelineStage)} className="w-full text-left px-3.5 py-2 text-base hover:bg-slate-50 font-medium transition-colors">{v}</button>
                   ))}
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={handleBulkDelete}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-650 hover:bg-red-500 text-[12px] font-medium rounded-xl transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-650 hover:bg-red-500 text-base font-medium rounded-xl transition-all"
               >
                 <IconTrash size={14} /> Scrub Batch
               </button>
 
               <div className="w-[1px] h-6 bg-slate-700 mx-1" />
 
-              <button 
+              <button
                 onClick={() => setSelectedIds([])}
                 className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
               >
@@ -1275,14 +1275,14 @@ export function PipelineBoard({
       </AnimatePresence>
 
       {/* ── Detail Drawer & Creation Modal ── */}
-      <LeadDetailDrawer 
+      <LeadDetailDrawer
         leadId={selectedLeadId}
         onClose={() => setSelectedLeadId(null)}
         leadData={leads.find(l => l.id === selectedLeadId)}
         onUpdateLead={(updated) => setLeads(prev => prev.map(l => l.id === updated.id ? updated : l))}
       />
 
-      <LeadFormModal 
+      <LeadFormModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateOrUpdate}

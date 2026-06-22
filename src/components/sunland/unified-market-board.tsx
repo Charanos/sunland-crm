@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { IconArrowUpRight } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
 import { PropertyDetailDrawer } from "./property-detail-drawer";
+import { PaginationControls } from "@/components/ui/erp-primitives";
 
 type PropertyType = "All Properties" | "Apartment" | "Commercial" | "House" | "Land" | "Villa";
 
@@ -53,6 +54,14 @@ export function UnifiedMarketBoard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [drawerProperty, setDrawerProperty] = useState<any | null>(null);
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+
+  // Reset page when filter/search changes
+  useEffect(() => {
+    setPage(1);
+  }, [activeType, searchQuery]);
+
   // Filter listings based on active tab and search query
   const filteredListings = useMemo(() => {
     return MASTER_INVENTORY.filter(listing => {
@@ -62,6 +71,13 @@ export function UnifiedMarketBoard() {
       return matchesType && matchesSearch;
     });
   }, [activeType, searchQuery]);
+
+  const cardsPerPage = 3;
+  const totalPages = Math.ceil(filteredListings.length / cardsPerPage);
+  const paginatedListings = useMemo(() => {
+    const startIdx = (page - 1) * cardsPerPage;
+    return filteredListings.slice(startIdx, startIdx + cardsPerPage);
+  }, [filteredListings, page]);
 
   // Derived Analytics Data based on filter
   const analytics = useMemo(() => {
@@ -101,7 +117,7 @@ export function UnifiedMarketBoard() {
       <div className="py-6 border-t border-slate-200/60 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
         <div>
           <h2 className="title-serif text-slate-900 text-[22px]">Market Insights & Portfolio</h2>
-          <p className="text-[12px] text-slate-500 tracking-wide mt-1">Real-time analytical breakdown and inventory tracking.</p>
+          <p className="text-base text-slate-500 tracking-wide mt-1">Real-time analytical breakdown and inventory tracking.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -128,7 +144,7 @@ export function UnifiedMarketBoard() {
             placeholder="Search listings..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-[34px] rounded-lg border border-slate-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] pl-3 pr-3 text-[12px] text-slate-700 placeholder:text-slate-400 focus:border-[#151936]/40 focus:outline-none transition-all w-[180px] mt-1 lg:mt-0"
+            className="h-[34px] rounded-lg border border-slate-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] pl-3 pr-3 text-base text-slate-700 placeholder:text-slate-400 focus:border-[#151936]/40 focus:outline-none transition-all w-[180px] mt-1 lg:mt-0"
           />
         </div>
       </div>
@@ -140,10 +156,10 @@ export function UnifiedMarketBoard() {
           <div className="flex justify-between items-start mb-6">
             <div>
               <h3 className="text-[17px] text-slate-900 tracking-tight mb-1">Market Revenue Overview</h3>
-              <p className="text-[12px] text-slate-500">Available rental income this month</p>
+              <p className="text-base text-slate-500">Available rental income this month</p>
               <div className="mt-4 flex items-center gap-3">
                 <span className="text-[28px] font-mono text-slate-900 leading-none">KES {analytics.revenue}</span>
-                <span className="text-[10px] text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full flex items-center shadow-sm">
+                <span className="text-sm  text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full flex items-center shadow-sm">
                   {analytics.growth}
                 </span>
               </div>
@@ -165,18 +181,18 @@ export function UnifiedMarketBoard() {
                 )
               })}
             </div>
-            <div className="flex justify-between text-[10px] text-slate-400 border-b border-slate-100 pb-3 mb-4">
+            <div className="flex justify-between text-sm  text-slate-400 border-b border-slate-100 pb-3 mb-4">
               <span>Mon</span>
               <span>Sun</span>
             </div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="size-[12px] rounded-[3px] bg-[#151936]"></div>
-                <span className="text-[11px] text-slate-500">Occupied Units - {analytics.occupiedPercent}%</span>
+                <span className="text-sm text-slate-500">Occupied Units - {analytics.occupiedPercent}%</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="size-[12px] rounded-[3px] bg-[#eef2f6] border border-slate-200"></div>
-                <span className="text-[11px] text-slate-500">Vacant Units - {analytics.vacantPercent}%</span>
+                <span className="text-sm text-slate-500">Vacant Units - {analytics.vacantPercent}%</span>
               </div>
             </div>
           </div>
@@ -186,7 +202,7 @@ export function UnifiedMarketBoard() {
         <div className="xl:col-span-4 bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col hover:shadow-md transition-all">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-[16px] text-slate-900 tracking-tight">Properties Types</h3>
-            <span className="text-[11px] text-[#151936] bg-[#eef2f6] px-2.5 py-1 rounded-md border border-[#eef2f6]/50">{activeType}</span>
+            <span className="text-sm text-[#151936] bg-[#eef2f6] px-2.5 py-1 rounded-md border border-[#eef2f6]/50">{activeType}</span>
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center mb-6 mt-2">
@@ -200,38 +216,38 @@ export function UnifiedMarketBoard() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-full m-[22px] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                 <span className="text-[18px] font-mono text-slate-800 leading-none mb-1 tracking-tight">{analytics.totalProps}</span>
-                <span className="text-[9px] text-slate-400 uppercase tracking-widest text-center leading-[1.2]">Total<br />{activeType === 'All Properties' ? 'Property' : activeType}</span>
+                <span className="text-xs  text-slate-400 uppercase tracking-widest text-center leading-[1.2]">Total<br />{activeType === 'All Properties' ? 'Property' : activeType}</span>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-y-5 gap-x-2 mt-auto">
             <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'House' ? 'opacity-30' : 'opacity-100')}>
-              <div className="size-[34px] rounded-xl bg-[#0f766e] flex items-center justify-center text-[11px] text-white shadow-sm">40%</div>
+              <div className="size-[34px] rounded-xl bg-[#0f766e] flex items-center justify-center text-sm text-white shadow-sm">40%</div>
               <div>
-                <p className="text-[11px] text-slate-500 leading-none mb-1">House</p>
-                <p className="text-[13px] text-slate-800 font-mono leading-none">1,514</p>
+                <p className="text-sm text-slate-500 leading-none mb-1">House</p>
+                <p className="text-base text-slate-800 font-mono leading-none">1,514</p>
               </div>
             </div>
             <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Villa' ? 'opacity-30' : 'opacity-100')}>
-              <div className="size-[34px] rounded-xl bg-[#d97706] flex items-center justify-center text-[11px] text-white shadow-sm">12%</div>
+              <div className="size-[34px] rounded-xl bg-[#d97706] flex items-center justify-center text-sm text-white shadow-sm">12%</div>
               <div>
-                <p className="text-[11px] text-slate-500 leading-none mb-1">Villa</p>
-                <p className="text-[13px] text-slate-800 font-mono leading-none">454</p>
+                <p className="text-sm text-slate-500 leading-none mb-1">Villa</p>
+                <p className="text-base text-slate-800 font-mono leading-none">454</p>
               </div>
             </div>
             <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Apartment' ? 'opacity-30' : 'opacity-100')}>
-              <div className="size-[34px] rounded-xl bg-[#0ea5e9] flex items-center justify-center text-[11px] text-white shadow-sm">20%</div>
+              <div className="size-[34px] rounded-xl bg-[#0ea5e9] flex items-center justify-center text-sm text-white shadow-sm">20%</div>
               <div>
-                <p className="text-[11px] text-slate-500 leading-none mb-1">Apartment</p>
-                <p className="text-[13px] text-slate-800 font-mono leading-none">757</p>
+                <p className="text-sm text-slate-500 leading-none mb-1">Apartment</p>
+                <p className="text-base text-slate-800 font-mono leading-none">757</p>
               </div>
             </div>
             <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Commercial' ? 'opacity-30' : 'opacity-100')}>
-              <div className="size-[34px] rounded-xl bg-[#4f46e5] flex items-center justify-center text-[11px] text-white shadow-sm">8%</div>
+              <div className="size-[34px] rounded-xl bg-[#4f46e5] flex items-center justify-center text-sm text-white shadow-sm">8%</div>
               <div>
-                <p className="text-[11px] text-slate-500 leading-none mb-1">Commercial</p>
-                <p className="text-[13px] text-slate-800 font-mono leading-none">303</p>
+                <p className="text-sm text-slate-500 leading-none mb-1">Commercial</p>
+                <p className="text-base text-slate-800 font-mono leading-none">303</p>
               </div>
             </div>
           </div>
@@ -241,7 +257,7 @@ export function UnifiedMarketBoard() {
         <div className="xl:col-span-3 bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col hover:shadow-md transition-all">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-[16px] text-slate-900 tracking-tight">Top Agents</h3>
-            <button className="text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100 hover:bg-slate-100 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)]">This Month ⌄</button>
+            <button className="text-sm text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100 hover:bg-slate-100 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)]">This Month ⌄</button>
           </div>
 
           <div className="flex flex-col gap-[18px] mt-1">
@@ -252,13 +268,13 @@ export function UnifiedMarketBoard() {
                     <Image src={agent.img} alt={agent.name} fill sizes="40px" className="object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div>
-                    <h4 className="text-[13px] text-slate-800 leading-none mb-1.5 group-hover:text-[#151936] transition-colors">{agent.name}</h4>
-                    <p className="text-[10.5px] text-slate-400 leading-none">{agent.sold} sold - {agent.rented} rented</p>
+                    <h4 className="text-base text-slate-800 leading-none mb-1.5 group-hover:text-[#151936] transition-colors">{agent.name}</h4>
+                    <p className="text-sm text-slate-400 leading-none">{agent.sold} sold - {agent.rented} rented</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[12px] font-mono text-[#151936] leading-none mb-1">{agent.revenue}</p>
-                  <p className="text-[9px] text-slate-400 uppercase tracking-widest leading-none">annually</p>
+                  <p className="text-base font-mono text-[#151936] leading-none mb-1">{agent.revenue}</p>
+                  <p className="text-xs  text-slate-400 uppercase tracking-widest leading-none">annually</p>
                 </div>
               </div>
             ))}
@@ -267,74 +283,84 @@ export function UnifiedMarketBoard() {
       </section>
 
       {/* ── Filtered Property Listings Grid ── */}
-      {filteredListings.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-          {filteredListings.map((card) => (
-            <div 
-              key={card.id} 
-              className="bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-4 rounded-[20px] hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group animate-in fade-in zoom-in-95 duration-300 cursor-pointer"
-              onClick={() => setDrawerProperty({ ...card, name: card.title, price: `KES ${card.price.toLocaleString()}` })}
-            >
-              <div>
-                <div className="relative aspect-[16/10] w-full rounded-[14px] overflow-hidden shrink-0 shadow-sm border border-slate-100/50">
-                  <Image
-                    src={card.imageUrl}
-                    alt={card.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 250px"
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute top-2 right-2">
-                    <span className={cn(
-                      "text-[10px] px-2.5 py-1 rounded-md tracking-wide whitespace-nowrap shadow-sm",
-                      card.status === "Available" ? "bg-[#e6f4ea] text-[#1b431e]" :
-                        card.status === "Occupied" ? "bg-[#eef2f6] text-[#24354a]" :
-                          card.status === "Under Offer" ? "bg-[#fcf0e4] text-[#5e2b17]" : "bg-slate-100 text-slate-600"
-                    )}>
-                      {card.status}
-                    </span>
+      {paginatedListings.length > 0 ? (
+        <div className="space-y-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+            {paginatedListings.map((card) => (
+              <div
+                key={card.id}
+                className="bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-4 rounded-[20px] hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group animate-in fade-in zoom-in-95 duration-300 cursor-pointer"
+                onClick={() => setDrawerProperty({ ...card, name: card.title, price: `KES ${card.price.toLocaleString()}` })}
+              >
+                <div>
+                  <div className="relative aspect-[16/10] w-full rounded-[14px] overflow-hidden shrink-0 shadow-sm border border-slate-100/50">
+                    <Image
+                      src={card.imageUrl}
+                      alt={card.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 250px"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <span className={cn(
+                        "text-sm  px-2.5 py-1 rounded-md tracking-wide whitespace-nowrap shadow-sm",
+                        card.status === "Available" ? "bg-[#e6f4ea] text-[#1b431e]" :
+                          card.status === "Occupied" ? "bg-[#eef2f6] text-[#24354a]" :
+                            card.status === "Under Offer" ? "bg-[#fcf0e4] text-[#5e2b17]" : "bg-slate-100 text-slate-600"
+                      )}>
+                        {card.status}
+                      </span>
+                    </div>
+                    <div className="absolute top-2 left-2">
+                      <span className="text-sm  px-2 py-0.5 rounded border border-white/20 bg-black/40 backdrop-blur-md text-white shadow-sm">
+                        {card.type}
+                      </span>
+                    </div>
                   </div>
-                  <div className="absolute top-2 left-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded border border-white/20 bg-black/40 backdrop-blur-md text-white shadow-sm">
-                      {card.type}
-                    </span>
-                  </div>
+                  <h4 className="text-[14px] text-slate-800 mt-4 leading-snug line-clamp-1 group-hover:text-[#151936] transition-colors">
+                    {card.title}
+                  </h4>
+                  <p className="text-sm  text-slate-400 mt-1 truncate">{card.location}</p>
                 </div>
-                <h4 className="text-[14px] text-slate-800 mt-4 leading-snug line-clamp-1 group-hover:text-[#151936] transition-colors">
-                  {card.title}
-                </h4>
-                <p className="text-[11.5px] text-slate-400 mt-1 truncate">{card.location}</p>
-              </div>
 
-              <div className="mt-5 pt-4 border-t border-slate-50 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    src={card.agent.img}
-                    fallback={card.agent.name.substring(0, 2)}
-                    className="size-8 shadow-sm border border-slate-100"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-[12px] text-slate-700 leading-none truncate mb-1">{card.agent.name}</p>
-                    <p className="text-[10px] text-slate-400 leading-none truncate">Listing Agent</p>
+                <div className="mt-5 pt-4 border-t border-slate-50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      src={card.agent.img}
+                      fallback={card.agent.name.substring(0, 2)}
+                      className="size-8 shadow-sm border border-slate-100"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-base text-slate-700 leading-none truncate mb-1">{card.agent.name}</p>
+                      <p className="text-sm  text-slate-400 leading-none truncate">Listing Agent</p>
+                    </div>
                   </div>
+                  <p className="text-[14px] font-mono text-[#151936] tracking-tight">KES {card.price >= 1000000 ? (card.price / 1000000).toFixed(1) + 'M' : (card.price / 1000).toFixed(0) + 'K'}</p>
                 </div>
-                <p className="text-[14px] font-mono text-[#151936] tracking-tight">KES {card.price >= 1000000 ? (card.price / 1000000).toFixed(1) + 'M' : (card.price / 1000).toFixed(0) + 'K'}</p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              label={`Showing ${paginatedListings.length} of ${filteredListings.length} properties`}
+            />
+          )}
         </div>
       ) : (
         <div className="w-full h-[200px] flex items-center justify-center bg-white rounded-[20px] border border-slate-100 border-dashed">
-          <p className="text-[13px] text-slate-400">No properties match your filter criteria.</p>
+          <p className="text-base text-slate-400">No properties match your filter criteria.</p>
         </div>
       )}
 
-      <PropertyDetailDrawer 
-        open={!!drawerProperty} 
-        onClose={() => setDrawerProperty(null)} 
-        property={drawerProperty} 
-        onEdit={() => {}} 
-        onDelete={() => {}} 
+      <PropertyDetailDrawer
+        open={!!drawerProperty}
+        onClose={() => setDrawerProperty(null)}
+        property={drawerProperty}
+        onEdit={() => { }}
+        onDelete={() => { }}
       />
     </div>
   );

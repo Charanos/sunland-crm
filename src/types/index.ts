@@ -1,13 +1,20 @@
 export type UserRole =
   | "ceo"
   | "general_manager"
-  | "bd_head"
-  | "agent"
-  | "property_manager"
-  | "accounts_manager"
-  | "accounts_officer"
-  | "hr_manager"
-  | "auditor";
+  | "finance_head" | "accounts_manager"
+  | "finance_officer" | "accounts_officer"
+  | "rentals_officer" | "rentals_mandates_officer"
+  | "payroll_officer"
+  | "hr_head" | "hr_manager"
+  | "hr_officer"
+  | "line_manager" | "bd_head"
+  | "agent" | "bd_agent"
+  | "front_office_head"
+  | "front_office_admin"
+  | "driver"
+  | "operations_lead" | "property_manager"
+  | "valuer"
+  | "auditor" | "auditor_compliance";
 
 export type PipelineStage =
   | "inquiry"

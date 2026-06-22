@@ -75,7 +75,7 @@ export function MobileNavigationDrawer() {
             <img
               src="/logo.png"
               className="h-8 w-auto max-w-[160px] object-contain pl-1"
-              alt="Sunland CRM Logo"
+              alt="Sunland ERP Logo"
             />
           </Link>
           <IconButton
@@ -102,7 +102,7 @@ export function MobileNavigationDrawer() {
                     return (
                       <Link
                         className={cn(
-                          "focus-ring relative flex h-9.5 items-center gap-3 rounded-xl px-3 text-sm text-white/80 transition",
+                          "focus-ring relative flex h-9.5 items-center gap-3 rounded-xl px-3 text-sm  text-white/80 transition",
                           "hover:text-white",
                           isActive && "text-white font-medium",
                         )}
@@ -122,7 +122,7 @@ export function MobileNavigationDrawer() {
                           <IconComponent aria-hidden size={17} stroke={1.8} />
                           {item.label}
                           {item.badge ? (
-                            <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/70">
+                            <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-sm  text-white/70">
                               {item.badge}
                             </span>
                           ) : null}
@@ -142,7 +142,7 @@ export function MobileNavigationDrawer() {
             {/* ── Team Section ── */}
             <div>
               <div className="flex items-center justify-between mb-2 pl-2 pr-1">
-                <p className="label-caps tracking-widest text-white/60 text-[11px] uppercase font-semibold">Team</p>
+                <p className="label-caps tracking-widest text-white/60 text-sm uppercase font-medium">Team</p>
               </div>
               <div className="space-y-0.5">
                 {TEAM_MEMBERS.map((member) => (
@@ -167,10 +167,10 @@ export function MobileNavigationDrawer() {
                       className="size-8 shrink-0"
                     />
                     <div className="min-w-0 text-left">
-                      <p className="truncate text-[13px] text-white/75 group-hover:text-white/95 transition-colors">
+                      <p className="truncate text-base text-white/75 group-hover:text-white/95 transition-colors">
                         {member.name}
                       </p>
-                      <p className="truncate text-[11px] text-white/40">{member.role}</p>
+                      <p className="truncate text-sm text-white/40">{member.role}</p>
                     </div>
                   </button>
                 ))}

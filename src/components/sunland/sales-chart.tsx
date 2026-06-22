@@ -22,8 +22,8 @@ export default function SalesChart({
     if (active && payload && payload.length) {
       return (
         <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
-          <p className="text-[12px] font-medium text-slate-400 uppercase tracking-wider mb-2">{label}</p>
-          <div className="space-y-1.5 text-sm font-medium">
+          <p className="text-base font-medium text-slate-400 uppercase tracking-wider mb-2">{label}</p>
+          <div className="space-y-1.5 text-sm  font-medium">
             {payload.map((entry: any, i: number) => (
               <p key={i} className="flex items-center justify-between gap-4" style={{ color: entry.color }}>
                 <span>{entry.name}:</span>
@@ -78,7 +78,7 @@ export default function SalesChart({
             height={36}
             iconSize={8}
             iconType="circle"
-            formatter={(value) => <span className="text-slate-500 font-medium text-sm">{value}</span>}
+            formatter={(value) => <span className="text-slate-500 font-medium text-sm ">{value}</span>}
           />
           {showRevenue && (
             <Bar

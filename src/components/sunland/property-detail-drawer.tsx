@@ -122,7 +122,7 @@ export function PropertyDetailDrawer({
           <div className="absolute top-3 right-3">
             <span
               className={cn(
-                "text-[11px] px-3 py-1 rounded-lg font-medium border shadow-sm",
+                "text-sm px-3 py-1 rounded-lg font-medium border shadow-sm",
                 STATUS_STYLES[property.status]
               )}
             >
@@ -130,7 +130,7 @@ export function PropertyDetailDrawer({
             </span>
           </div>
           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-            <p className="text-white/70 text-[11px] font-medium uppercase tracking-wider mb-1">
+            <p className="text-white/70 text-sm font-medium uppercase tracking-wider mb-1">
               {property.type}
             </p>
             <h3 className="text-white text-lg font-medium leading-snug">
@@ -147,14 +147,14 @@ export function PropertyDetailDrawer({
             </p>
             <div className="flex items-center gap-1.5 mt-2 text-slate-500">
               <IconMapPin size={13} stroke={2} />
-              <span className="text-[12px] font-medium">{property.location}</span>
+              <span className="text-base font-medium">{property.location}</span>
             </div>
           </div>
           <div className="text-right">
             <span className="text-[14px] font-mono font-medium text-slate-600">
               {property.roi}
             </span>
-            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">
+            <p className="text-sm  text-slate-400 font-medium uppercase tracking-wider mt-0.5">
               Annual ROI
             </p>
           </div>
@@ -179,7 +179,7 @@ export function PropertyDetailDrawer({
                 <p className="text-[16px] font-mono font-medium text-slate-800 leading-none">
                   {tile.value}
                 </p>
-                <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
+                <p className="text-sm  text-slate-400 font-medium mt-1 uppercase tracking-wider">
                   {tile.label}
                 </p>
               </div>
@@ -201,10 +201,10 @@ export function PropertyDetailDrawer({
               />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-medium text-slate-800 leading-none mb-1">
+              <p className="text-base font-medium text-slate-800 leading-none mb-1">
                 {details.agent.name}
               </p>
-              <p className="text-[11px] text-slate-500 font-medium leading-none">
+              <p className="text-sm text-slate-500 font-medium leading-none">
                 {details.agent.role}
               </p>
             </div>
@@ -241,7 +241,7 @@ export function PropertyDetailDrawer({
                   <p className="text-[12.5px] text-slate-700 leading-snug">
                     {activity.text}
                   </p>
-                  <p className="text-[11px] text-slate-400 font-medium mt-0.5 flex items-center gap-1">
+                  <p className="text-sm text-slate-400 font-medium mt-0.5 flex items-center gap-1">
                     <IconClock size={11} stroke={2} />
                     {activity.time}
                   </p>

@@ -1,0 +1,382 @@
+import fs from "fs";
+import path from "path";
+
+// Manually load env variables from .env.local in development environment
+try {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envConfig = fs.readFileSync(envPath, "utf-8");
+    for (const line of envConfig.split("\n")) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        let value = match[2] || "";
+        if (value.endsWith("\r")) {
+          value = value.substring(0, value.length - 1);
+        }
+        if (value.startsWith('"') && value.endsWith('"')) {
+          value = value.substring(1, value.length - 1);
+        }
+        process.env[key] = value;
+      }
+    }
+  }
+} catch (e) {
+  console.warn("Failed to load .env.local", e);
+}
+
+import { db } from "@/db";
+import {
+  entities,
+  users,
+  contacts,
+  properties,
+  leads,
+  leases,
+  maintenanceRequests,
+  transactions,
+  approvalRequests,
+  notifications,
+  activityLogs,
+} from "@/db/schema";
+import { hashPassword } from "@/lib/auth/password";
+
+async function runSeed() {
+  console.log("--------------------------------------------------");
+  console.log("Initializing Demo Workspace & Ledger Ledger Setup");
+  console.log("--------------------------------------------------");
+
+  try {
+    // 1. Clean existing records in reverse dependency order
+    console.log("Step 1: Clearing existing records...");
+    await db.delete(activityLogs);
+    await db.delete(notifications);
+    await db.delete(approvalRequests);
+    await db.delete(transactions);
+    await db.delete(leases);
+    await db.delete(maintenanceRequests);
+    await db.delete(leads);
+    await db.delete(properties);
+    await db.delete(contacts);
+    await db.delete(users);
+    await db.delete(entities);
+    console.log("Database cleared successfully.");
+
+    // 2. Insert Entities (Divisions)
+    console.log("Step 2: Populating business divisions...");
+    const [groupEntity, commEntity, resEntity, valEntity] = await db
+      .insert(entities)
+      .values([
+        {
+          slug: "group",
+          name: "Sunland Group",
+          legalName: "Sunland Group Holdings Limited",
+          isConsolidated: true,
+        },
+        {
+          slug: "commercial",
+          name: "Sunland Commercial",
+          legalName: "Sunland Commercial Properties Limited",
+          isConsolidated: false,
+        },
+        {
+          slug: "residential",
+          name: "Sunland Residential",
+          legalName: "Sunland Residential Estates Limited",
+          isConsolidated: false,
+        },
+        {
+          slug: "valuers",
+          name: "Sunland Valuers Ltd",
+          legalName: "Sunland Valuers and Advisory Services Limited",
+          isConsolidated: false,
+        },
+      ])
+      .returning();
+
+    console.log(`Created 4 divisions: Group (${groupEntity.id}), Commercial (${commEntity.id}), Residential (${resEntity.id}), Valuers (${valEntity.id}).`);
+
+    // 3. Create Demo Users
+    console.log("Step 3: Creating administrative and operational user roles...");
+    const hashedPass = await hashPassword("sunland-demo");
+
+    const [ceoUser, , , financeOfficerUser, pmUser] = await db
+      .insert(users)
+      .values([
+        {
+          email: "ceo@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Paul Amos",
+          role: "ceo",
+          title: "Chief Executive Officer",
+          primaryEntityId: groupEntity.id,
+        },
+        {
+          email: "gm@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Grace Mutua",
+          role: "general_manager",
+          title: "General Manager",
+          primaryEntityId: groupEntity.id,
+        },
+        {
+          email: "finance.head@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Dennis Munge",
+          role: "finance_head",
+          title: "Head of Finance",
+          primaryEntityId: groupEntity.id,
+        },
+        {
+          email: "finance.officer@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Esther Howard",
+          role: "finance_officer",
+          title: "Finance Officer",
+          primaryEntityId: commEntity.id,
+        },
+        {
+          email: "ops.lead@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Jacob Jones",
+          role: "operations_lead",
+          title: "Operations Director",
+          primaryEntityId: resEntity.id,
+        },
+        {
+          email: "hr.head@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Cody Fisher",
+          role: "hr_head",
+          title: "Head of Human Resources",
+          primaryEntityId: groupEntity.id,
+        },
+        {
+          email: "line.manager@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Jared Omondi",
+          role: "line_manager",
+          title: "Line Manager",
+          primaryEntityId: resEntity.id,
+        },
+        {
+          email: "front.office@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Sharon Koech",
+          role: "front_office_head",
+          title: "Front Office Lead",
+          primaryEntityId: groupEntity.id,
+        },
+      ])
+      .returning();
+
+    console.log(`Created 6 users. Authenticate with email and password 'sunland-demo'.`);
+
+    // 4. Create Contacts (Landlords and Tenants)
+    console.log("Step 4: Creating client and partner records...");
+    const [landlordA, landlordB, tenantA, tenantB] = await db
+      .insert(contacts)
+      .values([
+        {
+          entityId: commEntity.id,
+          type: "landlord",
+          displayName: "Kariuki Holdings",
+          companyName: "Kariuki Real Estate Investments Ltd",
+          email: "investments@kariuki.co.ke",
+          phone: "+254722000111",
+          source: "Direct Referral",
+          assignedToId: ceoUser.id,
+        },
+        {
+          entityId: resEntity.id,
+          type: "landlord",
+          displayName: "Margaret Wambui",
+          email: "margaret@wambui.me",
+          phone: "+254733111222",
+          source: "Marketing Campaign",
+          assignedToId: pmUser.id,
+        },
+        {
+          entityId: commEntity.id,
+          type: "tenant",
+          displayName: "Nexus Tech Solutions",
+          companyName: "Nexus Technology Solutions Ltd",
+          email: "office@nexustech.co.ke",
+          phone: "+254711222333",
+          source: "Listing Portal",
+          assignedToId: financeOfficerUser.id,
+        },
+        {
+          entityId: resEntity.id,
+          type: "tenant",
+          displayName: "Alice Odhiambo",
+          email: "alice@odhiambo.co.ke",
+          phone: "+254700333444",
+          source: "Walk-in Client",
+          assignedToId: pmUser.id,
+        },
+      ])
+      .returning();
+
+    console.log("Created 4 contacts.");
+
+    // 5. Create Properties
+    console.log("Step 5: Logging managed properties...");
+    const [propComm, propRes] = await db
+      .insert(properties)
+      .values([
+        {
+          entityId: commEntity.id,
+          propertyCode: "PROP-COMM-001",
+          name: "Nexus Office Plaza",
+          propertyType: "Commercial Office",
+          listingType: "Rental",
+          status: "occupied",
+          location: "Westlands, Nairobi",
+          ownerContactId: landlordA.id,
+          monthlyRentKes: "350000.00",
+          sizeSqft: 2400,
+        },
+        {
+          entityId: resEntity.id,
+          propertyCode: "PROP-RES-001",
+          name: "Lavington Heights Unit 4B",
+          propertyType: "Apartment",
+          listingType: "Rental",
+          status: "occupied",
+          location: "Lavington, Nairobi",
+          ownerContactId: landlordB.id,
+          monthlyRentKes: "95000.00",
+          sizeSqft: 1500,
+        },
+      ])
+      .returning();
+
+    console.log("Created 2 properties.");
+
+    // 6. Create Leases
+    console.log("Step 6: Executing lease agreements...");
+    const startsAt = new Date();
+    startsAt.setMonth(startsAt.getMonth() - 2);
+    const endsAt = new Date();
+    endsAt.setFullYear(endsAt.getFullYear() + 1);
+
+    const [leaseA, leaseB] = await db
+      .insert(leases)
+      .values([
+        {
+          entityId: commEntity.id,
+          propertyId: propComm.id,
+          tenantContactId: tenantA.id,
+          startsAt,
+          endsAt,
+          monthlyRentKes: "350000.00",
+          depositKes: "700000.00",
+          isActive: true,
+        },
+        {
+          entityId: resEntity.id,
+          propertyId: propRes.id,
+          tenantContactId: tenantB.id,
+          startsAt,
+          endsAt,
+          monthlyRentKes: "95000.00",
+          depositKes: "190000.00",
+          isActive: true,
+        },
+      ])
+      .returning();
+
+    console.log("Created 2 active leases.");
+
+    // 7. Create Transactions
+    console.log("Step 7: Generating ledger transactions...");
+    await db.insert(transactions).values([
+      {
+        entityId: commEntity.id,
+        type: "rent",
+        contactId: tenantA.id,
+        propertyId: propComm.id,
+        leaseId: leaseA.id,
+        amountKes: "350000.00",
+        occurredAt: new Date(),
+        recordedById: financeOfficerUser.id,
+        notes: "Rent payment for Nexus Tech Solutions - Month of June",
+      },
+      {
+        entityId: resEntity.id,
+        type: "rent",
+        contactId: tenantB.id,
+        propertyId: propRes.id,
+        leaseId: leaseB.id,
+        amountKes: "95000.00",
+        occurredAt: new Date(),
+        recordedById: pmUser.id,
+        notes: "Rent payment for Alice Odhiambo - Month of June",
+      },
+      {
+        entityId: commEntity.id,
+        type: "expense",
+        contactId: landlordA.id,
+        propertyId: propComm.id,
+        amountKes: "45000.00",
+        occurredAt: new Date(),
+        recordedById: financeOfficerUser.id,
+        notes: "Elevator repair maintenance cost - Westlands Plaza",
+      },
+    ]);
+
+    console.log("Created 3 initial transactions.");
+
+    // 8. Create Approval Requests
+    console.log("Step 8: Populating dynamic approvals queue...");
+    await db.insert(approvalRequests).values([
+      {
+        entityId: commEntity.id,
+        requestType: "petty_cash",
+        relatedTable: "transactions",
+        relatedId: leaseA.id, // using lease id for demonstration
+        requestedById: financeOfficerUser.id,
+        amountKes: "6000.00",
+        requiredApproverRole: "gm",
+        status: "pending",
+        decisionNotes: "Needs GM verification for office stationaries above threshold.",
+      },
+      {
+        entityId: resEntity.id,
+        requestType: "mandate_activation",
+        relatedTable: "leases",
+        relatedId: leaseB.id,
+        requestedById: pmUser.id,
+        amountKes: "5200000.00",
+        requiredApproverRole: "ceo",
+        status: "pending",
+        decisionNotes: "Annualized contract value exceeds CEO threshold requirement.",
+      },
+    ]);
+
+    console.log("Created 2 pending approval requests.");
+
+    // 9. Activity Logs
+    console.log("Step 9: Writing initial system activity audit logs...");
+    await db.insert(activityLogs).values([
+      {
+        entityId: groupEntity.id,
+        actorId: ceoUser.id,
+        associatedType: "entities",
+        associatedId: groupEntity.id,
+        action: "initialize_workspace",
+        summary: "Demo Workspace has been successfully initialized and configured.",
+      },
+    ]);
+
+    console.log("--------------------------------------------------");
+    console.log("Database Seed Finished Successfully!");
+    console.log("--------------------------------------------------");
+  } catch (error) {
+    console.error("Database seeding failed:", error);
+    throw error;
+  }
+}
+
+runSeed();

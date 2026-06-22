@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  IconX, 
-  IconMessageCircle, 
-  IconPhoneCall, 
+import {
+  IconX,
+  IconMessageCircle,
+  IconPhoneCall,
   IconMail,
   IconEdit,
   IconClock,
@@ -32,9 +32,9 @@ interface ContactDetailDrawerProps {
   onUpdateContact?: (updated: Contact) => void;
 }
 
-export function ContactDetailDrawer({ 
-  contactId, 
-  onClose, 
+export function ContactDetailDrawer({
+  contactId,
+  onClose,
   contactData,
   onUpdateContact
 }: ContactDetailDrawerProps) {
@@ -93,16 +93,16 @@ export function ContactDetailDrawer({
       width="30rem" // 480px is 30rem
       footer={
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={openChat}
-            className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#151936] text-white hover:bg-[#1f2552] rounded-xl text-[13px] font-medium transition-colors shadow-sm"
+            className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#151936] text-white hover:bg-[#1f2552] rounded-xl text-base font-medium transition-colors shadow-sm"
           >
-            <IconMessageCircle size={16} /> 
+            <IconMessageCircle size={16} />
             <span>Send Message</span>
           </button>
           <a
             href={`tel:${contactData.phone}`}
-            className="flex-1 flex items-center justify-center gap-2 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-[13px] font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-base font-medium transition-colors"
           >
             <IconPhoneCall size={16} />
             <span>Call Contact</span>
@@ -111,14 +111,14 @@ export function ContactDetailDrawer({
       }
     >
       <div className="space-y-6">
-        
+
         {/* Profile Card Header */}
         <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-5 flex flex-col items-center text-center">
           <div className="relative mb-3">
-            <Avatar 
-              src={contactData.avatar} 
-              fallback={contactData.name[0]} 
-              className="size-20 border-4 border-white shadow-md" 
+            <Avatar
+              src={contactData.avatar}
+              fallback={contactData.name[0]}
+              className="size-20 border-4 border-white shadow-md"
             />
             <span className={cn(
               "absolute bottom-0 right-0 size-4 rounded-full border-2 border-white",
@@ -129,15 +129,15 @@ export function ContactDetailDrawer({
           <h3 className="text-[18px] font-medium text-slate-900 leading-snug">
             {contactData.name}
           </h3>
-          <p className="text-[12px] text-slate-400 font-medium mt-0.5 capitalize">
+          <p className="text-base text-slate-400 font-medium mt-0.5 capitalize">
             Assigned Agent: {contactData.assignedAgent || "Unassigned"}
           </p>
 
           <div className="flex items-center gap-2 mt-3 flex-wrap justify-center">
-            <span className={cn("px-2.5 py-0.5 text-[11px] font-medium rounded-full border", TYPE_COLORS[contactData.type])}>
+            <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full border", TYPE_COLORS[contactData.type])}>
               {TYPE_LABELS[contactData.type]}
             </span>
-            <span className={cn("px-2.5 py-0.5 text-[11px] font-medium rounded-full border capitalize", STATUS_COLORS[contactData.status])}>
+            <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full border capitalize", STATUS_COLORS[contactData.status])}>
               {STATUS_LABELS[contactData.status]}
             </span>
           </div>
@@ -156,10 +156,10 @@ export function ContactDetailDrawer({
 
         {/* Financial Metrics */}
         <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest mb-3">Financial Overview</p>
+          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mb-3">Financial Overview</p>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-3 bg-emerald-50/40 border border-emerald-100 rounded-xl">
-              <span className="text-[11px] font-medium text-emerald-700 block mb-1">Total Paid (KES)</span>
+              <span className="text-sm font-medium text-emerald-700 block mb-1">Total Paid (KES)</span>
               <span className="text-[18px] font-medium font-mono text-emerald-800 tracking-tight leading-none">
                 {formatKES(contactData.financials.paid)}
               </span>
@@ -168,7 +168,7 @@ export function ContactDetailDrawer({
               "p-3 rounded-xl border",
               contactData.financials.arrears > 0 ? "bg-rose-50/40 border-rose-100" : "bg-slate-50/50 border-slate-100"
             )}>
-              <span className={cn("text-[11px] font-medium block mb-1", contactData.financials.arrears > 0 ? "text-rose-700" : "text-slate-500")}>Arrears (KES)</span>
+              <span className={cn("text-sm font-medium block mb-1", contactData.financials.arrears > 0 ? "text-rose-700" : "text-slate-500")}>Arrears (KES)</span>
               <span className={cn("text-[18px] font-medium font-mono tracking-tight leading-none", contactData.financials.arrears > 0 ? "text-rose-800" : "text-slate-700")}>
                 {formatKES(contactData.financials.arrears)}
               </span>
@@ -184,7 +184,7 @@ export function ContactDetailDrawer({
 
         {/* Property Associations */}
         <div className="space-y-3">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">Associated Properties</p>
+          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest">Associated Properties</p>
           {contactData.associatedProperties.length > 0 ? (
             <div className="grid grid-cols-1 gap-2">
               {contactData.associatedProperties.map((prop) => (
@@ -194,8 +194,8 @@ export function ContactDetailDrawer({
                       <IconBuilding size={16} />
                     </div>
                     <div>
-                      <p className="text-[13px] font-medium text-slate-800 leading-snug">{prop.name}</p>
-                      <p className="text-[11px] text-slate-400 capitalize">{prop.role || TYPE_LABELS[contactData.type]}</p>
+                      <p className="text-base font-medium text-slate-800 leading-snug">{prop.name}</p>
+                      <p className="text-sm text-slate-400 capitalize">{prop.role || TYPE_LABELS[contactData.type]}</p>
                     </div>
                   </div>
                   <IconLink size={14} className="text-slate-300" />
@@ -204,25 +204,25 @@ export function ContactDetailDrawer({
             </div>
           ) : (
             <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center">
-              <p className="text-[12px] text-slate-400 font-medium">No associated properties found.</p>
+              <p className="text-base text-slate-400 font-medium">No associated properties found.</p>
             </div>
           )}
         </div>
 
         {/* Engagement Timeline */}
         <div className="space-y-4">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">Engagement Timeline</p>
-          
+          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest">Engagement Timeline</p>
+
           {/* Quick Note Form */}
           <form onSubmit={handleAddNote} className="flex gap-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Add contact note or interaction log..."
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10"
             />
-            <button 
+            <button
               type="submit"
               className="px-4 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] rounded-xl text-[12.5px] font-medium transition-colors"
             >
@@ -233,11 +233,11 @@ export function ContactDetailDrawer({
           {/* Timeline List */}
           <div className="relative pl-3 space-y-4 pt-2">
             <div className="absolute top-2 bottom-2 left-[19px] w-[1px] bg-slate-100" />
-            
+
             <AnimatePresence initial={false}>
               {timeline.map((log) => (
-                <motion.div 
-                  key={log.id} 
+                <motion.div
+                  key={log.id}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
@@ -246,14 +246,14 @@ export function ContactDetailDrawer({
                   <div className="size-[14px] rounded-full bg-white border-[3px] border-[#151936] shadow-sm z-10 shrink-0 mt-1" />
                   <div className="flex-1 bg-slate-50/50 border border-slate-100 rounded-xl p-3">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-800">
+                      <div className="flex items-center gap-1.5 text-base font-medium text-slate-800">
                         {getLogIcon(log.type)}
                         <span>{log.summary}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono">{log.date}</span>
+                      <span className="text-sm  text-slate-400 font-mono">{log.date}</span>
                     </div>
                     {log.details && (
-                      <p className="text-[12px] text-slate-500 leading-relaxed mt-1">
+                      <p className="text-base text-slate-500 leading-relaxed mt-1">
                         {log.details}
                       </p>
                     )}
@@ -265,7 +265,7 @@ export function ContactDetailDrawer({
         </div>
 
         {/* Meta Info */}
-        <div className="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4 text-[11px] text-slate-400 uppercase tracking-widest font-medium">
+        <div className="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4 text-sm text-slate-400 uppercase tracking-widest font-medium">
           <div>
             <span>Created Date:</span>
             <span className="block text-[12.5px] text-slate-600 normal-case mt-0.5 font-mono">

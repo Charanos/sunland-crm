@@ -104,11 +104,11 @@ function EntitySwitchOverlayInner() {
         >
           {/* Header context */}
           <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
-            <div className="flex items-center gap-2 text-white/50 text-[12px] uppercase tracking-wider font-semibold">
+            <div className="flex items-center gap-2 text-white/50 text-base uppercase tracking-wider font-medium">
               <IconNetwork size={14} className="animate-pulse text-[var(--primary)]" />
               <span>Switching Context</span>
             </div>
-            <div className="text-[11px] font-mono text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-full border border-[var(--primary)]/20">
+            <div className="text-sm font-mono text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-full border border-[var(--primary)]/20">
               {progress}% Loaded
             </div>
           </div>
@@ -140,8 +140,8 @@ function EntitySwitchOverlayInner() {
             <h2 className="text-[18px] font-medium tracking-tight text-white/95">
               {targetEntity.name}
             </h2>
-            <p className="mt-1 text-[13px] text-white/45 font-medium">{targetEntity.subtitle}</p>
-            <p className="mt-3 text-[13px] leading-relaxed text-white/70 bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
+            <p className="mt-1 text-base text-white/45 font-medium">{targetEntity.subtitle}</p>
+            <p className="mt-3 text-base leading-relaxed text-white/70 bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
               {targetEntity.description}
             </p>
           </div>
@@ -149,7 +149,7 @@ function EntitySwitchOverlayInner() {
           {/* Stats Breakdown (Fades in partially) */}
           <div className="mt-6 grid grid-cols-3 gap-2.5">
             <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 text-center transition hover:border-white/[0.08]">
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-white/35">Properties</span>
+              <span className="block text-sm font-medium uppercase tracking-wider text-white/35">Properties</span>
               <motion.span
                 animate={{ opacity: progress > 30 ? 1 : 0.2 }}
                 className="mt-1.5 block font-mono text-[16px] font-medium text-white/90"
@@ -158,7 +158,7 @@ function EntitySwitchOverlayInner() {
               </motion.span>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 text-center transition hover:border-white/[0.08]">
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-white/35">Contacts</span>
+              <span className="block text-sm font-medium uppercase tracking-wider text-white/35">Contacts</span>
               <motion.span
                 animate={{ opacity: progress > 55 ? 1 : 0.2 }}
                 className="mt-1.5 block font-mono text-[16px] font-medium text-white/90"
@@ -167,10 +167,10 @@ function EntitySwitchOverlayInner() {
               </motion.span>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 text-center transition hover:border-white/[0.08]">
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-white/35">Revenue</span>
+              <span className="block text-sm font-medium uppercase tracking-wider text-white/35">Revenue</span>
               <motion.span
                 animate={{ opacity: progress > 80 ? 1 : 0.2 }}
-                className="mt-1.5 block font-mono text-[15px] font-medium text-[var(--primary)]"
+                className="mt-1.5 block font-mono text-base  font-medium text-[var(--primary)]"
               >
                 {progress > 80 ? targetEntity.stats.revenue : "—"}
               </motion.span>
@@ -179,7 +179,7 @@ function EntitySwitchOverlayInner() {
 
           {/* Loading status text & spinner */}
           <div className="mt-6 flex items-center justify-between border-t border-white/[0.06] pt-4">
-            <span className="text-[12px] font-medium text-white/50">{statusText}</span>
+            <span className="text-base font-medium text-white/50">{statusText}</span>
             {progress < 100 ? (
               <IconLoader2 size={16} className="animate-spin text-[var(--primary)]" />
             ) : (

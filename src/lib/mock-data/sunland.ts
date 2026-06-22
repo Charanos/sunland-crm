@@ -460,7 +460,7 @@ export const executiveDashboardMock: ExecutiveDashboardMock = {
       title: "Payment received",
       body: "KES 720K rent payment recorded for Westlands Tower 4B.",
       tone: "success",
-      href: "/admin/finance",
+      href: "/fin",
     },
   ],
   finance: {

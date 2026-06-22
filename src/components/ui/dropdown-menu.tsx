@@ -50,7 +50,7 @@ export function DropdownMenu({
         type="button"
       >
         {trigger ?? (
-          <span className="inline-flex h-10 items-center gap-2 rounded-full border border-[var(--outline)] bg-white px-4 text-sm">
+          <span className="inline-flex h-10 items-center gap-2 rounded-full border border-[var(--outline)] bg-white px-4 text-sm ">
             {label}
             <IconChevronDown aria-hidden size={15} />
           </span>
@@ -80,7 +80,7 @@ export function DropdownItem({
 }) {
   return (
     <button
-      className="focus-ring flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-[var(--on-surface)] hover:bg-[var(--surface-muted)]"
+      className="focus-ring flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm  text-[var(--on-surface)] hover:bg-[var(--surface-muted)]"
       onClick={onClick}
       role="menuitem"
       type="button"

@@ -1,4 +1,5 @@
 import type { Icon } from "@tabler/icons-react";
+import { BoardHeader } from "@/components/ui/erp-primitives";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export function ModulePage({
@@ -20,13 +21,11 @@ export function ModulePage({
 }) {
   return (
     <div className="mx-auto flex max-w-[88rem] flex-col gap-6">
-      <section>
-        <p className="label-caps text-[var(--on-surface-dim)]">{eyebrow}</p>
-        <h1 className="headline-lg mt-2">{title}</h1>
-        <p className="body-md mt-2 max-w-2xl text-[var(--on-surface-dim)]">
-          {description}
-        </p>
-      </section>
+      <BoardHeader
+        eyebrow={<p className="label-caps text-[var(--on-surface-dim)]">{eyebrow}</p>}
+        title={title}
+        description={description}
+      />
       <EmptyState
         action={action}
         description={emptyDescription}

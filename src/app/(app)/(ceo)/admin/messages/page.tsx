@@ -40,12 +40,12 @@ export default function MessagesPage() {
               <input
                 type="text"
                 placeholder="Search messages..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#151936]/30 transition-colors"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:border-[#151936]/30 transition-colors"
               />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
-            <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3">Direct Messages</h4>
+            <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2 px-3">Direct Messages</h4>
             <div className="space-y-1">
               {MOCK_DMS.map((dm) => (
                 <button
@@ -65,12 +65,12 @@ export default function MessagesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
                       <h4 className={cn("text-[14px] font-medium truncate transition-colors", activeChatId === dm.id ? "text-[#151936]" : "text-slate-700")}>{dm.name}</h4>
-                      <span className="text-[11px] text-slate-400">10:28</span>
+                      <span className="text-sm text-slate-400">10:28</span>
                     </div>
-                    <p className={cn("text-[12px] truncate pr-2", activeChatId === dm.id ? "text-slate-600" : "text-slate-500")}>{dm.lastMessage}</p>
+                    <p className={cn("text-base truncate pr-2", activeChatId === dm.id ? "text-slate-600" : "text-slate-500")}>{dm.lastMessage}</p>
                   </div>
                   {dm.unread > 0 && activeChatId !== dm.id && (
-                    <div className="shrink-0 size-5 rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
+                    <div className="shrink-0 size-5 rounded-full bg-[#f3df27] flex items-center justify-center text-sm  font-medium text-[#151936]">
                       {dm.unread}
                     </div>
                   )}
@@ -88,7 +88,7 @@ export default function MessagesPage() {
               <Avatar src={activeChat.avatar} fallback={activeChat.name[0]} className="size-12 border border-slate-200" />
               <div>
                 <h3 className="text-[16px] font-medium text-slate-900">{activeChat.name}</h3>
-                <p className="text-[13px] text-emerald-600 flex items-center gap-1.5">
+                <p className="text-base text-emerald-600 flex items-center gap-1.5">
                   <span className="size-2 rounded-full bg-emerald-500"></span> Online
                 </p>
               </div>
@@ -103,7 +103,7 @@ export default function MessagesPage() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar">
             <div className="text-center my-4">
-              <span className="text-[11px] font-medium text-slate-500 bg-slate-200/50 px-4 py-1.5 rounded-full">Today, June 18th</span>
+              <span className="text-sm font-medium text-slate-500 bg-slate-200/50 px-4 py-1.5 rounded-full">Today, June 18th</span>
             </div>
 
             {MOCK_MESSAGES.map((msg) => (

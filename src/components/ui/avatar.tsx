@@ -22,7 +22,7 @@ export function Avatar({
     // Outer shell: no overflow-hidden so the status dot can bleed outside
     <span
       className={cn(
-        "relative inline-flex size-10 shrink-0 items-center justify-center bg-[var(--primary)] text-sm font-medium text-[var(--on-primary)]",
+        "relative inline-flex size-10 shrink-0 items-center justify-center bg-[var(--primary)] text-sm  font-medium text-[var(--on-primary)]",
         shapeClass,
         className,
       )}

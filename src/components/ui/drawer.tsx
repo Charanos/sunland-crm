@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { IconX } from "@tabler/icons-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils/cn";
@@ -22,6 +23,12 @@ export function Drawer({
   title: string;
   width?: string;
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
 
@@ -40,11 +47,11 @@ export function Drawer({
     };
   }, [onClose, open]);
 
-  if (!open) {
+  if (!open || !mounted) {
     return null;
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] animate-fade-in">
       {/* Backdrop */}
       <button
@@ -81,6 +88,7 @@ export function Drawer({
           </div>
         ) : null}
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
