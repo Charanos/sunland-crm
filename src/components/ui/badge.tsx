@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils/cn";
 
-type BadgeTone = "primary" | "neutral" | "success" | "warning" | "risk" | "data";
+type BadgeTone = "primary" | "neutral" | "success" | "warning" | "risk" | "data" | "brand";
 
 const tones: Record<BadgeTone, string> = {
-  primary: "bg-[var(--primary)] text-[var(--on-primary)]",
-  neutral: "bg-black/[0.06] text-[var(--on-surface)]",
-  success: "bg-[#e8f7ef] text-[#16623b]",
-  warning: "bg-[#fff4cb] text-[#704800]",
-  risk: "bg-[#ffeded] text-[#8a1f1f]",
-  data: "bg-[#ecf0ff] text-[#203c9d]",
+  primary: "badge-tone-primary",
+  neutral: "badge-tone-neutral",
+  success: "badge-tone-success",
+  warning: "badge-tone-warning",
+  risk: "badge-tone-risk",
+  data: "badge-tone-data",
+  brand: "badge-tone-brand",
 };
 
 export function Badge({
@@ -21,14 +22,9 @@ export function Badge({
   tone?: BadgeTone;
 }) {
   return (
-    <span
-      className={cn(
-        "label-caps inline-flex h-6 items-center rounded-full px-2.5",
-        tones[tone],
-        className,
-      )}
-    >
+    <span className={cn("badge-pill", tones[tone], className)}>
       {children}
     </span>
   );
 }
+

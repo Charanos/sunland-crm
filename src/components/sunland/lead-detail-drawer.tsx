@@ -122,7 +122,7 @@ export function LeadDetailDrawer({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end p-4">
             <div>
-              <p className="text-sm  text-[#f3df27] font-medium tracking-widest uppercase">Property Interest</p>
+              <p className="text-[#f3df27] label-caps">Property Interest</p>
               <h4 className="text-white text-base  font-medium leading-tight mt-0.5">{leadData.propertyInterest}</h4>
             </div>
           </div>
@@ -137,7 +137,7 @@ export function LeadDetailDrawer({
             />
           </div>
 
-          <h3 className="text-[18px] font-medium text-slate-900 leading-snug">
+          <h3 className="font-medium text-slate-900 leading-snug text-xl">
             {leadData.clientName}
           </h3>
           <p className="text-base text-slate-400 font-medium mt-0.5 capitalize">
@@ -153,7 +153,7 @@ export function LeadDetailDrawer({
             </span>
           </div>
 
-          <div className="w-full border-t border-slate-100 mt-4 pt-4 grid grid-cols-2 gap-2 text-left text-[12.5px] text-slate-600">
+          <div className="w-full border-t border-slate-100 mt-4 pt-4 grid grid-cols-2 gap-2 text-left text-slate-600 text-base">
             <a href={`mailto:${leadData.email}`} className="flex items-center gap-2 hover:text-[#151936] transition-colors truncate">
               <IconMail size={14} className="text-slate-400 shrink-0" />
               <span className="truncate">{leadData.email}</span>
@@ -167,31 +167,31 @@ export function LeadDetailDrawer({
 
         {/* Opportunity Metrics */}
         <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest leading-none">Deal Valuation</p>
+          <p className="text-slate-400 leading-none label-caps">Deal Valuation</p>
 
           <div className="p-4 bg-amber-50/40 border border-amber-100/50 rounded-xl flex items-center justify-between">
             <div>
               <span className="text-sm font-medium text-amber-800 block mb-1">Estimated Budget</span>
-              <span className="text-[20px] font-medium font-mono text-slate-800 tracking-tight leading-none">
+              <span className="text-slate-800 tracking-tight leading-none mono-stat">
                 {formatKES(leadData.budget)}
               </span>
             </div>
-            <div className="size-10 rounded-full bg-white flex items-center justify-center text-amber-600 border border-amber-100 shadow-sm font-mono font-medium text-base ">
+            <div className="size-10 rounded-full bg-white flex items-center justify-center text-amber-600 border border-amber-100 shadow-sm mono-data">
               KES
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 flex flex-col justify-center gap-1">
-              <span className="text-sm  text-slate-400 font-medium uppercase tracking-wider">Property Interest</span>
+              <span className="text-slate-400 label-caps">Property Interest</span>
               <span className="text-base font-medium text-slate-800 truncate flex items-center gap-1.5">
                 <IconBuilding size={14} className="text-slate-400 shrink-0" />
                 <span className="truncate">{leadData.propertyInterest}</span>
               </span>
             </div>
             <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 flex flex-col justify-center gap-1">
-              <span className="text-sm  text-slate-400 font-medium uppercase tracking-wider">Created Date</span>
-              <span className="text-base font-medium text-slate-800 font-mono flex items-center gap-1.5">
+              <span className="text-slate-400 label-caps">Created Date</span>
+              <span className="text-slate-800 flex items-center gap-1.5 mono-data">
                 <IconCalendarEvent size={14} className="text-slate-400 shrink-0" />
                 <span>{leadData.createdDate}</span>
               </span>
@@ -202,7 +202,7 @@ export function LeadDetailDrawer({
         {/* Notes log */}
         {leadData.notes && (
           <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-base text-slate-600 leading-relaxed">
-            <p className="text-sm  font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+            <p className="text-slate-400 mb-2 flex items-center gap-1 label-caps">
               <IconTag size={12} /> Specific Requirements
             </p>
             {leadData.notes}
@@ -211,7 +211,7 @@ export function LeadDetailDrawer({
 
         {/* Engagement Timeline */}
         <div className="space-y-4">
-          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest">Engagement Timeline</p>
+          <p className="text-slate-400 label-caps">Engagement Timeline</p>
 
           {/* Quick Note Form */}
           <form onSubmit={handleAddNote} className="flex gap-2">
@@ -220,11 +220,11 @@ export function LeadDetailDrawer({
               placeholder="Add deal log or interaction update..."
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
-              className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10"
+              className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 text-base"
             />
             <button
               type="submit"
-              className="px-4 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] rounded-xl text-[12.5px] font-medium transition-colors cursor-pointer"
+              className="px-4 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] rounded-xl font-medium transition-colors cursor-pointer text-base"
             >
               Log
             </button>

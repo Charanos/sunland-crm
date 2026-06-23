@@ -551,13 +551,28 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
       <FinanceModuleNav />
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4 animate-fade-in-up">
-        <div className="relative min-h-[255px] overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#070b19] via-[#0f172a] to-[#181534] p-8 text-white shadow-2xl">
-          {/* Enhanced Background */}
-          <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: `url(${activeEntity.avatarUrl})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#070b19]/90 via-[#0f172a]/95 to-[#181534]/90" />
+        <div className="relative min-h-[255px] overflow-hidden rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 p-8 text-white shadow-2xl">
+          {/* Subtle Institutional Grid Background Pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.04] mix-blend-overlay"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h30v30H0V0zm1 1h28v28H1V1z' fill='%23ffffff' fill-opacity='0.15' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+              backgroundSize: "30px 30px"
+            }}
+          />
 
-          {/* Subtle Glowing Accents */}
-          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
+          {/* Premium Unsplash Background with low opacity */}
+          <div
+            className="absolute inset-0 opacity-[0.06] mix-blend-luminosity"
+            style={{
+              backgroundImage: `url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2564&auto=format&fit=crop)`,
+              backgroundSize: "cover",
+              backgroundPosition: "center"
+            }}
+          />
+
+          {/* Subtle Glowing Accent */}
+          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-slate-500/10 blur-3xl" />
           <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl" />
 
           <div className="relative z-10 flex h-full flex-col justify-between gap-8">
@@ -565,96 +580,29 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               {/* Left Column: Context & Title */}
               <div className="max-w-xl space-y-5">
                 <div className="flex items-center gap-3">
-                  <Badge tone="primary" className="bg-indigo-500/20 text-indigo-200 border-indigo-500/30 px-3 py-1 shadow-sm backdrop-blur-md">
+                  <Badge tone="primary" className="bg-slate-700/60 text-slate-200 border-slate-600/50 px-3 py-1 shadow-sm backdrop-blur-md">
                     {activeEntity.name}
                   </Badge>
-                  <span className="text-[11.5px] font-normal tracking-widest uppercase text-slate-400/80">Finance Division</span>
+                  <span className="text-slate-400 label-caps text-xs tracking-wider">Treasury Control Console</span>
                 </div>
                 <div>
-                  <h2 className="title-serif text-[38px] font-normal leading-tight tracking-tight text-white mb-3">
+                  <h2 className="title-serif font-normal leading-tight tracking-tight text-white mb-3">
                     Treasury Settlement
                   </h2>
-                  <p className="text-[13.5px] leading-relaxed text-slate-300/80 font-light max-w-lg">
-                    Control vendor cash-outs, external receivables, dispute holds, and ledger-ready postings without mixing landlord rent liabilities into Sunland revenue.
+                  <p className="leading-relaxed text-slate-300 font-light max-w-lg body-md">
+                    Monitor vendor payables, verify external client receivables, enforce approval thresholds, and manage corporate cash postings on a dedicated, isolated sub-ledger.
                   </p>
                 </div>
 
                 <div className="pt-2 flex items-center gap-4">
                   <div className="flex -space-x-2.5">
-                    <div className="size-8 rounded-full border-2 border-[#0a0f24] bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-[10px] font-bold text-white shadow-md transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer" title="Controller: John Doe">JD</div>
-                    <div className="size-8 rounded-full border-2 border-[#0a0f24] bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-[10px] font-bold text-white shadow-md transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer" title="Controller: Alice M.">AM</div>
-                    <div className="flex size-8 items-center justify-center rounded-full border-2 border-[#0a0f24] bg-indigo-500/20 text-[10px] font-medium text-indigo-200 backdrop-blur-md shadow-sm transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer">
+                    <div className="size-8 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center font-medium text-white shadow-md transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer text-sm" title="Controller: John Doe">JD</div>
+                    <div className="size-8 rounded-full border-2 border-slate-900 bg-slate-600 flex items-center justify-center font-medium text-white shadow-md transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer text-sm" title="Controller: Alice M.">AM</div>
+                    <div className="flex size-8 items-center justify-center rounded-full border-2 border-slate-900 bg-slate-800/80 font-medium text-slate-300 backdrop-blur-md shadow-sm transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer text-sm">
                       +3
                     </div>
                   </div>
-                  <span className="text-[12px] font-normal text-slate-400">Active Controllers</span>
-                </div>
-              </div>
-
-              {/* Right Column: Key Metrics Panel */}
-              <div className="flex-1 w-full lg:max-w-md shrink-0 h-full">
-                <div className="relative h-full flex flex-col justify-between overflow-hidden rounded-[20px] border border-white/10 bg-white/5 backdrop-blur-2xl shadow-2xl transition-all duration-500 hover:shadow-[0_0_30px_rgba(16,185,129,0.12)] hover:border-white/15 group">
-                  {/* Subtle Artwork Background */}
-                  <div className="absolute inset-0 opacity-[0.12] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center" />
-                  
-                  {/* Gradients & Glows */}
-                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 transition-all duration-500 group-hover:bg-emerald-500/15" />
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl -ml-10 -mb-10" />
-
-                  <div className="relative z-10 p-5 flex flex-col h-full justify-between gap-6">
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400">Net Posted Cash</p>
-                        <IconScale size={18} stroke={2} className="text-emerald-500/80" />
-                      </div>
-                      
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <span className={cn("font-mono text-[42px] font-normal tracking-tight transition-all duration-500", metrics.postedCash >= 0 ? "text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)] group-hover:drop-shadow-[0_0_18px_rgba(16,185,129,0.5)]" : "text-rose-400 drop-shadow-[0_0_12px_rgba(244,63,94,0.3)] group-hover:drop-shadow-[0_0_18px_rgba(244,63,94,0.5)]")}>
-                          {formatMoney(metrics.postedCash)}
-                        </span>
-                        <span className="text-[12px] text-slate-400 font-normal uppercase tracking-widest">KES</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="h-px w-full bg-gradient-to-r from-white/15 via-white/5 to-transparent mb-4" />
-
-                      <div className="grid grid-cols-3 gap-2.5 w-full">
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px] select-none transition-all duration-300 hover:bg-white/[0.07] hover:border-white/[0.08]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Due Soon</p>
-                          <div className="flex items-center gap-1.5">
-                            {metrics.dueThisWeek > 0 ? (
-                              <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            ) : (
-                              <span className="size-1.5 rounded-full bg-slate-500" />
-                            )}
-                            <p className="font-mono text-[20px] font-medium text-white leading-none">{metrics.dueThisWeek}</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px] select-none transition-all duration-300 hover:bg-white/[0.07] hover:border-white/[0.08]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Disputes</p>
-                          <div className="flex items-center gap-1.5">
-                            {metrics.disputes > 0 ? (
-                              <span className="size-1.5 rounded-full bg-rose-400 animate-pulse" />
-                            ) : (
-                              <span className="size-1.5 rounded-full bg-emerald-400" />
-                            )}
-                            <p className="font-mono text-[20px] font-medium text-white leading-none">{metrics.disputes}</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px] select-none transition-all duration-300 hover:bg-white/[0.07] hover:border-white/[0.08]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Ledger</p>
-                          <div className="flex items-center gap-1.5">
-                            <span className="size-1.5 rounded-full bg-emerald-500" />
-                            <p className="font-mono text-[20px] font-medium text-white leading-none">
-                              {bills.filter(b => b.status === "Posted").length + invoices.filter(inv => inv.status === "Posted").length}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <span className="font-normal text-slate-400 body-sm">Active Controllers</span>
                 </div>
               </div>
             </div>
@@ -665,8 +613,8 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
           <div className="border-b border-slate-100/80 p-6 bg-white z-10 relative">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-[18px] font-medium text-slate-900 tracking-tight font-sans">Exception Run</h3>
-                <p className="mt-1 text-[13px] font-medium text-slate-500">Prioritized items that need collection, settlement, or hold review.</p>
+                <h3 className="font-medium text-slate-900 tracking-tight font-sans text-xl">Exception Run</h3>
+                <p className="mt-1 font-medium text-slate-500 text-sm">Prioritized items that need collection, settlement, or hold review.</p>
               </div>
               <Badge tone={exceptionQueue.length > 0 ? "warning" : "success"} className="shadow-sm px-3 py-1.5">{exceptionQueue.length} Active</Badge>
             </div>
@@ -690,14 +638,14 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2.5 mb-1">
-                    <span className="font-mono text-[13px] font-medium text-slate-900">{item.ref}</span>
-                    <Badge tone={item.tone} className="h-5 text-[10px] font-semibold tracking-wider uppercase px-2 shadow-sm">{item.status}</Badge>
+                    <span className="text-slate-900 mono-amount">{item.ref}</span>
+                    <Badge tone={item.tone} className="h-5 font-normal px-2 shadow-sm label-caps text-xs">{item.status}</Badge>
                   </div>
-                  <p className="truncate text-[14px] font-medium text-slate-800 leading-snug">{item.label}</p>
-                  <p className="mt-0.5 truncate text-[12.5px] font-medium text-slate-500">{item.meta}</p>
+                  <p className="truncate font-medium text-slate-800 leading-snug body-md">{item.label}</p>
+                  <p className="mt-0.5 truncate font-medium text-slate-500 text-sm">{item.meta}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="font-mono text-[18px] font-medium tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors">
+                  <span className="tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors mono-stat">
                     {formatMoney(item.amount)}
                   </span>
                 </div>
@@ -710,93 +658,182 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
       {/* ── 1. KPI Cards Row ─────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
         {/* KPI 1: Payables outstanding */}
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-200 bg-gradient-to-b from-white to-amber-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconTrendingDown size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
-              <IconTrendingDown size={16} stroke={2.5} />
-            </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">A/P Outstanding</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-[#151936]">
-              {formatMoney(metrics.payables)}
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Pending vendor settlements</span>
-          </div>
-        </BoardPanel>
+        {(() => {
+          const pendingBillsCount = bills.filter(b => b.status === "Pending").length;
+          const totalBillsCount = bills.length || 1;
+          const billsRatio = (pendingBillsCount / totalBillsCount) * 100;
+          return (
+            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-300/60 bg-white border border-slate-200/50">
+              {/* Subtle visual card background */}
+              <div
+                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600&auto=format&fit=crop)` }}
+              />
+              {/* Top Accent line */}
+              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-amber-500" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-slate-500 label-caps text-xs tracking-wider">A/P Outstanding</span>
+                <div className="size-7 rounded-lg bg-amber-50/50 text-amber-600 flex items-center justify-center border border-amber-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
+                  <IconTrendingDown size={14} stroke={2.5} />
+                </div>
+              </div>
+
+              <div className="flex flex-col mt-auto relative z-10">
+                <span className="font-mono font-normal tracking-tight text-[#151936] text-2xl">
+                  {formatMoney(metrics.payables)}
+                </span>
+
+                {/* Micro visual progress meter */}
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${billsRatio}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
+                    <span>Verification Pending</span>
+                    <span>{pendingBillsCount} of {totalBillsCount}</span>
+                  </div>
+                </div>
+              </div>
+            </BoardPanel>
+          );
+        })()}
 
         {/* KPI 2: Receivables outstanding */}
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-200 bg-gradient-to-b from-white to-indigo-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconArrowUpRight size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
-              <IconArrowUpRight size={16} stroke={2.5} />
-            </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">A/R Outstanding</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-[#151936]">
-              {formatMoney(metrics.receivables)}
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Awaiting client receipts</span>
-          </div>
-        </BoardPanel>
+        {(() => {
+          const unpaidInvoicesCount = invoices.filter(i => i.status !== "Posted").length;
+          const totalInvoicesCount = invoices.length || 1;
+          const invoicesRatio = (unpaidInvoicesCount / totalInvoicesCount) * 100;
+          return (
+            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-300/60 bg-white border border-slate-200/50">
+              {/* Subtle visual card background */}
+              <div
+                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop)` }}
+              />
+              {/* Top Accent line */}
+              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-indigo-500" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-slate-500 label-caps text-xs tracking-wider">A/R Outstanding</span>
+                <div className="size-7 rounded-lg bg-indigo-50/50 text-indigo-600 flex items-center justify-center border border-indigo-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
+                  <IconArrowUpRight size={14} stroke={2.5} />
+                </div>
+              </div>
+
+              <div className="flex flex-col mt-auto relative z-10">
+                <span className="font-mono font-normal tracking-tight text-[#151936] text-2xl">
+                  {formatMoney(metrics.receivables)}
+                </span>
+
+                {/* Micro visual progress meter */}
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${invoicesRatio}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
+                    <span>Awaiting Collection</span>
+                    <span>{unpaidInvoicesCount} of {totalInvoicesCount}</span>
+                  </div>
+                </div>
+              </div>
+            </BoardPanel>
+          );
+        })()}
 
         {/* KPI 3: Net position */}
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-200 bg-gradient-to-b from-white to-emerald-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconCoins size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
-              <IconCoins size={16} stroke={2.5} />
-            </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Net Working Capital</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className={cn(
-              "text-[28px] font-mono font-normal tracking-tight",
-              metrics.capital >= 0 ? "text-emerald-700" : "text-rose-600"
-            )}>
-              {formatMoney(metrics.capital)}
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">A/R balance less A/P balance</span>
-          </div>
-        </BoardPanel>
+        {(() => {
+          const capRatio = Math.min(100, Math.max(0, (metrics.capital / (metrics.receivables || 1)) * 100));
+          return (
+            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-300/60 bg-white border border-slate-200/50">
+              {/* Subtle visual card background */}
+              <div
+                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop)` }}
+              />
+              {/* Top Accent line */}
+              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-emerald-500" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-slate-500 label-caps text-xs tracking-wider">Net Capital</span>
+                <div className="size-7 rounded-lg bg-emerald-50/50 text-emerald-600 flex items-center justify-center border border-emerald-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
+                  <IconCoins size={14} stroke={2.5} />
+                </div>
+              </div>
+
+              <div className="flex flex-col mt-auto relative z-10">
+                <span className={cn(
+                  "text-2xl font-mono font-normal tracking-tight",
+                  metrics.capital >= 0 ? "text-emerald-700" : "text-rose-600"
+                )}>
+                  {formatMoney(metrics.capital)}
+                </span>
+
+                {/* Micro visual progress meter */}
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${capRatio}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
+                    <span>Receivable Coverage</span>
+                    <span>{Math.round(capRatio)}%</span>
+                  </div>
+                </div>
+              </div>
+            </BoardPanel>
+          );
+        })()}
 
         {/* KPI 4: Overdue counts */}
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-200 bg-gradient-to-b from-white to-rose-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconClock size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-200/50">
-              <IconClock size={16} stroke={2.5} />
-            </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Overdue Invoices</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-rose-700">
-              {metrics.overdue} <span className="text-[20px] text-rose-700/70">Invoices</span>
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Requires immediate follow-up</span>
-          </div>
-        </BoardPanel>
+        {(() => {
+          const unpaidInvoicesCount = invoices.filter(i => i.status !== "Posted").length;
+          const overdueRatio = (metrics.overdue / (unpaidInvoicesCount || 1)) * 100;
+          return (
+            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-300/60 bg-white border border-slate-200/50">
+              {/* Subtle visual card background */}
+              <div
+                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1507206130007-be9c29b29330?q=80&w=600&auto=format&fit=crop)` }}
+              />
+              {/* Top Accent line */}
+              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-rose-500" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-slate-500 label-caps text-xs tracking-wider">Overdue Risk</span>
+                <div className="size-7 rounded-lg bg-rose-50/50 text-rose-600 flex items-center justify-center border border-rose-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
+                  <IconClock size={14} stroke={2.5} />
+                </div>
+              </div>
+
+              <div className="flex flex-col mt-auto relative z-10">
+                <span className="font-mono font-normal tracking-tight text-rose-700 text-2xl">
+                  {metrics.overdue} <span className="text-rose-700/65 text-lg">Invoices</span>
+                </span>
+
+                {/* Micro visual progress meter */}
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-rose-500 transition-all duration-500" style={{ width: `${overdueRatio}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
+                    <span>Overdue Share</span>
+                    <span>{Math.round(overdueRatio)}% of outstanding</span>
+                  </div>
+                </div>
+              </div>
+            </BoardPanel>
+          );
+        })()}
       </section>
 
       {/* ── 2. Visualization Section ────────────────────────────────────────── */}
       <BoardPanel className="p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
           <div>
-            <h3 className="text-[14px] font-medium text-slate-900 tracking-tight">Billing & Accrual Trends</h3>
+            <h3 className="font-medium text-slate-900 tracking-tight body-md">Billing & Accrual Trends</h3>
             <p className="text-sm text-slate-400 mt-0.5">MTD Billing generation compared against vendor liabilities</p>
           </div>
-          <div className="flex items-center gap-4 text-xs font-medium">
+          <div className="flex items-center gap-4 font-medium text-sm">
             <span className="flex items-center gap-1.5 text-indigo-600">
               <span className="size-2 rounded-full bg-indigo-500" /> Invoiced (A/R)
             </span>
@@ -829,8 +866,8 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
       </BoardPanel>
 
       <div className="pt-6 border-t border-slate-200/60 my-2 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal">Aging, Holds & Ledger Impact</h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <h2 className="title-serif text-slate-900 font-normal">Aging, Holds & Ledger Impact</h2>
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           Surface due-date exposure, dispute freezes, and the journal impact that will be created by payment or receipt actions.
         </p>
       </div>
@@ -838,7 +875,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
       <section className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-4 animate-fade-in-up">
         <BoardPanel className="p-5 relative overflow-hidden group hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <h3 className="text-[15px] font-normal text-slate-900 tracking-tight">Aging Heatmap</h3>
+            <h3 className="font-normal text-slate-900 tracking-tight headline-md">Aging Heatmap</h3>
             <Badge tone="data" className="shadow-sm">{activeTab === "payables" ? "Vendor exposure" : "Client collection"}</Badge>
           </div>
           <div className="mt-5 grid grid-cols-5 gap-3">
@@ -861,10 +898,10 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                         : "border-amber-200/60 bg-gradient-to-b from-amber-50/80 to-white hover:border-amber-300"
                   )}
                 >
-                  <p className={cn("text-[11.5px] font-medium uppercase tracking-widest", isRisk ? "text-rose-700" : "text-slate-500")}>{bucket}</p>
+                  <p className={cn("text-sm font-medium uppercase tracking-widest", isRisk ? "text-rose-700" : "text-slate-500")}>{bucket}</p>
                   <div className="mt-auto pt-4">
-                    <p className="font-mono text-[18px] font-normal tracking-tight text-slate-900">{formatMoney(bucketValue)}</p>
-                    <p className="mt-1 text-[12.5px] font-medium text-slate-500">{bucketRows.length} records</p>
+                    <p className="tracking-tight text-slate-900 mono-stat">{formatMoney(bucketValue)}</p>
+                    <p className="mt-1 font-medium text-slate-500 text-base">{bucketRows.length} records</p>
                   </div>
                 </div>
               );
@@ -875,8 +912,8 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         <BoardPanel className="p-5 relative overflow-hidden group hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-[15px] font-normal text-slate-900 tracking-tight">Posting Preview</h3>
-              <p className="mt-1 text-[13px] font-medium text-slate-500">Finance actions create ledger entries automatically after validation.</p>
+              <h3 className="font-normal text-slate-900 tracking-tight headline-md">Posting Preview</h3>
+              <p className="mt-1 font-medium text-slate-500 text-sm">Finance actions create ledger entries automatically after validation.</p>
             </div>
             <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 group-hover:text-indigo-500 transition-colors">
               <IconTransfer size={20} />
@@ -885,17 +922,17 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
           <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="rounded-xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-white p-5 transition-all duration-300 hover:shadow-sm hover:border-amber-300">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[11.5px] font-medium uppercase tracking-widest text-amber-700">Pay vendor bill</span>
+                <span className="text-amber-700 label-caps">Pay vendor bill</span>
                 <div className="size-8 rounded-lg bg-amber-100/50 flex items-center justify-center text-amber-600">
                   <IconReceipt2 size={16} />
                 </div>
               </div>
               <div className="mt-4 space-y-2">
-                <div className="flex justify-between items-center text-[13px] font-medium">
+                <div className="flex justify-between items-center font-medium text-sm">
                   <span className="text-amber-900">DR Expense/Payable</span>
                   <span className="font-mono text-amber-700">+ Amount</span>
                 </div>
-                <div className="flex justify-between items-center text-[13px] font-medium">
+                <div className="flex justify-between items-center font-medium text-sm">
                   <span className="text-slate-600">CR Cash/Bank</span>
                   <span className="font-mono text-slate-500">- Amount</span>
                 </div>
@@ -903,17 +940,17 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             </div>
             <div className="rounded-xl border border-indigo-200/60 bg-gradient-to-br from-indigo-50/80 to-white p-5 transition-all duration-300 hover:shadow-sm hover:border-indigo-300">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[11.5px] font-medium uppercase tracking-widest text-indigo-700">Record receipt</span>
+                <span className="text-indigo-700 label-caps">Record receipt</span>
                 <div className="size-8 rounded-lg bg-indigo-100/50 flex items-center justify-center text-indigo-600">
                   <IconShieldCheck size={16} />
                 </div>
               </div>
               <div className="mt-4 space-y-2">
-                <div className="flex justify-between items-center text-[13px] font-medium">
+                <div className="flex justify-between items-center font-medium text-sm">
                   <span className="text-indigo-900">DR Cash/Bank</span>
                   <span className="font-mono text-indigo-700">+ Amount</span>
                 </div>
-                <div className="flex justify-between items-center text-[13px] font-medium">
+                <div className="flex justify-between items-center font-medium text-sm">
                   <span className="text-slate-600">CR Receivable/Rev</span>
                   <span className="font-mono text-slate-500">- Amount</span>
                 </div>
@@ -934,10 +971,10 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
 
       {/* ── 3. Segment Content Title & Queue ─────────────────────────────────── */}
       <div className="pt-2 my-2 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal capitalize">
+        <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab} Queue
         </h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           {activeTab === "payables" && "Track incoming vendor bills, security invoices, lift contractors, and record corporate settlements."}
           {activeTab === "receivables" && "Monitor valuation consultancy invoices, lease documentation fee receipts, and customer payments."}
         </p>
@@ -952,7 +989,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               placeholder={activeTab === "payables" ? "Search bills, vendors, properties..." : "Search invoices, clients, properties..."}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-              className="w-full bg-transparent text-[12.5px] text-slate-700 placeholder-slate-400 focus:outline-none"
+              className="w-full bg-transparent text-slate-700 placeholder-slate-400 focus:outline-none text-base"
             />
           </div>
         </div>
@@ -962,7 +999,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             /* Payables Table */
             <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
               <thead>
-                <tr className="border-b border-slate-100 text-sm font-medium uppercase tracking-wider text-slate-400 bg-slate-50/50">
+                <tr className="border-b border-slate-100 text-slate-400 bg-slate-50/50 label-caps">
                   <th className="px-5 py-3">Bill Code</th>
                   <th className="px-5 py-3">Vendor</th>
                   <th className="px-5 py-3">Category</th>
@@ -980,7 +1017,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                     onClick={() => { setSelectedBill(b); setSelectedInvoice(null); }}
                     className="transition-colors hover:bg-slate-50/80 cursor-pointer"
                   >
-                    <td className="px-5 py-3.5 font-mono text-[12.5px] font-medium text-slate-900">{b.billCode}</td>
+                    <td className="px-5 py-3.5 text-slate-900 mono-data">{b.billCode}</td>
                     <td className="px-5 py-3.5">
                       <p className="text-base font-medium text-slate-800 leading-snug">{b.vendorName}</p>
                       <p className="text-sm text-slate-400 mt-0.5">{b.description}</p>
@@ -996,13 +1033,13 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                         {b.category}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-[12.5px] text-slate-600">
+                    <td className="px-5 py-3.5 text-slate-600 text-base">
                       <span className="flex items-center gap-1"><IconBuilding size={12} /> {b.propertyName}</span>
                     </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-900">
+                    <td className="px-5 py-3.5 text-right text-slate-900 mono-data">
                       {formatMoney(b.amount)}
                     </td>
-                    <td className="px-5 py-3.5 text-[12.5px] text-slate-600">
+                    <td className="px-5 py-3.5 text-slate-600 text-base">
                       <span className="font-mono">{formatDate(b.dueDate)}</span>
                       <p className="mt-1 text-sm text-slate-400">{agingBucket(b.dueDate, b.status === "Posted")}</p>
                     </td>
@@ -1026,7 +1063,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                           <button
                             type="button"
                             onClick={() => handleToggleDispute(b.id, "bill")}
-                            className="text-xs font-medium text-slate-400 hover:text-slate-700"
+                            className="font-medium text-slate-400 hover:text-slate-700 text-sm"
                           >
                             {b.disputed ? "Clear hold" : "Mark disputed"}
                           </button>
@@ -1045,7 +1082,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             /* Receivables Table */
             <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
               <thead>
-                <tr className="border-b border-slate-100 text-sm font-medium uppercase tracking-wider text-slate-400 bg-slate-50/50">
+                <tr className="border-b border-slate-100 text-slate-400 bg-slate-50/50 label-caps">
                   <th className="px-5 py-3">Invoice</th>
                   <th className="px-5 py-3">Client</th>
                   <th className="px-5 py-3">Property Link</th>
@@ -1062,7 +1099,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                     onClick={() => { setSelectedInvoice(inv); setSelectedBill(null); }}
                     className="transition-colors hover:bg-slate-50/80 cursor-pointer"
                   >
-                    <td className="px-5 py-3.5 font-mono text-[12.5px] font-medium text-slate-900">{inv.invoiceCode}</td>
+                    <td className="px-5 py-3.5 text-slate-900 mono-data">{inv.invoiceCode}</td>
                     <td className="px-5 py-3.5">
                       <p className="text-base font-medium text-slate-800 leading-snug">{inv.clientName}</p>
                       <p className="text-sm text-slate-400 mt-0.5">{inv.description}</p>
@@ -1073,13 +1110,13 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                         </Badge>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-[12.5px] text-slate-600">
+                    <td className="px-5 py-3.5 text-slate-600 text-base">
                       <span className="flex items-center gap-1"><IconBuilding size={12} /> {inv.propertyName}</span>
                     </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-900">
+                    <td className="px-5 py-3.5 text-right text-slate-900 mono-data">
                       {formatMoney(inv.amount)}
                     </td>
-                    <td className="px-5 py-3.5 text-[12.5px] text-slate-600">
+                    <td className="px-5 py-3.5 text-slate-600 text-base">
                       <span className="font-mono">{formatDate(inv.dueDate)}</span>
                       <p className="mt-1 text-sm text-slate-400">{agingBucket(inv.dueDate, inv.status === "Posted")}</p>
                     </td>
@@ -1136,28 +1173,28 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         {payBill && (
           <form onSubmit={handlePayBillSubmit} className="space-y-5 pt-1">
             <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/[0.02] to-indigo-500/[0.02] border border-slate-100 p-4 rounded-xl space-y-2.5 shadow-sm">
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Bill Reference</span>
                 <span className="font-mono font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{payBill.billCode}</span>
               </div>
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Vendor</span>
                 <span className="font-medium text-slate-800">{payBill.vendorName}</span>
               </div>
               <div className="h-px bg-slate-100 my-1" />
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Settlement Amount</span>
-                <span className="font-mono font-semibold text-amber-700 bg-amber-50/60 px-2.5 py-1 rounded-lg border border-amber-100/30">{formatMoney(payBill.amount)}</span>
+                <span className="font-mono font-normal text-amber-700 bg-amber-50/60 px-2.5 py-1 rounded-lg border border-amber-100/30">{formatMoney(payBill.amount)}</span>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-normal uppercase tracking-wider text-slate-400 block">Funding Bank/Cash Account</label>
+              <label className="text-slate-400 block label-caps">Funding Bank/Cash Account</label>
               <div className="relative rounded-lg shadow-sm">
                 <select
                   value={billPayAccount}
                   onChange={(e) => setBillPayAccount(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-[12.5px] text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium appearance-none font-sans"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium appearance-none font-sans text-base"
                 >
                   <option value="NCBA Operating A/C">NCBA Operating A/C (011-928-8211)</option>
                   <option value="Stanchart Reserve A/C">Stanchart Reserve A/C (012-384-9920)</option>
@@ -1171,7 +1208,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-normal uppercase tracking-wider text-slate-400 block">Transaction Ref / Cheque No.</label>
+              <label className="text-slate-400 block label-caps">Transaction Ref / Cheque No.</label>
               <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                   <IconReceipt2 size={15} />
@@ -1182,16 +1219,16 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   placeholder="e.g. FT-NCBA-98291"
                   value={billPayRef}
                   onChange={(e) => setBillPayRef(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-[12.5px] font-mono text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
+                  className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all mono-data"
                 />
               </div>
             </div>
 
             <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <Button type="button" variant="secondary" onClick={() => setPayBill(null)} className="h-9 px-4 text-[12.5px]">
+              <Button type="button" variant="secondary" onClick={() => setPayBill(null)} className="h-9 px-4 text-base">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="h-9 px-4 text-[12.5px] bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium rounded-lg shadow-sm">
+              <Button type="submit" disabled={isSubmitting} className="h-9 px-4 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium rounded-lg shadow-sm text-base">
                 {isSubmitting ? "Accruing..." : "Record Payment"}
               </Button>
             </div>
@@ -1204,28 +1241,28 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         {recordReceipt && (
           <form onSubmit={handleRecordReceiptSubmit} className="space-y-5 pt-1">
             <div className="relative overflow-hidden bg-gradient-to-r from-indigo-500/[0.02] to-emerald-500/[0.02] border border-slate-100 p-4 rounded-xl space-y-2.5 shadow-sm">
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Invoice Number</span>
                 <span className="font-mono font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{recordReceipt.invoiceCode}</span>
               </div>
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Client</span>
                 <span className="font-medium text-slate-800">{recordReceipt.clientName}</span>
               </div>
               <div className="h-px bg-slate-100 my-1" />
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Invoiced Amount</span>
-                <span className="font-mono font-semibold text-indigo-700 bg-indigo-50/50 px-2.5 py-1 rounded-lg border border-indigo-100/30">{formatMoney(recordReceipt.amount)}</span>
+                <span className="font-mono font-normal text-indigo-700 bg-indigo-50/50 px-2.5 py-1 rounded-lg border border-indigo-100/30">{formatMoney(recordReceipt.amount)}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-normal uppercase tracking-wider text-slate-400 block">Receipt Channel</label>
+                <label className="text-slate-400 block label-caps">Receipt Channel</label>
                 <select
                   value={receiptMethod}
                   onChange={(e) => setReceiptMethod(e.target.value as NonNullable<InvoiceRecord["payMethod"]>)}
-                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-[12.5px] text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium font-sans"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium font-sans text-base"
                 >
                   <option value="Bank Transfer">Bank Transfer</option>
                   <option value="M-Pesa">M-Pesa Paybill</option>
@@ -1234,11 +1271,11 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-normal uppercase tracking-wider text-slate-400 block">Target Account</label>
+                <label className="text-slate-400 block label-caps">Target Account</label>
                 <select
                   value={receiptAccount}
                   onChange={(e) => setReceiptAccount(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-[12.5px] text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium font-sans"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium font-sans text-base"
                 >
                   <option value="NCBA Operating A/C">NCBA Operating A/C</option>
                   <option value="Stanchart Reserve A/C">Stanchart Reserve A/C</option>
@@ -1248,7 +1285,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-normal uppercase tracking-wider text-slate-400 block">Payment Reference / MPESA Code</label>
+              <label className="text-slate-400 block label-caps">Payment Reference / MPESA Code</label>
               <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                   <IconReceipt2 size={15} />
@@ -1259,16 +1296,16 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   placeholder="e.g. MP-RF88921-KES"
                   value={receiptRef}
                   onChange={(e) => setReceiptRef(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-[12.5px] font-mono text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
+                  className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all mono-data"
                 />
               </div>
             </div>
 
             <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <Button type="button" variant="secondary" onClick={() => setRecordReceipt(null)} className="h-9 px-4 text-[12.5px]">
+              <Button type="button" variant="secondary" onClick={() => setRecordReceipt(null)} className="h-9 px-4 text-base">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="h-9 px-4 text-[12.5px] bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium rounded-lg shadow-sm">
+              <Button type="submit" disabled={isSubmitting} className="h-9 px-4 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium rounded-lg shadow-sm text-base">
                 {isSubmitting ? "Recording..." : "Record Receipt"}
               </Button>
             </div>
@@ -1284,11 +1321,11 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         footer={
           selectedBill && (
             <div className="flex gap-2 justify-end">
-              <Button variant="secondary" onClick={() => setSelectedBill(null)} className="h-9 text-[12.5px]">
+              <Button variant="secondary" onClick={() => setSelectedBill(null)} className="h-9 text-base">
                 Close Panel
               </Button>
               {selectedBill.status === "Pending" && (
-                <Button variant="secondary" onClick={() => handleToggleDispute(selectedBill.id, "bill")} className="h-9 text-[12.5px]">
+                <Button variant="secondary" onClick={() => handleToggleDispute(selectedBill.id, "bill")} className="h-9 text-base">
                   {selectedBill.disputed ? "Clear Hold" : "Dispute Hold"}
                 </Button>
               )}
@@ -1296,7 +1333,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 <Button
                   onClick={() => { setSelectedBill(null); openPayModalFor(selectedBill); }}
                   disabled={Boolean(selectedBill.disputed)}
-                  className="bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] h-9 text-[12.5px] font-medium rounded-lg"
+                  className="bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] h-9 font-medium rounded-lg text-base"
                 >
                   {selectedBill.disputed ? "Held" : "Pay Vendor Bill"}
                 </Button>
@@ -1306,15 +1343,15 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         }
       >
         {selectedBill && (
-          <div className="space-y-6 text-slate-700 text-xs">
+          <div className="space-y-6 text-slate-700 text-sm">
             {/* Header context */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm border border-slate-100/50">
                 <IconUser size={20} />
               </div>
               <div>
-                <h4 className="text-[14px] font-medium text-slate-900 leading-snug">{selectedBill.vendorName}</h4>
-                <p className="text-[11.5px] text-slate-400 mt-0.5">{selectedBill.billCode} · {selectedBill.category}</p>
+                <h4 className="font-medium text-slate-900 leading-snug body-md">{selectedBill.vendorName}</h4>
+                <p className="text-slate-400 mt-0.5 text-sm">{selectedBill.billCode} · {selectedBill.category}</p>
               </div>
             </div>
 
@@ -1323,33 +1360,33 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               <div className="relative border border-slate-200 bg-white p-5 rounded-2xl flex flex-col justify-between shadow-sm min-h-[140px] select-none font-sans overflow-hidden">
                 {/* Visual verified/paid watermark */}
                 {selectedBill.status === "Posted" && (
-                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-emerald-600 px-3 py-1 text-sm font-bold text-emerald-600 tracking-wider rounded">
+                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-emerald-600 px-3 py-1 text-sm font-medium text-emerald-600 tracking-wider rounded">
                     PAID / ACCRUED
                   </div>
                 )}
                 {selectedBill.disputed && (
-                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-rose-600 px-3 py-1 text-sm font-bold text-rose-600 tracking-wider rounded">
+                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-rose-600 px-3 py-1 text-sm font-medium text-rose-600 tracking-wider rounded">
                     DISPUTED HOLD
                   </div>
                 )}
-                
-                <div className="flex justify-between items-start text-[11px] text-slate-400 font-mono">
-                  <span className="font-semibold text-slate-700 tracking-wider">VENDOR BILL VOUCHER</span>
+
+                <div className="flex justify-between items-start text-slate-400 font-mono text-sm">
+                  <span className="font-normal text-slate-700 tracking-wider">VENDOR BILL VOUCHER</span>
                   <span>REF: {selectedBill.billCode}</span>
                 </div>
 
                 <div className="my-2 flex justify-between items-center gap-4">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">Payee / Creditor</span>
-                    <span className="text-sm font-semibold text-slate-800 leading-tight mt-0.5">{selectedBill.vendorName}</span>
-                    <span className="text-[11.5px] text-slate-500 mt-0.5 font-medium">{selectedBill.category} · Allocation: {selectedBill.propertyName}</span>
+                    <span className="text-slate-400 font-mono label-caps">Payee / Creditor</span>
+                    <span className="text-sm font-normal text-slate-800 leading-tight mt-0.5">{selectedBill.vendorName}</span>
+                    <span className="text-slate-500 mt-0.5 font-medium text-sm">{selectedBill.category} · Allocation: {selectedBill.propertyName}</span>
                   </div>
-                  <div className="bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-lg text-[14px] font-semibold text-slate-800 font-mono shadow-[inset_0_1px_1.5px_rgba(0,0,0,0.03)] shrink-0">
+                  <div className="bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-lg font-normal text-slate-800 font-mono shadow-[inset_0_1px_1.5px_rgba(0,0,0,0.03)] shrink-0 body-md">
                     {formatMoney(selectedBill.amount)}
                   </div>
                 </div>
 
-                <div className="flex justify-between items-end text-[10px] text-slate-400 border-t border-slate-100 pt-2 font-mono">
+                <div className="flex justify-between items-end text-slate-400 border-t border-slate-100 pt-2 font-mono text-sm">
                   <div>
                     <span className="text-slate-400">ISSUED BY:</span>{" "}
                     <span className="text-slate-700 font-sans font-medium">{selectedBill.owner}</span>
@@ -1362,17 +1399,17 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Description</span>
-                <p className="text-slate-700 leading-relaxed text-[12.5px] bg-slate-50 border border-slate-100 p-3 rounded-xl">{selectedBill.description}</p>
+                <span className="text-slate-400 label-caps">Description</span>
+                <p className="text-slate-700 leading-relaxed bg-slate-50 border border-slate-100 p-3 rounded-xl text-base">{selectedBill.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Linkage Property</span>
-                  <p className="text-slate-800 mt-1 flex items-center gap-1 font-medium text-[12.5px]"><IconBuilding size={12} /> {selectedBill.propertyName}</p>
+                  <span className="text-slate-400 label-caps">Linkage Property</span>
+                  <p className="text-slate-800 mt-1 flex items-center gap-1 font-medium text-base"><IconBuilding size={12} /> {selectedBill.propertyName}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Payment Status</span>
+                  <span className="text-slate-400 label-caps">Payment Status</span>
                   <div className="mt-1">
                     <Badge tone={selectedBill.status === "Posted" ? "success" : selectedBill.disputed ? "risk" : "warning"} className="px-2.5 py-0.5">
                       {selectedBill.status === "Posted" ? "Settled" : recordRisk(selectedBill.dueDate, false, selectedBill.disputed)}
@@ -1383,34 +1420,34 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
 
               <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100">
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Source</span>
-                  <p className="mt-0.5 text-[12.5px] font-medium text-slate-700">{selectedBill.source}</p>
+                  <span className="text-slate-400 label-caps">Source</span>
+                  <p className="mt-0.5 font-medium text-slate-700 text-base">{selectedBill.source}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Owner</span>
-                  <p className="mt-0.5 text-[12.5px] font-medium text-slate-700">{selectedBill.owner}</p>
+                  <span className="text-slate-400 label-caps">Owner</span>
+                  <p className="mt-0.5 font-medium text-slate-700 text-base">{selectedBill.owner}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Aging</span>
-                  <p className="mt-0.5 font-mono text-[12.5px] font-medium text-slate-700">{agingBucket(selectedBill.dueDate, selectedBill.status === "Posted")}</p>
+                  <span className="text-slate-400 label-caps">Aging</span>
+                  <p className="mt-0.5 text-slate-700 mono-data">{agingBucket(selectedBill.dueDate, selectedBill.status === "Posted")}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Accrued Amount</span>
-                  <p className="text-[14px] font-mono font-semibold text-slate-800 mt-1">{formatMoney(selectedBill.amount)}</p>
+                  <span className="text-slate-400 label-caps">Accrued Amount</span>
+                  <p className="font-mono font-normal text-slate-800 mt-1 body-md">{formatMoney(selectedBill.amount)}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Due Date</span>
-                  <p className="text-slate-600 font-mono font-medium mt-1 text-[12.5px]">{formatDate(selectedBill.dueDate)}</p>
+                  <span className="text-slate-400 label-caps">Due Date</span>
+                  <p className="text-slate-600 mt-1 mono-data">{formatDate(selectedBill.dueDate)}</p>
                 </div>
               </div>
 
               {selectedBill.status === "Posted" && (
                 <div className="p-4 bg-emerald-50/20 border border-emerald-100/40 rounded-xl space-y-2 pt-2.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block">Payment Allocation Details</span>
-                  <div className="grid grid-cols-2 gap-2 text-[12px]">
+                  <span className="text-slate-400 block label-caps">Payment Allocation Details</span>
+                  <div className="grid grid-cols-2 gap-2 body-sm">
                     <div>
                       <span className="text-slate-400">Date Paid:</span>
                       <p className="font-medium text-slate-700 mt-0.5">{selectedBill.paidDate}</p>
@@ -1421,21 +1458,21 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                     </div>
                     <div className="col-span-2 pt-1.5 border-t border-emerald-100/30">
                       <span className="text-slate-400">Transaction Reference:</span>
-                      <p className="font-mono text-slate-800 font-semibold mt-0.5">{selectedBill.bankRef}</p>
+                      <p className="font-mono text-slate-800 font-normal mt-0.5">{selectedBill.bankRef}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               <div className="pt-2 border-t border-slate-100">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block">Activity Log</span>
+                <span className="text-slate-400 block label-caps">Activity Log</span>
                 <div className="mt-3.5 space-y-3">
                   {selectedBill.activityLog.map((entry, index) => (
                     <div key={`${selectedBill.id}-${entry}`} className="flex gap-2.5">
                       <span className="mt-1.5 size-1.5 rounded-full bg-slate-400 shrink-0" />
                       <div>
-                        <p className="text-[12.5px] text-slate-700 font-medium leading-normal">{entry}</p>
-                        <p className="font-mono text-[10px] text-slate-400 mt-0.5">Step {selectedBill.activityLog.length - index}</p>
+                        <p className="text-slate-700 font-medium leading-normal text-base">{entry}</p>
+                        <p className="font-mono text-slate-400 mt-0.5 text-sm">Step {selectedBill.activityLog.length - index}</p>
                       </div>
                     </div>
                   ))}
@@ -1454,11 +1491,11 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         footer={
           selectedInvoice && (
             <div className="flex gap-2 justify-end">
-              <Button variant="secondary" onClick={() => setSelectedInvoice(null)} className="h-9 text-[12.5px]">
+              <Button variant="secondary" onClick={() => setSelectedInvoice(null)} className="h-9 text-base">
                 Close Panel
               </Button>
               {selectedInvoice.status !== "Posted" && (
-                <Button variant="secondary" onClick={() => handleToggleDispute(selectedInvoice.id, "invoice")} className="h-9 text-[12.5px]">
+                <Button variant="secondary" onClick={() => handleToggleDispute(selectedInvoice.id, "invoice")} className="h-9 text-base">
                   {selectedInvoice.disputed ? "Clear Hold" : "Dispute Hold"}
                 </Button>
               )}
@@ -1466,7 +1503,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 <Button
                   onClick={() => { setSelectedInvoice(null); openReceiptModalFor(selectedInvoice); }}
                   disabled={Boolean(selectedInvoice.disputed)}
-                  className="bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] h-9 text-[12.5px] font-medium rounded-lg"
+                  className="bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] h-9 font-medium rounded-lg text-base"
                 >
                   {selectedInvoice.disputed ? "Held" : "Record Receipt"}
                 </Button>
@@ -1476,15 +1513,15 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         }
       >
         {selectedInvoice && (
-          <div className="space-y-6 text-slate-700 text-xs">
+          <div className="space-y-6 text-slate-700 text-sm">
             {/* Header context */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm border border-slate-100/50">
                 <IconUser size={20} />
               </div>
               <div>
-                <h4 className="text-[14px] font-medium text-slate-900 leading-snug">{selectedInvoice.clientName}</h4>
-                <p className="text-[11.5px] text-slate-400 mt-0.5">{selectedInvoice.invoiceCode} · {selectedInvoice.propertyName}</p>
+                <h4 className="font-medium text-slate-900 leading-snug body-md">{selectedInvoice.clientName}</h4>
+                <p className="text-slate-400 mt-0.5 text-sm">{selectedInvoice.invoiceCode} · {selectedInvoice.propertyName}</p>
               </div>
             </div>
 
@@ -1493,38 +1530,38 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               <div className="relative border border-slate-200 bg-white p-5 rounded-2xl flex flex-col justify-between shadow-sm min-h-[140px] select-none font-sans overflow-hidden">
                 {/* Visual stamp */}
                 {selectedInvoice.status === "Posted" && (
-                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-emerald-600 px-3 py-1 text-sm font-bold text-emerald-600 tracking-wider rounded">
+                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-emerald-600 px-3 py-1 text-sm font-medium text-emerald-600 tracking-wider rounded">
                     PAID / SETTLED
                   </div>
                 )}
                 {selectedInvoice.status === "Overdue" && !selectedInvoice.disputed && (
-                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-rose-600 px-3 py-1 text-sm font-bold text-rose-600 tracking-wider rounded">
+                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-rose-600 px-3 py-1 text-sm font-medium text-rose-600 tracking-wider rounded">
                     OVERDUE
                   </div>
                 )}
                 {selectedInvoice.disputed && (
-                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-rose-500 px-3 py-1 text-sm font-bold text-rose-500 tracking-wider rounded">
+                  <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-rose-500 px-3 py-1 text-sm font-medium text-rose-500 tracking-wider rounded">
                     DISPUTE HOLD
                   </div>
                 )}
 
-                <div className="flex justify-between items-start text-[11px] text-slate-400 font-mono">
-                  <span className="font-semibold text-slate-700 tracking-wider">SUNLAND SYSTEM INVOICE</span>
+                <div className="flex justify-between items-start text-slate-400 font-mono text-sm">
+                  <span className="font-normal text-slate-700 tracking-wider">SUNLAND SYSTEM INVOICE</span>
                   <span>NO: {selectedInvoice.invoiceCode}</span>
                 </div>
 
                 <div className="my-2 flex justify-between items-center gap-4">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">Bill to / Client</span>
-                    <span className="text-sm font-semibold text-slate-800 leading-tight mt-0.5">{selectedInvoice.clientName}</span>
-                    <span className="text-[11.5px] text-slate-500 mt-0.5 font-medium">Property: {selectedInvoice.propertyName}</span>
+                    <span className="text-slate-400 font-mono label-caps">Bill to / Client</span>
+                    <span className="text-sm font-normal text-slate-800 leading-tight mt-0.5">{selectedInvoice.clientName}</span>
+                    <span className="text-slate-500 mt-0.5 font-medium text-sm">Property: {selectedInvoice.propertyName}</span>
                   </div>
-                  <div className="bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-lg text-[14px] font-semibold text-slate-800 font-mono shadow-[inset_0_1px_1.5px_rgba(0,0,0,0.03)] shrink-0">
+                  <div className="bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-lg font-normal text-slate-800 font-mono shadow-[inset_0_1px_1.5px_rgba(0,0,0,0.03)] shrink-0 body-md">
                     {formatMoney(selectedInvoice.amount)}
                   </div>
                 </div>
 
-                <div className="flex justify-between items-end text-[10px] text-slate-400 border-t border-slate-100 pt-2 font-mono">
+                <div className="flex justify-between items-end text-slate-400 border-t border-slate-100 pt-2 font-mono text-sm">
                   <div>
                     <span className="text-slate-400">ISSUED BY:</span>{" "}
                     <span className="text-slate-700 font-sans font-medium">{selectedInvoice.owner}</span>
@@ -1537,17 +1574,17 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Description</span>
-                <p className="text-slate-700 leading-relaxed text-[12.5px] bg-slate-50 border border-slate-100 p-3 rounded-xl">{selectedInvoice.description}</p>
+                <span className="text-slate-400 label-caps">Description</span>
+                <p className="text-slate-700 leading-relaxed bg-slate-50 border border-slate-100 p-3 rounded-xl text-base">{selectedInvoice.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Property Link</span>
-                  <p className="text-slate-800 mt-1 flex items-center gap-1 font-medium text-[12.5px]"><IconBuilding size={12} /> {selectedInvoice.propertyName}</p>
+                  <span className="text-slate-400 label-caps">Property Link</span>
+                  <p className="text-slate-800 mt-1 flex items-center gap-1 font-medium text-base"><IconBuilding size={12} /> {selectedInvoice.propertyName}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Invoice Status</span>
+                  <span className="text-slate-400 label-caps">Invoice Status</span>
                   <div className="mt-1">
                     <Badge
                       tone={selectedInvoice.status === "Posted" ? "success" : selectedInvoice.status === "Overdue" || selectedInvoice.disputed ? "risk" : "warning"}
@@ -1561,34 +1598,34 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
 
               <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100">
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Source</span>
-                  <p className="mt-0.5 text-[12.5px] font-medium text-slate-700">{selectedInvoice.source}</p>
+                  <span className="text-slate-400 label-caps">Source</span>
+                  <p className="mt-0.5 font-medium text-slate-700 text-base">{selectedInvoice.source}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Owner</span>
-                  <p className="mt-0.5 text-[12.5px] font-medium text-slate-700">{selectedInvoice.owner}</p>
+                  <span className="text-slate-400 label-caps">Owner</span>
+                  <p className="mt-0.5 font-medium text-slate-700 text-base">{selectedInvoice.owner}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Aging</span>
-                  <p className="mt-0.5 font-mono text-[12.5px] font-medium text-slate-700">{agingBucket(selectedInvoice.dueDate, selectedInvoice.status === "Posted")}</p>
+                  <span className="text-slate-400 label-caps">Aging</span>
+                  <p className="mt-0.5 text-slate-700 mono-data">{agingBucket(selectedInvoice.dueDate, selectedInvoice.status === "Posted")}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Invoiced Amount</span>
-                  <p className="text-[14px] font-mono font-semibold text-slate-800 mt-1">{formatMoney(selectedInvoice.amount)}</p>
+                  <span className="text-slate-400 label-caps">Invoiced Amount</span>
+                  <p className="font-mono font-normal text-slate-800 mt-1 body-md">{formatMoney(selectedInvoice.amount)}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Due Date</span>
-                  <p className="text-slate-600 font-mono font-medium mt-1 text-[12.5px]">{formatDate(selectedInvoice.dueDate)}</p>
+                  <span className="text-slate-400 label-caps">Due Date</span>
+                  <p className="text-slate-600 mt-1 mono-data">{formatDate(selectedInvoice.dueDate)}</p>
                 </div>
               </div>
 
               {selectedInvoice.status === "Posted" && (
                 <div className="p-4 bg-emerald-50/20 border border-emerald-100/40 rounded-xl space-y-2 pt-2.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block">Receipt Confirmation Details</span>
-                  <div className="grid grid-cols-2 gap-2 text-[12px]">
+                  <span className="text-slate-400 block label-caps">Receipt Confirmation Details</span>
+                  <div className="grid grid-cols-2 gap-2 body-sm">
                     <div>
                       <span className="text-slate-400">Date Received:</span>
                       <p className="font-medium text-slate-700 mt-0.5">{selectedInvoice.receivedDate}</p>
@@ -1603,7 +1640,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                     </div>
                     <div>
                       <span className="text-slate-400">Payment Reference:</span>
-                      <p className="font-mono text-slate-800 font-semibold mt-0.5">{selectedInvoice.bankRef}</p>
+                      <p className="font-mono text-slate-800 font-normal mt-0.5">{selectedInvoice.bankRef}</p>
                     </div>
                   </div>
                 </div>
@@ -1625,14 +1662,14 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               )}
 
               <div className="pt-2 border-t border-slate-100">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block">Activity Log</span>
+                <span className="text-slate-400 block label-caps">Activity Log</span>
                 <div className="mt-3.5 space-y-3">
                   {selectedInvoice.activityLog.map((entry, index) => (
                     <div key={`${selectedInvoice.id}-${entry}`} className="flex gap-2.5">
                       <span className="mt-1.5 size-1.5 rounded-full bg-slate-400 shrink-0" />
                       <div>
-                        <p className="text-[12.5px] text-slate-700 font-medium leading-normal">{entry}</p>
-                        <p className="font-mono text-[10px] text-slate-400 mt-0.5">Step {selectedInvoice.activityLog.length - index}</p>
+                        <p className="text-slate-700 font-medium leading-normal text-base">{entry}</p>
+                        <p className="font-mono text-slate-400 mt-0.5 text-sm">Step {selectedInvoice.activityLog.length - index}</p>
                       </div>
                     </div>
                   ))}

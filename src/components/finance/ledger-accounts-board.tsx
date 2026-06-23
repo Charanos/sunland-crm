@@ -640,7 +640,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                   placeholder="Search journals memo or ID..."
-                  className="w-full bg-transparent text-[12.5px] text-slate-700 outline-none placeholder:text-slate-400"
+                  className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-base"
                 />
               </div>
             )}
@@ -651,7 +651,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   value={coaSearchQuery}
                   onChange={(e) => setCoaSearchQuery(e.target.value)}
                   placeholder="Search account code or name..."
-                  className="w-full bg-transparent text-[12.5px] text-slate-700 outline-none placeholder:text-slate-400"
+                  className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-base"
                 />
               </div>
             )}
@@ -678,10 +678,10 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
       {/* ── 3. Main Tab Panel ────────────────────────────────────────────────── */}
       <div className="pt-2 my-2 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal capitalize">
+        <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab.replace(/-/g, " ")} Panel
         </h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           {renderTabDescription()}
         </p>
       </div>
@@ -806,7 +806,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px] text-left text-sm  text-slate-650">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100 text-sm  font-medium uppercase tracking-widest text-slate-400">
+                  <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 label-caps">
                     <th className="px-5 py-3 w-[120px]">Date</th>
                     <th className="px-5 py-3 w-[120px]">Reference</th>
                     <th className="px-5 py-3">Memo Details</th>
@@ -820,13 +820,13 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 <tbody className="divide-y divide-slate-100/80 bg-white">
                   {paginatedJournals.length > 0 ? paginatedJournals.map((row) => (
                     <tr key={row.id} className="transition-colors hover:bg-slate-50/80 group">
-                      <td className="px-5 py-3.5 font-mono text-base text-slate-450">{row.date}</td>
-                      <td className="px-5 py-3.5 font-mono text-[12.5px] font-medium text-[#151936]">{row.id}</td>
+                      <td className="px-5 py-3.5 text-slate-450 mono-data">{row.date}</td>
+                      <td className="px-5 py-3.5 text-[#151936] mono-data">{row.id}</td>
                       <td className="px-5 py-3.5 text-base text-slate-700 font-medium">{row.memo}</td>
-                      <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-750">
+                      <td className="px-5 py-3.5 text-right text-slate-750 mono-data">
                         {row.debit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-750">
+                      <td className="px-5 py-3.5 text-right text-slate-750 mono-data">
                         {row.credit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-5 py-3.5 text-base text-slate-500 font-medium">{row.user}</td>
@@ -885,11 +885,11 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="size-2 rounded-full bg-[#151936]" />
-                        <span className="text-sm  uppercase font-medium tracking-wider text-slate-400">Assets</span>
+                        <span className="text-slate-400 label-caps">Assets</span>
                       </div>
                       <p className="text-sm text-slate-450 font-medium mt-0.5">{coaCategoryTotals.Asset.count} accounts</p>
                     </div>
-                    <p className="mt-4 font-mono text-base font-medium text-slate-800">
+                    <p className="mt-4 text-slate-800 mono-data">
                       {coaCategoryTotals.Asset.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })} KES
                     </p>
                   </div>
@@ -899,11 +899,11 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="size-2 rounded-full bg-[#c96f45]" />
-                        <span className="text-sm  uppercase font-medium tracking-wider text-slate-400">Liabilities</span>
+                        <span className="text-slate-400 label-caps">Liabilities</span>
                       </div>
                       <p className="text-sm text-slate-450 font-medium mt-0.5">{coaCategoryTotals.Liability.count} accounts</p>
                     </div>
-                    <p className="mt-4 font-mono text-base font-medium text-slate-800">
+                    <p className="mt-4 text-slate-800 mono-data">
                       {coaCategoryTotals.Liability.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })} KES
                     </p>
                   </div>
@@ -913,11 +913,11 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="size-2 rounded-full bg-[#5a7c9f]" />
-                        <span className="text-sm  uppercase font-medium tracking-wider text-slate-400">Equity</span>
+                        <span className="text-slate-400 label-caps">Equity</span>
                       </div>
                       <p className="text-sm text-slate-450 font-medium mt-0.5">{coaCategoryTotals.Equity.count} accounts</p>
                     </div>
-                    <p className="mt-4 font-mono text-base font-medium text-slate-800">
+                    <p className="mt-4 text-slate-800 mono-data">
                       {coaCategoryTotals.Equity.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })} KES
                     </p>
                   </div>
@@ -927,11 +927,11 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="size-2 rounded-full bg-[#48954b]" />
-                        <span className="text-sm  uppercase font-medium tracking-wider text-slate-400">Revenues</span>
+                        <span className="text-slate-400 label-caps">Revenues</span>
                       </div>
                       <p className="text-sm text-slate-450 font-medium mt-0.5">{coaCategoryTotals.Revenue.count} accounts</p>
                     </div>
-                    <p className="mt-4 font-mono text-base font-medium text-slate-800">
+                    <p className="mt-4 text-slate-800 mono-data">
                       {coaCategoryTotals.Revenue.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })} KES
                     </p>
                   </div>
@@ -941,11 +941,11 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="size-2 rounded-full bg-[#8b5cf6]" />
-                        <span className="text-sm  uppercase font-medium tracking-wider text-slate-400">Expenses</span>
+                        <span className="text-slate-400 label-caps">Expenses</span>
                       </div>
                       <p className="text-sm text-slate-450 font-medium mt-0.5">{coaCategoryTotals.Expense.count} accounts</p>
                     </div>
-                    <p className="mt-4 font-mono text-base font-medium text-slate-800">
+                    <p className="mt-4 text-slate-800 mono-data">
                       {coaCategoryTotals.Expense.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })} KES
                     </p>
                   </div>
@@ -975,7 +975,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     </ResponsiveContainer>
                   </div>
                   <div className="w-[45%] text-sm font-medium text-slate-500 space-y-1 pl-2">
-                    <h5 className="text-sm  uppercase font-medium text-slate-400 tracking-wider mb-1.5">Balance Mix</h5>
+                    <h5 className="text-slate-400 mb-1.5 label-caps">Balance Mix</h5>
                     {coaChartData.map((entry) => (
                       <div key={entry.name} className="flex items-center gap-1.5">
                         <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
@@ -1014,7 +1014,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm  text-slate-650">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100 text-sm  font-medium uppercase tracking-widest text-slate-400">
+                  <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 label-caps">
                     <th className="px-5 py-3 w-[150px]">Account Code</th>
                     <th className="px-5 py-3">Account Title Name</th>
                     <th className="px-5 py-3 w-[180px]">Classification Type</th>
@@ -1029,7 +1029,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       className="transition-colors hover:bg-slate-50/80 cursor-pointer group"
                       onClick={() => setSelectedCoaAccount(account)}
                     >
-                      <td className="px-5 py-3.5 font-mono text-[12.5px] font-medium text-[#151936]">{account.id}</td>
+                      <td className="px-5 py-3.5 text-[#151936] mono-data">{account.id}</td>
                       <td className="px-5 py-3.5 text-base text-slate-700 font-medium">{account.name}</td>
                       <td className="px-5 py-3.5">
                         <Badge
@@ -1044,7 +1044,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                           {account.type}
                         </Badge>
                       </td>
-                      <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-755">
+                      <td className="px-5 py-3.5 text-right text-slate-755 mono-data">
                         {account.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-5 py-3.5 text-right">
@@ -1101,7 +1101,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             </div>
 
             {auditSeal && (
-              <div className="mx-6 mt-4 p-4 rounded-xl border border-emerald-100 bg-emerald-50/45 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-850 animate-fade-in">
+              <div className="mx-6 mt-4 p-4 rounded-xl border border-emerald-100 bg-emerald-50/45 flex flex-wrap items-center justify-between gap-3 text-emerald-850 animate-fade-in text-sm">
                 <div className="flex items-center gap-3">
                   <div className="size-9 rounded-lg bg-emerald-100/80 flex items-center justify-center text-emerald-700">
                     <IconShieldCheck size={20} />
@@ -1122,7 +1122,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <div className="bg-white border border-slate-200/70 p-5 rounded-xl shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div>
-                    <h4 className="text-[12.5px] font-medium text-slate-800">Visual Equilibrium Breakdown</h4>
+                    <h4 className="font-medium text-slate-800 text-base">Visual Equilibrium Breakdown</h4>
                     <p className="text-sm text-slate-450 font-medium mt-0.5">Asset & Expense debits balancing against Liability, Equity & Revenue credits.</p>
                   </div>
                   <Badge tone={Math.abs(trialBalanceData.totalDr - trialBalanceData.totalCr) < 0.01 ? "success" : "risk"}>
@@ -1150,7 +1150,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm  text-slate-650">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100 text-sm  font-medium uppercase tracking-widest text-slate-400">
+                  <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 label-caps">
                     <th className="px-5 py-3 w-[150px]">Code</th>
                     <th className="px-5 py-3">Account Name</th>
                     <th className="px-5 py-3 text-right w-[200px]">Debits (KES)</th>
@@ -1165,12 +1165,12 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                     return (
                       <tr key={account.id} className="transition-colors hover:bg-slate-50/80">
-                        <td className="px-5 py-3 font-mono text-base text-slate-500">{account.id}</td>
-                        <td className="px-5 py-3 text-[12.5px] text-slate-700 font-medium">{account.name}</td>
-                        <td className="px-5 py-3 text-right font-mono text-[12.5px] font-medium text-slate-700">
+                        <td className="px-5 py-3 text-slate-500 mono-data">{account.id}</td>
+                        <td className="px-5 py-3 text-slate-700 font-medium text-base">{account.name}</td>
+                        <td className="px-5 py-3 text-right text-slate-700 mono-data">
                           {drAmt > 0 ? drAmt.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
                         </td>
-                        <td className="px-5 py-3 text-right font-mono text-[12.5px] font-medium text-slate-700">
+                        <td className="px-5 py-3 text-right text-slate-700 mono-data">
                           {crAmt > 0 ? crAmt.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
                         </td>
                       </tr>
@@ -1196,16 +1196,16 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       <>
                         <tr className="bg-slate-50/70 border-t-2 border-slate-200 font-medium">
                           <td colSpan={2} className="px-5 py-4 text-base text-slate-655 font-medium">Consolidated Ledger Summary</td>
-                          <td className="px-5 py-4 text-right font-mono text-base text-slate-900">
+                          <td className="px-5 py-4 text-right text-slate-900 mono-data">
                             {drSum.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </td>
-                          <td className="px-5 py-4 text-right font-mono text-base text-slate-900">
+                          <td className="px-5 py-4 text-right text-slate-900 mono-data">
                             {crSum.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
                         {!isTbBalanced && (
                           <tr className="bg-rose-50 text-rose-800 font-medium">
-                            <td colSpan={4} className="px-5 py-3 text-xs font-medium text-center">
+                            <td colSpan={4} className="px-5 py-3 font-medium text-center text-sm">
                               ⚠️ Out of Balance Variance detected: KES {tbVariance.toLocaleString(undefined, { minimumFractionDigits: 2 })}. Review manual postings.
                             </td>
                           </tr>
@@ -1240,14 +1240,14 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                   {/* Header block */}
                   <div className="border-b border-slate-100 pb-4 text-center">
-                    <h4 className="title-serif text-slate-900 text-xl font-normal">Sunland Real Estate Group</h4>
-                    <p className="text-sm  text-slate-400 uppercase tracking-widest font-mono mt-1">Statement of Financial Position</p>
+                    <h4 className="title-serif text-slate-900 font-normal">Sunland Real Estate Group</h4>
+                    <p className="text-slate-400 font-mono mt-1 label-caps">Statement of Financial Position</p>
                     <p className="text-base text-slate-500 font-medium mt-0.5">As of June 21, 2026</p>
                   </div>
 
                   {/* Assets Section */}
                   <div className="space-y-2">
-                    <h5 className="text-sm  font-medium uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">1. Assets & Reserves</h5>
+                    <h5 className="text-slate-400 border-b border-slate-100 pb-1 label-caps">1. Assets & Reserves</h5>
                     <div className="space-y-1 pl-3">
                       {coa.filter(a => a.type === "Asset").map(account => (
                         <div
@@ -1273,7 +1273,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         return (
                           <div className="flex justify-between text-base text-slate-900 font-medium border-t border-slate-100 pt-2 font-medium px-2">
                             <span>Total Assets</span>
-                            <span className="font-mono text-[14px] text-[#1b431e]">{totalAssets.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span className="font-mono text-[#1b431e] body-md">{totalAssets.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           </div>
                         );
                       })()}
@@ -1282,7 +1282,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                   {/* Liabilities Section */}
                   <div className="space-y-2">
-                    <h5 className="text-sm  font-medium uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">2. Operating Liabilities</h5>
+                    <h5 className="text-slate-400 border-b border-slate-100 pb-1 label-caps">2. Operating Liabilities</h5>
                     <div className="space-y-1 pl-3">
                       {coa.filter(a => a.type === "Liability").map(account => (
                         <div
@@ -1308,7 +1308,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         return (
                           <div className="flex justify-between text-base text-slate-900 font-medium border-t border-slate-100 pt-2 font-medium px-2">
                             <span>Total Liabilities</span>
-                            <span className="font-mono text-[14px] text-slate-800">{totalLiab.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span className="font-mono text-slate-800 body-md">{totalLiab.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           </div>
                         );
                       })()}
@@ -1317,7 +1317,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                   {/* Equity Section */}
                   <div className="space-y-2">
-                    <h5 className="text-sm  font-medium uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">3. Capital & Shareholder Equity</h5>
+                    <h5 className="text-slate-400 border-b border-slate-100 pb-1 label-caps">3. Capital & Shareholder Equity</h5>
                     <div className="space-y-1 pl-3">
                       {coa.filter(a => a.type === "Equity").map(account => (
                         <div
@@ -1343,7 +1343,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         return (
                           <div className="flex justify-between text-base text-slate-900 font-medium border-t border-slate-100 pt-2 font-medium px-2">
                             <span>Total Shareholder Equity</span>
-                            <span className="font-mono text-[14px] text-slate-800">{totalEquity.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span className="font-mono text-slate-800 body-md">{totalEquity.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           </div>
                         );
                       })()}
@@ -1360,7 +1360,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                     return (
                       <div className={cn(
-                        "p-3.5 rounded-xl border flex items-center justify-between text-xs font-medium",
+                        "p-3.5 rounded-xl border flex items-center justify-between text-sm font-medium",
                         isSheetBalanced ? "bg-emerald-50 border-emerald-100 text-emerald-800" : "bg-rose-50 border-rose-100 text-rose-800"
                       )}>
                         <span className="flex items-center gap-1.5 font-medium">
@@ -1385,7 +1385,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   {/* Donut Chart: Asset reserve mix */}
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4">
                     <h5 className="text-base font-medium text-slate-800 uppercase tracking-wider">Asset Reserve Mix</h5>
-                    <div className="h-44 w-full text-[11px]">
+                    <div className="h-44 w-full text-sm">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -1423,7 +1423,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   {/* Donut Chart: Funding structure mix */}
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4">
                     <h5 className="text-base font-medium text-slate-800 uppercase tracking-wider">Funding Composition</h5>
-                    <div className="h-44 w-full text-[11px]">
+                    <div className="h-44 w-full text-sm">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -1486,14 +1486,14 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                   {/* Header block */}
                   <div className="border-b border-slate-100 pb-4 text-center">
-                    <h4 className="title-serif text-slate-900 text-xl font-normal">Sunland Real Estate Group</h4>
-                    <p className="text-sm  text-slate-400 uppercase tracking-widest font-mono mt-1">Statement of Cash Flows</p>
+                    <h4 className="title-serif text-slate-900 font-normal">Sunland Real Estate Group</h4>
+                    <p className="text-slate-400 font-mono mt-1 label-caps">Statement of Cash Flows</p>
                     <p className="text-base text-slate-500 font-medium mt-0.5">Period ended June 21, 2026</p>
                   </div>
 
                   {/* Operating Cash flow */}
                   <div className="space-y-2">
-                    <h5 className="text-sm  font-medium uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">1. Cash flows from Operating Activities</h5>
+                    <h5 className="text-slate-400 border-b border-slate-100 pb-1 label-caps">1. Cash flows from Operating Activities</h5>
                     <div className="space-y-1.5 pl-3">
                       {cashFlowLines.filter(l => l.category === "Operating").map(line => (
                         <div
@@ -1503,7 +1503,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         >
                           <span className="group-hover:text-blue-600 transition-colors flex items-center gap-2">
                             <span>{line.name}</span>
-                            <span className="text-xs  bg-slate-100 text-slate-450 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">Reclassify</span>
+                            <span className="bg-slate-100 text-slate-450 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity text-sm">Reclassify</span>
                           </span>
                           <span className={cn("font-mono text-slate-800")}>
                             {line.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -1512,7 +1512,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       ))}
                       <div className="flex justify-between text-base text-slate-900 border-t border-slate-100 pt-2 font-medium px-2">
                         <span>Net Cash generated by Operating Activities</span>
-                        <span className="font-mono text-[14px] text-emerald-700">
+                        <span className="font-mono text-emerald-700 body-md">
                           {cashFlowData.operating.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -1521,7 +1521,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                   {/* Investing Cash flow */}
                   <div className="space-y-2">
-                    <h5 className="text-sm  font-medium uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">2. Cash flows from Investing Activities</h5>
+                    <h5 className="text-slate-400 border-b border-slate-100 pb-1 label-caps">2. Cash flows from Investing Activities</h5>
                     <div className="space-y-1.5 pl-3">
                       {cashFlowLines.filter(l => l.category === "Investing").length > 0 ? (
                         cashFlowLines.filter(l => l.category === "Investing").map(line => (
@@ -1532,7 +1532,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                           >
                             <span className="group-hover:text-blue-600 transition-colors flex items-center gap-2">
                               <span>{line.name}</span>
-                              <span className="text-xs  bg-slate-100 text-slate-450 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">Reclassify</span>
+                              <span className="bg-slate-100 text-slate-450 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity text-sm">Reclassify</span>
                             </span>
                             <span className={cn("font-mono text-slate-800")}>
                               {line.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -1544,7 +1544,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       )}
                       <div className="flex justify-between text-base text-slate-900 border-t border-slate-100 pt-2 font-medium px-2">
                         <span>Net Cash used in Investing Activities</span>
-                        <span className="font-mono text-[14px] text-slate-650">
+                        <span className="font-mono text-slate-650 body-md">
                           {cashFlowData.investing.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -1553,7 +1553,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                   {/* Financing Cash flow */}
                   <div className="space-y-2">
-                    <h5 className="text-sm  font-medium uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">3. Cash flows from Financing Activities</h5>
+                    <h5 className="text-slate-400 border-b border-slate-100 pb-1 label-caps">3. Cash flows from Financing Activities</h5>
                     <div className="space-y-1.5 pl-3">
                       {cashFlowLines.filter(l => l.category === "Financing").map(line => (
                         <div
@@ -1563,7 +1563,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         >
                           <span className="group-hover:text-blue-600 transition-colors flex items-center gap-2">
                             <span>{line.name}</span>
-                            <span className="text-xs  bg-slate-100 text-slate-450 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">Reclassify</span>
+                            <span className="bg-slate-100 text-slate-450 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity text-sm">Reclassify</span>
                           </span>
                           <span className={cn("font-mono text-slate-800")}>
                             {line.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -1572,7 +1572,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       ))}
                       <div className="flex justify-between text-base text-slate-900 border-t border-slate-100 pt-2 font-medium px-2">
                         <span>Net Cash used in Financing Activities</span>
-                        <span className="font-mono text-[14px] text-rose-700">
+                        <span className="font-mono text-rose-700 body-md">
                           {cashFlowData.financing.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -1583,7 +1583,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   <div className="border-t border-slate-200 pt-4">
                     <div className="flex justify-between text-base  text-[#151936] font-medium px-2">
                       <span>Net Cash Position (Bank Accounts)</span>
-                      <span className="font-mono text-[17px] font-medium">
+                      <span className="font-mono font-medium text-lg">
                         {cashFlowData.totalCash.toLocaleString(undefined, { minimumFractionDigits: 2 })} KES
                       </span>
                     </div>
@@ -1729,7 +1729,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         copy[idx].account = e.target.value;
                         setNewJournalLines(copy);
                       }}
-                      className="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none bg-white font-medium text-slate-700 disabled:bg-slate-50"
+                      className="w-full border border-slate-200 rounded-xl px-2.5 py-2 outline-none bg-white font-medium text-slate-700 disabled:bg-slate-50 text-sm"
                       required
                     >
                       <option value="">Select Ledger Account...</option>
@@ -1752,7 +1752,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         copy[idx].debit = e.target.value;
                         setNewJournalLines(copy);
                       }}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none font-mono font-medium disabled:bg-slate-50"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none font-mono font-medium disabled:bg-slate-50 text-sm"
                     />
                   </div>
 
@@ -1767,7 +1767,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         copy[idx].credit = e.target.value;
                         setNewJournalLines(copy);
                       }}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none font-mono font-medium disabled:bg-slate-50"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none font-mono font-medium disabled:bg-slate-50 text-sm"
                     />
                   </div>
 
@@ -1810,14 +1810,14 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               type="button"
               disabled={isSubmitting}
               onClick={() => setIsNewJournalOpen(false)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-650 hover:bg-slate-50 transition-colors text-xs font-medium disabled:opacity-50"
+              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-650 hover:bg-slate-50 transition-colors font-medium disabled:opacity-50 text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!isBalanced || isSubmitting}
-              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-colors text-xs font-medium"
+              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-colors font-medium text-sm"
             >
               {isSubmitting ? "Posting..." : "Post Entry"}
             </button>
@@ -1890,14 +1890,14 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               type="button"
               disabled={isSubmitting}
               onClick={() => setIsNewAccountOpen(false)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-650 hover:bg-slate-50 transition-colors text-xs font-medium disabled:opacity-50"
+              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-655 hover:bg-slate-50 transition-colors font-medium disabled:opacity-50 text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors text-xs font-medium disabled:opacity-50"
+              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors font-medium disabled:opacity-50 text-sm"
             >
               {isSubmitting ? "Creating..." : "Create Account"}
             </button>
@@ -1906,43 +1906,46 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
       </Modal>
 
       {/* ── 7. Journal Detail Drawer ─────────────────────────────────────────── */}
-      {selectedJournal && (
-        <>
-          <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 transition-opacity" onClick={() => setSelectedJournal(null)} />
-          <div className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col animate-slide-in-right border-l border-slate-200">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      <Drawer
+        open={Boolean(selectedJournal)}
+        onClose={() => setSelectedJournal(null)}
+        title={`Journal Entry: ${selectedJournal?.id ?? ""}`}
+        width="28rem"
+        footer={
+          selectedJournal?.status === "Posted" && (
+            <Button
+              onClick={() => setVoidConfirmId(selectedJournal.id)}
+              variant="secondary"
+              className="w-full bg-white border-slate-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 shadow-sm"
+            >
+              <IconArrowBackUp size={16} className="mr-1.5" /> Void Ledger Entry
+            </Button>
+          )
+        }
+      >
+        {selectedJournal && (
+          <div className="space-y-6 text-slate-700 text-sm">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-[18px] font-mono font-medium text-slate-900">{selectedJournal.id}</h3>
-                  <Badge tone={selectedJournal.status === "Posted" ? "success" : "neutral"} className="py-0.5 px-2 font-medium">
-                    {selectedJournal.status}
-                  </Badge>
-                </div>
-                <p className="text-[12.5px] text-slate-500 font-medium">
+                <p className="text-slate-500 font-medium text-base">
                   {selectedJournal.date} • Entered by {selectedJournal.user}
                 </p>
               </div>
-              <button
-                onClick={() => setSelectedJournal(null)}
-                className="p-2 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 shadow-sm transition-colors"
-              >
-                ✕
-              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
-              <div className="mb-6">
-                <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2">Master Memo Description</h4>
-                <p className="text-[14.25px] text-slate-800 font-medium bg-slate-50 p-3 rounded-lg border border-slate-100 leading-snug">
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-slate-400 mb-2 label-caps">Master Memo Description</h4>
+                <p className="body-md text-slate-800 font-medium bg-slate-50 p-3 rounded-lg border border-slate-100 leading-snug">
                   {selectedJournal.memo}
                 </p>
               </div>
 
-              <div className="mb-8">
-                <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2">Ledger Split Lines</h4>
+              <div>
+                <h4 className="text-slate-400 mb-2 label-caps">Ledger Split Lines</h4>
                 <div className="border border-slate-200 rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-[12.5px]">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-sm  font-medium text-slate-500 uppercase tracking-wider">
+                  <table className="w-full text-left text-base">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 label-caps">
                       <tr>
                         <th className="px-3 py-2 w-[60%]">Account</th>
                         <th className="px-3 py-2 text-right">Debit</th>
@@ -1976,34 +1979,22 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               </div>
 
               <div>
-                <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">Audit Activity Log</h4>
+                <h4 className="text-slate-400 mb-3 label-caps">Audit Activity Log</h4>
                 <div className="space-y-4 border-l-2 border-slate-100 ml-2 pl-4">
                   {selectedJournal.logs.map((log, i) => (
                     <div key={i} className="relative">
-                      <div className="absolute -left-[21px] top-1 size-2.5 rounded-full bg-slate-300 ring-4 ring-white" />
-                      <p className="text-[12.5px] text-slate-700 font-medium leading-snug">{log.action}</p>
+                      <div className="absolute -left-[21px] top-1 size-2.5 rounded-full bg-slate-350 ring-4 ring-white" />
+                      <p className="text-slate-700 font-medium leading-snug text-base">{log.action}</p>
                       <p className="text-sm text-slate-400 mt-0.5">{log.time} • {log.user}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-
-            {/* Drawer Footer Actions */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-3">
-              {selectedJournal.status === "Posted" && (
-                <Button
-                  onClick={() => setVoidConfirmId(selectedJournal.id)}
-                  variant="secondary"
-                  className="w-full bg-white border-slate-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 shadow-sm"
-                >
-                  <IconArrowBackUp size={16} className="mr-1.5" /> Void Ledger Entry
-                </Button>
-              )}
-            </div>
           </div>
-        </>
-      )}
+        )}
+      </Drawer>
+
 
       {/* ── 8. Void Confirmation Dialog ──────────────────────────────────────── */}
       <ConfirmDialog
@@ -2030,7 +2021,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             <div className="bg-slate-50 border border-slate-200/70 p-4 rounded-xl shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Account Title</h4>
+                  <h4 className="text-slate-400 label-caps">Account Title</h4>
                   <p className="text-base  font-medium text-slate-800 mt-1">{selectedCoaAccount.name}</p>
                 </div>
                 <Badge
@@ -2047,7 +2038,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/50 flex justify-between items-center">
                 <span className="text-base text-slate-500 font-medium">Current Balance</span>
-                <span className="font-mono text-base  font-medium text-slate-805">
+                <span className="text-slate-805 mono-data">
                   {selectedCoaAccount.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} KES
                 </span>
               </div>
@@ -2055,11 +2046,11 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
             {/* General Ledger Postings */}
             <div>
-              <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2.5">General Ledger Postings ({selectedAccountTransactions.length})</h4>
+              <h4 className="text-slate-400 mb-2.5 label-caps">General Ledger Postings ({selectedAccountTransactions.length})</h4>
               <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                 {selectedAccountTransactions.length > 0 ? (
-                  <table className="w-full text-left text-[12.5px]">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-sm  font-medium text-slate-500 uppercase tracking-wider">
+                  <table className="w-full text-left text-base">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 label-caps">
                       <tr>
                         <th className="px-3 py-2 w-[110px]">Date/Ref</th>
                         <th className="px-3 py-2">Details</th>
@@ -2074,7 +2065,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                           <tr key={`${tx.id}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
                             <td className="px-3 py-2.5">
                               <p className="font-mono text-sm text-slate-400">{tx.date}</p>
-                              <p className="font-mono text-base font-medium text-[#151936] mt-0.5">{tx.id}</p>
+                              <p className="text-[#151936] mt-0.5 mono-data">{tx.id}</p>
                             </td>
                             <td className="px-3 py-2.5">
                               <p className="text-base text-slate-700 truncate max-w-[140px]" title={tx.memo}>{tx.memo}</p>
@@ -2101,16 +2092,16 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
             {/* Audit Trail Logs */}
             <div>
-              <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">Audit Activity Log</h4>
+              <h4 className="text-slate-400 mb-3 label-caps">Audit Activity Log</h4>
               <div className="space-y-4 border-l-2 border-slate-100 ml-2 pl-4">
                 <div className="relative">
                   <div className="absolute -left-[21px] top-1 size-2.5 rounded-full bg-slate-300 ring-4 ring-white" />
-                  <p className="text-[12.5px] text-slate-700 font-medium leading-snug">Account verified in General Ledger audit</p>
+                  <p className="text-slate-700 font-medium leading-snug text-base">Account verified in General Ledger audit</p>
                   <p className="text-sm text-slate-400 mt-0.5">Today • System Automator</p>
                 </div>
                 <div className="relative">
                   <div className="absolute -left-[21px] top-1 size-2.5 rounded-full bg-slate-200 ring-4 ring-white" />
-                  <p className="text-[12.5px] text-slate-700 font-medium leading-snug">Account initialization completed</p>
+                  <p className="text-slate-700 font-medium leading-snug text-base">Account initialization completed</p>
                   <p className="text-sm text-slate-400 mt-0.5">2026-06-01 • Finance Manager</p>
                 </div>
               </div>
@@ -2131,19 +2122,19 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
           <div className="space-y-6">
             {/* Summary block */}
             <div className="bg-slate-50 border border-slate-200/70 p-4 rounded-xl shadow-sm space-y-2">
-              <div className="flex justify-between items-center text-[12.5px]">
+              <div className="flex justify-between items-center text-base">
                 <span className="text-slate-500 font-medium">Ledger Book Balance</span>
                 <span className="font-mono font-medium text-slate-800">
                   {reconciliationAccount.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} KES
                 </span>
               </div>
-              <div className="flex justify-between items-center text-[12.5px] pt-2 border-t border-slate-200/50">
+              <div className="flex justify-between items-center pt-2 border-t border-slate-200/50 text-base">
                 <span className="text-slate-550 font-medium">Bank/Statement Balance</span>
                 <span className="font-mono font-medium text-[#151936]">
                   {(parseFloat(bankStatementBalance) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} KES
                 </span>
               </div>
-              <div className="flex justify-between items-center text-[12.5px] pt-2 border-t border-slate-200/50 font-medium">
+              <div className="flex justify-between items-center pt-2 border-t border-slate-200/50 font-medium text-base">
                 <span className="text-slate-600 font-medium">Variance Detected</span>
                 <span className={cn(
                   "font-mono text-base font-medium",
@@ -2159,7 +2150,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             {/* Reconciliation Fields Form */}
             <div className="space-y-4">
               <div className="grid gap-1.5">
-                <label className="text-sm  font-medium text-slate-500 uppercase tracking-wider">Bank Statement Ending Balance</label>
+                <label className="text-slate-500 label-caps">Bank Statement Ending Balance</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -2174,7 +2165,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
               {/* Transactions Match list */}
               <div>
-                <label className="text-sm  font-medium text-slate-500 uppercase tracking-wider block mb-2">Match Statement Postings</label>
+                <label className="text-slate-500 block mb-2 label-caps">Match Statement Postings</label>
                 <div className="border border-slate-150 rounded-xl overflow-hidden shadow-sm max-h-48 overflow-y-auto divide-y divide-slate-100 bg-white">
                   {journals.filter(j => j.status === "Posted" && j.lines.some(l => l.account === reconciliationAccount.name)).length > 0 ? (
                     journals.filter(j => j.status === "Posted" && j.lines.some(l => l.account === reconciliationAccount.name)).map(tx => {
@@ -2189,7 +2180,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                             );
                           }}
                           className={cn(
-                            "flex items-center justify-between p-3 cursor-pointer hover:bg-slate-50/50 transition-colors text-[12.5px]",
+                            "flex items-center justify-between p-3 cursor-pointer hover:bg-slate-50/50 transition-colors text-sm",
                             isMatched && "bg-slate-50/80"
                           )}
                         >
@@ -2213,14 +2204,14 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       );
                     })
                   ) : (
-                    <div className="p-4 text-center text-xs text-slate-450">No ledger postings to match.</div>
+                    <div className="p-4 text-center text-slate-450 text-sm">No ledger postings to match.</div>
                   )}
                 </div>
               </div>
 
               {/* Reconciliation Notes */}
               <div className="grid gap-1.5">
-                <label className="text-sm  font-medium text-slate-500 uppercase tracking-wider">Audit & Reconciliation Notes</label>
+                <label className="text-slate-500 label-caps">Audit & Reconciliation Notes</label>
                 <textarea
                   rows={3}
                   value={reconNotes}
@@ -2236,14 +2227,14 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <button
                 type="button"
                 onClick={() => setReconciliationAccount(null)}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-xs font-medium"
+                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm"
               >
                 Close
               </button>
               <button
                 type="button"
                 onClick={handleSaveReconciliation}
-                className="px-4 py-2 bg-[#151936] hover:bg-slate-800 text-white rounded-xl transition-colors text-xs font-medium"
+                className="px-4 py-2 bg-[#151936] hover:bg-slate-800 text-white rounded-xl transition-colors font-medium text-sm"
               >
                 Record Reconciliation Audit
               </button>
@@ -2251,11 +2242,11 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
             {/* Reconciliation History List */}
             <div>
-              <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2.5">Reconciliation Logs</h4>
+              <h4 className="text-slate-400 mb-2.5 label-caps">Reconciliation Logs</h4>
               <div className="space-y-2.5 max-h-48 overflow-y-auto pl-1">
                 {reconciliationHistory[reconciliationAccount.id]?.length > 0 ? (
                   reconciliationHistory[reconciliationAccount.id].map((h, i) => (
-                    <div key={i} className="text-[12.5px] border border-slate-150 p-3 rounded-xl bg-white space-y-1.5 shadow-sm">
+                    <div key={i} className="border border-slate-150 p-3 rounded-xl bg-white space-y-1.5 shadow-sm text-base">
                       <div className="flex justify-between items-center text-sm  text-slate-400 font-mono">
                         <span>{h.date}</span>
                         <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-sans font-medium">Reconciled</span>
@@ -2263,15 +2254,15 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       <p className="text-slate-700 font-medium">{h.notes}</p>
                       <div className="grid grid-cols-3 gap-1 pt-1.5 border-t border-slate-100 font-mono text-sm text-slate-505">
                         <div>
-                          <p className="text-xs  uppercase font-sans text-slate-400 font-medium">Bank Bal</p>
+                          <p className="uppercase font-sans text-slate-400 font-medium text-sm">Bank Bal</p>
                           <p className="text-slate-750 font-medium">{h.statementBalance.toLocaleString()}</p>
                         </div>
                         <div>
-                          <p className="text-xs  uppercase font-sans text-slate-400 font-medium">Ledger Bal</p>
+                          <p className="uppercase font-sans text-slate-400 font-medium text-sm">Ledger Bal</p>
                           <p className="text-slate-750 font-medium">{h.ledgerBalance.toLocaleString()}</p>
                         </div>
                         <div>
-                          <p className="text-xs  uppercase font-sans text-slate-400 font-medium">Variance</p>
+                          <p className="uppercase font-sans text-slate-400 font-medium text-sm">Variance</p>
                           <p className={cn("font-medium", h.variance === 0 ? "text-emerald-600" : "text-rose-600")}>
                             {h.variance.toLocaleString()}
                           </p>
@@ -2298,8 +2289,8 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
         >
           <div className="space-y-6">
             <div className="bg-slate-50 border border-slate-200/70 p-4 rounded-xl shadow-sm">
-              <span className="text-sm  uppercase font-medium text-slate-400 tracking-wider">Line Item Title</span>
-              <p className="text-[14px] font-medium text-slate-808 mt-1">{reclassLine.name}</p>
+              <span className="text-slate-400 label-caps">Line Item Title</span>
+              <p className="font-medium text-slate-808 mt-1 body-md">{reclassLine.name}</p>
               <div className="mt-3 pt-3 border-t border-slate-200/50 flex justify-between items-center">
                 <span className="text-sm  text-slate-500 font-medium">Transaction Amount</span>
                 <span className="font-mono text-sm  font-medium text-slate-800">
@@ -2313,7 +2304,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm  font-medium text-slate-550 uppercase tracking-wider block font-medium">Assign Cash Flow Activity Category</label>
+              <label className="text-slate-550 block label-caps">Assign Cash Flow Activity Category</label>
               <div className="grid gap-2">
                 {(["Operating", "Investing", "Financing"] as const).map((cat) => {
                   const isCurrent = reclassLine.category === cat;
@@ -2338,7 +2329,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         </p>
                       </div>
                       {isCurrent && (
-                        <span className="text-sm font-mono font-medium uppercase tracking-wider">Active</span>
+                        <span className="font-mono label-caps">Active</span>
                       )}
                     </button>
                   );
@@ -2350,7 +2341,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <button
                 type="button"
                 onClick={() => setReclassLine(null)}
-                className="px-4 py-2 border border-slate-205 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-xs font-medium w-full"
+                className="px-4 py-2 border border-slate-205 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium w-full text-sm"
               >
                 Cancel
               </button>

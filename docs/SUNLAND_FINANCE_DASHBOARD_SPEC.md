@@ -53,7 +53,7 @@ Treasury Control
 
 People & Statutory
  ├─ Payroll
- └─ Affordable Housing
+ └─ Commissions & WHT
 
 Finance Assurance
  └─ Reports
@@ -100,9 +100,9 @@ Switching tabs is a route change, not a client-only state flip, so the KPI tier 
 /admin/finance/cheques/returned
 /admin/finance/fees/rules                                Service Fees (default tab)
 /admin/finance/fees/charges
-/admin/finance/affordable-housing/units                  Affordable Housing (default tab)
-/admin/finance/affordable-housing/allocations
-/admin/finance/affordable-housing/levy
+/admin/finance/commissions/deals                         Commissions & WHT (default tab)
+/admin/finance/commissions/wht-filings
+/admin/finance/commissions/levy
 /admin/finance/reports/generate                          Reports (default tab)
 /admin/finance/reports/library
 /admin/finance/reports/verify
@@ -156,7 +156,7 @@ Query keys are namespaced per resource so an invalidation in one place doesn't a
 ['finance', 'ap-ar', tab, entityId]
 ['finance', 'cheques', tab, entityId]
 ['finance', 'fees', tab, entityId]
-['finance', 'affordable-housing', tab, entityId]
+['finance', 'commissions', tab, entityId]
 ['finance', 'reports', tab, entityId]
 ['finance', 'approvals', entityId]
 ```
@@ -206,7 +206,7 @@ Narrows master spec Section 3.2 to concrete actions. "View" without an action co
 | Mark cheque credited (under threshold) | Yes | Yes | No | No | Yes | Yes |
 | Mark cheque credited (over threshold) | Yes (co-signs) | No | No | No | Yes (co-signs) | Yes |
 | Edit fee rules | Yes | No | No | No | No | No |
-| Approve Affordable Housing programme participation | No | No | No | No | No | Yes |
+| Approve Agent Commission Payouts & Deals | No | No | No | No | Yes | Yes |
 | Generate / view reports | Yes | Yes | View only | View own | Yes | Yes |
 
 *Finance Head can initiate and review but is intentionally excluded from approving Finance's own mandate and expense requests, since Finance Head is frequently the originator of the underlying record; approval sits with GM/CEO to preserve separation of duties. This is a deliberate control, not an oversight.
@@ -397,13 +397,13 @@ This page is the clearest place in the whole Finance module to see the deposited
 
 ---
 
-### 7.8 Affordable Housing (`/admin/finance/affordable-housing`)
+### 7.8 Commissions & WHT (`/admin/finance/commissions`)
 
-**Tabs:** Units · Allocations · Levy
+**Tabs:** Deals · WHT Filings · Housing Levy
 
-- **Units:** `affordable_housing_units`, linked property/unit, scheme status.
-- **Allocations:** allottee eligibility records. New programme participation (as opposed to routine allocation updates within an already-approved programme) is CEO-approval-gated per master spec 5.8 and 4.7, since it's a government-facing commitment, not a routine transaction.
-- **Levy:** the 1.5% employer / 1.5% employee Affordable Housing Levy, sourced from Payroll (7.4), shown here with a compliance-history view rather than duplicated as a separate manual entry point.
+- **Deals:** Closed agency deals across sales/lettings, valuation fees, project management, and feasibility studies. Displays gross payout, withholding tax (10% WHT), and net agent payout.
+- **WHT Filings:** Remittance records submitted to the Kenya Revenue Authority (KRA) for withholding tax obligations.
+- **Housing Levy:** Sourced from Payroll (7.4), displays the 3.0% Affordable Housing Levy compliance records.
 
 ---
 
@@ -463,7 +463,7 @@ Every Drawer in the Finance module (Journal Entry, Mandate, Cheque, Payroll Run,
 | AP payment recorded | Operations (if contractor-originated) | Contractor invoice status updates on the Operations module |
 | BD closes a deal won | Finance Service Fees | Commission charge is created by Finance's fee rules engine; BD never computes the commission amount |
 | BD property petty cash expense logged | Finance Mandates | Appears in the mandate's Expenses Log, auto-approved or routed to GM/CEO by Finance thresholds |
-| New Affordable Housing programme participation | Executive (CEO) | Requires explicit CEO approval before any allocation activity proceeds |
+| Agent Commission Payout / Deal Approval | Executive (CEO) | Requires CEO validation when commission payout exceeds KES 100k or is outside standard rate bands |
 | Any approval decision | Executive | Item clears from the Unified Approvals Queue |
 | Report generated | Executive (Reports Center) | Appears in the consolidated Reports Center, master spec 9.3 |
 | CEO edits approval threshold | Finance approval gates | New threshold is read from System Administration configuration on the next evaluated request, not hardcoded in Finance |
@@ -558,6 +558,6 @@ A finer-grained breakdown of master spec Phases 1–3, specific to Finance:
 7. Payables & Receivables.
 8. Cheques.
 9. Service Fees.
-10. Affordable Housing.
+10. Commissions & WHT.
 11. Reports & QR verification, once there's real Balance Sheet, Cash Flow, Mandate, and Payroll data worth reporting on.
 12. Overview, last, deliberately, since it's a rollup of everything above and is only meaningful once the pages it summarizes have real data flowing through them.

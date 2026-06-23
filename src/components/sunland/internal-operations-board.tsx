@@ -129,7 +129,7 @@ export function InternalOperationsBoard() {
       {/* ── Section Header ── */}
       <div className="py-6 border-t border-slate-200/60 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
         <div>
-          <h2 className="title-serif text-slate-900 text-[22px]">Internal Structure & Scheduler</h2>
+          <h2 className="title-serif text-slate-900">Internal Structure & Scheduler</h2>
           <p className="text-base text-slate-500 tracking-wide mt-1">High-level operations breakdown and executive itinerary.</p>
         </div>
 
@@ -156,7 +156,7 @@ export function InternalOperationsBoard() {
                     <div className="size-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700">
                       <IconBriefcase size={16} stroke={1.5} />
                     </div>
-                    <span className="text-sm text-slate-500 uppercase tracking-widest">Sales</span>
+                    <span className="text-slate-500 label-caps">Sales</span>
                   </div>
                   <div className="flex items-center gap-1 bg-teal-50 px-1.5 py-0.5 rounded text-sm  text-teal-700">
                     <span className="size-1.5 rounded-full bg-teal-500 animate-pulse" /> Active
@@ -164,11 +164,11 @@ export function InternalOperationsBoard() {
                 </div>
                 <div className="mt-auto flex items-end justify-between">
                   <div>
-                    <h3 className="text-[32px] font-mono text-slate-800 leading-none tracking-tight">24</h3>
+                    <h3 className="text-slate-800 leading-none tracking-tight mono-stat">24</h3>
                     <p className="text-sm text-slate-400 mt-1">Licensed Brokers</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-base font-mono text-teal-600">+3 this Q</p>
+                    <p className="text-teal-600 mono-data">+3 this Q</p>
                   </div>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export function InternalOperationsBoard() {
                     <div className="size-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700">
                       <IconUsers size={16} stroke={1.5} />
                     </div>
-                    <span className="text-sm text-slate-500 uppercase tracking-widest">Ops</span>
+                    <span className="text-slate-500 label-caps">Ops</span>
                   </div>
                   <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded text-sm  text-amber-700">
                     <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" /> At Capacity
@@ -190,11 +190,11 @@ export function InternalOperationsBoard() {
                 </div>
                 <div className="mt-auto flex items-end justify-between">
                   <div>
-                    <h3 className="text-[32px] font-mono text-slate-800 leading-none tracking-tight">18</h3>
+                    <h3 className="text-slate-800 leading-none tracking-tight mono-stat">18</h3>
                     <p className="text-sm text-slate-400 mt-1">Property Managers</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-base font-mono text-amber-600">420 Units</p>
+                    <p className="text-amber-600 mono-data">420 Units</p>
                   </div>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export function InternalOperationsBoard() {
                     <div className="size-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700">
                       <IconGavel size={16} stroke={1.5} />
                     </div>
-                    <span className="text-sm text-slate-500 uppercase tracking-widest">Legal</span>
+                    <span className="text-slate-500 label-caps">Legal</span>
                   </div>
                   <div className="flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded text-sm  text-slate-500">
                     Processing
@@ -216,11 +216,11 @@ export function InternalOperationsBoard() {
                 </div>
                 <div className="mt-auto flex items-end justify-between">
                   <div>
-                    <h3 className="text-[32px] font-mono text-slate-800 leading-none tracking-tight">6</h3>
+                    <h3 className="text-slate-800 leading-none tracking-tight mono-stat">6</h3>
                     <p className="text-sm text-slate-400 mt-1">Escrow Officers</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-base font-mono text-indigo-600">14 Pending</p>
+                    <p className="text-indigo-600 mono-data">14 Pending</p>
                   </div>
                 </div>
               </div>
@@ -230,7 +230,7 @@ export function InternalOperationsBoard() {
           {/* Active Workflows Timeline */}
           <BoardPanel className="flex flex-1 flex-col">
             <div className="flex items-center justify-between mb-6 border-b border-slate-50 pb-4">
-              <h3 className="text-[16px] text-slate-900 tracking-tight">Cross-Department Operations</h3>
+              <h3 className="text-slate-900 tracking-tight text-lg">Cross-Department Operations</h3>
               <button className="text-sm text-slate-500 hover:text-slate-800 transition-colors bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">View All Projects</button>
             </div>
 
@@ -245,10 +245,10 @@ export function InternalOperationsBoard() {
                 <div className="flex-1 bg-slate-50/50 hover:bg-slate-50 p-3.5 rounded-xl border border-slate-100 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="text-[14px] text-slate-800">Q3 Broker Recruitment Drive</h4>
+                      <h4 className="text-slate-800 body-md">Q3 Broker Recruitment Drive</h4>
                       <p className="text-base text-slate-500 mt-0.5">Interviewing 12 candidates for the commercial sector.</p>
                     </div>
-                    <span className="text-sm  bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded shadow-sm uppercase tracking-wider">Sales</span>
+                    <span className="bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded shadow-sm label-caps">Sales</span>
                   </div>
 
                   <div className="flex items-center gap-4 mt-3">
@@ -269,17 +269,17 @@ export function InternalOperationsBoard() {
                 <div className="flex-1 bg-slate-50/50 hover:bg-slate-50 p-3.5 rounded-xl border border-slate-100 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="text-[14px] text-slate-800">Escrow Clearance: Muthaiga Estate</h4>
+                      <h4 className="text-slate-800 body-md">Escrow Clearance: Muthaiga Estate</h4>
                       <p className="text-base text-slate-500 mt-0.5">Finalizing deed transfers and tax documentation.</p>
                     </div>
-                    <span className="text-sm  bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded shadow-sm uppercase tracking-wider">Legal</span>
+                    <span className="bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded shadow-sm label-caps">Legal</span>
                   </div>
 
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex -space-x-2">
                       <Image width={24} height={24} src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Assignee" className="size-6 rounded-full border-2 border-white bg-slate-100" />
                       <Image width={24} height={24} src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&crop=face" alt="Assignee" className="size-6 rounded-full border-2 border-white bg-slate-100" />
-                      <div className="size-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-xs  text-slate-500">+1</div>
+                      <div className="size-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-slate-500 text-sm">+1</div>
                     </div>
                     <span className="text-sm text-indigo-600 px-2.5 py-1 bg-indigo-50 rounded-md">Awaiting Signature</span>
                   </div>
@@ -294,10 +294,10 @@ export function InternalOperationsBoard() {
                 <div className="flex-1 bg-slate-50/50 hover:bg-slate-50 p-3.5 rounded-xl border border-slate-100 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="text-[14px] text-slate-800">Routine Safety Audits</h4>
+                      <h4 className="text-slate-800 body-md">Routine Safety Audits</h4>
                       <p className="text-base text-slate-500 mt-0.5">Inspecting 4 multi-family complexes in Westlands.</p>
                     </div>
-                    <span className="text-sm  bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded shadow-sm uppercase tracking-wider">Ops</span>
+                    <span className="bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded shadow-sm label-caps">Ops</span>
                   </div>
 
                   <div className="flex items-center justify-between mt-3">
@@ -314,7 +314,7 @@ export function InternalOperationsBoard() {
         {/* ── Executive Scheduler (Right) ── */}
         <BoardPanel className="lg:col-span-5 flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-[16px] text-slate-900 tracking-tight">Executive Scheduler</h3>
+            <h3 className="text-slate-900 tracking-tight text-lg">Executive Scheduler</h3>
             <div className="flex items-center gap-3">
               <button onClick={prevMonth} className="text-slate-400 hover:text-slate-800 transition-colors">
                 <IconChevronLeft size={18} stroke={2} />
@@ -331,7 +331,7 @@ export function InternalOperationsBoard() {
           {/* Real Calendar Grid */}
           <div className="grid grid-cols-7 gap-1 mb-6">
             {daysOfWeek.map(d => (
-              <div key={d} className="text-center text-sm  uppercase tracking-widest text-slate-400 mb-2">{d}</div>
+              <div key={d} className="text-center text-slate-400 mb-2 label-caps">{d}</div>
             ))}
             {calendarDays.map((day, i) => {
               const isSelected = day &&
@@ -390,15 +390,15 @@ export function InternalOperationsBoard() {
                   <div key={evt.id} className={cn("p-3.5 rounded-[14px] border flex gap-3.5 relative overflow-hidden group shadow-sm hover:shadow-md transition-all", style.bg)}>
                     <div className={cn("absolute left-0 top-0 bottom-0 w-[4px]", style.accent)} />
                     <div className={cn("flex flex-col items-center justify-center shrink-0 pr-3 border-r border-black/5 min-w-[55px]", style.text)}>
-                      <span className="text-base font-mono leading-none mb-1">{evt.time.split(' ')[0]}</span>
-                      <span className="text-xs  uppercase tracking-widest opacity-70">{evt.time.split(' ')[1] || "EAT"}</span>
+                      <span className="leading-none mb-1 mono-data">{evt.time.split(' ')[0]}</span>
+                      <span className="opacity-70 label-caps">{evt.time.split(' ')[1] || "EAT"}</span>
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <h5 className={cn("text-[14px] tracking-tight truncate leading-snug", style.text)}>{evt.title}</h5>
                       <div className={cn("flex items-center gap-3 mt-1.5 opacity-80", style.text)}>
                         <div className="flex items-center gap-1">
                           <IconClock size={13} stroke={2.5} className={style.iconColor} />
-                          <span className="text-[11px]">{evt.duration}</span>
+                          <span className="text-sm">{evt.duration}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <style.icon size={13} stroke={2.5} className={style.iconColor} />
@@ -415,7 +415,7 @@ export function InternalOperationsBoard() {
                   <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
                     <IconCalendarEvent size={20} stroke={1.5} />
                   </div>
-                  <p className="text-[12.5px] text-slate-500">No events scheduled.</p>
+                  <p className="text-slate-500 text-base">No events scheduled.</p>
                 </div>
               )}
             </div>

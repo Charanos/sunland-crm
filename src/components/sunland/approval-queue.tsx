@@ -96,11 +96,11 @@ export function ApprovalQueue() {
 
                 <div className="grid grid-cols-2 gap-2 text-sm  text-slate-600 mb-4 bg-slate-50/50 p-3 rounded-lg border border-slate-100/50">
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm text-slate-400 font-medium uppercase tracking-wider">Entity</span>
+                    <span className="text-slate-400 label-caps">Entity</span>
                     <span className="font-medium text-slate-700 capitalize">{req.entityId}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm text-slate-400 font-medium uppercase tracking-wider">Requested By</span>
+                    <span className="text-slate-400 label-caps">Requested By</span>
                     <span className="font-medium text-slate-700">{req.requestedBy}</span>
                   </div>
                 </div>

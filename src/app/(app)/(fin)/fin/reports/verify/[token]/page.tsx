@@ -14,10 +14,10 @@ export default async function FinanceReportTokenPage({
         <div className="size-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm mb-2">
           <IconShieldCheck size={32} stroke={1.5} />
         </div>
-        <h1 className="title-serif text-[32px] tracking-tight text-slate-900">
+        <h1 className="title-serif tracking-tight text-slate-900">
           Document Authentication Portal
         </h1>
-        <p className="max-w-2xl text-[15px] leading-relaxed text-slate-500 font-light">
+        <p className="max-w-2xl leading-relaxed text-slate-500 font-light headline-md">
           You are accessing the Sunland Group secure verification registry. 
           The document associated with this token has been cryptographically signed 
           and its authenticity can be verified against our immutable ledger.

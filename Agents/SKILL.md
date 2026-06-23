@@ -24,6 +24,8 @@ If a task seems to require changing one of these, stop and flag it instead of pr
 
 ## 2. Design system cheat sheet (don't re-derive this, just use it)
 
+### Colors & Typography
+
 | Token | Value | Use |
 |---|---|---|
 | Primary action | `bg-[#f3df27]` `text-[#151936]` hover `bg-[#e6d220]` | Buttons that create/submit/confirm |
@@ -34,7 +36,22 @@ If a task seems to require changing one of these, stop and flag it instead of pr
 | Titles | `title-serif`, `font-normal` (300) | Page and section headers only |
 | Data | `font-mono` | Every KES amount, date, ticket ID, mandate reference |
 
-Hard rules: never `#15464e`. Never `font-semibold` or `font-bold` anywhere. Never invent a new semantic color when one of the four above already fits. Currency always goes through `formatCompactKES()`, never a local `toLocaleString()` or hand-rolled formatter.
+### Stacking Order & Z-Index Tokens
+
+| Token | Class | Value | Use |
+|---|---|---|---|
+| Sticky Header | `z-header` | `20` | Sticky top navigation bar (`TopNav`) |
+| Aside Navigation | `z-nav` | `30` | Collapsible sidebar container (`SunlandNav`) |
+| Chat Widget | `z-chat` | `40` | Global floating action chat widget FAB button |
+| Overlay Screen | `z-overlay` | `950` | Fullscreen intermediate overlays |
+| Modal Backdrop | `z-modal` | `999` | Global portal-rendered modal wrappers |
+| Drawer Backdrop | `z-drawer` | `999` | Global portal-rendered drawer wrappers |
+| Status Notification | `z-toast` | `1000` | Global auto-dismissing toast notifications |
+
+**Layout Stacking Rules**:
+- Sibling panels with transform animations (like `animate-fade-in-up` which applies translation) create local stacking contexts.
+- To prevent lower row elements from overlaying preceding dropdown menus, the command header row hosting the action dropdown MUST be explicitly elevated with `relative z-10`.
+- Hard rules: never `#15464e`. Never `font-semibold` or `font-bold` anywhere. Never invent a new semantic color when one of the four colors above already fits. Currency always goes through `formatCompactKES()`, never a local `toLocaleString()` or hand-rolled formatter.
 
 ## 3. Build order
 
@@ -84,7 +101,11 @@ Copy this into the PR/task notes for every module. All boxes checked before movi
 - [ ] Every CRUD action fires a Toast.
 - [ ] Tables paginate at 5–8 rows.
 - [ ] Page reads `activeEntityId` from the existing `useUIStore`; no local entity state.
-- [ ] No `useEffect` syncing state from props; state is derived during render.
+- [ ] No `useEffect` syncing state from props; state is derived during render. For form modals, reset state on mount by rendering the form inner content conditionally (`if (!open) return null`) and using a `useState` initializer.
+- [ ] No `useEffect` mount checking setting state (`setMounted(true)`) to prevent cascading render warnings; use `useSyncExternalStore` for SSR/hydration state detection instead.
+- [ ] No raw `any` initializers for form states; define strict TypeScript interfaces (e.g. `ContactFormData`).
+- [ ] Next.js image optimization is enforced; use the optimized `<Image />` component instead of standard `<img>` tags.
+- [ ] Dashboard header sections containing absolute dropdowns use `relative z-10` to stack cleanly on top of animated sibling sections.
 - [ ] If money or a consequential record state changes, there's a server-side check for an approved `approval_requests` row where the spec requires one.
 
 ## 6. Financial logic guardrails (never code around these)

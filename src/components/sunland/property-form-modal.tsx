@@ -165,7 +165,7 @@ export function PropertyFormModal({
           <div>
             <label className="label-caps text-slate-500 mb-1.5 block">ROI / Yield</label>
             <input
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors mono-data"
               placeholder="e.g. 12.0%"
               value={form.roi}
               onChange={(e) => updateField("roi", e.target.value)}

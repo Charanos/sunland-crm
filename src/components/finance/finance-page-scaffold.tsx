@@ -115,12 +115,12 @@ function tabDescription(sectionId: FinanceSectionId, tabId: string) {
       "Configurable service fee rules for revenue recognition.",
     "fees:charges":
       "Logged service fee charges linked back to their originating record.",
-    "affordable-housing:units":
-      "Affordable Housing programme unit registry and CEO-gated participation records.",
-    "affordable-housing:allocations":
-      "Allottee allocation and eligibility records.",
-    "affordable-housing:levy":
-      "Payroll-sourced Affordable Housing Levy compliance view.",
+    "commissions:deals":
+      "Agent sales and letting commissions tracking closed deals, gross values, agent percentages, and withholding tax deductions.",
+    "commissions:wht-filings":
+      "Withholding Tax filings submitted to the Kenya Revenue Authority (KRA) for compliance validation.",
+    "commissions:levy":
+      "Monthly Affordable Housing Levy payroll statistics, remitted at 3.0% (1.5% employer and 1.5% employee shares).",
     "reports:generate":
       "Report generation form target for balance sheet, cash flow, mandate, payroll, and trial balance outputs.",
     "reports:library":
@@ -160,10 +160,10 @@ function StatementPreview({ tabId }: { tabId: string }) {
     <BoardPanel className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="title-serif text-[24px] font-normal text-slate-900">
+          <h2 className="title-serif font-normal text-slate-900">
             Statement Preview
           </h2>
-          <p className="mt-1 text-[12.5px] text-slate-500">
+          <p className="mt-1 text-slate-500 text-base">
             Document-style layout scaffold for the computed finance statement.
           </p>
         </div>
@@ -185,7 +185,7 @@ function StatementPreview({ tabId }: { tabId: string }) {
             <div key={group} className="grid gap-2 border-b border-slate-200/70 py-3 last:border-0 md:grid-cols-[180px_1fr_auto]">
               <p className="text-base font-medium text-[#151936]">{group}</p>
               <p className="text-base text-slate-600">{label}</p>
-              <p className="font-mono text-base font-medium text-slate-900">{value}</p>
+              <p className="text-slate-900 mono-data">{value}</p>
             </div>
           ))}
         </div>
@@ -245,7 +245,7 @@ export function FinancePageScaffold({
                   setPage(1);
                 }}
                 placeholder={`Search ${section.label.toLowerCase()}`}
-                className="w-full bg-transparent text-[12.5px] text-slate-700 outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-base"
               />
             </div>
             <Button variant="secondary" size="sm">
@@ -295,10 +295,10 @@ export function FinancePageScaffold({
         <BoardPanel className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-[16px] font-medium text-slate-900">
+              <h2 className="font-medium text-slate-900 text-lg">
                 {tab?.label ?? section.label} Work Queue
               </h2>
-              <p className="mt-1 text-[12.5px] text-slate-500">
+              <p className="mt-1 text-slate-500 text-base">
                 Production table scaffold with drawer row targets and 5-row pagination boundary.
               </p>
             </div>
@@ -313,7 +313,7 @@ export function FinancePageScaffold({
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
                   <thead>
-                    <tr className="border-b border-slate-100 text-sm font-medium uppercase tracking-wider text-slate-400">
+                    <tr className="border-b border-slate-100 text-slate-400 label-caps">
                       {scaffold.columns.map((column) => (
                         <th key={column} className={cn("px-2 py-2.5", column === "Amount" && "text-right")}>
                           {column}
@@ -325,20 +325,20 @@ export function FinancePageScaffold({
                   <tbody className="divide-y divide-slate-100">
                     {visibleRows.map((row) => (
                       <tr key={row.ref} className="transition-colors hover:bg-slate-50/80">
-                        <td className="px-2 py-3 font-mono text-[12.5px] font-medium text-slate-900">
+                        <td className="px-2 py-3 text-slate-900 mono-data">
                           {row.ref}
                         </td>
                         <td className="px-2 py-3">
                           <p className="text-base font-medium text-slate-800">{row.subject}</p>
                           <p className="mt-0.5 text-base text-slate-500">{row.detail}</p>
                         </td>
-                        <td className="px-2 py-3 text-right font-mono text-[12.5px] font-medium text-slate-900">
+                        <td className="px-2 py-3 text-right text-slate-900 mono-data">
                           {formatCompactKES(row.amount)}
                         </td>
                         <td className="px-2 py-3">
                           <Badge tone={statusTone[row.status]}>{row.status}</Badge>
                         </td>
-                        <td className="px-2 py-3 font-mono text-[12.5px] text-slate-500">
+                        <td className="px-2 py-3 text-slate-500 mono-data">
                           {row.date}
                         </td>
                         <td className="px-2 py-3 text-right">

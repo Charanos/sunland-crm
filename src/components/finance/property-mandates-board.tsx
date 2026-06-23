@@ -403,7 +403,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 placeholder="Search contract code, property, landlord..."
-                className="w-full bg-transparent text-[12.5px] text-slate-700 outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-base"
               />
             </div>
             <Button variant="secondary" size="sm" className="bg-white border-slate-200 shadow-sm">
@@ -434,13 +434,13 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconBuilding size={16} stroke={2.5} />
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Active Mandates</span>
+            <span className="text-slate-500 label-caps">Active Mandates</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-[#151936]">
-              {metrics.active} <span className="text-[20px] text-slate-400">Contracts</span>
+            <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
+              {metrics.active} <span className="text-slate-400 text-xl">Contracts</span>
             </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Currently active</span>
+            <span className="font-medium text-slate-500 mt-1 text-sm">Currently active</span>
           </div>
         </BoardPanel>
 
@@ -453,13 +453,13 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
               <IconCoins size={16} stroke={2.5} />
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Management Fees</span>
+            <span className="text-slate-500 label-caps">Management Fees</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-indigo-700">
+            <span className="font-mono font-normal tracking-tight text-indigo-700 text-3xl">
               KES {metrics.fees.toLocaleString()}
             </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Avg Rate: {metrics.avgFee}</span>
+            <span className="font-medium text-slate-500 mt-1 text-sm">Avg Rate: {metrics.avgFee}</span>
           </div>
         </BoardPanel>
 
@@ -472,13 +472,13 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconReportMoney size={16} stroke={2.5} />
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Remittance Payout</span>
+            <span className="text-slate-500 label-caps">Remittance Payout</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-emerald-700">
+            <span className="font-mono font-normal tracking-tight text-emerald-700 text-3xl">
               KES {metrics.payoutQueue.toLocaleString()}
             </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Net split total</span>
+            <span className="font-medium text-slate-500 mt-1 text-sm">Net split total</span>
           </div>
         </BoardPanel>
 
@@ -491,13 +491,13 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
               <IconScale size={16} stroke={2.5} />
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Pending Payout</span>
+            <span className="text-slate-500 label-caps">Pending Payout</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-amber-700">
-              {metrics.pending} <span className="text-[20px] text-amber-700/70">Contracts</span>
+            <span className="font-mono font-normal tracking-tight text-amber-700 text-3xl">
+              {metrics.pending} <span className="text-amber-700/70 text-xl">Contracts</span>
             </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Awaiting CEO approval</span>
+            <span className="font-medium text-slate-500 mt-1 text-sm">Awaiting CEO approval</span>
           </div>
         </BoardPanel>
       </section>
@@ -506,20 +506,20 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
       <BoardPanel className="p-6 shadow-sm border-slate-200 relative overflow-hidden transition-all duration-300 hover:border-slate-300 group">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8 items-center">
           <div>
-            <h3 className="text-[18px] font-normal tracking-tight text-slate-900">Contract Financial Payout Split</h3>
-            <p className="text-[13px] font-medium text-slate-500 mt-1 leading-relaxed">Summary of how collected rent is split between company management fees, utility/maintenance deductions, and net landlord disbursements.</p>
+            <h3 className="font-normal tracking-tight text-slate-900 text-xl">Contract Financial Payout Split</h3>
+            <p className="font-medium text-slate-500 mt-1 leading-relaxed text-sm">Summary of how collected rent is split between company management fees, utility/maintenance deductions, and net landlord disbursements.</p>
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="rounded-xl border border-slate-200/60 bg-gradient-to-b from-slate-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-slate-300">
-                <span className="text-[11.5px] text-slate-500 uppercase tracking-widest font-medium">Total Collected Rent</span>
-                <p className="text-[24px] font-mono font-normal tracking-tight text-slate-900 mt-2">KES {financialSplitTotals.collected.toLocaleString()}</p>
+                <span className="text-slate-500 label-caps">Total Collected Rent</span>
+                <p className="tracking-tight text-slate-900 mt-2 mono-stat">KES {financialSplitTotals.collected.toLocaleString()}</p>
               </div>
               <div className="rounded-xl border border-indigo-200/60 bg-gradient-to-b from-indigo-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-indigo-300">
-                <span className="text-[11.5px] text-indigo-700 uppercase tracking-widest font-medium">Accrued Mgmt Fees</span>
-                <p className="text-[24px] font-mono font-normal tracking-tight text-indigo-700 mt-2">KES {financialSplitTotals.fees.toLocaleString()}</p>
+                <span className="text-indigo-700 label-caps">Accrued Mgmt Fees</span>
+                <p className="tracking-tight text-indigo-700 mt-2 mono-stat">KES {financialSplitTotals.fees.toLocaleString()}</p>
               </div>
               <div className="rounded-xl border border-amber-200/60 bg-gradient-to-b from-amber-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-amber-300">
-                <span className="text-[11.5px] text-amber-700 uppercase tracking-widest font-medium">Utility/Legal Deductions</span>
-                <p className="text-[24px] font-mono font-normal tracking-tight text-amber-700 mt-2">KES {financialSplitTotals.expenses.toLocaleString()}</p>
+                <span className="text-amber-700 label-caps">Utility/Legal Deductions</span>
+                <p className="tracking-tight text-amber-700 mt-2 mono-stat">KES {financialSplitTotals.expenses.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -545,11 +545,11 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <span className="text-xs text-slate-400 font-medium">No approved collection data</span>
+              <span className="text-slate-400 font-medium text-sm">No approved collection data</span>
             )}
             <div className="absolute flex flex-col items-center">
               <span className="text-sm  text-slate-400 uppercase font-medium">Net Payout</span>
-              <span className="text-[14px] font-mono font-semibold text-slate-800 mt-0.5">
+              <span className="font-mono font-normal text-slate-800 mt-0.5 body-md">
                 KES {(financialSplitTotals.payout / 1000000).toFixed(1)}M
               </span>
             </div>
@@ -559,10 +559,10 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
 
       {/* ── 5. Segment Content Title & Queue ─────────────────────────────────── */}
       <div className="pt-2 my-2 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal capitalize">
+        <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab.replace(/-/g, " ")} Contracts Panel
         </h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           {activeTab === "active" && "Registry of active landlord management mandates showing collections, fee splits, and remittance balances."}
           {activeTab === "pending-approval" && "Contracts awaiting CEO verification signatures and cryptographic signoff audits."}
           {activeTab === "draft" && "Terms and parameters for draft contracts currently under negotiation."}
@@ -586,7 +586,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="overflow-x-auto bg-white">
               <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
                 <thead>
-                  <tr className="border-b border-slate-100 text-sm font-medium uppercase tracking-wider text-slate-400">
+                  <tr className="border-b border-slate-100 text-slate-400 label-caps">
                     <th className="px-5 py-3">Contract Code</th>
                     <th className="px-5 py-3">Property / Units</th>
                     <th className="px-5 py-3">Landlord</th>
@@ -610,7 +610,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                         onClick={() => setSelectedMandate(row)}
                         className="transition-colors hover:bg-slate-50/80 cursor-pointer"
                       >
-                        <td className="px-5 py-3.5 font-mono text-[12.5px] font-medium text-slate-900">
+                        <td className="px-5 py-3.5 text-slate-900 mono-data">
                           {row.mandateCode}
                         </td>
                         <td className="px-5 py-3.5">
@@ -621,24 +621,24 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                           <p className="text-base font-medium text-slate-800">{row.landlordName}</p>
                           <span className="text-sm text-slate-400 font-mono">Started: {row.startDate}</span>
                         </td>
-                        <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-800">
+                        <td className="px-5 py-3.5 text-right text-slate-800 mono-data">
                           {row.feeRate}%
                         </td>
                         {activeTab !== "draft" && (
-                          <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-900">
+                          <td className="px-5 py-3.5 text-right text-slate-900 mono-data">
                             KES {row.collectedRent.toLocaleString()}
                           </td>
                         )}
                         {activeTab !== "draft" && (
                           <td className={cn(
-                            "px-5 py-3.5 text-right font-mono text-[12.5px] font-medium",
+                            "px-5 py-3.5 text-right font-mono text-sm font-medium",
                             deductions > 0 ? "text-amber-700 bg-amber-50/30" : "text-slate-400"
                           )}>
                             {deductions > 0 ? `KES ${deductions.toLocaleString()}` : "—"}
                           </td>
                         )}
                         {activeTab !== "draft" && (
-                          <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-emerald-700 bg-emerald-50/40">
+                          <td className="px-5 py-3.5 text-right text-emerald-700 bg-emerald-50/40 mono-data">
                             KES {landlordShare.toLocaleString()}
                           </td>
                         )}
@@ -753,7 +753,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                 placeholder="45000"
                 value={expAmount}
                 onChange={(e) => setExpAmount(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-base font-mono focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 focus:outline-none mono-data"
               />
             </div>
             <div>
@@ -791,7 +791,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
           description="Verify splits, landlord details, and terms. Approving generates a cryptographic stamp signature."
         >
           <div className="space-y-4">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-xs text-slate-700 space-y-2">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-slate-700 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Contract Reference:</span>
                 <span className="font-mono font-medium text-slate-900">{approveMandate.mandateCode}</span>
@@ -816,7 +816,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
               </div>
             </div>
 
-            <div className="flex items-start gap-2 bg-indigo-50/50 p-3 rounded-lg border border-indigo-100 text-xs text-indigo-850">
+            <div className="flex items-start gap-2 bg-indigo-50/50 p-3 rounded-lg border border-indigo-100 text-indigo-850 text-sm">
               <IconInfoCircle size={14} className="shrink-0 mt-0.5" />
               <span>Confirming registers this contract as ACTIVE in the General Ledger. All rent collections will automatically split based on these terms.</span>
             </div>
@@ -883,10 +883,10 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
 
             {/* Split statistics */}
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h4 className="text-[14.5px] font-medium text-slate-800 mb-2 leading-tight">{selectedMandate.propertyName}</h4>
-              <p className="text-base text-slate-500 font-mono uppercase tracking-wide">Owner: {selectedMandate.landlordName}</p>
+              <h4 className="font-medium text-slate-800 mb-2 leading-tight text-label">{selectedMandate.propertyName}</h4>
+              <p className="text-slate-500 uppercase tracking-wide mono-data">Owner: {selectedMandate.landlordName}</p>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-xs">
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-sm">
                 <div className="flex justify-between py-1 border-b border-slate-100/60">
                   <span className="text-slate-400">Negotiated Rate:</span>
                   <span className="font-medium text-slate-900">{selectedMandate.feeRate}% fee</span>
@@ -908,9 +908,9 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
               </div>
 
               {selectedMandate.status === "Approved" && (
-                <div className="mt-4 bg-emerald-50/50 p-3 rounded-lg border border-emerald-150 flex items-center justify-between text-xs">
+                <div className="mt-4 bg-emerald-50/50 p-3 rounded-lg border border-emerald-150 flex items-center justify-between text-sm">
                   <span className="text-slate-600 font-medium">Net Remittance Payout Due:</span>
-                  <span className="font-mono font-semibold text-emerald-700 text-sm ">
+                  <span className="font-mono font-normal text-emerald-700 text-sm ">
                     KES {(
                       selectedMandate.collectedRent -
                       (selectedMandate.collectedRent * (selectedMandate.feeRate / 100)) -
@@ -923,33 +923,33 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
 
             {/* Verification Signoff Stamp */}
             {selectedMandate.approvalHash ? (
-              <div className="rounded-xl border border-indigo-150 bg-indigo-50/10 p-3.5 text-xs text-slate-700 space-y-1.5">
-                <p className="text-sm font-semibold text-indigo-700 uppercase tracking-wider flex items-center gap-1 leading-none">
+              <div className="rounded-xl border border-indigo-150 bg-indigo-50/10 p-3.5 text-slate-700 space-y-1.5 text-sm">
+                <p className="font-normal text-indigo-700 flex items-center gap-1 leading-none label-caps">
                   <IconCheck size={12} stroke={3} /> CEO SIGNATURE REGISTERED
                 </p>
-                <div className="flex justify-between pt-1 text-[11px]">
+                <div className="flex justify-between pt-1 text-sm">
                   <span className="text-slate-400 font-medium">Authorized By:</span>
                   <span className="font-medium text-slate-800">{selectedMandate.approvalUser}</span>
                 </div>
-                <div className="flex justify-between text-[11px]">
+                <div className="flex justify-between text-sm">
                   <span className="text-slate-400 font-medium">Verification Token:</span>
                   <span className="font-mono font-medium text-slate-850 bg-slate-100 px-1 rounded">{selectedMandate.approvalHash}</span>
                 </div>
-                <div className="flex justify-between text-[11px]">
+                <div className="flex justify-between text-sm">
                   <span className="text-slate-400 font-medium">Signoff Timestamp:</span>
                   <span className="text-slate-850 font-medium">{selectedMandate.approvalDate}</span>
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/40 p-4 text-center text-xs text-slate-400 font-medium">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/40 p-4 text-center text-slate-400 font-medium text-sm">
                 Contract awaits CEO signoff verification before active disbursements can execute.
               </div>
             )}
 
             {/* Landlord Contact Info */}
             <div className="border border-slate-150 rounded-xl p-4 bg-slate-50/50">
-              <p className="text-sm text-slate-400 uppercase tracking-wider font-medium mb-3">Owner Contact Profile</p>
-              <div className="flex items-center justify-between text-xs text-slate-700">
+              <p className="text-slate-400 mb-3 label-caps">Owner Contact Profile</p>
+              <div className="flex items-center justify-between text-slate-700 text-sm">
                 <div className="flex items-center gap-2">
                   <IconUser size={14} className="text-slate-400" />
                   <span className="font-medium text-slate-800">{selectedMandate.landlordName}</span>
@@ -963,17 +963,17 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
 
             {/* Expense logs list */}
             <div>
-              <p className="text-sm text-slate-400 uppercase tracking-wider font-medium mb-3">Contract Expenses Deductions</p>
+              <p className="text-slate-400 mb-3 label-caps">Contract Expenses Deductions</p>
               {selectedMandate.expenses.length > 0 ? (
                 <div className="space-y-2">
                   {selectedMandate.expenses.map((exp) => (
                     <div key={exp.id} className="flex items-center justify-between border border-slate-100 bg-white rounded-lg p-3 shadow-xs">
                       <div>
-                        <p className="text-[12.5px] font-medium text-slate-800">{exp.description}</p>
+                        <p className="font-medium text-slate-800 text-base">{exp.description}</p>
                         <p className="text-sm text-slate-450 mt-0.5">Category: {exp.category}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-base font-mono font-medium text-amber-700 leading-none">KES {exp.amount.toLocaleString()}</p>
+                        <p className="text-amber-700 leading-none mono-data">KES {exp.amount.toLocaleString()}</p>
                         <span className="text-sm  text-slate-400 font-mono mt-1 block">{exp.date}</span>
                       </div>
                     </div>
@@ -981,7 +981,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                 </div>
               ) : (
                 <div className="text-center py-6 border border-slate-100 border-dashed rounded-lg bg-slate-50/50">
-                  <p className="text-xs text-slate-400 font-medium">No expenses charged to this mandate ledger.</p>
+                  <p className="text-slate-400 font-medium text-sm">No expenses charged to this mandate ledger.</p>
                 </div>
               )}
             </div>

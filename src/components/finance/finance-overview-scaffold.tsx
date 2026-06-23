@@ -449,7 +449,7 @@ export function FinanceOverviewScaffold() {
 
   const SortIndicator = ({ field }: { field: keyof PropertyListing }) => (
     sortField === field ? (
-      <span className="ml-1 text-xs ">{sortDir === "asc" ? "▲" : "▼"}</span>
+      <span className="ml-1 text-sm">{sortDir === "asc" ? "▲" : "▼"}</span>
     ) : null
   );
 
@@ -892,13 +892,13 @@ export function FinanceOverviewScaffold() {
     <div className="mx-auto flex max-w-[98rem] flex-col gap-4 pb-12 animate-fade-in">
 
       {/* ── Header Command Title & Quick Actions ──────────────────────────── */}
-      <section className="flex flex-col gap-2 border-b border-slate-200/60 pb-5 animate-fade-in-up">
+      <section className="relative z-10 flex flex-col gap-2 border-b border-slate-200/60 pb-5 animate-fade-in-up">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2.5">
             <Badge tone="primary" className="font-medium tracking-wide py-1 px-2.5">
               {context === "commercial" ? "Commercial Ledger" : "Consolidated Ledger"}
             </Badge>
-            <span className="text-base font-mono text-slate-400 font-medium hidden sm:inline">
+            <span className="text-slate-400 hidden sm:inline mono-data">
               Synced {lastRefreshed.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}
             </span>
           </div>
@@ -916,7 +916,7 @@ export function FinanceOverviewScaffold() {
               Sync
             </button>
 
-            <div className="relative group">
+            <div className="relative group z-40">
               <button className="flex items-center gap-1.5 text-base font-medium text-[#151936] bg-[#f3df27] px-3.5 py-2 rounded-xl shadow-sm hover:bg-[#e6d220] transition-all hover:shadow hover:-translate-y-0.5">
                 <IconPlus size={14} stroke={2.5} />
                 Financial Action
@@ -952,7 +952,7 @@ export function FinanceOverviewScaffold() {
           </div>
         </div>
 
-        <h1 className="title-serif text-slate-900 mt-2 text-3xl font-normal">Financial Operations Command</h1>
+        <h1 className="title-serif text-slate-900 mt-2 font-normal">Financial Operations Command</h1>
         <p className="text-base text-slate-500 max-w-3xl leading-relaxed mt-1">
           Monitor entity liquidity, reconcile double-entry ledgers, resolve statutory alerts, and oversee property revenue streams in real-time.
         </p>
@@ -980,7 +980,7 @@ export function FinanceOverviewScaffold() {
                     {alert.title}
                   </h4>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-[18px] font-mono font-medium leading-none text-slate-800">{alert.count}</span>
+                    <span className="leading-none text-slate-800 mono-stat">{alert.count}</span>
                     <span className="text-base text-slate-500 font-medium">{alert.value}</span>
                   </div>
                 </div>
@@ -1004,7 +1004,7 @@ export function FinanceOverviewScaffold() {
               <IconArrowUpRight size={13} className="ml-auto text-white opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div className="flex items-end justify-between mt-auto mb-1 relative z-10">
-              <span className="text-[26px] font-medium text-white tracking-tight font-mono leading-none">{formatCompactKES(currentMetrics.netCash)}</span>
+              <span className="font-medium text-white tracking-tight font-mono leading-none text-3xl">{formatCompactKES(currentMetrics.netCash)}</span>
             </div>
             <div className="flex items-center justify-between text-sm font-medium text-emerald-400 relative z-10">
               <span>Current Liquidity</span>
@@ -1023,7 +1023,7 @@ export function FinanceOverviewScaffold() {
               <span className="text-base font-medium text-[#336336] tracking-wide uppercase">Revenue (MTD)</span>
             </div>
             <div className="flex flex-col mt-auto mb-1">
-              <span className="text-[26px] font-medium text-[#1b431e] tracking-tight font-mono leading-none">{formatCompactKES(currentMetrics.revenueMtd)}</span>
+              <span className="font-medium text-[#1b431e] tracking-tight font-mono leading-none text-3xl">{formatCompactKES(currentMetrics.revenueMtd)}</span>
               <span className="text-sm  font-medium text-[#467846] mt-2 leading-snug">Excludes rent liabilities</span>
             </div>
           </div>
@@ -1039,7 +1039,7 @@ export function FinanceOverviewScaffold() {
               <span className="text-base font-medium text-[#415671] tracking-wide uppercase">A/R Outstanding</span>
             </div>
             <div className="flex flex-col mt-auto mb-1">
-              <span className="text-[26px] font-medium text-[#24354a] tracking-tight font-mono leading-none">{formatCompactKES(currentMetrics.receivables)}</span>
+              <span className="font-medium text-[#24354a] tracking-tight font-mono leading-none text-3xl">{formatCompactKES(currentMetrics.receivables)}</span>
             </div>
             <div className="h-[4px] bg-[#d2dde8] rounded-full overflow-hidden w-full mt-2">
               <div className="h-full bg-[#5a7c9f] rounded-full w-[35%]" />
@@ -1057,7 +1057,7 @@ export function FinanceOverviewScaffold() {
               <span className="text-base font-medium text-[#824429] tracking-wide uppercase">A/P Outstanding</span>
             </div>
             <div className="flex flex-col mt-auto mb-1">
-              <span className="text-[26px] font-medium text-[#5e2b17] tracking-tight font-mono leading-none">{formatCompactKES(currentMetrics.payables)}</span>
+              <span className="font-medium text-[#5e2b17] tracking-tight font-mono leading-none text-3xl">{formatCompactKES(currentMetrics.payables)}</span>
             </div>
             <div className="h-[4px] bg-[#f2d8c9] rounded-full overflow-hidden w-full mt-2">
               <div className="h-full bg-[#c96f45] rounded-full w-[15%]" />
@@ -1068,8 +1068,8 @@ export function FinanceOverviewScaffold() {
 
       {/* ── SECTION 2: Pending Approvals & Awaiting Decisions ───────────── */}
       <div className="pt-6 border-t border-slate-200/60 my-4 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal">Pending Approvals & Awaiting Decisions</h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <h2 className="title-serif text-slate-900 font-normal">Pending Approvals & Awaiting Decisions</h2>
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           Review and authorize pending financial transactions requiring secondary verification and sign-off.
         </p>
       </div>
@@ -1077,9 +1077,9 @@ export function FinanceOverviewScaffold() {
       <BoardPanel className="animate-fade-in-up">
         {activeApprovals.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-600">
+            <table className="w-full text-left text-slate-600 text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-sm  font-medium uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-slate-100 text-slate-400 label-caps">
                   <th className="pb-2.5 px-3">Reference</th>
                   <th className="pb-2.5 px-3">Transaction Details</th>
                   <th className="pb-2.5 px-3 text-right">Value (KES)</th>
@@ -1152,8 +1152,8 @@ export function FinanceOverviewScaffold() {
 
       {/* ── SECTION 2.5: CEO Property Portfolio & Pipeline ────────────────── */}
       <div className="pt-6 border-t border-slate-200/60 my-4 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal">Property Portfolio & Pipeline</h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <h2 className="title-serif text-slate-900 font-normal">Property Portfolio & Pipeline</h2>
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           Track listing volumes, closed sales velocity, and featured real estate portfolios.
         </p>
       </div>
@@ -1171,7 +1171,7 @@ export function FinanceOverviewScaffold() {
                 <IconArrowUpRight size={12} className="ml-auto text-[#2e626a] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[32px] font-medium text-[#151936] tracking-tight font-mono leading-none">{ceoMetrics.activeListings}</span>
+                <span className="text-[#151936] tracking-tight leading-none mono-stat">{ceoMetrics.activeListings}</span>
                 <span className="text-sm font-medium text-[#2e626a] mb-0.5">{ceoMetrics.activeTrend}</span>
               </div>
               <div className="h-[4px] bg-[#c3e3e8] rounded-full overflow-hidden w-full">
@@ -1190,7 +1190,7 @@ export function FinanceOverviewScaffold() {
                 <IconArrowUpRight size={12} className="ml-auto text-[#336336] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[32px] font-medium text-[#1b431e] tracking-tight font-mono leading-none">{ceoMetrics.revenueMtd}</span>
+                <span className="text-[#1b431e] tracking-tight leading-none mono-stat">{ceoMetrics.revenueMtd}</span>
                 <span className="text-sm font-medium text-[#336336] mb-0.5">{ceoMetrics.revenueTrend}</span>
               </div>
               <div className="h-[4px] bg-[#c6e0c7] rounded-full overflow-hidden w-full">
@@ -1207,14 +1207,14 @@ export function FinanceOverviewScaffold() {
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-950/30" />
           </div>
           <div className="absolute top-0 inset-x-0 p-4 flex items-center justify-between z-10">
-            <span className="backdrop-blur-md bg-white/10 text-white border border-white/20 text-sm px-2.5 py-1 rounded-md tracking-wider uppercase font-medium">Featured Property</span>
+            <span className="backdrop-blur-md bg-white/10 text-white border border-white/20 px-2.5 py-1 rounded-md label-caps">Featured Property</span>
             <Link href="/admin/properties" className="backdrop-blur-md bg-white/10 text-white hover:bg-white/20 border border-white/20 text-sm px-2.5 py-1 rounded-md font-medium flex items-center gap-1 transition-all">
               View All <IconArrowUpRight size={13} />
             </Link>
           </div>
           <div className="absolute bottom-0 inset-x-0 p-5 flex flex-col justify-end text-white z-10">
             <div>
-              <p className="font-mono text-[#f3df27] text-2xl sm:text-[26px] tracking-tight leading-none font-medium">{featuredProperty.price}</p>
+              <p className="text-[#f3df27] sm:text-3xl tracking-tight leading-none mono-stat">{featuredProperty.price}</p>
               <h3 className="text-lg font-medium text-white mt-1.5 leading-snug">{featuredProperty.name}</h3>
               <p className="text-sm  text-slate-300 font-medium mt-0.5 uppercase tracking-wide">{featuredProperty.location}</p>
             </div>
@@ -1223,7 +1223,7 @@ export function FinanceOverviewScaffold() {
               <span className="text-sm  font-mono text-slate-300 font-medium">{featuredProperty.roi}</span>
               <button
                 onClick={() => setDrawerProperty({ id: "featured", ...featuredProperty, roi: featuredProperty.roi.replace(" ROI", "").replace(" Yield", ""), type: "Premium Estate" })}
-                className="focus-ring ml-auto inline-flex h-8.5 items-center justify-center rounded-lg bg-white text-slate-900 px-4 text-xs font-medium transition hover:bg-slate-100"
+                className="focus-ring ml-auto inline-flex h-8.5 items-center justify-center rounded-lg bg-white text-slate-900 px-4 font-medium transition hover:bg-slate-100 text-sm"
               >
                 More Details
               </button>
@@ -1241,7 +1241,7 @@ export function FinanceOverviewScaffold() {
                 <IconArrowUpRight size={12} className="ml-auto text-[#824429] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[32px] font-medium text-[#5e2b17] tracking-tight font-mono leading-none">{ceoMetrics.closedDeals}</span>
+                <span className="text-[#5e2b17] tracking-tight leading-none mono-stat">{ceoMetrics.closedDeals}</span>
                 <span className="text-sm font-medium text-[#824429] mb-0.5">{ceoMetrics.closedTrend}</span>
               </div>
               <div className="h-[4px] bg-[#f2d8c9] rounded-full overflow-hidden w-full"><div className="h-full bg-[#c96f45] rounded-full w-[60%]" /></div>
@@ -1256,7 +1256,7 @@ export function FinanceOverviewScaffold() {
                 <IconArrowUpRight size={12} className="ml-auto text-[#415671] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[32px] font-medium text-[#24354a] tracking-tight font-mono leading-none">{ceoMetrics.newDeals}</span>
+                <span className="text-[#24354a] tracking-tight leading-none mono-stat">{ceoMetrics.newDeals}</span>
                 <span className="text-sm font-medium text-[#415671] mb-0.5">{ceoMetrics.newDealsTrend}</span>
               </div>
               <div className="h-[4px] bg-[#d2dde8] rounded-full overflow-hidden w-full"><div className="h-full bg-[#5a7c9f] rounded-full w-[45%]" /></div>
@@ -1280,7 +1280,7 @@ export function FinanceOverviewScaffold() {
         <div className="xl:col-span-8 bg-white p-6 rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[500px]">
           <div>
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <h2 className="text-[16px] text-slate-800 font-medium tracking-wide">Listing Board</h2>
+              <h2 className="text-slate-800 font-medium tracking-wide text-lg">Listing Board</h2>
               <div className="flex items-center gap-2">
                 {/* Tab switcher */}
                 <div className="flex items-center gap-1 bg-slate-50/80 p-1 rounded-lg">
@@ -1319,7 +1319,7 @@ export function FinanceOverviewScaffold() {
                   value={listingSearch}
                   onChange={(e) => { setListingSearch(e.target.value); setCurrentPage(1); }}
                   onKeyDown={(e) => { if (e.key === "Escape") setListingSearch(""); }}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-105 bg-slate-50/50 text-[12.5px] text-slate-705 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/30 transition-colors"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-105 bg-slate-50/50 text-slate-705 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/30 transition-colors text-base"
                 />
               </div>
             )}
@@ -1331,7 +1331,7 @@ export function FinanceOverviewScaffold() {
               <div className="flex-1 overflow-x-auto [scrollbar-width:thin] mt-1">
                 <table className="w-full text-left border-collapse min-w-[600px]">
                   <thead>
-                    <tr className="border-b border-slate-100/60 text-sm font-medium text-slate-400 uppercase tracking-widest">
+                    <tr className="border-b border-slate-100/60 text-slate-400 label-caps">
                       {([
                         ["name", "Property Name"],
                         ["location", "Location"],
@@ -1369,15 +1369,15 @@ export function FinanceOverviewScaffold() {
                             {listing.name}
                           </button>
                         </td>
-                        <td className="py-3 px-2 text-slate-500 font-medium text-[12.5px]">{listing.location}</td>
-                        <td className="py-3 px-2 text-slate-500 font-medium text-[12.5px]">{listing.type}</td>
+                        <td className="py-3 px-2 text-slate-500 font-medium text-base">{listing.location}</td>
+                        <td className="py-3 px-2 text-slate-500 font-medium text-base">{listing.type}</td>
                         <td className="py-3 px-2">
                           <span className={cn("text-sm  px-2.5 py-1 rounded-md font-medium tracking-wide whitespace-nowrap", TABLE_STATUS_STYLES[listing.status])}>
                             {listing.status}
                           </span>
                         </td>
-                        <td className="py-3 px-2 font-mono font-medium text-[12.5px] text-slate-600">{listing.roi}</td>
-                        <td className="py-3 px-2 font-mono text-right text-slate-808 font-medium text-[13px]">{listing.price}</td>
+                        <td className="py-3 px-2 text-slate-600 mono-data">{listing.roi}</td>
+                        <td className="py-3 px-2 text-right text-slate-808 mono-amount">{listing.price}</td>
                         <td className="py-3 pl-2 relative">
                           <button
                             onClick={(e) => { e.stopPropagation(); setRowMenuOpen(rowMenuOpen === listing.id ? null : listing.id); }}
@@ -1388,14 +1388,14 @@ export function FinanceOverviewScaffold() {
                           </button>
                           {rowMenuOpen === listing.id && (
                             <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 animate-scale-in">
-                              <button onClick={() => { setDrawerProperty(listing); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-707 hover:bg-slate-50 font-medium transition-colors text-left">
+                              <button onClick={() => { setDrawerProperty(listing); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-707 hover:bg-slate-50 font-medium transition-colors text-left text-base">
                                 <IconEye size={14} /> View Details
                               </button>
-                              <button onClick={() => { setEditingProperty(listing); setPropertyModalMode("edit"); setPropertyModalOpen(true); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-707 hover:bg-slate-50 font-medium transition-colors text-left">
+                              <button onClick={() => { setEditingProperty(listing); setPropertyModalMode("edit"); setPropertyModalOpen(true); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-707 hover:bg-slate-50 font-medium transition-colors text-left text-base">
                                 <IconEdit size={14} /> Edit Property
                               </button>
                               <div className="border-t border-slate-100 my-1" />
-                              <button onClick={() => { setDeleteConfirmId(listing.id); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-red-600 hover:bg-red-50 font-medium transition-colors text-left">
+                              <button onClick={() => { setDeleteConfirmId(listing.id); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-red-600 hover:bg-red-50 font-medium transition-colors text-left text-base">
                                 <IconTrash size={14} /> Delete
                               </button>
                             </div>
@@ -1472,7 +1472,7 @@ export function FinanceOverviewScaffold() {
                       <LogIcon size={14} stroke={2} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12.5px] text-slate-707 leading-snug font-medium">{log.text}</p>
+                      <p className="text-slate-707 leading-snug font-medium text-base">{log.text}</p>
                       <p className="text-sm text-slate-400 mt-0.5">{log.time}</p>
                     </div>
                   </div>
@@ -1493,7 +1493,7 @@ export function FinanceOverviewScaffold() {
                         <LogIcon size={14} stroke={2} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12.5px] text-slate-707 leading-snug font-medium">{log.text}</p>
+                        <p className="text-slate-707 leading-snug font-medium text-base">{log.text}</p>
                         <p className="text-sm text-slate-400 mt-0.5">{log.time}</p>
                       </div>
                     </div>
@@ -1527,8 +1527,8 @@ export function FinanceOverviewScaffold() {
 
       {/* ── SECTION 4: Cross-Departmental Financial Sync ────────────────── */}
       <div className="pt-6 border-t border-slate-200/60 my-4 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal">Cross-Departmental Financial Sync</h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <h2 className="title-serif text-slate-900 font-normal">Cross-Departmental Financial Sync</h2>
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           Monitor operating inputs and ledger accruals flowing from human resources, business development, and front office logistics.
         </p>
       </div>
@@ -1541,7 +1541,7 @@ export function FinanceOverviewScaffold() {
               <div className="size-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-750 shadow-sm">
                 <IconUsersGroup size={16} stroke={2.5} />
               </div>
-              <span className="text-sm  text-slate-505 uppercase tracking-wider font-medium">Human Resources</span>
+              <span className="text-slate-505 label-caps">Human Resources</span>
             </div>
             <Badge tone="primary" className="py-0.5 px-2 font-medium">Staff Ledger</Badge>
           </div>
@@ -1570,7 +1570,7 @@ export function FinanceOverviewScaffold() {
               <div className="size-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shadow-sm">
                 <IconCoins size={16} stroke={2.5} />
               </div>
-              <span className="text-sm  text-slate-505 uppercase tracking-wider font-medium">Business Dev</span>
+              <span className="text-slate-505 label-caps">Business Dev</span>
             </div>
             <Badge tone="success" className="py-0.5 px-2 font-medium">Revenue Queue</Badge>
           </div>
@@ -1599,7 +1599,7 @@ export function FinanceOverviewScaffold() {
               <div className="size-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shadow-sm">
                 <IconCar size={16} stroke={2.5} />
               </div>
-              <span className="text-sm  text-slate-550 uppercase tracking-wider font-medium">Front Office</span>
+              <span className="text-slate-550 label-caps">Front Office</span>
             </div>
             <Badge tone="data" className="py-0.5 px-2 font-medium">Operating Float</Badge>
           </div>
@@ -1624,8 +1624,8 @@ export function FinanceOverviewScaffold() {
 
       {/* ── SECTION 5: General Ledger & Closing Readiness Audit ─────────── */}
       <div className="pt-6 border-t border-slate-200/60 my-4">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal">General Ledger & Closing Readiness Audit</h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <h2 className="title-serif text-slate-900 font-normal">General Ledger & Closing Readiness Audit</h2>
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           Review balanced ledger postings, and track closing statement snappings with QR verification logs.
         </p>
       </div>
@@ -1647,9 +1647,9 @@ export function FinanceOverviewScaffold() {
           </div>
 
           <div className="flex-1 overflow-x-auto min-h-[220px]">
-            <table className="w-full text-left text-xs text-slate-650">
+            <table className="w-full text-left text-slate-650 text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-sm  font-medium uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-slate-100 text-slate-400 label-caps">
                   <th className="pb-2">Reference</th>
                   <th className="pb-2">Memo Details</th>
                   <th className="pb-2 text-right">Amount</th>
@@ -1692,15 +1692,15 @@ export function FinanceOverviewScaffold() {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="text-base  text-slate-800 font-medium tracking-wide">Close Readiness Checks</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Month-end control list for Finance Head verification.</p>
+              <p className="text-slate-400 mt-0.5 text-sm">Month-end control list for Finance Head verification.</p>
             </div>
             <Badge tone="primary">Audit Mode</Badge>
           </div>
 
           <div className="flex-1 overflow-x-auto min-h-[220px]">
-            <table className="w-full text-left text-xs text-slate-650">
+            <table className="w-full text-left text-slate-650 text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-sm  font-medium uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-slate-100 text-slate-400 label-caps">
                   <th className="pb-2">Control</th>
                   <th className="pb-2">Status</th>
                   <th className="pb-2 text-right">Evidence</th>
@@ -1716,7 +1716,7 @@ export function FinanceOverviewScaffold() {
                     <td className="py-2.5">
                       <Badge tone={c.tone} className="py-0.5 px-2 font-medium">{c.status}</Badge>
                     </td>
-                    <td className="py-2.5 text-right font-mono text-slate-500 font-medium text-[11px]">{c.evidence}</td>
+                    <td className="py-2.5 text-right font-mono text-slate-500 font-medium text-sm">{c.evidence}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1733,8 +1733,8 @@ export function FinanceOverviewScaffold() {
 
       {/* ── SECTION 6: Revenue Stream & Ledger Analytics ─────────────────── */}
       <div className="pt-6 border-t border-slate-200/60 my-4">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal">Revenue Streams & Audit Trail</h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <h2 className="title-serif text-slate-900 font-normal">Revenue Streams & Audit Trail</h2>
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           Deep-dive into income channels and review chronological General Ledger postings.
         </p>
       </div>
@@ -1765,7 +1765,7 @@ export function FinanceOverviewScaffold() {
         {/* Right: Recent Financial Activity */}
         <div className="xl:col-span-4 bg-white border border-slate-100 shadow-sm rounded-2xl flex flex-col overflow-hidden animate-fade-in-up stagger-7 h-[450px]">
           <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <h2 className="text-[14px] text-slate-800 font-medium tracking-wide">Recent Financial Activity</h2>
+            <h2 className="text-slate-800 font-medium tracking-wide body-md">Recent Financial Activity</h2>
             <Badge tone="neutral">{activity.length} events</Badge>
           </div>
           <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
@@ -1792,7 +1792,7 @@ export function FinanceOverviewScaffold() {
                       <LogIcon size={14} stroke={2.5} />
                     </div>
                     <div className="flex-1 min-w-0 pb-1">
-                      <p className="text-[12.5px] text-slate-700 leading-snug font-medium cursor-pointer hover:text-blue-600 transition-colors">
+                      <p className="text-slate-700 leading-snug font-medium cursor-pointer hover:text-blue-600 transition-colors text-base">
                         {log.text}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
@@ -1816,8 +1816,8 @@ export function FinanceOverviewScaffold() {
 
       {/* ── SECTION 7: Property Portfolios & Mandates ─────────────────────── */}
       <div className="pt-6 border-t border-slate-200/60 my-4">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal">Property Portfolios & Mandates</h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <h2 className="title-serif text-slate-900 font-normal">Property Portfolios & Mandates</h2>
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           Assess collection performance and review terms of active real estate contracts.
         </p>
       </div>
@@ -1836,21 +1836,21 @@ export function FinanceOverviewScaffold() {
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-950/30" />
           </div>
           <div className="absolute top-0 inset-x-0 p-4 flex items-center justify-between z-10">
-            <span className="backdrop-blur-md bg-white/10 text-white border border-white/20 text-sm px-2.5 py-1 rounded-md tracking-wider uppercase font-medium">Featured Mandate</span>
+            <span className="backdrop-blur-md bg-white/10 text-white border border-white/20 px-2.5 py-1 rounded-md label-caps">Featured Mandate</span>
             <Badge tone="success" className="py-0.5 px-2 font-medium">Active</Badge>
           </div>
           <div className="absolute bottom-0 inset-x-0 p-5 flex flex-col justify-end text-white z-10">
             <div>
-              <p className="font-mono text-[#f3df27] text-2xl tracking-tight leading-none font-medium font-medium">KES {activeMandate.monthlyCollect.toLocaleString()}/mo</p>
+              <p className="text-[#f3df27] tracking-tight leading-none mono-stat">KES {activeMandate.monthlyCollect.toLocaleString()}/mo</p>
               <h3 className="text-lg font-medium text-white mt-1.5 leading-snug">{activeMandate.property}</h3>
               <p className="text-sm  text-slate-300 font-medium mt-0.5 uppercase tracking-wide">Landlord: {activeMandate.landlord}</p>
             </div>
             <div className="flex items-center gap-3 mt-4 pt-3 border-t border-white/10">
-              <span className="text-sm  px-2.5 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/20 text-blue-300 font-medium uppercase tracking-wider">{activeMandate.units} Units</span>
+              <span className="px-2.5 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/20 text-blue-300 label-caps">{activeMandate.units} Units</span>
               <span className="text-sm  font-mono text-slate-300 font-medium">{activeMandate.rate}% Commission</span>
               <Link
                 href={`/fin/mandates/active`}
-                className="focus-ring ml-auto inline-flex h-8.5 items-center justify-center rounded-xl bg-white text-slate-900 px-4 text-xs font-medium transition hover:bg-slate-100"
+                className="focus-ring ml-auto inline-flex h-8.5 items-center justify-center rounded-xl bg-white text-slate-900 px-4 font-medium transition hover:bg-slate-100 text-sm"
               >
                 Remittance
               </Link>
@@ -1861,7 +1861,7 @@ export function FinanceOverviewScaffold() {
         {/* Col 5-8: Collection Rate Radial Panel */}
         <Card className="xl:col-span-3 p-5 flex flex-col justify-between items-center bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all animate-fade-in-up stagger-9 h-[340px] rounded-2xl">
           <div className="w-full">
-            <h3 className="text-[14px] text-slate-800 font-medium tracking-wide">Collections Health</h3>
+            <h3 className="text-slate-800 font-medium tracking-wide body-md">Collections Health</h3>
             <p className="text-sm text-slate-400 mt-0.5 leading-relaxed">Percentage of rent collected versus expected totals.</p>
           </div>
 
@@ -1878,8 +1878,8 @@ export function FinanceOverviewScaffold() {
                 />
               </svg>
               <div className="text-center z-10">
-                <p className="text-3xl font-medium font-mono text-emerald-700 tracking-tight">{currentMetrics.collectionRate}%</p>
-                <p className="text-sm  text-slate-400 font-medium uppercase tracking-wider mt-0.5">Rent Secured</p>
+                <p className="text-emerald-700 tracking-tight mono-stat">{currentMetrics.collectionRate}%</p>
+                <p className="text-slate-400 mt-0.5 label-caps">Rent Secured</p>
               </div>
             </div>
           </div>
@@ -1894,14 +1894,14 @@ export function FinanceOverviewScaffold() {
         {/* Col 9-12: Active Mandates Table */}
         <div className="xl:col-span-5 bg-white border border-slate-100 shadow-sm rounded-2xl flex flex-col p-5 animate-fade-in-up stagger-10 h-[340px] justify-between">
           <div className="mb-4">
-            <h2 className="text-[14px] text-slate-800 font-medium tracking-wide">Active Landlord Mandates</h2>
+            <h2 className="text-slate-800 font-medium tracking-wide body-md">Active Landlord Mandates</h2>
             <p className="text-sm text-slate-400 mt-0.5">Active contracts under management for the selected entity.</p>
           </div>
 
           <div className="flex-1 overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-650">
+            <table className="w-full text-left text-slate-650 text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-sm font-medium uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-slate-100 text-slate-400 label-caps">
                   <th className="pb-2">Property</th>
                   <th className="pb-2 text-right">Collectible MTD</th>
                   <th className="pb-2 text-center">Units</th>
@@ -1913,7 +1913,7 @@ export function FinanceOverviewScaffold() {
                   <tr key={m.ref} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-2.5">
                       <p className="font-medium text-slate-800">{m.property}</p>
-                      <p className="text-xs text-slate-400 font-mono">{m.ref}</p>
+                      <p className="text-slate-400 font-mono text-sm">{m.ref}</p>
                     </td>
                     <td className="py-2.5 text-right font-mono text-slate-705 font-medium">
                       {formatCompactKES(m.monthlyCollect)}
@@ -1985,7 +1985,7 @@ export function FinanceOverviewScaffold() {
                         copy[idx].account = e.target.value;
                         setJeLines(copy);
                       }}
-                      className="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none bg-white font-medium text-slate-700"
+                      className="w-full border border-slate-200 rounded-xl px-2.5 py-2 outline-none bg-white font-medium text-slate-700 text-sm"
                     >
                       {COA_ACCOUNTS.map((acc) => (
                         <option key={acc.code} value={acc.code}>
@@ -2007,7 +2007,7 @@ export function FinanceOverviewScaffold() {
                         if (val > 0) copy[idx].credit = 0; // double entry rule
                         setJeLines(copy);
                       }}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none font-mono font-medium"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none font-mono font-medium text-sm"
                     />
                   </div>
 
@@ -2023,7 +2023,7 @@ export function FinanceOverviewScaffold() {
                         if (val > 0) copy[idx].debit = 0; // double entry rule
                         setJeLines(copy);
                       }}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none font-mono font-medium"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none font-mono font-medium text-sm"
                     />
                   </div>
 
@@ -2037,7 +2037,7 @@ export function FinanceOverviewScaffold() {
                         copy[idx].memo = e.target.value;
                         setJeLines(copy);
                       }}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none font-medium"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none font-medium text-sm"
                     />
                   </div>
 
@@ -2088,14 +2088,14 @@ export function FinanceOverviewScaffold() {
               type="button"
               disabled={isSubmitting}
               onClick={() => setActiveModal(null)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-xs font-medium"
+              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || jeLines.reduce((a, l) => a + l.debit, 0) !== jeLines.reduce((a, l) => a + l.credit, 0)}
-              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-colors text-xs font-medium"
+              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-colors font-medium text-sm"
             >
               {isSubmitting ? "Posting..." : "Commit Entry"}
             </button>
@@ -2114,7 +2114,7 @@ export function FinanceOverviewScaffold() {
         <form onSubmit={handleChequeSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Cheque Number</label>
+              <label className="text-slate-400 label-caps">Cheque Number</label>
               <input
                 type="text"
                 required
@@ -2125,7 +2125,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Payer Account / Landlord</label>
+              <label className="text-slate-400 label-caps">Payer Account / Landlord</label>
               <input
                 type="text"
                 required
@@ -2139,7 +2139,7 @@ export function FinanceOverviewScaffold() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Amount (KES)</label>
+              <label className="text-slate-400 label-caps">Amount (KES)</label>
               <input
                 type="number"
                 required
@@ -2150,7 +2150,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Deposited Date</label>
+              <label className="text-slate-400 label-caps">Deposited Date</label>
               <input
                 type="date"
                 required
@@ -2162,10 +2162,10 @@ export function FinanceOverviewScaffold() {
           </div>
 
           {chqAmount > 500000 && (
-            <div className="p-3.5 rounded-xl border border-amber-100 bg-amber-50/50 flex gap-2.5 text-xs text-amber-800 font-medium">
+            <div className="p-3.5 rounded-xl border border-amber-100 bg-amber-50/50 flex gap-2.5 text-amber-800 font-medium text-sm">
               <IconShieldExclamation size={18} className="shrink-0 text-amber-600" />
               <div>
-                <p className="font-medium text-[12.5px] text-amber-900 mb-0.5">Policy Control Triggered</p>
+                <p className="font-medium text-amber-900 mb-0.5 text-base">Policy Control Triggered</p>
                 <p className="font-normal text-slate-650 leading-relaxed">
                   {"Deposited banker's cheques exceeding KES 500,000 require co-signing by both the Finance Head and General Manager before being credited. Status will be marked as \"Pending Approval\"."}
                 </p>
@@ -2178,14 +2178,14 @@ export function FinanceOverviewScaffold() {
               type="button"
               disabled={isSubmitting}
               onClick={() => setActiveModal(null)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-xs font-medium"
+              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors text-xs font-medium"
+              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors font-medium text-sm"
             >
               {isSubmitting ? "Logging..." : "Log Cheque"}
             </button>
@@ -2204,7 +2204,7 @@ export function FinanceOverviewScaffold() {
         <form onSubmit={handleMandateSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Landlord Account</label>
+              <label className="text-slate-400 label-caps">Landlord Account</label>
               <input
                 type="text"
                 required
@@ -2215,7 +2215,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Property Name</label>
+              <label className="text-slate-400 label-caps">Property Name</label>
               <input
                 type="text"
                 required
@@ -2229,7 +2229,7 @@ export function FinanceOverviewScaffold() {
 
           <div className="grid grid-cols-3 gap-4">
             <div className="grid gap-1.5 col-span-1">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Unit Count</label>
+              <label className="text-slate-400 label-caps">Unit Count</label>
               <input
                 type="number"
                 min={1}
@@ -2240,7 +2240,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5 col-span-1">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Rate (%)</label>
+              <label className="text-slate-400 label-caps">Rate (%)</label>
               <input
                 type="number"
                 min={1}
@@ -2252,7 +2252,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5 col-span-1">
-              <label className="text-sm font-medium uppercase text-slate-400 tracking-wider">Start Date</label>
+              <label className="text-slate-400 label-caps">Start Date</label>
               <input
                 type="date"
                 required
@@ -2265,7 +2265,7 @@ export function FinanceOverviewScaffold() {
 
           {mandateRate !== 10 && (
             <div className="grid gap-1.5 animate-fade-in">
-              <label className="text-sm font-medium uppercase text-rose-500 tracking-wider font-medium">Rate Deviation Justification</label>
+              <label className="text-rose-500 label-caps">Rate Deviation Justification</label>
               <textarea
                 required
                 rows={2}
@@ -2278,10 +2278,10 @@ export function FinanceOverviewScaffold() {
           )}
 
           {mandateUnits > 10 && (
-            <div className="p-3.5 rounded-xl border border-amber-100 bg-amber-50/50 flex gap-2.5 text-xs text-amber-800 font-medium">
+            <div className="p-3.5 rounded-xl border border-amber-100 bg-amber-50/50 flex gap-2.5 text-amber-800 font-medium text-sm">
               <IconFileText size={18} className="shrink-0 text-amber-600" />
               <div>
-                <p className="font-medium text-[12.5px] text-amber-900 mb-0.5">High-Volume Mandate Approval</p>
+                <p className="font-medium text-amber-900 mb-0.5 text-base">High-Volume Mandate Approval</p>
                 <p className="font-normal text-slate-650 leading-relaxed">
                   Management mandates covering portfolios with more than 10 units are subject to GM / CEO sign-off before tenant ledger syncing is unlocked.
                 </p>
@@ -2294,14 +2294,14 @@ export function FinanceOverviewScaffold() {
               type="button"
               disabled={isSubmitting}
               onClick={() => setActiveModal(null)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-xs font-medium"
+              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || (mandateRate !== 10 && !mandateReason)}
-              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors text-xs font-medium"
+              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors font-medium text-sm"
             >
               {isSubmitting ? "Drafting..." : "Create Mandate"}
             </button>
@@ -2331,7 +2331,7 @@ export function FinanceOverviewScaffold() {
           </div>
 
           <div className="rounded-xl border border-slate-150 overflow-hidden bg-slate-50/50">
-            <div className="p-3 bg-slate-105 border-b border-slate-200 flex justify-between items-center text-[12.5px] font-medium text-slate-700">
+            <div className="p-3 bg-slate-105 border-b border-slate-200 flex justify-between items-center font-medium text-slate-700 text-base">
               <span>HR Hours Registry Handoff</span>
               <Badge tone="success">Validated</Badge>
             </div>
@@ -2342,26 +2342,26 @@ export function FinanceOverviewScaffold() {
                 <span className="font-mono text-slate-900 font-medium">{formatCompactKES(payrollSummary.gross)}</span>
               </div>
               <div className="space-y-1.5 pl-3 border-l-2 border-slate-200">
-                <div className="flex justify-between text-xs text-slate-500">
+                <div className="flex justify-between text-slate-500 text-sm">
                   <span>PAYE Income Tax (KRA)</span>
                   <span className="font-mono text-slate-700">{formatCompactKES(payrollSummary.paye)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-500">
+                <div className="flex justify-between text-slate-500 text-sm">
                   <span>NSSF Deductions</span>
                   <span className="font-mono text-slate-700">{formatCompactKES(payrollSummary.nssf)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-500">
+                <div className="flex justify-between text-slate-500 text-sm">
                   <span>SHIF Healthcare Contribution</span>
                   <span className="font-mono text-slate-700">{formatCompactKES(payrollSummary.shif)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-500">
+                <div className="flex justify-between text-slate-500 text-sm">
                   <span>Affordable Housing Levy (1.5%)</span>
                   <span className="font-mono text-slate-705">{formatCompactKES(payrollSummary.housingLevy)}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-slate-200 font-medium text-slate-800">
                 <span>Net Disbursement Estimate</span>
-                <span className="font-mono text-[#1b431e] text-[16px]">{formatCompactKES(payrollSummary.net)}</span>
+                <span className="font-mono text-[#1b431e] text-lg">{formatCompactKES(payrollSummary.net)}</span>
               </div>
             </div>
           </div>
@@ -2371,14 +2371,14 @@ export function FinanceOverviewScaffold() {
               type="button"
               disabled={isSubmitting}
               onClick={() => setActiveModal(null)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-xs font-medium"
+              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || payrollPeriod !== "June 2026"}
-              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors text-xs font-medium"
+              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors font-medium text-sm"
             >
               {isSubmitting ? "Submitting Run..." : "Submit Payroll Run"}
             </button>
@@ -2408,7 +2408,7 @@ export function FinanceOverviewScaffold() {
               {approvalConfirm.item.amount > 0 && (
                 <div className="flex justify-between items-center pt-2 border-t border-slate-200/60 font-medium text-slate-850">
                   <span>Transaction Value</span>
-                  <span className="font-mono text-[14px] font-medium text-slate-905">{formatCompactKES(approvalConfirm.item.amount)}</span>
+                  <span className="font-mono font-medium text-slate-905 body-md">{formatCompactKES(approvalConfirm.item.amount)}</span>
                 </div>
               )}
             </div>
@@ -2433,7 +2433,7 @@ export function FinanceOverviewScaffold() {
               type="button"
               disabled={isSubmitting}
               onClick={() => setApprovalConfirm(null)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-xs font-medium"
+              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm"
             >
               Cancel
             </button>
@@ -2454,7 +2454,7 @@ export function FinanceOverviewScaffold() {
                 setApprovalConfirm(null);
               }}
               className={cn(
-                "px-4 py-2 rounded-xl text-xs font-medium transition-colors text-white",
+                "px-4 py-2 rounded-xl text-sm font-medium transition-colors text-white",
                 approvalConfirm?.type === "approve"
                   ? "bg-[#151936] hover:bg-slate-850"
                   : "bg-rose-600 hover:bg-rose-700 disabled:opacity-50"

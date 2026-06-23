@@ -96,7 +96,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-24 right-4 z-[200] flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2.5 lg:bottom-4">
+      <div className="fixed bottom-24 right-4 z-toast flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2.5 lg:bottom-4">
         {toasts.map((toast) => {
           const IconComponent = toneIcons[toast.tone];
           const styles = toneStyles[toast.tone];

@@ -152,7 +152,7 @@ Every threshold referenced across the master spec and the four department specs,
 | Payroll disbursement | never | always | informational only | Master spec 4.7, Finance spec 7.4 |
 | Promotion / demotion | never | non-Head roles | Head-level roles | Master spec 4.5, HR spec 8.5 |
 | Banker's cheque crediting | below KES 500,000 | above 500,000 (dual sign-off with Finance Head) | n/a | Master spec 4.7, Finance spec 7.6 |
-| Affordable Housing programme participation | never | n/a | always | Master spec 5.8, Finance spec 7.8 |
+| Agent Commission Payout / Deal Approval | never | n/a | always | Master spec 5.8, Finance spec 7.8 |
 | Offboarding, Head-level role | n/a | notified | notified, effectively required | HR spec 8.1 |
 
 Every figure in the GM and CEO columns is editable only from System Administration > Approval Thresholds (8.3), by CEO only, with the change logged in the Audit Log (8.3) including the prior value, the new value, and who made the change.

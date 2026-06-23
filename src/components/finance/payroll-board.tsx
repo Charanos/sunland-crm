@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useSyncExternalStore } from "react";
 import {
   IconSearch,
   IconCoins,
@@ -295,7 +295,11 @@ const ROWS_PER_PAGE = 5;
 export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
   const { pushToast } = useToast();
   const activeEntityId = useUIStore((state) => state.activeEntityId);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [currentRole, setCurrentRole] = useState<string>("ceo");
 
   // Search & pagination state
@@ -325,7 +329,6 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
   // Role simulation check
   useEffect(() => {
-    setMounted(true);
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
@@ -343,6 +346,101 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
     return new Intl.DateTimeFormat("en-KE", { month: "short", day: "numeric", year: "numeric" }).format(new Date(val));
   };
 
+  const calculateKenyanStatutories = (gross: number) => {
+    // 1. NSSF: Standard Tier I & II (6% of gross up to pensionable salary cap of KES 36,000, max KES 2,160)
+    let nssf = 0;
+    if (gross > 0) {
+      const pensionable = Math.min(gross, 36000);
+      nssf = pensionable * 0.06; // Max 2,160
+    }
+
+    // 2. Taxable Pay (gross minus tax-deductible NSSF contribution)
+    const taxablePay = Math.max(0, gross - nssf);
+
+    // 3. PAYE progressive brackets (KRA 2024 income tax schedule):
+    // First 24,000: 10%
+    // Next 8,333 (up to 32,333): 25%
+    // Next 467,667 (up to 500,000): 30%
+    // Next 300,000 (up to 800,000): 32.5%
+    // Above 800,000: 35%
+    let payeBeforeRelief = 0;
+    let remaining = taxablePay;
+
+    if (remaining > 0) {
+      const band1 = Math.min(remaining, 24000);
+      payeBeforeRelief += band1 * 0.10;
+      remaining -= band1;
+    }
+    if (remaining > 0) {
+      const band2 = Math.min(remaining, 8333);
+      payeBeforeRelief += band2 * 0.25;
+      remaining -= band2;
+    }
+    if (remaining > 0) {
+      const band3 = Math.min(remaining, 467667);
+      payeBeforeRelief += band3 * 0.30;
+      remaining -= band3;
+    }
+    if (remaining > 0) {
+      const band4 = Math.min(remaining, 300000);
+      payeBeforeRelief += band4 * 0.325;
+      remaining -= band4;
+    }
+    if (remaining > 0) {
+      payeBeforeRelief += remaining * 0.35;
+    }
+
+    // 4. SHIF Contribution: flat 2.75% of gross pay (replaces tiered NHIF rates)
+    const shif = gross * 0.0275;
+
+    // 5. Affordable Housing Levy (AHL): 1.5% employee contribution (employer matches with 1.5%)
+    const ahlEmployee = gross * 0.015;
+    const ahlEmployer = gross * 0.015;
+
+    // 6. Tax Reliefs:
+    // Personal Relief: KES 2,400 monthly flat
+    // SHIF relief: 15% of SHIF contribution
+    // Housing Levy relief: 15% of employee Housing Levy share
+    const personalRelief = gross > 0 ? 2400 : 0;
+    const shifRelief = shif * 0.15;
+    const ahlRelief = ahlEmployee * 0.15;
+    const totalReliefs = personalRelief + shifRelief + ahlRelief;
+
+    // 7. Net PAYE
+    const netPaye = Math.max(0, payeBeforeRelief - totalReliefs);
+
+    // 8. Net Salary Pay
+    const netPay = Math.max(0, gross - nssf - shif - ahlEmployee - netPaye);
+
+    return {
+      gross,
+      nssf,
+      taxablePay,
+      payeBeforeRelief,
+      personalRelief,
+      shif,
+      shifRelief,
+      ahlEmployee,
+      ahlEmployer,
+      ahlRelief,
+      totalReliefs,
+      netPaye,
+      netPay
+    };
+  };
+
+  const downloadCsv = (filename: string, csvContent: string) => {
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const isGMorCEO = currentRole === "ceo" || currentRole === "general_manager";
 
   // --- Handlers ---
@@ -351,25 +449,60 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const gross = MOCK_TIME_LOGS.reduce((sum, item) => sum + item.computedGross, 0);
-    const housing = gross * 0.03; // Employer + employee 1.5%
-    const nssfSum = MOCK_TIME_LOGS.length * 2000;
-    const shifSum = gross * 0.025;
-    const payeSum = gross * 0.15;
-    const totalDeductions = payeSum + nssfSum + shifSum + housing;
-    const net = gross - totalDeductions;
+    let totalGross = 0;
+    let totalNet = 0;
+    let totalDeductions = 0;
+    let totalPaye = 0;
+    let totalNssf = 0;
+    let totalShif = 0;
+    let totalLevy = 0;
+
+    const generatedPayslips: EmployeePayslip[] = MOCK_TIME_LOGS.map((log, index) => {
+      const gr = log.computedGross;
+      const calc = calculateKenyanStatutories(gr);
+
+      totalGross += calc.gross;
+      totalNet += calc.netPay;
+      totalDeductions += (calc.nssf + calc.shif + calc.ahlEmployee + calc.netPaye);
+      totalPaye += calc.netPaye;
+      totalNssf += calc.nssf;
+      totalShif += calc.shif;
+      totalLevy += (calc.ahlEmployee + calc.ahlEmployer);
+
+      const basic = gr * 0.8;
+      const allowance = gr * 0.2;
+
+      return {
+        id: `ps-new-${index}-${Date.now()}`,
+        payslipCode: `PS-${newRunPeriod.replace(" ", "").toUpperCase()}-0${index + 1}`,
+        employeeName: log.employeeName,
+        employeeRole: log.employeeName === "Paul Amos" ? "Chief Executive Officer" : "Officer",
+        department: log.department,
+        period: newRunPeriod,
+        basicSalary: basic,
+        allowances: allowance,
+        grossPay: gr,
+        paye: calc.netPaye,
+        nssf: calc.nssf,
+        shif: calc.shif,
+        housingLevy: calc.ahlEmployee,
+        netPay: calc.netPay,
+        status: "Draft",
+        activityLog: [`Created in draft run PAY-${newRunPeriod.replace(" ", "-").toUpperCase()}`]
+      };
+    });
 
     const newRun: PayrollRun = {
       id: `run-${Date.now()}`,
       runCode: `PAY-${newRunPeriod.replace(" ", "-").toUpperCase()}`,
       period: newRunPeriod,
-      grossPay: gross,
-      netPay: net,
+      grossPay: totalGross,
+      netPay: totalNet,
       deductions: totalDeductions,
-      paye: payeSum,
-      nssf: nssfSum,
-      shif: shifSum,
-      housingLevy: housing,
+      paye: totalPaye,
+      nssf: totalNssf * 2, // Matched NSSF (Employee + Employer shares)
+      shif: totalShif,
+      housingLevy: totalLevy, // Matched AHL (Employee + Employer shares)
       status: "Draft",
       departmentsBreakdown: [
         { name: "Management", gross: 500000, count: 1 },
@@ -382,38 +515,6 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
     };
 
     setRuns([newRun, ...runs]);
-
-    // Automatically generate draft payslips for this run
-    const generatedPayslips: EmployeePayslip[] = MOCK_TIME_LOGS.map((log, index) => {
-      const basic = log.computedGross * 0.8;
-      const allowance = log.computedGross * 0.2;
-      const gr = log.computedGross;
-      const pe = gr * 0.15;
-      const ns = 2000;
-      const sh = gr * 0.025;
-      const hl = gr * 0.015;
-      const nt = gr - (pe + ns + sh + hl);
-
-      return {
-        id: `ps-new-${index}-${Date.now()}`,
-        payslipCode: `PS-${newRunPeriod.replace(" ", "").toUpperCase()}-0${index + 1}`,
-        employeeName: log.employeeName,
-        employeeRole: log.employeeName === "Paul Amos" ? "Chief Executive Officer" : "Officer",
-        department: log.department,
-        period: newRunPeriod,
-        basicSalary: basic,
-        allowances: allowance,
-        grossPay: gr,
-        paye: pe,
-        nssf: ns,
-        shif: sh,
-        housingLevy: hl,
-        netPay: nt,
-        status: "Draft",
-        activityLog: [`Created in draft run ${newRun.runCode}`]
-      };
-    });
-
     setPayslips([...generatedPayslips, ...payslips]);
 
     setShowNewRunModal(false);
@@ -617,172 +718,114 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
       <FinanceModuleNav />
 
-      {/* ── Satin Hero Section ────────────────────────────────────────────── */}
+      {/* ── Hero & KPI Cards Section ────────────────────────────────────────── */}
       <section className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4">
-        <div className="relative min-h-[255px] overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#0c0f24] via-[#121b36] to-[#1e1b4b] p-8 text-white shadow-2xl">
+        {/* Left Column: Compact Hero Card */}
+        <div className="relative min-h-[220px] xl:min-h-auto overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#0c0f24] via-[#121b36] to-[#1e1b4b] p-6 text-white shadow-xl flex flex-col justify-between">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.15),transparent_60%)]" />
-          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-indigo-500/5 blur-3xl" />
-
-          <div className="relative z-10 flex h-full flex-col justify-between gap-8">
-            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
-              {/* Context info */}
-              <div className="max-w-xl space-y-5">
-                <div className="flex items-center gap-3">
-                  <Badge tone="primary" className="bg-indigo-500/20 text-indigo-200 border-indigo-500/30 px-3 py-1 shadow-sm backdrop-blur-md">
-                    Sunland Group
-                  </Badge>
-                  <span className="text-[11.5px] font-normal tracking-widest uppercase text-slate-400/80">People Operations</span>
-                </div>
-                <div>
-                  <h2 className="title-serif text-[38px] font-normal leading-tight tracking-tight text-white mb-3">
-                    Disbursement Ledger
-                  </h2>
-                  <p className="text-[13.5px] leading-relaxed text-slate-300/80 font-light max-w-lg">
-                    Manage payroll schedules, generate individual payslip statements with automated NHIF/SHIF calculations, and route compliance returns securely.
-                  </p>
-                </div>
-
-                <div className="pt-2 flex items-center gap-4">
-                  <div className="flex -space-x-2.5">
-                    <div className="size-8 rounded-full border-2 border-[#0c0f24] bg-indigo-600 flex items-center justify-center text-[10px] font-medium text-white shadow-md transition-all hover:scale-110 cursor-pointer" title="Cody Fisher">CF</div>
-                    <div className="size-8 rounded-full border-2 border-[#0c0f24] bg-indigo-800 flex items-center justify-center text-[10px] font-medium text-white shadow-md transition-all hover:scale-110 cursor-pointer" title="Dennis Munge">DM</div>
-                    <div className="flex size-8 items-center justify-center rounded-full border-2 border-[#0c0f24] bg-indigo-500/20 text-[10px] font-medium text-indigo-200 backdrop-blur-md">
-                      +2
-                    </div>
-                  </div>
-                  <span className="text-[12px] font-normal text-slate-400">Payroll Officers</span>
-                </div>
-              </div>
-
-              {/* Aggregates widget */}
-              <div className="flex-1 w-full lg:max-w-md shrink-0 h-full">
-                <div className="relative h-full flex flex-col justify-between overflow-hidden rounded-[20px] border border-white/10 bg-white/5 backdrop-blur-2xl p-5 shadow-2xl select-none group">
-                  <div className="absolute inset-0 opacity-[0.06] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=2500')] bg-cover bg-center" />
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20" />
-
-                  <div className="relative z-10 flex flex-col justify-between h-full gap-6">
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400">Total MTD Net Disbursed</p>
-                        <IconCoins size={18} className="text-indigo-400" />
-                      </div>
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <span className="font-mono text-[42px] font-normal tracking-tight text-indigo-300 drop-shadow-[0_0_12px_rgba(99,102,241,0.3)]">
-                          {formatMoney(runs.filter((r) => r.status === "Disbursed").reduce((sum, r) => sum + r.netPay, 0))}
-                        </span>
-                        <span className="text-[12px] text-slate-400 font-normal uppercase tracking-widest">KES</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="h-px w-full bg-gradient-to-r from-white/15 via-white/5 to-transparent mb-4" />
-                      <div className="grid grid-cols-3 gap-2.5 w-full">
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Draft/Pending</p>
-                          <p className="font-mono text-[20px] font-medium text-white leading-none">{aggregates.activeRuns}</p>
-                        </div>
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Accrued Deductions</p>
-                          <p className="font-mono text-[16px] font-medium text-white leading-none truncate max-w-[80px]">{formatMoney(aggregates.deductionsMTD)}</p>
-                        </div>
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Unpaid Return</p>
-                          <p className="font-mono text-[16px] font-medium text-amber-400 leading-none truncate max-w-[80px]">{formatMoney(aggregates.pendingRemittances)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* Subtle background image */}
+          <div 
+            className="absolute inset-0 opacity-[0.06] mix-blend-overlay bg-cover bg-center"
+            style={{ backgroundImage: `url(https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2564&auto=format&fit=crop)` }}
+          />
+          <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-indigo-500/10 blur-2xl" />
+          
+          <div className="relative z-10 space-y-4">
+            <div className="flex items-center gap-3">
+              <Badge tone="primary" className="bg-indigo-500/20 text-indigo-200 border-indigo-500/30 px-3 py-1 shadow-sm backdrop-blur-md">
+                Sunland Group
+              </Badge>
+              <span className="text-sm font-normal tracking-widest uppercase text-slate-400/80">People Operations</span>
             </div>
+            <div>
+              <h2 className="title-serif text-4xl font-normal leading-tight tracking-tight text-white mb-2">
+                Disbursement Ledger
+              </h2>
+              <p className="text-base leading-relaxed text-slate-300/85 font-light max-w-lg">
+                Manage payroll schedules, generate individual payslip statements with automated NHIF/SHIF calculations, and route compliance returns securely.
+              </p>
+            </div>
+          </div>
+          
+          <div className="relative z-10 pt-4 flex items-center justify-between border-t border-white/10 mt-4">
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-2.5">
+                <div className="size-7 rounded-full border border-indigo-900 bg-indigo-600 flex items-center justify-center text-sm font-medium text-white shadow-md transition-all hover:scale-110 cursor-pointer" title="Cody Fisher">PA</div>
+                <div className="size-7 rounded-full border border-indigo-900 bg-indigo-800 flex items-center justify-center text-sm font-medium text-white shadow-md transition-all hover:scale-110 cursor-pointer" title="Dennis Munge">DM</div>
+                <div className="flex size-7 items-center justify-center rounded-full border border-indigo-900 bg-indigo-500/20 text-xs font-medium text-indigo-200 backdrop-blur-md">
+                  +2
+                </div>
+              </div>
+              <span className="body-sm font-normal text-slate-400">Payroll Officers</span>
+            </div>
+            <span className="font-mono text-sm text-indigo-200">System Accrued</span>
           </div>
         </div>
-      </section>
 
-      {/* ── KPI Cards Row ─────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-200 bg-gradient-to-b from-white to-indigo-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconUser size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
-              <IconUser size={16} stroke={2.5} />
+        {/* Right Column: 2x2 KPI Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-indigo-200 bg-gradient-to-b from-white to-indigo-50/10">
+            <div className="flex items-center gap-2 text-slate-500">
+              <IconUser size={15} className="text-indigo-600" />
+              <span className="body-sm font-medium uppercase tracking-wider">Active Employees</span>
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest font-sans">Active Employees</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-[#151936]">
-              {payslips.filter((p) => p.period === "June 2026").length} Staff
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Timesheets reconciled</span>
-          </div>
-        </BoardPanel>
+            <div className="mt-auto">
+              <span className="text-2xl font-mono font-medium tracking-tight text-[#151936] leading-none">
+                {payslips.filter((p) => p.period === "June 2026").length} Staff
+              </span>
+              <p className="body-sm text-slate-400 mt-1">Timesheets reconciled</p>
+            </div>
+          </BoardPanel>
 
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-200 bg-gradient-to-b from-white to-amber-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconClock size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
-              <IconClock size={16} stroke={2.5} />
+          <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-amber-250 bg-gradient-to-b from-white to-amber-50/10">
+            <div className="flex items-center gap-2 text-slate-500">
+              <IconClock size={15} className="text-amber-500" />
+              <span className="body-sm font-medium uppercase tracking-wider">Pending Runs</span>
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Pending Runs</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-amber-700">
-              {runs.filter((r) => r.status === "Pending").length} Run
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Awaiting GM disbursement</span>
-          </div>
-        </BoardPanel>
+            <div className="mt-auto">
+              <span className="text-2xl font-mono font-medium tracking-tight text-slate-900 leading-none">
+                {runs.filter((r) => r.status === "Pending").length} Runs
+              </span>
+              <p className="body-sm text-slate-400 mt-1">Awaiting GM payout</p>
+            </div>
+          </BoardPanel>
 
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-200 bg-gradient-to-b from-white to-emerald-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconCoins size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-              <IconCoins size={16} stroke={2.5} />
+          <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-emerald-250 bg-gradient-to-b from-white to-emerald-50/10">
+            <div className="flex items-center gap-2 text-slate-500">
+              <IconCoins size={15} className="text-emerald-600" />
+              <span className="body-sm font-medium uppercase tracking-wider">MTD Disbursed</span>
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Disbursed June</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-emerald-700">
-              {runs.some((r) => r.period === "June 2026" && r.status === "Disbursed") ? "Disbursed" : "Pending Approval"}
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Disbursement status</span>
-          </div>
-        </BoardPanel>
+            <div className="mt-auto">
+              <span className="text-2xl font-mono font-medium tracking-tight text-slate-900 leading-none">
+                {formatMoney(runs.filter((r) => r.status === "Disbursed").reduce((sum, r) => sum + r.netPay, 0))}
+              </span>
+              <p className="body-sm text-slate-400 mt-1">Net payroll posted</p>
+            </div>
+          </BoardPanel>
 
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-200 bg-gradient-to-b from-white to-rose-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconBuildingBank size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100">
-              <IconBuildingBank size={16} stroke={2.5} />
+          <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-rose-250 bg-gradient-to-b from-white to-rose-50/10">
+            <div className="flex items-center gap-2 text-slate-500">
+              <IconBuildingBank size={15} className="text-rose-600" />
+              <span className="body-sm font-medium uppercase tracking-wider">Unpaid Remittance</span>
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Unpaid Remittance</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-rose-700">
-              {formatMoney(aggregates.pendingRemittances)}
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Due within 15 days</span>
-          </div>
-        </BoardPanel>
+            <div className="mt-auto">
+              <span className="text-2xl font-mono font-medium tracking-tight text-rose-700 leading-none">
+                {formatMoney(aggregates.pendingRemittances)}
+              </span>
+              <p className="body-sm text-slate-400 mt-1">Due within 15 days</p>
+            </div>
+          </BoardPanel>
+        </div>
       </section>
 
       {/* ── Grid Board Section ────────────────────────────────────────────── */}
       <BoardPanel className="mt-2">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
           <div>
-            <h3 className="title-serif text-[20px] font-normal text-slate-900">
+            <h3 className="title-serif font-normal text-slate-900">
               {tabId === "runs" ? "Payroll Cycles" : tabId === "payslips" ? "Staff Earnings Vouchers" : "Statutory Returns Control"}
             </h3>
-            <p className="text-[12.5px] text-slate-450 mt-1 font-medium">
+            <p className="text-slate-450 mt-1 font-medium text-base">
               {tabId === "runs"
                 ? "Generate runs and submit for authorization."
                 : tabId === "payslips"
@@ -801,7 +844,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                   setPage(1);
                 }}
                 placeholder="Search values..."
-                className="w-full bg-transparent text-[12.5px] text-slate-700 outline-none placeholder:text-slate-400 font-sans"
+                className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 font-sans text-base"
               />
             </div>
             <Button variant="secondary" size="sm">
@@ -822,7 +865,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left text-sm text-slate-600">
                 <thead>
-                  <tr className="border-b border-slate-100 text-sm font-medium uppercase tracking-wider text-slate-400">
+                  <tr className="border-b border-slate-100 text-slate-400 label-caps">
                     {tabId === "runs" && (
                       <>
                         <th className="px-3 py-2.5">Run Code</th>
@@ -870,15 +913,15 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                     >
                       {tabId === "runs" && (
                         <>
-                          <td className="px-3 py-3 font-mono text-[12.5px] font-medium text-slate-900">{(row as PayrollRun).runCode}</td>
+                          <td className="px-3 py-3 text-slate-900 mono-data">{(row as PayrollRun).runCode}</td>
                           <td className="px-3 py-3 text-slate-800">{(row as PayrollRun).period}</td>
-                          <td className="px-3 py-3 text-right font-mono text-[12.5px] font-medium text-slate-900">
+                          <td className="px-3 py-3 text-right text-slate-900 mono-data">
                             {formatMoney((row as PayrollRun).grossPay)}
                           </td>
-                          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-slate-500">
+                          <td className="px-3 py-3 text-right text-slate-500 mono-data">
                             {formatMoney((row as PayrollRun).deductions)}
                           </td>
-                          <td className="px-3 py-3 text-right font-mono text-[12.5px] font-medium text-indigo-700">
+                          <td className="px-3 py-3 text-right text-indigo-700 mono-data">
                             {formatMoney((row as PayrollRun).netPay)}
                           </td>
                           <td className="px-3 py-3">
@@ -898,16 +941,16 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                       )}
                       {tabId === "payslips" && (
                         <>
-                          <td className="px-3 py-3 font-mono text-[12.5px] font-medium text-slate-900">
+                          <td className="px-3 py-3 text-slate-900 mono-data">
                             {(row as EmployeePayslip).payslipCode}
                           </td>
                           <td className="px-3 py-3 text-slate-800 font-medium">{(row as EmployeePayslip).employeeName}</td>
                           <td className="px-3 py-3 text-slate-500">{(row as EmployeePayslip).department}</td>
                           <td className="px-3 py-3 text-slate-500">{(row as EmployeePayslip).period}</td>
-                          <td className="px-3 py-3 text-right font-mono text-[12.5px] text-slate-500">
+                          <td className="px-3 py-3 text-right text-slate-500 mono-data">
                             {formatMoney((row as EmployeePayslip).grossPay)}
                           </td>
-                          <td className="px-3 py-3 text-right font-mono text-[12.5px] font-medium text-slate-800">
+                          <td className="px-3 py-3 text-right text-slate-800 mono-data">
                             {formatMoney((row as EmployeePayslip).netPay)}
                           </td>
                           <td className="px-3 py-3">
@@ -927,15 +970,15 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                       )}
                       {tabId === "remittances" && (
                         <>
-                          <td className="px-3 py-3 font-mono text-[12.5px] font-medium text-slate-900">
+                          <td className="px-3 py-3 text-slate-900 mono-data">
                             {(row as StatutoryRemittance).remittanceCode}
                           </td>
                           <td className="px-3 py-3 text-slate-800 font-medium">{(row as StatutoryRemittance).statutoryBody}</td>
                           <td className="px-3 py-3 text-slate-500">{(row as StatutoryRemittance).period}</td>
-                          <td className="px-3 py-3 text-right font-mono text-[12.5px] font-medium text-slate-900">
+                          <td className="px-3 py-3 text-right text-slate-900 mono-data">
                             {formatMoney((row as StatutoryRemittance).amount)}
                           </td>
-                          <td className="px-3 py-3 font-mono text-[12.5px] text-slate-500">{(row as StatutoryRemittance).dueDate}</td>
+                          <td className="px-3 py-3 text-slate-500 mono-data">{(row as StatutoryRemittance).dueDate}</td>
                           <td className="px-3 py-3">
                             <Badge
                               tone={
@@ -978,7 +1021,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                 <IconEye size={20} />
               </div>
               <h4 className="text-sm font-medium text-slate-800">No records found</h4>
-              <p className="text-[12.5px] text-slate-450 leading-relaxed">
+              <p className="text-slate-450 leading-relaxed text-base">
                 We couldn't find any values matching your active search queries. Try adjusting your query or filter configurations.
               </p>
             </div>
@@ -1019,45 +1062,45 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         }
       >
         {selectedRun && (
-          <div className="space-y-6 text-slate-700 text-xs">
+          <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm border border-slate-100/50">
                 <IconCoins size={20} />
               </div>
               <div>
-                <h4 className="text-[14px] font-medium text-slate-900 leading-snug">{selectedRun.period} Allocation</h4>
-                <p className="text-[11.5px] text-slate-400 mt-0.5">{selectedRun.runCode} · Status: {selectedRun.status}</p>
+                <h4 className="font-medium text-slate-900 leading-snug body-md">{selectedRun.period} Allocation</h4>
+                <p className="text-slate-400 mt-0.5 text-sm">{selectedRun.runCode} · Status: {selectedRun.status}</p>
               </div>
             </div>
 
             <div className="space-y-5">
               {/* Simulated Handoff Sheet */}
               <div className="relative border border-[#0f172a]/15 bg-gradient-to-r from-indigo-50/70 via-slate-50/50 to-indigo-50/50 p-5 rounded-2xl flex flex-col justify-between overflow-hidden shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_4px_12px_rgba(0,0,0,0.02)] select-none outline outline-4 outline-white/80 outline-offset-[-5px]">
-                <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.12] origin-center -rotate-12 border-2 border-dashed border-current px-3 py-1 text-[16px] font-black tracking-widest rounded text-indigo-700">
+                <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.12] origin-center -rotate-12 border-2 border-dashed border-current px-3 py-1 font-black tracking-widest rounded text-indigo-700 text-lg">
                   {selectedRun.status.toUpperCase()}
                 </div>
 
-                <div className="flex justify-between items-start text-[11px] text-slate-400 font-mono">
+                <div className="flex justify-between items-start text-slate-400 font-mono text-sm">
                   <span className="font-medium text-slate-600">SUNLAND REAL ESTATE GROUP</span>
                   <span>RUN ID: {selectedRun.runCode}</span>
                 </div>
 
                 <div className="my-2 flex items-baseline justify-between">
                   <div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">Gross Pay Accrual</p>
-                    <p className="font-mono text-[30px] font-medium text-slate-900 leading-none mt-1">
+                    <p className="text-slate-400 font-mono label-caps">Gross Pay Accrual</p>
+                    <p className="font-mono text-4xl font-medium text-slate-900 leading-none mt-1">
                       {formatMoney(selectedRun.grossPay)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">Net Salary Outflow</p>
-                    <p className="font-mono text-[18px] font-medium text-indigo-700 leading-none mt-1">
+                    <p className="text-slate-400 font-mono label-caps">Net Salary Outflow</p>
+                    <p className="text-indigo-700 leading-none mt-1 mono-stat">
                       {formatMoney(selectedRun.netPay)}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-end text-[10px] text-slate-400 border-t border-slate-200/50 pt-2 font-mono">
+                <div className="flex justify-between items-end text-slate-400 border-t border-slate-200/50 pt-2 font-mono text-sm">
                   <span>PERIOD: {selectedRun.period}</span>
                   <span>DEDUCTIONS: {formatMoney(selectedRun.deductions)}</span>
                 </div>
@@ -1065,15 +1108,15 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
               {/* Department breakdown */}
               <div className="space-y-2">
-                <span className="text-[10px] text-slate-450 uppercase tracking-wider font-medium">Department Allocation Breakdown</span>
+                <span className="text-slate-450 label-caps">Department Allocation Breakdown</span>
                 <div className="rounded-xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
                   {selectedRun.departmentsBreakdown.map((dept) => (
                     <div key={dept.name} className="flex justify-between items-center p-3 hover:bg-slate-50/50">
                       <div>
                         <p className="text-slate-800 font-medium">{dept.name}</p>
-                        <p className="text-[11px] text-slate-400 font-sans">{dept.count} active employees</p>
+                        <p className="text-slate-400 font-sans text-sm">{dept.count} active employees</p>
                       </div>
-                      <p className="font-mono text-[13px] font-medium text-slate-900">{formatMoney(dept.gross)}</p>
+                      <p className="text-slate-900 mono-amount">{formatMoney(dept.gross)}</p>
                     </div>
                   ))}
                 </div>
@@ -1082,31 +1125,31 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               {/* Tax items breakdown */}
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">KRA PAYE Share</span>
-                  <p className="text-slate-700 font-mono font-medium mt-1 text-[12.5px]">{formatMoney(selectedRun.paye)}</p>
+                  <span className="text-slate-400 label-caps">KRA PAYE Share</span>
+                  <p className="text-slate-700 mt-1 mono-data">{formatMoney(selectedRun.paye)}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">NSSF Deductions</span>
-                  <p className="text-slate-700 font-mono font-medium mt-1 text-[12.5px]">{formatMoney(selectedRun.nssf)}</p>
+                  <span className="text-slate-400 label-caps">NSSF Deductions</span>
+                  <p className="text-slate-700 mt-1 mono-data">{formatMoney(selectedRun.nssf)}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">SHIF Contribution</span>
-                  <p className="text-slate-700 font-mono font-medium mt-1 text-[12.5px]">{formatMoney(selectedRun.shif)}</p>
+                  <span className="text-slate-400 label-caps">SHIF Contribution</span>
+                  <p className="text-slate-700 mt-1 mono-data">{formatMoney(selectedRun.shif)}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Housing Levy (3.0% Total)</span>
-                  <p className="text-slate-700 font-mono font-medium mt-1 text-[12.5px]">{formatMoney(selectedRun.housingLevy)}</p>
+                  <span className="text-slate-400 label-caps">Housing Levy (3.0% Total)</span>
+                  <p className="text-slate-700 mt-1 mono-data">{formatMoney(selectedRun.housingLevy)}</p>
                 </div>
               </div>
 
               {/* Activity Log */}
               <div className="pt-2 border-t border-slate-100">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Process Audit Logs</span>
+                <span className="text-slate-400 label-caps">Process Audit Logs</span>
                 <div className="mt-2 space-y-2 max-h-[140px] overflow-y-auto pr-1">
                   {selectedRun.activityLog.map((log, idx) => (
                     <div key={idx} className="flex gap-2 text-slate-500 leading-normal font-sans">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
-                      <p className="text-[11.5px]">{log}</p>
+                      <p className="text-sm">{log}</p>
                     </div>
                   ))}
                 </div>
@@ -1146,28 +1189,28 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         }
       >
         {selectedPayslip && (
-          <div className="space-y-6 text-slate-700 text-xs">
+          <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/50">
                 <IconUser size={20} />
               </div>
               <div>
-                <h4 className="text-[14px] font-medium text-slate-900 leading-snug">{selectedPayslip.employeeName}</h4>
-                <p className="text-[11.5px] text-slate-400 mt-0.5">{selectedPayslip.employeeRole} · {selectedPayslip.department}</p>
+                <h4 className="font-medium text-slate-900 leading-snug body-md">{selectedPayslip.employeeName}</h4>
+                <p className="text-slate-400 mt-0.5 text-sm">{selectedPayslip.employeeRole} · {selectedPayslip.department}</p>
               </div>
             </div>
 
             <div className="space-y-5">
               {/* Simulated Payslip Voucher */}
               <div className="relative border border-[#0f172a]/15 bg-gradient-to-r from-emerald-50/50 via-indigo-50/30 to-indigo-50/50 p-6 rounded-2xl flex flex-col justify-between overflow-hidden shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_4px_12px_rgba(0,0,0,0.02)] select-none font-mono">
-                <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.1] origin-center -rotate-12 border-2 border-dashed border-emerald-600 px-3 py-1.5 text-[20px] font-black tracking-widest rounded text-emerald-600">
+                <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.1] origin-center -rotate-12 border-2 border-dashed border-emerald-600 px-3 py-1.5 font-black tracking-widest rounded text-emerald-600 text-xl">
                   {selectedPayslip.status === "Disbursed" ? "PAID" : "APPROVED"}
                 </div>
 
-                <div className="flex justify-between items-start text-[10px] text-slate-400 border-b border-slate-200/50 pb-2">
+                <div className="flex justify-between items-start text-slate-400 border-b border-slate-200/50 pb-2 text-sm">
                   <div>
                     <p className="font-sans font-medium text-slate-600">SUNLAND REAL ESTATE LTD</p>
-                    <p className="text-[9px] font-sans text-slate-400 mt-0.5">PO Box 40100, Nairobi</p>
+                    <p className="font-sans text-slate-400 mt-0.5 text-sm">PO Box 40100, Nairobi</p>
                   </div>
                   <div className="text-right">
                     <p>SLIP NO: {selectedPayslip.payslipCode}</p>
@@ -1176,23 +1219,23 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                 </div>
 
                 <div className="my-4 space-y-2.5">
-                  <div className="flex justify-between items-center text-[12px] text-slate-800">
+                  <div className="flex justify-between items-center text-slate-800 body-sm">
                     <span className="font-sans">Basic Pay Rate</span>
                     <span>{formatMoney(selectedPayslip.basicSalary)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-[12px] text-slate-800">
+                  <div className="flex justify-between items-center text-slate-800 body-sm">
                     <span className="font-sans">House/Transport Allowances</span>
                     <span>{formatMoney(selectedPayslip.allowances)}</span>
                   </div>
                   <div className="h-px bg-slate-200/50 my-1" />
-                  <div className="flex justify-between items-center text-[12px] text-slate-900 font-medium">
+                  <div className="flex justify-between items-center text-slate-900 font-medium body-sm">
                     <span className="font-sans">Gross Salary Accrued</span>
                     <span>{formatMoney(selectedPayslip.grossPay)}</span>
                   </div>
                   <div className="h-px bg-slate-250 my-1" />
 
                   {/* Deductions segment */}
-                  <div className="space-y-1 text-[11px] text-slate-500 pl-2">
+                  <div className="space-y-1 text-slate-500 pl-2 text-sm">
                     <div className="flex justify-between">
                       <span className="font-sans">PAYE (KRA)</span>
                       <span>-{formatMoney(selectedPayslip.paye)}</span>
@@ -1212,9 +1255,58 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center text-[13px] text-indigo-700 font-medium border-t border-slate-300/50 pt-2">
+                <div className="flex justify-between items-center text-indigo-700 font-medium border-t border-slate-300/50 pt-2 text-sm">
                   <span className="font-sans">Net Salary Deposited</span>
                   <span>{formatMoney(selectedPayslip.netPay)}</span>
+                </div>
+              </div>
+
+              {/* Kenyan Tax & Relief Ledger Breakdown */}
+              <div className="space-y-2 mt-4 font-sans">
+                <span className="text-slate-450 label-caps">KRA PAYE & Relief Ledger Breakdown</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 text-slate-600 text-sm">
+                  {(() => {
+                    const calc = calculateKenyanStatutories(selectedPayslip.grossPay);
+                    return (
+                      <>
+                        <div className="flex justify-between border-b border-slate-100 pb-1.5 font-medium text-slate-800">
+                          <span>Pensionable Gross Pay</span>
+                          <span className="font-mono">{formatMoney(calc.gross)}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-500">
+                          <span>NSSF Exemption (6% up to 36k)</span>
+                          <span className="font-mono">-{formatMoney(calc.nssf)}</span>
+                        </div>
+                        <div className="flex justify-between font-medium text-slate-800">
+                          <span>Taxable Pay Base</span>
+                          <span className="font-mono">{formatMoney(calc.taxablePay)}</span>
+                        </div>
+                        <div className="h-px bg-slate-200/50 my-1" />
+                        <div className="flex justify-between text-slate-500">
+                          <span>PAYE (Progressive Tax Brackets)</span>
+                          <span className="font-mono">{formatMoney(calc.payeBeforeRelief)}</span>
+                        </div>
+                        <div className="space-y-1 pl-3 text-xs text-slate-500 border-l border-slate-200">
+                          <div className="flex justify-between">
+                            <span>Personal Relief (Monthly)</span>
+                            <span className="font-mono">-{formatMoney(calc.personalRelief)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Insurance Relief (15% SHIF)</span>
+                            <span className="font-mono">-{formatMoney(calc.shifRelief)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Housing Relief (15% AHL)</span>
+                            <span className="font-mono">-{formatMoney(calc.ahlRelief)}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between border-t border-slate-100 pt-2 font-medium text-slate-800">
+                          <span>Net PAYE Obligation</span>
+                          <span className="font-mono text-rose-600">{formatMoney(calc.netPaye)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -1229,12 +1321,12 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
               {/* Process timeline log */}
               <div className="pt-2 border-t border-slate-100">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Audit History</span>
+                <span className="text-slate-400 label-caps">Audit History</span>
                 <div className="mt-2 space-y-2">
                   {selectedPayslip.activityLog.map((log, idx) => (
                     <div key={idx} className="flex gap-2 text-slate-500 leading-normal font-sans">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
-                      <p className="text-[11.5px]">{log}</p>
+                      <p className="text-sm">{log}</p>
                     </div>
                   ))}
                 </div>
@@ -1271,37 +1363,37 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         }
       >
         {selectedRemittance && (
-          <div className="space-y-6 text-slate-700 text-xs">
+          <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/50">
                 <IconBuildingBank size={20} />
               </div>
               <div>
-                <h4 className="text-[14px] font-medium text-slate-900 leading-snug">{selectedRemittance.statutoryBody} Return</h4>
-                <p className="text-[11.5px] text-slate-400 mt-0.5">{selectedRemittance.remittanceCode} · Period: {selectedRemittance.period}</p>
+                <h4 className="font-medium text-slate-900 leading-snug body-md">{selectedRemittance.statutoryBody} Return</h4>
+                <p className="text-slate-400 mt-0.5 text-sm">{selectedRemittance.remittanceCode} · Period: {selectedRemittance.period}</p>
               </div>
             </div>
 
             <div className="space-y-5">
               {/* Simulated Return Certificate */}
               <div className="relative border border-[#0f172a]/15 bg-gradient-to-r from-amber-50/50 via-slate-50/50 to-indigo-50/50 p-6 rounded-2xl flex flex-col justify-between overflow-hidden shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_4px_12px_rgba(0,0,0,0.02)] select-none font-mono">
-                <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.1] origin-center -rotate-12 border-2 border-dashed border-current px-3 py-1.5 text-[16px] font-black tracking-widest rounded">
+                <div className="absolute right-8 top-5 select-none pointer-events-none opacity-[0.1] origin-center -rotate-12 border-2 border-dashed border-current px-3 py-1.5 font-black tracking-widest rounded text-lg">
                   {selectedRemittance.status.toUpperCase()}
                 </div>
 
-                <div className="flex justify-between items-start text-[10px] text-slate-450 border-b border-slate-200/50 pb-2">
+                <div className="flex justify-between items-start text-slate-450 border-b border-slate-200/50 pb-2 text-sm">
                   <span className="font-sans font-medium text-slate-600">REPUBLIC OF KENYA STATUTORY RETURN</span>
                   <span>REF: {selectedRemittance.remittanceCode}</span>
                 </div>
 
                 <div className="my-3">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">Liability Accrual</p>
-                  <p className="font-mono text-[32px] font-medium text-slate-900 leading-none mt-1">
+                  <p className="text-slate-400 font-mono label-caps">Liability Accrual</p>
+                  <p className="text-slate-900 leading-none mt-1 mono-stat">
                     {formatMoney(selectedRemittance.amount)}
                   </p>
                 </div>
 
-                <div className="space-y-2 border-t border-slate-200/50 pt-3 text-[11px] text-slate-500 font-sans">
+                <div className="space-y-2 border-t border-slate-200/50 pt-3 text-slate-500 font-sans text-sm">
                   <div className="flex justify-between">
                     <span>Beneficiary Body</span>
                     <span className="font-mono font-medium text-slate-700">{selectedRemittance.statutoryBody}</span>
@@ -1333,14 +1425,67 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                 </div>
               </div>
 
+              {/* Export Statutory upload CSV template button */}
+              <div className="pt-1">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    let csvHeader = "";
+                    let csvRows = "";
+                    const body = selectedRemittance.statutoryBody;
+
+                    if (body === "KRA / PAYE") {
+                      csvHeader = "Employee PIN,Employee Name,Basic Salary,Allowances,Gross Salary,NSSF Deduction,SHIF Deduction,AHL Deduction,Personal Relief,Net PAYE\n";
+                      csvRows = MOCK_TIME_LOGS.map((log) => {
+                        const gr = log.computedGross;
+                        const calc = calculateKenyanStatutories(gr);
+                        return `A001234567B,${log.employeeName},${(gr * 0.8).toFixed(2)},${(gr * 0.2).toFixed(2)},${gr.toFixed(2)},${calc.nssf.toFixed(2)},${calc.shif.toFixed(2)},${calc.ahlEmployee.toFixed(2)},2400.00,${calc.netPaye.toFixed(2)}`;
+                      }).join("\n");
+                    } else if (body === "NSSF") {
+                      csvHeader = "Employee PIN,Employee Name,NSSF Number,Gross Pay,Employee Share (6%),Employer Share (6%),Total Contribution (12%)\n";
+                      csvRows = MOCK_TIME_LOGS.map((log) => {
+                        const gr = log.computedGross;
+                        const calc = calculateKenyanStatutories(gr);
+                        return `A001234567B,${log.employeeName},NSSF-123456,${gr.toFixed(2)},${calc.nssf.toFixed(2)},${calc.nssf.toFixed(2)},${(calc.nssf * 2).toFixed(2)}`;
+                      }).join("\n");
+                    } else if (body === "SHIF") {
+                      csvHeader = "Employee PIN,Employee Name,SHIF Number,Gross Salary,SHIF Contribution (2.75%)\n";
+                      csvRows = MOCK_TIME_LOGS.map((log) => {
+                        const gr = log.computedGross;
+                        const calc = calculateKenyanStatutories(gr);
+                        return `A001234567B,${log.employeeName},SHIF-992019,${gr.toFixed(2)},${calc.shif.toFixed(2)}`;
+                      }).join("\n");
+                    } else { // Affordable Housing Fund
+                      csvHeader = "Employee PIN,Employee Name,Gross Pay,Employee AHL Share (1.5%),Employer AHL Share (1.5%),Total AHL Contribution (3.0%)\n";
+                      csvRows = MOCK_TIME_LOGS.map((log) => {
+                        const gr = log.computedGross;
+                        const calc = calculateKenyanStatutories(gr);
+                        return `A001234567B,${log.employeeName},${gr.toFixed(2)},${calc.ahlEmployee.toFixed(2)},${calc.ahlEmployer.toFixed(2)},${(calc.ahlEmployee + calc.ahlEmployer).toFixed(2)}`;
+                      }).join("\n");
+                    }
+
+                    downloadCsv(`${body.replace(/\s+\/\s+/g, "-").replace(/\s+/g, "-")}-Filing-${selectedRemittance.remittanceCode}.csv`, csvHeader + csvRows);
+                    pushToast({
+                      tone: "success",
+                      title: `${body} Return CSV Exported`,
+                      body: `iTax upload ready file downloaded with ${MOCK_TIME_LOGS.length} employee records.`
+                    });
+                  }}
+                  className="w-full justify-center flex items-center gap-1.5"
+                >
+                  <IconFileExport size={16} />
+                  Download {selectedRemittance.statutoryBody} Return Template
+                </Button>
+              </div>
+
               {/* Process timeline log */}
               <div className="pt-2 border-t border-slate-100">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Obligation Timeline</span>
+                <span className="text-slate-400 label-caps">Obligation Timeline</span>
                 <div className="mt-2 space-y-2">
                   {selectedRemittance.activityLog.map((log, idx) => (
                     <div key={idx} className="flex gap-2 text-slate-500 leading-normal font-sans">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
-                      <p className="text-[11.5px]">{log}</p>
+                      <p className="text-sm">{log}</p>
                     </div>
                   ))}
                 </div>
@@ -1352,25 +1497,25 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
       {/* ── Modal: New Payroll Run ────────────────────────────────────────── */}
       <Modal open={showNewRunModal} onClose={() => setShowNewRunModal(false)} title="Initiate Payroll Run" size="lg">
-        <form onSubmit={handleCreateRun} className="space-y-5 text-xs text-slate-700">
+        <form onSubmit={handleCreateRun} className="space-y-5 text-slate-700 text-sm">
           <div className="rounded-xl bg-indigo-50/50 border border-indigo-100/50 p-4">
-            <h4 className="text-[13px] font-medium text-indigo-900 mb-1 flex items-center gap-1.5">
+            <h4 className="font-medium text-indigo-900 mb-1 flex items-center gap-1.5 text-sm">
               <IconShieldCheck size={16} className="text-indigo-600" />
               Accrual Generation Notice
             </h4>
-            <p className="text-[12px] text-indigo-700/80 leading-relaxed font-sans">
+            <p className="text-indigo-700/80 leading-relaxed font-sans body-sm">
               This process pulls active employee hours directly from HR time clocks (reconciled by the HR Liaison) and computes KRA PAYE, NSSF, SHIF, and Housing Levy automatically.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="runPeriod" className="block text-[11px] font-medium text-slate-450 uppercase tracking-wider mb-2">Target Month</label>
+              <label htmlFor="runPeriod" className="block text-slate-450 mb-2 label-caps">Target Month</label>
               <select
                 id="runPeriod"
                 value={newRunPeriod}
                 onChange={(e) => setNewRunPeriod(e.target.value)}
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-[12.5px] text-slate-800 outline-none focus:border-indigo-400 font-sans"
+                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-slate-800 outline-none focus:border-indigo-400 font-sans text-base"
               >
                 <option value="June 2026">June 2026</option>
                 <option value="July 2026">July 2026</option>
@@ -1378,8 +1523,8 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-medium text-slate-450 uppercase tracking-wider mb-2">Accrual Mode</label>
-              <div className="h-10 border border-slate-200 rounded-lg bg-slate-50 flex items-center px-3 text-[12.5px] font-medium text-slate-600">
+              <label className="block text-slate-450 mb-2 label-caps">Accrual Mode</label>
+              <div className="h-10 border border-slate-200 rounded-lg bg-slate-50 flex items-center px-3 font-medium text-slate-600 text-base">
                 Aggregated Timesheet Sync
               </div>
             </div>
@@ -1387,15 +1532,15 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
           {/* Time logs preview */}
           <div className="space-y-2">
-            <span className="text-[10px] text-slate-450 uppercase tracking-wider font-medium">HR Reconciled Work Hours (Read-Only)</span>
+            <span className="text-slate-450 label-caps">HR Reconciled Work Hours (Read-Only)</span>
             <div className="border border-slate-100 rounded-xl overflow-hidden divide-y divide-slate-100 max-h-[200px] overflow-y-auto">
               {MOCK_TIME_LOGS.map((log) => (
                 <div key={log.employeeName} className="flex justify-between items-center p-3 hover:bg-slate-50/40">
                   <div>
-                    <p className="text-[12.5px] font-medium text-slate-800">{log.employeeName}</p>
-                    <p className="text-[11px] text-slate-400 font-sans">{log.department} · {log.hoursLogged} hours logged</p>
+                    <p className="font-medium text-slate-800 text-base">{log.employeeName}</p>
+                    <p className="text-slate-400 font-sans text-sm">{log.department} · {log.hoursLogged} hours logged</p>
                   </div>
-                  <p className="font-mono text-[12.5px] font-medium text-slate-700">Gross: {formatMoney(log.computedGross)}</p>
+                  <p className="text-slate-700 mono-data">Gross: {formatMoney(log.computedGross)}</p>
                 </div>
               ))}
             </div>
@@ -1414,26 +1559,26 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
       {/* ── Modal: Pay Remittance ─────────────────────────────────────────── */}
       <Modal open={showPayRemittanceModal} onClose={() => setShowPayRemittanceModal(false)} title="Verify Statutory Remittance" size="md">
-        <form onSubmit={handlePayRemittanceSubmit} className="space-y-5 text-xs text-slate-700">
+        <form onSubmit={handlePayRemittanceSubmit} className="space-y-5 text-slate-700 text-sm">
           {selectedRemittance && (
             <>
               <div className="rounded-xl bg-amber-50/50 border border-amber-100/50 p-4">
-                <h4 className="text-[13px] font-medium text-amber-900 mb-1 flex items-center gap-1.5">
+                <h4 className="font-medium text-amber-900 mb-1 flex items-center gap-1.5 text-sm">
                   <IconShieldCheck size={16} className="text-amber-600" />
                   Statutory Clearance
                 </h4>
-                <p className="text-[12px] text-amber-700/80 leading-relaxed font-sans">
+                <p className="text-amber-700/80 leading-relaxed font-sans body-sm">
                   Verify that statutory payment of <span className="font-mono font-medium">{formatMoney(selectedRemittance.amount)}</span> to the <span className="font-medium">{selectedRemittance.statutoryBody}</span> has been debited from the bank accounts before inputting the reference.
                 </p>
               </div>
 
               <div>
-                <label htmlFor="remitAcct" className="block text-[11px] font-medium text-slate-450 uppercase tracking-wider mb-2">Debited Source Account</label>
+                <label htmlFor="remitAcct" className="block text-slate-450 mb-2 label-caps">Debited Source Account</label>
                 <select
                   id="remitAcct"
                   value={remitAccount}
                   onChange={(e) => setRemitAccount(e.target.value)}
-                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-[12.5px] text-slate-800 outline-none focus:border-indigo-400 font-sans"
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-slate-800 outline-none focus:border-indigo-400 font-sans text-base"
                 >
                   <option value="NCBA Operating A/C">NCBA Operating A/C</option>
                   <option value="Co-op Reserve A/C">Co-op Reserve A/C</option>
@@ -1441,7 +1586,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               </div>
 
               <div>
-                <label htmlFor="remitRef" className="block text-[11px] font-medium text-slate-450 uppercase tracking-wider mb-2">Payment Reference / Ticket Hash</label>
+                <label htmlFor="remitRef" className="block text-slate-450 mb-2 label-caps">Payment Reference / Ticket Hash</label>
                 <div className="relative flex h-10 items-center rounded-lg border border-slate-200 bg-white px-3 focus-within:border-indigo-400">
                   <input
                     id="remitRef"
@@ -1449,7 +1594,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                     value={remitRef}
                     onChange={(e) => setRemitRef(e.target.value)}
                     placeholder="e.g. MP-TX982A-KRA or FT-KCB-9910"
-                    className="w-full bg-transparent text-[12.5px] text-slate-700 outline-none placeholder:text-slate-400 font-mono"
+                    className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 mono-data"
                   />
                   <IconTransfer size={16} className="text-slate-400 ml-2" />
                 </div>

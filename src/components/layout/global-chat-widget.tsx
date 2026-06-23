@@ -103,14 +103,14 @@ export function GlobalChatWidget() {
                       <div className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-400 border-2 border-[#151936]"></div>
                     </div>
                     <div>
-                      <h4 className="text-[14px] font-medium leading-none mb-1">{MOCK_DMS.find(d => d.id === activeChatId)?.name}</h4>
+                      <h4 className="font-medium leading-none mb-1 body-md">{MOCK_DMS.find(d => d.id === activeChatId)?.name}</h4>
                       <p className="text-sm  text-white/60 leading-none">Online</p>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <h3 className="text-[16px] font-medium tracking-tight">Internal Comms</h3>
+                  <h3 className="font-medium tracking-tight text-lg">Internal Comms</h3>
                   <p className="text-base text-white/60">3 unread messages</p>
                 </div>
               )}
@@ -138,7 +138,7 @@ export function GlobalChatWidget() {
               <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
                   <div className="text-center mb-2">
-                    <span className="text-sm  uppercase tracking-widest text-slate-400 font-medium bg-slate-200/50 px-3 py-1 rounded-full">Today</span>
+                    <span className="text-slate-400 bg-slate-200/50 px-3 py-1 rounded-full label-caps">Today</span>
                   </div>
 
                   {MOCK_MESSAGES.map((msg) => (
@@ -230,7 +230,7 @@ export function GlobalChatWidget() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-0.5">
-                          <h4 className="text-[14px] font-medium text-slate-800 truncate group-hover:text-[#151936]">{dm.name}</h4>
+                          <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] body-md">{dm.name}</h4>
                           <span className="text-sm text-slate-400">10:28 AM</span>
                         </div>
                         <p className="text-base text-slate-500 truncate pr-4">{dm.lastMessage}</p>
@@ -252,7 +252,7 @@ export function GlobalChatWidget() {
                         <IconHash size={20} stroke={2} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-[14px] font-medium text-slate-800 truncate group-hover:text-[#151936]">{ch.name}</h4>
+                        <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] body-md">{ch.name}</h4>
                         <p className="text-base text-slate-500 truncate">Latest update in channel...</p>
                       </div>
                       {ch.unread > 0 && (

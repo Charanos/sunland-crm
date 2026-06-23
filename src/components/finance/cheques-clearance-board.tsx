@@ -391,112 +391,72 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
       <FinanceModuleNav />
 
       <section className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4 animate-fade-in-up">
-        <div className="relative min-h-[255px] overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#070b19] via-[#0f172a] to-[#181534] p-8 text-white shadow-2xl">
-          {/* Enhanced Background */}
-          <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: `url(${activeEntity.avatarUrl})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#070b19]/90 via-[#0f172a]/95 to-[#181534]/90" />
+        <div className="relative min-h-[255px] overflow-hidden rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 p-8 text-white shadow-2xl">
+          {/* Subtle Institutional Grid Background Pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.04] mix-blend-overlay"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h30v30H0V0zm1 1h28v28H1V1z' fill='%23ffffff' fill-opacity='0.15' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+              backgroundSize: "30px 30px"
+            }}
+          />
+
+          {/* Premium Unsplash Background with low opacity */}
+          <div
+            className="absolute inset-0 opacity-[0.06] mix-blend-luminosity"
+            style={{
+              backgroundImage: `url(https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=2564&auto=format&fit=crop)`,
+              backgroundSize: "cover",
+              backgroundPosition: "center"
+            }}
+          />
 
           {/* Subtle Glowing Accents */}
-          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
+          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-slate-500/10 blur-3xl" />
           <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl" />
 
-          <div className="relative z-10 flex h-full flex-col justify-between gap-8">
+          <div className="relative z-10 flex h-full flex justify-between gap-8">
             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
               {/* Left Column: Context & Title */}
               <div className="max-w-xl space-y-5">
                 <div className="flex items-center gap-3">
-                  <Badge tone="primary" className="bg-indigo-500/20 text-indigo-200 border-indigo-500/30 px-3 py-1 shadow-sm backdrop-blur-md">
+                  <Badge tone="primary" className="bg-slate-700/60 text-slate-200 border-slate-600/50 px-3 py-1 shadow-sm backdrop-blur-md">
                     {activeEntity.name}
                   </Badge>
-                  <span className="text-[11.5px] font-normal tracking-widest uppercase text-slate-400/80">Finance Division</span>
+                  <span className="text-slate-400 label-caps text-xs tracking-wider">Treasury Control Console</span>
                 </div>
                 <div>
-                  <h2 className="title-serif text-[38px] font-normal leading-tight tracking-tight text-white mb-3">
+                  <h2 className="title-serif font-normal leading-tight tracking-tight text-white mb-3">
                     Cheque Clearance
                   </h2>
-                  <p className="text-[13.5px] leading-relaxed text-slate-300/80 font-light max-w-lg">
-                    Deposited cheques stay off-ledger until bank credit is confirmed. Over-threshold clearances route to GM/Finance Head approval before any journal is posted.
+                  <p className="leading-relaxed text-slate-300 font-light max-w-lg body-md">
+                    Track deposited cheques, verify bank credit status, and route transaction amounts exceeding the policy limit to the CEO/GM approval chain before posting ledger records.
                   </p>
                 </div>
 
                 <div className="pt-2 flex items-center gap-4">
                   <div className="flex -space-x-2.5">
-                    <div className="size-8 rounded-full border-2 border-[#0a0f24] bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-[10px] font-bold text-white shadow-md transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer" title="Clearing Agent: John Doe">JD</div>
-                    <div className="size-8 rounded-full border-2 border-[#0a0f24] bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-[10px] font-bold text-white shadow-md transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer" title="Clearing Agent: Alice M.">AM</div>
-                    <div className="flex size-8 items-center justify-center rounded-full border-2 border-[#0a0f24] bg-emerald-500/20 text-[10px] font-medium text-emerald-200 backdrop-blur-md shadow-sm transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer">
+                    <div className="size-8 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center font-medium text-white shadow-md transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer text-sm" title="Clearing Agent: John Doe">JD</div>
+                    <div className="size-8 rounded-full border-2 border-slate-900 bg-slate-600 flex items-center justify-center font-medium text-white shadow-md transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer text-sm" title="Clearing Agent: Alice M.">AM</div>
+                    <div className="flex size-8 items-center justify-center rounded-full border-2 border-slate-900 bg-slate-800/80 font-medium text-slate-300 backdrop-blur-md shadow-sm transition-all duration-300 hover:scale-125 hover:z-10 hover:translate-y-[-2px] cursor-pointer text-sm">
                       +2
                     </div>
                   </div>
-                  <span className="text-[12px] font-normal text-slate-400">Clearing Agents</span>
+                  <span className="font-normal text-slate-400 body-sm">Clearing Agents</span>
                 </div>
               </div>
 
               {/* Right Column: Key Metrics Panel */}
               <div className="flex-1 w-full lg:max-w-md shrink-0 h-full">
-                <div className="relative h-full flex flex-col justify-between overflow-hidden rounded-[20px] border border-white/10 bg-white/5 backdrop-blur-2xl shadow-2xl transition-all duration-500 hover:shadow-[0_0_30px_rgba(243,223,39,0.12)] hover:border-white/15 group">
-                  {/* Subtle Artwork Background */}
-                  <div className="absolute inset-0 opacity-[0.12] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center" />
+                <div className="relative h-full flex flex-col justify-between overflow-hidden rounded-[20px] border border-white/10 bg-slate-950/40 backdrop-blur-xl shadow-2xl transition-all duration-500 hover:shadow-[0_0_30px_rgba(243,223,39,0.08)] hover:border-white/15 group">
+                  {/* Subtle Grid Artwork Background */}
+                  <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center" />
 
                   {/* Gradients & Glows */}
-                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -mr-20 -mt-20 transition-all duration-500 group-hover:bg-amber-500/15" />
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl -ml-10 -mb-10" />
+                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-500/50 to-transparent" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-slate-500/10 rounded-full blur-3xl -mr-20 -mt-20 transition-all duration-500 group-hover:bg-slate-500/15" />
 
-                  <div className="relative z-10 p-5 flex flex-col h-full justify-between gap-6">
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400">Policy Threshold</p>
-                        <IconScale size={18} stroke={2} className="text-amber-500/80" />
-                      </div>
-
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <span className="font-mono text-[42px] font-normal tracking-tight text-[#f3df27] drop-shadow-[0_0_12px_rgba(243,223,39,0.3)] transition-all duration-500 group-hover:drop-shadow-[0_0_18px_rgba(243,223,39,0.5)]">
-                          {formatMoney(CHEQUE_APPROVAL_THRESHOLD)}
-                        </span>
-                        <span className="text-[12px] text-slate-400 font-normal uppercase tracking-widest">KES</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="h-px w-full bg-gradient-to-r from-white/15 via-white/5 to-transparent mb-4" />
-
-                      <div className="grid grid-cols-3 gap-2.5 w-full">
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px] select-none transition-all duration-300 hover:bg-white/[0.07] hover:border-white/[0.08]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Approval</p>
-                          <div className="flex items-center gap-1.5">
-                            {metrics.approvalHeld > 0 ? (
-                              <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            ) : (
-                              <span className="size-1.5 rounded-full bg-slate-500" />
-                            )}
-                            <p className="font-mono text-[20px] font-medium text-white leading-none">{metrics.approvalHeld}</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px] select-none transition-all duration-300 hover:bg-white/[0.07] hover:border-white/[0.08]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Stale</p>
-                          <div className="flex items-center gap-1.5">
-                            {metrics.staleClearing > 0 ? (
-                              <span className="size-1.5 rounded-full bg-rose-400 animate-pulse" />
-                            ) : (
-                              <span className="size-1.5 rounded-full bg-emerald-400" />
-                            )}
-                            <p className="font-mono text-[20px] font-medium text-white leading-none">{metrics.staleClearing}</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-center bg-white/[0.02] border border-white/[0.04] p-3 rounded-[14px] select-none transition-all duration-300 hover:bg-white/[0.07] hover:border-white/[0.08]">
-                          <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400 mb-1.5">Returned</p>
-                          <div className="flex items-center gap-1.5">
-                            {metrics.returnValue > 0 ? (
-                              <span className="size-1.5 rounded-full bg-rose-500 animate-pulse" />
-                            ) : (
-                              <span className="size-1.5 rounded-full bg-emerald-500" />
-                            )}
-                            <p className="font-mono text-[20px] font-medium text-white leading-none">{metrics.returnValue > 0 ? "Yes" : "No"}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  {/*  */}
                 </div>
               </div>
             </div>
@@ -507,8 +467,8 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
           <div className="border-b border-slate-100/80 p-6 bg-white z-10 relative">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-[18px] font-medium text-slate-900 tracking-tight font-sans">Clearance Queue</h3>
-                <p className="mt-1 text-[13px] font-medium text-slate-500">Highest-risk deposited and returned instruments.</p>
+                <h3 className="font-medium text-slate-900 tracking-tight font-sans text-xl">Clearance Queue</h3>
+                <p className="mt-1 font-medium text-slate-500 text-sm">Highest-risk deposited and returned instruments.</p>
               </div>
               <Badge tone={clearanceQueue.length > 0 ? "warning" : "success"} className="shadow-sm px-3 py-1.5">{clearanceQueue.length} Active</Badge>
             </div>
@@ -530,16 +490,16 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2.5 mb-1">
-                    <span className="font-mono text-[13px] font-medium text-slate-900">{item.chequeNumber}</span>
-                    <Badge tone={item.status === "Returned" ? "risk" : item.approvalStatus ? "warning" : "data"} className="h-5 text-[10px] font-normal tracking-wider uppercase px-2 shadow-sm">
+                    <span className="text-slate-900 mono-amount">{item.chequeNumber}</span>
+                    <Badge tone={item.status === "Returned" ? "risk" : item.approvalStatus ? "warning" : "data"} className="h-5 px-2 shadow-sm label-caps">
                       {item.status === "Returned" ? item.returnReason : item.approvalStatus ?? `${clearingAge(item.depositedDate)} days`}
                     </Badge>
                   </div>
-                  <p className="truncate text-[14px] font-medium text-slate-800 leading-snug">{item.payerName}</p>
-                  <p className="mt-0.5 truncate text-[12.5px] font-medium text-slate-500">{item.source} - {item.holder}</p>
+                  <p className="truncate font-medium text-slate-800 leading-snug body-md">{item.payerName}</p>
+                  <p className="mt-0.5 truncate font-medium text-slate-500 text-base">{item.source} - {item.holder}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="font-mono text-[18px] font-medium tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors">
+                  <span className="tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors mono-stat">
                     {formatMoney(item.amount)}
                   </span>
                 </div>
@@ -551,91 +511,181 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
 
       {/* ── 1. KPI Cards Row ─────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-        {/* KPI 1: In clearing queue */}
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-200 bg-gradient-to-b from-white to-amber-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconBuildingBank size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
-              <IconBuildingBank size={16} stroke={2.5} />
-            </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Awaiting Clearance</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-[#151936]">
-              {formatMoney(metrics.depositedValue)}
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">{metrics.depositedCount} Cheques in transit</span>
-          </div>
-        </BoardPanel>
+        {/* KPI 1: Awaiting Clearance */}
+        {(() => {
+          const pendingCheques = cheques.filter(c => c.status === "Pending").length;
+          const totalCheques = cheques.length || 1;
+          const transitRatio = (pendingCheques / totalCheques) * 100;
+          return (
+            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-300/60 bg-white border border-slate-200/50">
+              {/* Subtle visual card background */}
+              <div
+                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=600&auto=format&fit=crop)` }}
+              />
+              {/* Top Accent line */}
+              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-amber-500" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-slate-500 label-caps text-xs tracking-wider">Awaiting Clearance</span>
+                <div className="size-7 rounded-lg bg-amber-50/50 text-amber-600 flex items-center justify-center border border-amber-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
+                  <IconBuildingBank size={14} stroke={2.5} />
+                </div>
+              </div>
+
+              <div className="flex flex-col mt-auto relative z-10">
+                <span className="font-mono font-normal tracking-tight text-[#151936] text-2xl">
+                  {formatMoney(metrics.depositedValue)}
+                </span>
+
+                {/* Micro visual progress meter */}
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${transitRatio}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
+                    <span>In transit</span>
+                    <span>{pendingCheques} of {totalCheques} instruments</span>
+                  </div>
+                </div>
+              </div>
+            </BoardPanel>
+          );
+        })()}
 
         {/* KPI 2: Cleared & Posted */}
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-200 bg-gradient-to-b from-white to-emerald-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconCheck size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
-              <IconCheck size={16} stroke={2.5} />
-            </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Cleared & Posted</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-[#151936]">
-              {formatMoney(metrics.clearedValue)}
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Confirmed bank cash postings</span>
-          </div>
-        </BoardPanel>
+        {(() => {
+          const clearedCheques = cheques.filter(c => c.status === "Credited").length;
+          const totalCheques = cheques.length || 1;
+          const clearedRatio = (clearedCheques / totalCheques) * 100;
+          return (
+            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-300/60 bg-white border border-slate-200/50">
+              {/* Subtle visual card background */}
+              <div
+                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop)` }}
+              />
+              {/* Top Accent line */}
+              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-emerald-500" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-slate-500 label-caps text-xs tracking-wider">Cleared & Posted</span>
+                <div className="size-7 rounded-lg bg-emerald-50/50 text-emerald-600 flex items-center justify-center border border-emerald-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
+                  <IconCheck size={14} stroke={2.5} />
+                </div>
+              </div>
+
+              <div className="flex flex-col mt-auto relative z-10">
+                <span className="font-mono font-normal tracking-tight text-[#151936] text-2xl">
+                  {formatMoney(metrics.clearedValue)}
+                </span>
+
+                {/* Micro visual progress meter */}
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${clearedRatio}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
+                    <span>Settled Ledger Postings</span>
+                    <span>{clearedCheques} of {totalCheques}</span>
+                  </div>
+                </div>
+              </div>
+            </BoardPanel>
+          );
+        })()}
 
         {/* KPI 3: Returned cheques */}
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-200 bg-gradient-to-b from-white to-rose-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconAlertTriangle size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-200/50">
-              <IconAlertTriangle size={16} stroke={2.5} />
-            </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Returned Cheques</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-rose-700">
-              {metrics.returnedCount} <span className="text-[20px] text-rose-700/70">Cheques</span>
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Dishonored by drawer banks</span>
-          </div>
-        </BoardPanel>
+        {(() => {
+          const returnedCheques = cheques.filter(c => c.status === "Returned").length;
+          const totalCheques = cheques.length || 1;
+          const returnedRatio = (returnedCheques / totalCheques) * 100;
+          return (
+            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-300/60 bg-white border border-slate-200/50">
+              {/* Subtle visual card background */}
+              <div
+                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1507206130007-be9c29b29330?q=80&w=600&auto=format&fit=crop)` }}
+              />
+              {/* Top Accent line */}
+              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-rose-500" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-slate-500 label-caps text-xs tracking-wider">Returned Cheques</span>
+                <div className="size-7 rounded-lg bg-rose-50/50 text-rose-600 flex items-center justify-center border border-rose-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
+                  <IconAlertTriangle size={14} stroke={2.5} />
+                </div>
+              </div>
+
+              <div className="flex flex-col mt-auto relative z-10">
+                <span className="font-mono font-normal tracking-tight text-rose-700 text-2xl">
+                  {metrics.returnedCount} <span className="text-rose-700/65 text-lg">Cheques</span>
+                </span>
+
+                {/* Micro visual progress meter */}
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-rose-500 transition-all duration-500" style={{ width: `${returnedRatio}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
+                    <span>Dishonored / Returned</span>
+                    <span>{returnedCheques} of {totalCheques}</span>
+                  </div>
+                </div>
+              </div>
+            </BoardPanel>
+          );
+        })()}
 
         {/* KPI 4: Month Clearance Rate */}
-        <BoardPanel className="p-5 flex flex-col justify-between h-[135px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-200 bg-gradient-to-b from-white to-indigo-50/10">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-            <IconCoins size={100} stroke={1} />
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
-              <IconCoins size={16} stroke={2.5} />
-            </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Average Clear Time</span>
-          </div>
-          <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-indigo-700">
-              3.5 <span className="text-[20px] text-indigo-700/70">Biz Days</span>
-            </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">From deposit to credit stamp</span>
-          </div>
-        </BoardPanel>
+        {(() => {
+          const timeRatio = (3.5 / 5.0) * 100; // max 5 days scale
+          return (
+            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-300/60 bg-white border border-slate-200/50">
+              {/* Subtle visual card background */}
+              <div
+                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600&auto=format&fit=crop)` }}
+              />
+              {/* Top Accent line */}
+              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-indigo-500" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-slate-500 label-caps text-xs tracking-wider">Average Clear Time</span>
+                <div className="size-7 rounded-lg bg-indigo-50/50 text-indigo-600 flex items-center justify-center border border-indigo-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
+                  <IconTransfer size={14} stroke={2.5} />
+                </div>
+              </div>
+
+              <div className="flex flex-col mt-auto relative z-10">
+                <span className="font-mono font-normal tracking-tight text-indigo-700 text-2xl">
+                  3.5 <span className="text-indigo-700/65 text-lg">Biz Days</span>
+                </span>
+
+                {/* Micro visual progress meter */}
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${timeRatio}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
+                    <span>Performance Target (3d)</span>
+                    <span>{Math.round(timeRatio)}% target width</span>
+                  </div>
+                </div>
+              </div>
+            </BoardPanel>
+          );
+        })()}
       </section>
 
       {/* ── 2. Visualization Section ────────────────────────────────────────── */}
       <BoardPanel className="p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
           <div>
-            <h3 className="text-[14px] font-medium text-slate-900 tracking-tight">Cheque Clearance Trends</h3>
+            <h3 className="font-medium text-slate-900 tracking-tight body-md">Cheque Clearance Trends</h3>
             <p className="text-sm text-slate-400 mt-0.5">Cleared values vs. returned values trend analysis</p>
           </div>
-          <div className="flex items-center gap-4 text-xs font-medium">
+          <div className="flex items-center gap-4 font-medium text-sm">
             <span className="flex items-center gap-1.5 text-indigo-600">
               <span className="size-2 rounded-full bg-indigo-400" /> Cleared (KES)
             </span>
@@ -678,8 +728,8 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
       </BoardPanel>
 
       <div className="pt-6 border-t border-slate-200/60 my-2 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal">Policy Gates & Ledger Impact</h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <h2 className="title-serif text-slate-900 font-normal">Policy Gates & Ledger Impact</h2>
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           Deposited cheques have zero statement impact; only credited cheques post to the ledger, while returns open debtor follow-up.
         </p>
       </div>
@@ -713,14 +763,14 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
             <BoardPanel key={item.title} className={cn("p-5 border transition-all duration-300 hover:-translate-y-1 hover:shadow-sm", item.tone)}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11.5px] font-medium uppercase tracking-widest">{item.title}</p>
-                  <p className="mt-3 font-mono text-[22px] font-normal tracking-tight text-slate-900">{item.value}</p>
+                  <p className="label-caps">{item.title}</p>
+                  <p className="mt-3 font-mono font-normal tracking-tight text-slate-900 text-2xl">{item.value}</p>
                 </div>
                 <div className="flex size-10 items-center justify-center rounded-xl bg-white shadow-sm border border-slate-100/50">
                   <ItemIcon size={20} />
                 </div>
               </div>
-              <p className="mt-4 text-[13px] font-medium leading-relaxed text-slate-500">{item.body}</p>
+              <p className="mt-4 font-medium leading-relaxed text-slate-500 text-sm">{item.body}</p>
             </BoardPanel>
           );
         })}
@@ -729,10 +779,10 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
 
       {/* ── 3. Segment Content Title & Queue ─────────────────────────────────── */}
       <div className="pt-2 my-2 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal capitalize">
+        <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab} Cheques Panel
         </h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           {activeTab === "deposited" && "Review cheques currently sitting in bank clearance queues awaiting credit notifications."}
           {activeTab === "credited" && "Successfully posted banker's cheques marked as reconciled with general ledger impact logs."}
           {activeTab === "returned" && "List of bounced or returned checks. Log dishonor reason or represent for clearing."}
@@ -748,7 +798,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
               placeholder="Search by cheque number, payer, bank..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-              className="w-full bg-transparent text-[12.5px] text-slate-700 placeholder-slate-400 focus:outline-none"
+              className="w-full bg-transparent text-slate-700 placeholder-slate-400 focus:outline-none text-base"
             />
           </div>
         </div>
@@ -756,7 +806,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
             <thead>
-              <tr className="border-b border-slate-100 text-sm font-medium uppercase tracking-wider text-slate-400 bg-slate-50/50">
+              <tr className="border-b border-slate-100 text-slate-400 bg-slate-50/50 label-caps">
                 <th className="px-5 py-3">Cheque Number</th>
                 <th className="px-5 py-3">Payer / Description</th>
                 <th className="px-5 py-3">Clearing Bank</th>
@@ -774,7 +824,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                   onClick={() => setSelectedCheque(c)}
                   className="transition-colors hover:bg-slate-50/80 cursor-pointer"
                 >
-                  <td className="px-5 py-3.5 font-mono text-[12.5px] font-medium text-slate-900">{c.chequeNumber}</td>
+                  <td className="px-5 py-3.5 text-slate-900 mono-data">{c.chequeNumber}</td>
                   <td className="px-5 py-3.5">
                     <p className="text-base font-medium text-slate-800 leading-snug">{c.payerName}</p>
                     <p className="text-sm text-slate-400 mt-0.5">{c.description}</p>
@@ -788,19 +838,19 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                       </Badge>
                     ) : null}
                   </td>
-                  <td className="px-5 py-3.5 text-[12.5px] text-slate-600">
+                  <td className="px-5 py-3.5 text-slate-600 text-base">
                     <span className="flex items-center gap-1"><IconBuildingBank size={12} /> {c.bankName}</span>
                   </td>
-                  <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-900">
+                  <td className="px-5 py-3.5 text-right text-slate-900 mono-data">
                     {formatMoney(c.amount)}
                   </td>
-                  <td className="px-5 py-3.5 text-[12.5px] text-slate-600">
+                  <td className="px-5 py-3.5 text-slate-600 text-base">
                     <span className="font-mono">{formatDate(c.depositedDate)}</span>
                     <p className="mt-1 text-sm text-slate-400">{clearingAge(c.depositedDate)} days in bank path</p>
                   </td>
                   {activeTab === "credited" && (
                     <td className="px-5 py-3.5">
-                      <span className="font-mono text-base font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                      <span className="text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded mono-data">
                         {c.ledgerJournal || "Awaiting Post"}
                       </span>
                     </td>
@@ -838,7 +888,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                         <IconCheck size={16} stroke={2.5} />
                       </div>
                     ) : (
-                      <div className="flex justify-end pr-2 text-rose-500 gap-1.5 items-center text-xs font-medium">
+                      <div className="flex justify-end pr-2 text-rose-500 gap-1.5 items-center font-medium text-sm">
                         <IconAlertTriangle size={15} /> {c.followUpAction}
                       </div>
                     )}
@@ -862,23 +912,23 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
         {clearCheque && (
           <form onSubmit={handleClearChequeSubmit} className="space-y-5 pt-1">
             <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/[0.02] to-indigo-500/[0.02] border border-slate-100 p-4 rounded-xl space-y-2.5 shadow-sm">
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Cheque Reference</span>
                 <span className="font-mono font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{clearCheque.chequeNumber}</span>
               </div>
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Drawer / Payer</span>
                 <span className="font-medium text-slate-800">{clearCheque.payerName}</span>
               </div>
               <div className="h-px bg-slate-100 my-1" />
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Clearing Value</span>
-                <span className="font-mono font-semibold text-emerald-700 bg-emerald-50/60 px-2.5 py-1 rounded-lg border border-emerald-100/30">{formatMoney(clearCheque.amount)}</span>
+                <span className="font-mono font-normal text-emerald-700 bg-emerald-50/60 px-2.5 py-1 rounded-lg border border-emerald-100/30">{formatMoney(clearCheque.amount)}</span>
               </div>
             </div>
 
             {clearCheque.amount > CHEQUE_APPROVAL_THRESHOLD ? (
-              <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-4 text-[12px] leading-relaxed text-amber-800 flex items-start gap-2.5">
+              <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-4 leading-relaxed text-amber-800 flex items-start gap-2.5 body-sm">
                 <IconAlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
                 <div>
                   <span className="font-medium block mb-0.5">Threshold Escalation Active</span>
@@ -886,7 +936,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 text-[12px] leading-relaxed text-emerald-800 flex items-start gap-2.5">
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 leading-relaxed text-emerald-800 flex items-start gap-2.5 body-sm">
                 <IconShieldCheck size={16} className="shrink-0 mt-0.5 text-emerald-600" />
                 <div>
                   <span className="font-medium block mb-0.5">Auto-Credit Path</span>
@@ -896,7 +946,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
             )}
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-normal uppercase tracking-wider text-slate-400 block">Double Entry Description</label>
+              <label className="text-slate-400 block label-caps">Double Entry Description</label>
               <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                   <IconCoins size={15} />
@@ -906,17 +956,17 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                   required
                   value={clearJournalDesc}
                   onChange={(e) => setClearJournalDesc(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-[12.5px] text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium"
+                  className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-slate-700 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium text-base"
                 />
               </div>
-              <span className="text-[11px] text-slate-400 block leading-tight">Clearing will debit Cash Accounts (NCBA Bank) and credit Accounts Receivable.</span>
+              <span className="text-slate-400 block leading-tight text-sm">Clearing will debit Cash Accounts (NCBA Bank) and credit Accounts Receivable.</span>
             </div>
 
             <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <Button type="button" variant="secondary" onClick={() => setClearCheque(null)} className="h-9 px-4 text-[12.5px]">
+              <Button type="button" variant="secondary" onClick={() => setClearCheque(null)} className="h-9 px-4 text-base">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="h-9 px-4 text-[12.5px] bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium rounded-lg">
+              <Button type="submit" disabled={isSubmitting} className="h-9 px-4 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium rounded-lg text-base">
                 {isSubmitting ? "Processing..." : clearCheque.amount > CHEQUE_APPROVAL_THRESHOLD ? "Route Approval Request" : "Post & Reconcile Cash"}
               </Button>
             </div>
@@ -929,28 +979,28 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
         {returnCheque && (
           <form onSubmit={handleReturnChequeSubmit} className="space-y-5 pt-1">
             <div className="relative overflow-hidden bg-gradient-to-r from-rose-500/[0.02] to-amber-500/[0.02] border border-rose-100/50 p-4 rounded-xl space-y-2.5 shadow-sm">
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Cheque Reference</span>
                 <span className="font-mono font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{returnCheque.chequeNumber}</span>
               </div>
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Payer</span>
                 <span className="font-medium text-slate-800">{returnCheque.payerName}</span>
               </div>
               <div className="h-px bg-slate-100 my-1" />
-              <div className="flex justify-between items-center text-[12px]">
+              <div className="flex justify-between items-center body-sm">
                 <span className="text-slate-400 font-normal">Returned Sum</span>
-                <span className="font-mono font-semibold text-rose-700 bg-rose-50/50 px-2.5 py-1 rounded-lg border border-rose-100/30">{formatMoney(returnCheque.amount)}</span>
+                <span className="font-mono font-normal text-rose-700 bg-rose-50/50 px-2.5 py-1 rounded-lg border border-rose-100/30">{formatMoney(returnCheque.amount)}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-normal uppercase tracking-wider text-slate-400 block">Return Reason</label>
+                <label className="text-slate-400 block label-caps">Return Reason</label>
                 <select
                   value={retReason}
                   onChange={(e) => setRetReason(e.target.value as NonNullable<ChequeRecord["returnReason"]>)}
-                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-[12.5px] text-slate-700 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600 transition-all font-medium"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-slate-700 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600 transition-all font-medium text-base"
                 >
                   <option value="Insufficient Funds">Insufficient Funds</option>
                   <option value="Signature Mismatch">Signature Mismatch</option>
@@ -960,11 +1010,11 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-normal uppercase tracking-wider text-slate-400 block">Follow-up Workflow</label>
+                <label className="text-slate-400 block label-caps">Follow-up Workflow</label>
                 <select
                   value={retAction}
                   onChange={(e) => setRetAction(e.target.value as NonNullable<ChequeRecord["followUpAction"]>)}
-                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-[12.5px] text-slate-700 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600 transition-all font-medium"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-slate-700 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600 transition-all font-medium text-base"
                 >
                   <option value="Tenant Notified">Tenant/Client Notified</option>
                   <option value="Re-presented">Re-present next cycle</option>
@@ -974,10 +1024,10 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
             </div>
 
             <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <Button type="button" variant="secondary" onClick={() => setReturnCheque(null)} className="h-9 px-4 text-[12.5px]">
+              <Button type="button" variant="secondary" onClick={() => setReturnCheque(null)} className="h-9 px-4 text-base">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="h-9 px-4 text-[12.5px] bg-rose-600 text-white hover:bg-rose-700 font-medium rounded-lg">
+              <Button type="submit" disabled={isSubmitting} className="h-9 px-4 bg-rose-600 text-white hover:bg-rose-700 font-medium rounded-lg text-base">
                 {isSubmitting ? "Flagging..." : "Confirm Returned Status"}
               </Button>
             </div>
@@ -993,21 +1043,21 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
         footer={
           selectedCheque && (
             <div className="flex gap-2 justify-end">
-              <Button variant="secondary" onClick={() => setSelectedCheque(null)} className="h-9 text-[12.5px]">
+              <Button variant="secondary" onClick={() => setSelectedCheque(null)} className="h-9 text-base">
                 Close Panel
               </Button>
               {selectedCheque.status === "Pending" && (
                 <div className="flex gap-2">
                   <Button
                     onClick={() => { setSelectedCheque(null); openReturnModalFor(selectedCheque); }}
-                    className="bg-rose-50/10 text-rose-700 hover:bg-rose-500/20 py-1.5 px-3 rounded-lg text-[12.5px] font-medium"
+                    className="bg-rose-50/10 text-rose-700 hover:bg-rose-500/20 py-1.5 px-3 rounded-lg font-medium text-base"
                   >
                     Flag Bounced
                   </Button>
                   <Button
                     onClick={() => { setSelectedCheque(null); openClearModalFor(selectedCheque); }}
                     disabled={Boolean(selectedCheque.approvalStatus)}
-                    className="bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] py-1.5 px-3 rounded-lg text-[12.5px] font-medium"
+                    className="bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] py-1.5 px-3 rounded-lg font-medium text-base"
                   >
                     {selectedCheque.approvalStatus ? "Approval Routed" : "Clear Credit"}
                   </Button>
@@ -1018,15 +1068,15 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
         }
       >
         {selectedCheque && (
-          <div className="space-y-6 text-slate-700 text-xs">
+          <div className="space-y-6 text-slate-700 text-sm">
             {/* Header context */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm border border-slate-100/50">
                 <IconBuildingBank size={20} />
               </div>
               <div>
-                <h4 className="text-[14px] font-medium text-slate-900 leading-snug">{selectedCheque.payerName}</h4>
-                <p className="text-[11.5px] text-slate-400 mt-0.5">{selectedCheque.chequeNumber} · {selectedCheque.bankName}</p>
+                <h4 className="font-medium text-slate-900 leading-snug body-md">{selectedCheque.payerName}</h4>
+                <p className="text-slate-400 mt-0.5 text-sm">{selectedCheque.chequeNumber} · {selectedCheque.bankName}</p>
               </div>
             </div>
 
@@ -1034,33 +1084,33 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
               {/* Authentic Banker's Cheque Simulation */}
               <div className="relative border border-[#0f172a]/15 bg-gradient-to-r from-teal-50/70 via-indigo-50/30 to-teal-50/50 p-5 rounded-2xl flex flex-col justify-between overflow-hidden shadow-[inset_0_1px_3px_rgba(255,255,255,0.8),0_4px_12px_rgba(0,0,0,0.02)] h-[150px] select-none outline outline-4 outline-white/80 outline-offset-[-5px] font-sans">
                 {/* Slanted clearance stamp watermark */}
-                <div className="absolute right-10 top-6 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-dashed border-current px-3 py-1.5 text-[18px] font-black tracking-widest rounded transition-all duration-300">
+                <div className="absolute right-10 top-6 select-none pointer-events-none opacity-[0.15] origin-center -rotate-12 border-2 border-dashed border-current px-3 py-1.5 font-black tracking-widest rounded transition-all duration-300 text-xl">
                   {selectedCheque.status === "Credited" && <span className="text-emerald-600">CREDITED</span>}
                   {selectedCheque.status === "Returned" && <span className="text-rose-600">RETURNED</span>}
                   {selectedCheque.status === "Pending" && <span className="text-amber-600">CLEARING</span>}
                 </div>
 
-                <div className="flex justify-between items-start text-[11px] text-slate-400 font-mono">
+                <div className="flex justify-between items-start text-slate-400 font-mono text-sm">
                   <div className="flex items-center gap-1">
                     <IconBuildingBank size={14} className="text-slate-500" />
-                    <span className="font-semibold text-slate-700 tracking-wider">{selectedCheque.bankName}</span>
+                    <span className="font-normal text-slate-700 tracking-wider">{selectedCheque.bankName}</span>
                   </div>
                   <span>CHEQUE NO: {selectedCheque.chequeNumber.replace("CHQ-", "")}</span>
                 </div>
 
                 <div className="flex justify-between items-center my-2 gap-4">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">Pay to the order of</span>
+                    <span className="text-slate-400 font-mono label-caps">Pay to the order of</span>
                     <span className="text-sm font-normal text-slate-800 font-serif border-b border-dashed border-slate-300/80 pr-4 pb-0.5 leading-none">
                       Sunland Real Estate Ltd
                     </span>
                   </div>
-                  <div className="bg-white/90 border border-slate-300/60 px-3.5 py-1.5 rounded-lg text-[14px] font-semibold text-slate-800 font-mono shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] shrink-0">
+                  <div className="bg-white/90 border border-slate-300/60 px-3.5 py-1.5 rounded-lg font-normal text-slate-800 font-mono shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] shrink-0 body-md">
                     {formatMoney(selectedCheque.amount)}
                   </div>
                 </div>
 
-                <div className="flex justify-between items-end text-[10px] text-slate-400 border-t border-slate-200/50 pt-2 font-mono">
+                <div className="flex justify-between items-end text-slate-400 border-t border-slate-200/50 pt-2 font-mono text-sm">
                   <div>
                     <span className="text-slate-400">DRAWER:</span>{" "}
                     <span className="text-slate-700 font-sans font-medium">{selectedCheque.payerName}</span>
@@ -1072,23 +1122,23 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 </div>
 
                 {/* MICR Code lines */}
-                <div className="text-center text-[10px] tracking-[0.25em] font-mono text-slate-500/80 mt-1 select-none pointer-events-none">
+                <div className="text-center tracking-[0.25em] font-mono text-slate-500/80 mt-1 select-none pointer-events-none text-sm">
                   ⑈ {selectedCheque.chequeNumber.replace("CHQ-", "")} ⑈   01109288211 ⑈   0123849920 ⑈
                 </div>
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Allocation Memo</span>
-                <p className="text-slate-700 leading-relaxed text-[12.5px] bg-slate-50 border border-slate-100 p-3 rounded-xl">{selectedCheque.description}</p>
+                <span className="text-slate-400 label-caps">Allocation Memo</span>
+                <p className="text-slate-700 leading-relaxed bg-slate-50 border border-slate-100 p-3 rounded-xl text-base">{selectedCheque.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Deposited Date</span>
-                  <p className="text-slate-700 font-mono font-medium mt-1 text-[12.5px]">{formatDate(selectedCheque.depositedDate)}</p>
+                  <span className="text-slate-400 label-caps">Deposited Date</span>
+                  <p className="text-slate-700 mt-1 mono-data">{formatDate(selectedCheque.depositedDate)}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Clearing Status</span>
+                  <span className="text-slate-400 label-caps">Clearing Status</span>
                   <div className="mt-1">
                     <Badge
                       tone={selectedCheque.status === "Credited" ? "success" : selectedCheque.status === "Returned" ? "risk" : "warning"}
@@ -1102,24 +1152,24 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
 
               <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100">
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Source</span>
-                  <p className="mt-0.5 text-[12.5px] font-medium text-slate-700">{selectedCheque.source}</p>
+                  <span className="text-slate-400 label-caps">Source</span>
+                  <p className="mt-0.5 font-medium text-slate-700 text-base">{selectedCheque.source}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Holder</span>
-                  <p className="mt-0.5 text-[12.5px] font-medium text-slate-700">{selectedCheque.holder}</p>
+                  <span className="text-slate-400 label-caps">Holder</span>
+                  <p className="mt-0.5 font-medium text-slate-700 text-base">{selectedCheque.holder}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50/50 border border-slate-100/50 p-3">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Clearing Age</span>
-                  <p className="mt-0.5 font-mono text-[12.5px] font-medium text-slate-700">{clearingAge(selectedCheque.depositedDate)} days</p>
+                  <span className="text-slate-400 label-caps">Clearing Age</span>
+                  <p className="mt-0.5 text-slate-700 mono-data">{clearingAge(selectedCheque.depositedDate)} days</p>
                 </div>
               </div>
 
               {selectedCheque.approvalStatus && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 text-[12px] leading-relaxed text-amber-800 flex gap-2.5 items-start">
+                <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 leading-relaxed text-amber-800 flex gap-2.5 items-start body-sm">
                   <IconAlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
                   <div>
-                    <p className="font-semibold text-amber-900 mb-0.5">Approval Hold Active: {selectedCheque.approvalRef}</p>
+                    <p className="font-normal text-amber-900 mb-0.5">Approval Hold Active: {selectedCheque.approvalRef}</p>
                     <p className="text-slate-600 leading-normal">No ledger journal has been posted. The cheque remains in Deposited until the GM/CEO approval is decided.</p>
                   </div>
                 </div>
@@ -1127,15 +1177,15 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
 
               {selectedCheque.status === "Credited" && (
                 <div className="p-4 bg-emerald-50/20 border border-emerald-100/40 rounded-xl space-y-1.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block">Credit Reconciliation Log</span>
-                  <div className="grid grid-cols-2 gap-2 text-[12px] pt-0.5">
+                  <span className="text-slate-400 block label-caps">Credit Reconciliation Log</span>
+                  <div className="grid grid-cols-2 gap-2 pt-0.5 body-sm">
                     <div>
                       <span className="text-slate-400">Reconciled Date:</span>
                       <p className="font-mono font-medium text-slate-700 mt-0.5">{selectedCheque.reconciliationDate ? formatDate(selectedCheque.reconciliationDate) : "Pending"}</p>
                     </div>
                     <div>
                       <span className="text-slate-400">Ledger Journal:</span>
-                      <p className="font-mono font-semibold text-indigo-700 mt-0.5">{selectedCheque.ledgerJournal}</p>
+                      <p className="font-mono font-normal text-indigo-700 mt-0.5">{selectedCheque.ledgerJournal}</p>
                     </div>
                   </div>
                 </div>
@@ -1143,15 +1193,15 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
 
               {selectedCheque.status === "Returned" && (
                 <div className="p-4 bg-rose-50/20 border border-rose-100/40 rounded-xl space-y-2">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block">Dishonor Audit Log</span>
-                  <div className="grid grid-cols-2 gap-2 text-[12px] pt-0.5">
+                  <span className="text-slate-400 block label-caps">Dishonor Audit Log</span>
+                  <div className="grid grid-cols-2 gap-2 pt-0.5 body-sm">
                     <div>
                       <span className="text-slate-400">Returned Date:</span>
                       <p className="font-mono font-medium text-slate-700 mt-0.5">{selectedCheque.reconciliationDate ? formatDate(selectedCheque.reconciliationDate) : "Pending"}</p>
                     </div>
                     <div>
                       <span className="text-slate-400">Dispute Reason:</span>
-                      <p className="font-semibold text-rose-700 mt-0.5">{selectedCheque.returnReason}</p>
+                      <p className="font-normal text-rose-700 mt-0.5">{selectedCheque.returnReason}</p>
                     </div>
                     <div className="col-span-2 pt-2 border-t border-rose-100/30">
                       <span className="text-slate-400">Follow-up Workflow Action:</span>
@@ -1177,14 +1227,14 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
               )}
 
               <div className="pt-2 border-t border-slate-100">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block">Activity Log</span>
+                <span className="text-slate-400 block label-caps">Activity Log</span>
                 <div className="mt-3.5 space-y-3">
                   {selectedCheque.auditLog.map((entry, index) => (
                     <div key={`${selectedCheque.id}-${entry}`} className="flex gap-2.5">
                       <span className="mt-1.5 size-1.5 rounded-full bg-slate-400 shrink-0" />
                       <div>
-                        <p className="text-[12.5px] text-slate-700 leading-normal font-medium">{entry}</p>
-                        <p className="font-mono text-[10px] text-slate-400 mt-0.5">Step {selectedCheque.auditLog.length - index}</p>
+                        <p className="text-slate-700 leading-normal font-medium text-base">{entry}</p>
+                        <p className="font-mono text-slate-400 mt-0.5 text-sm">Step {selectedCheque.auditLog.length - index}</p>
                       </div>
                     </div>
                   ))}

@@ -12,6 +12,7 @@ import {
   IconLoader2,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const EMULATION_PROFILES = [
   {
@@ -81,6 +82,7 @@ export default function LoginPage() {
       const savedEmail = localStorage.getItem("sunland_remembered_email");
       const savedRemember = localStorage.getItem("sunland_remember_me");
       if (savedEmail) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setEmail(savedEmail);
       }
       if (savedRemember !== null) {
@@ -153,13 +155,13 @@ export default function LoginPage() {
             width={180}
             height={156}
             alt="Sunland Logo"
-            className="h-30 w-auto brightness-0 invert"
+            className="h-25 w-auto brightness-0 invert"
           />
         </div>
 
         {/* Refined copy with Cormorant Garamond title-serif */}
         <div className="absolute bottom-16 left-12 max-w-md text-white animate-fade-in-up">
-          <h2 className="title-serif font-normal text-white text-4xl leading-tight">Where Life Meets Style.</h2>
+          <h2 className="title-serif font-normal text-white leading-tight">Where Life Meets Style.</h2>
           <p className="body-md mt-4 text-slate-200/80 leading-relaxed font-sans">
             Proprietary estate intelligence system managing listings, contracts, tenants, human resources, and the core general ledger.
           </p>
@@ -183,13 +185,11 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#151936]/5 px-3 py-1">
-              <IconShieldLock size={12} className="text-[#151936]" />
-              <span className="font-mono text-[9.5px] uppercase tracking-wider text-[#151936] font-medium">
-                Secure Gateway
-              </span>
-            </div>
-            <h1 className="title-serif font-normal text-3xl text-[#151936] mt-4">
+            <Badge tone="brand" className="gap-1.5 px-3 py-1">
+              <IconShieldLock size={12} />
+              <span>Secure Gateway</span>
+            </Badge>
+            <h1 className="title-serif font-normal text-[#151936] mt-4">
               Welcome back to Sunland
             </h1>
             <p className="body-sm text-slate-500">
@@ -200,7 +200,7 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleStaticSubmit} className="mt-8 space-y-5">
             {error && (
-              <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-700 animate-scale-in">
+              <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-rose-700 animate-scale-in text-sm">
                 <span className="size-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" />
                 <span>{error}</span>
               </div>
@@ -253,7 +253,7 @@ export default function LoginPage() {
               </span>
             </label>
 
-            <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center justify-between text-slate-500 text-sm">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   className="size-4 rounded border-slate-300 accent-[#f3df27] focus:ring-[#f3df27] disabled:opacity-50"
@@ -270,7 +270,7 @@ export default function LoginPage() {
             </div>
 
             <Button
-              className="w-full h-auto py-2.5 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] border-none text-[11px] font-mono uppercase tracking-widest transition-colors duration-200 disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full h-auto py-2.5 bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] border-none font-mono transition-colors duration-200 disabled:opacity-60 flex items-center justify-center gap-2 label-caps"
               type="submit"
               disabled={loadingRole !== null}
             >
@@ -289,11 +289,11 @@ export default function LoginPage() {
           <div className="mt-10 border-t border-slate-100 pt-8">
             <div className="flex items-center gap-2">
               <span className="flex size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <h2 className="font-mono text-[10.5px] font-medium uppercase tracking-wider text-slate-400">
+              <h2 className="font-mono text-slate-400 label-caps">
                 Authorized Workspace Portals
               </h2>
             </div>
-            <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">
+            <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">
               Select an approved operational profile below to verify direct portal routing and role-based permissions.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -314,8 +314,8 @@ export default function LoginPage() {
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-slate-800 transition group-hover:text-[#151936]">{profile.name}</p>
-                    <p className="truncate text-[10px] text-slate-400 font-mono uppercase tracking-wide mt-0.5">{profile.title}</p>
+                    <p className="truncate font-medium text-slate-800 transition group-hover:text-[#151936] text-sm">{profile.name}</p>
+                    <p className="truncate text-slate-400 font-mono uppercase tracking-wide mt-0.5 text-sm">{profile.title}</p>
                   </div>
                   <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 group-hover:bg-[#151936]/5 group-hover:text-[#151936] transition duration-200">
                     <IconArrowRight size={11} stroke={2.5} />
@@ -328,7 +328,7 @@ export default function LoginPage() {
           {/* Footnote Sandbox Link */}
           <div className="mt-8 flex justify-center border-t border-slate-100 pt-6">
             <Link
-              className="font-mono text-[10px] uppercase tracking-wider text-slate-400 hover:text-slate-600 hover:underline"
+              className="font-mono text-slate-400 hover:text-slate-600 hover:underline label-caps"
               href="/admin"
             >
               System Sandbox Bypass: View Shell
@@ -350,14 +350,14 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <h3 className="title-serif font-normal text-xl text-white">Delegating Authority</h3>
+            <h3 className="title-serif font-normal text-white">Delegating Authority</h3>
             <p className="body-sm mt-2 text-slate-300 leading-relaxed">
               Establishing a secure workspace session for the {EMULATION_PROFILES.find(p => p.role === loadingRole)?.title || "Administrator"} portal.
             </p>
 
             <div className="mt-8 flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5">
               <IconLoader2 className="animate-spin text-[#f3df27]" size={12} />
-              <span className="font-mono text-[9px] uppercase tracking-widest text-[#f3df27]">
+              <span className="font-mono text-[#f3df27] label-caps">
                 Routing Secure Session...
               </span>
             </div>

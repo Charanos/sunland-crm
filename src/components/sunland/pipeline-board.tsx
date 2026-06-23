@@ -564,7 +564,7 @@ export function PipelineBoard({
           <div className="flex items-center gap-3">
             <Link
               href="/admin/pipeline"
-              className="flex items-center gap-1.5 text-[12.5px] font-medium text-slate-550 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 border border-slate-200 rounded-xl shadow-sm animate-fade-in"
+              className="flex items-center gap-1.5 font-medium text-slate-550 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 border border-slate-200 rounded-xl shadow-sm animate-fade-in text-base"
             >
               <IconChevronLeft size={15} />
               <span>Exit Focus Mode</span>
@@ -575,7 +575,7 @@ export function PipelineBoard({
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <span className="bg-[#f3df27]/20 text-[#151936] text-sm  px-2.5 py-0.5 rounded-full font-medium border border-[#f3df27]/40 uppercase tracking-wider">
+            <span className="bg-[#f3df27]/20 text-[#151936] px-2.5 py-0.5 rounded-full border border-[#f3df27]/40 label-caps">
               CEO / Admin Control
             </span>
           </div>
@@ -601,28 +601,28 @@ export function PipelineBoard({
               className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Contacts</span>
-              <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">CRM</span>
+              <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">CRM</span>
             </Link>
             <Link
               href="/admin/pipeline"
               className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
             >
               <span>Deals Pipeline</span>
-              <span className="bg-[#f3df27] text-[#151936] text-xs  px-1.5 py-0.2 rounded-full font-medium">Active</span>
+              <span className="bg-[#f3df27] text-[#151936] px-1.5 py-0.2 rounded-full font-medium text-sm">Active</span>
             </Link>
             <Link
               href="/admin/leases"
               className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Leases</span>
-              <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">Tenancies</span>
+              <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">Tenancies</span>
             </Link>
             <Link
               href="/admin/maintenance"
               className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Maintenance</span>
-              <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">Tickets</span>
+              <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">Tickets</span>
             </Link>
           </div>
         </div>
@@ -641,7 +641,7 @@ export function PipelineBoard({
               <span className="text-base font-medium text-slate-400 tracking-wider uppercase">Active Pipeline Value</span>
             </div>
             <div className="flex items-end justify-between mt-auto mb-2">
-              <span className="text-[26px] sm:text-[28px] font-medium text-slate-800 tracking-tight font-mono leading-none">
+              <span className="sm:text-[28px] font-medium text-slate-800 tracking-tight font-mono leading-none text-3xl">
                 {formatCompactKES(stats.activeValue)}
               </span>
               <span className="text-sm text-emerald-650 font-medium">Active Leads: {stats.total}</span>
@@ -660,7 +660,7 @@ export function PipelineBoard({
               <span className="text-base font-medium text-indigo-700 tracking-wider uppercase">Active Viewings</span>
             </div>
             <div className="flex items-end justify-between mt-auto mb-2">
-              <span className="text-[32px] font-medium text-indigo-900 tracking-tight font-mono leading-none">{stats.viewings}</span>
+              <span className="text-indigo-900 tracking-tight leading-none mono-stat">{stats.viewings}</span>
               <span className="text-sm text-indigo-650 font-medium">Tours this month</span>
             </div>
             <div className="h-[3px] bg-indigo-200/50 rounded-full w-full overflow-hidden">
@@ -677,7 +677,7 @@ export function PipelineBoard({
               <span className="text-base font-medium text-emerald-700 tracking-wider uppercase">Win Conversion Rate</span>
             </div>
             <div className="flex items-end justify-between mt-auto mb-2">
-              <span className="text-[32px] font-medium text-emerald-900 tracking-tight font-mono leading-none">{stats.winRate}%</span>
+              <span className="text-emerald-900 tracking-tight leading-none mono-stat">{stats.winRate}%</span>
               <span className="text-sm text-emerald-650 font-medium">Won vs Lost ratio</span>
             </div>
             <div className="h-[3px] bg-emerald-200/50 rounded-full w-full overflow-hidden">
@@ -694,7 +694,7 @@ export function PipelineBoard({
               <span className="text-base font-medium text-amber-700 tracking-wider uppercase">Pending Offers Value</span>
             </div>
             <div className="flex items-end justify-between mt-auto mb-2">
-              <span className="text-[26px] sm:text-[28px] font-medium text-amber-900 tracking-tight font-mono leading-none">
+              <span className="sm:text-[28px] font-medium text-amber-900 tracking-tight font-mono leading-none text-3xl">
                 {formatCompactKES(stats.pendingOffers)}
               </span>
               <span className="text-sm text-amber-750 font-medium">Offers & Negotiation</span>
@@ -762,7 +762,7 @@ export function PipelineBoard({
 
               {/* Stage select (List view only) */}
               {viewMode === "list" && (
-                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600">
+                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 text-base">
                   <span className="text-slate-400">Stage:</span>
                   <select
                     value={stageFilter}
@@ -775,7 +775,7 @@ export function PipelineBoard({
                 </div>
               )}
               {/* Source Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600 font-normal">
+              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 font-normal text-base">
                 <span className="text-slate-400">Source:</span>
                 <select
                   value={sourceFilter}
@@ -788,7 +788,7 @@ export function PipelineBoard({
               </div>
 
               {/* Scope Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600 font-normal">
+              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 font-normal text-base">
                 <span className="text-slate-400">Scope:</span>
                 <select
                   value={role}
@@ -803,7 +803,7 @@ export function PipelineBoard({
               {/* Add Lead button */}
               <button
                 onClick={() => { setEditingLead(undefined); setIsModalOpen(true); }}
-                className="flex items-center gap-1.5 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl text-[12.5px] font-medium hover:bg-[#e6d220] transition-colors shadow-sm cursor-pointer"
+                className="flex items-center gap-1.5 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl font-medium hover:bg-[#e6d220] transition-colors shadow-sm cursor-pointer text-base"
               >
                 <IconPlus size={15} stroke={2.5} />
                 <span>Create Lead</span>
@@ -813,7 +813,7 @@ export function PipelineBoard({
               {!isFullPageFocus && (
                 <Link
                   href="/admin/pipeline/kanban"
-                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-[12.5px] font-medium transition-all shadow-sm shrink-0"
+                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-medium transition-all shadow-sm shrink-0 text-base"
                 >
                   <IconArrowUpRight size={15} stroke={2.5} />
                   <span>Full Screen Focus</span>
@@ -825,7 +825,7 @@ export function PipelineBoard({
           {/* Active filter chips */}
           {(stageFilter !== "all" || sourceFilter !== "all" || searchQuery !== "") && (
             <div className="flex items-center gap-2 flex-wrap pt-2 animate-fade-in">
-              <span className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active Filters:</span>
+              <span className="text-slate-400 label-caps">Active Filters:</span>
               {searchQuery && (
                 <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
                   Search: "{searchQuery}"
@@ -892,7 +892,7 @@ export function PipelineBoard({
                           <span className={cn("px-2 py-0.5 rounded-md text-sm font-medium border uppercase tracking-wider font-medium", STAGE_COLORS[stage])}>
                             {STAGE_LABELS[stage]}
                           </span>
-                          <span className="text-base font-mono text-slate-400 font-medium">({stageLeads.length})</span>
+                          <span className="text-slate-400 mono-data">({stageLeads.length})</span>
                         </div>
                         {columnBudget > 0 && (
                           <span className="text-sm  font-mono font-medium text-slate-500">{formatCompactKES(columnBudget)}</span>
@@ -945,7 +945,7 @@ export function PipelineBoard({
                                       fallback={lead.assignedAgent[0]}
                                       className="size-5 shrink-0 border border-slate-100 shadow-sm"
                                     />
-                                    <span className="text-base font-medium font-mono text-slate-800 leading-none">
+                                    <span className="text-slate-800 leading-none mono-data">
                                       {formatCompactKES(lead.budget)}
                                     </span>
                                   </div>
@@ -997,7 +997,7 @@ export function PipelineBoard({
               <div key="list" className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[1000px]">
                   <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100 text-sm font-medium text-slate-400 uppercase tracking-widest select-none">
+                    <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 select-none label-caps">
                       <th className="py-4 pl-6 pr-2 w-10 text-center">
                         <input
                           type="checkbox"
@@ -1059,7 +1059,7 @@ export function PipelineBoard({
                                 className="size-9 shrink-0 border border-slate-100 shadow-sm"
                               />
                               <div>
-                                <span className="font-normal text-[14px] text-slate-900 group-hover:text-[#151936] transition-colors leading-snug block">
+                                <span className="font-normal text-slate-900 group-hover:text-[#151936] transition-colors leading-snug block body-md">
                                   {lead.clientName}
                                 </span>
                                 <span className="text-sm text-slate-400 font-mono mt-0.5 block font-normal">
@@ -1111,13 +1111,13 @@ export function PipelineBoard({
                                 <div className="absolute right-6 top-10 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 text-left animate-scale-in">
                                   <button
                                     onClick={() => { setSelectedLeadId(lead.id); setRowMenuId(null); }}
-                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
                                   >
                                     <IconCircleDot size={14} /> View Details
                                   </button>
                                   <button
                                     onClick={() => { setEditingLead(lead); setIsModalOpen(true); setRowMenuId(null); }}
-                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
                                   >
                                     <IconEdit size={14} /> Edit Lead
                                   </button>
@@ -1126,14 +1126,14 @@ export function PipelineBoard({
                                       setSelectedChatDMId(getDMIdForContact(lead.clientName));
                                       setRowMenuId(null);
                                     }}
-                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
                                   >
                                     <IconMessageCircle size={14} /> Send Message
                                   </button>
                                   <div className="border-t border-slate-100 my-1" />
                                   <button
                                     onClick={() => { handleDeleteLead(lead.id); setRowMenuId(null); }}
-                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-red-650 hover:bg-red-50 font-medium transition-colors"
+                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-red-650 hover:bg-red-50 font-medium transition-colors text-base"
                                   >
                                     <IconTrash size={14} /> Clear Record
                                   </button>
@@ -1150,14 +1150,14 @@ export function PipelineBoard({
                             <div className="size-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-sm">
                               <IconChartBar size={28} />
                             </div>
-                            <h4 className="text-[14px] font-medium text-slate-800 leading-none">No active leads match filters</h4>
+                            <h4 className="font-medium text-slate-800 leading-none body-md">No active leads match filters</h4>
                             <button
                               onClick={() => {
                                 setSearchQuery("");
                                 setStageFilter("all");
                                 setSourceFilter("all");
                               }}
-                              className="mt-4 px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-[12.5px] font-medium transition-all shadow-sm"
+                              className="mt-4 px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-medium transition-all shadow-sm text-base"
                             >
                               Reset Filters
                             </button>
@@ -1176,7 +1176,7 @@ export function PipelineBoard({
         {/* List Pagination (List view only) */}
         {viewMode === "list" && (
           <div className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
-            <span className="text-base text-slate-400 font-medium font-mono">
+            <span className="text-slate-400 mono-data">
               Showing {sortedLeads.length > 0 ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0}-
               {Math.min(currentPage * ROWS_PER_PAGE, sortedLeads.length)} of {sortedLeads.length} deals
             </span>
@@ -1226,11 +1226,11 @@ export function PipelineBoard({
             className="fixed bottom-6 inset-x-0 mx-auto w-full max-w-2xl bg-[#151936] text-white p-4 rounded-2xl shadow-[0_20px_50px_rgba(21,25,54,0.3)] flex items-center justify-between z-[70] border border-slate-800/40"
           >
             <div className="flex items-center gap-3">
-              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center text-base font-mono font-medium">
+              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center mono-data">
                 {selectedIds.length}
               </span>
               <div>
-                <p className="text-[12.5px] font-medium leading-none">Deals Selected</p>
+                <p className="font-medium leading-none text-base">Deals Selected</p>
                 <p className="text-sm text-slate-400 mt-1">Batch actions will apply to marked deals.</p>
               </div>
             </div>

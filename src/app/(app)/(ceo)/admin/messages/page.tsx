@@ -45,7 +45,7 @@ export default function MessagesPage() {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
-            <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2 px-3">Direct Messages</h4>
+            <h4 className="text-slate-400 mb-2 px-3 label-caps">Direct Messages</h4>
             <div className="space-y-1">
               {MOCK_DMS.map((dm) => (
                 <button
@@ -87,7 +87,7 @@ export default function MessagesPage() {
             <div className="flex items-center gap-4">
               <Avatar src={activeChat.avatar} fallback={activeChat.name[0]} className="size-12 border border-slate-200" />
               <div>
-                <h3 className="text-[16px] font-medium text-slate-900">{activeChat.name}</h3>
+                <h3 className="font-medium text-slate-900 text-lg">{activeChat.name}</h3>
                 <p className="text-base text-emerald-600 flex items-center gap-1.5">
                   <span className="size-2 rounded-full bg-emerald-500"></span> Online
                 </p>
@@ -136,7 +136,7 @@ export default function MessagesPage() {
               <input
                 type="text"
                 placeholder={`Message ${activeChat.name}...`}
-                className="flex-1 bg-transparent px-3 py-2 text-[14px] text-slate-800 focus:outline-none placeholder:text-slate-400"
+                className="flex-1 bg-transparent px-3 py-2 text-slate-800 focus:outline-none placeholder:text-slate-400 body-md"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />

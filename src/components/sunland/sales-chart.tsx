@@ -48,7 +48,7 @@ export default function SalesChart({
   const showVisitors = activeFilter === "all" || activeFilter === "Visitors";
 
   return (
-    <div className="h-72 w-full text-[12px]">
+    <div className="h-72 w-full body-sm">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}

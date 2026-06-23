@@ -142,7 +142,7 @@ export function MobileNavigationDrawer() {
             {/* ── Team Section ── */}
             <div>
               <div className="flex items-center justify-between mb-2 pl-2 pr-1">
-                <p className="label-caps tracking-widest text-white/60 text-sm uppercase font-medium">Team</p>
+                <p className="label-caps text-white/60">Team</p>
               </div>
               <div className="space-y-0.5">
                 {TEAM_MEMBERS.map((member) => (

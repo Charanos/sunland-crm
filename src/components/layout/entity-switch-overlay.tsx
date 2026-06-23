@@ -7,7 +7,7 @@ import { IconBuildingCommunity, IconCheck, IconLoader2, IconNetwork } from "@tab
 import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
 import { getEntityById } from "@/data/entities";
-import { Avatar } from "@/components/ui/avatar";
+import Image from "next/image";
 
 export function EntitySwitchOverlay() {
   return (
@@ -28,12 +28,9 @@ function EntitySwitchOverlayInner() {
 
   useEffect(() => {
     if (!switchingToEntityId) {
-      setProgress(0);
       return;
     }
 
-    // Progress simulation
-    setProgress(0);
     setStatusText("Initializing secure channel...");
 
     const interval = setInterval(() => {
@@ -74,6 +71,7 @@ function EntitySwitchOverlayInner() {
         // Update stores and dismiss
         setActiveEntityId(switchingToEntityId);
         setSwitchingToEntityId(null);
+        setProgress(0);
       }, 350); // slight pause at 100% for user satisfaction
 
       return () => clearTimeout(timeout);
@@ -89,7 +87,7 @@ function EntitySwitchOverlayInner() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#070919]/90 px-4 backdrop-blur-xl"
+        className="fixed inset-0 z-modal flex flex-col items-center justify-center bg-[#070919]/90 px-4 backdrop-blur-xl"
       >
         <motion.div
           initial={{ scale: 0.96, y: 12 }}
@@ -127,9 +125,11 @@ function EntitySwitchOverlayInner() {
               </div>
             </div>
             <div className="flex size-14 items-center justify-center overflow-hidden rounded-xl border border-white/[0.12] bg-white/[0.08] shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
-              <img
+              <Image
                 src={targetEntity.avatarUrl}
                 alt={targetEntity.name}
+                width={56}
+                height={56}
                 className="size-full object-cover"
               />
             </div>
@@ -137,7 +137,7 @@ function EntitySwitchOverlayInner() {
 
           {/* Connection detail info */}
           <div className="text-center">
-            <h2 className="text-[18px] font-medium tracking-tight text-white/95">
+            <h2 className="font-medium tracking-tight text-white/95 text-xl">
               {targetEntity.name}
             </h2>
             <p className="mt-1 text-base text-white/45 font-medium">{targetEntity.subtitle}</p>
@@ -149,28 +149,28 @@ function EntitySwitchOverlayInner() {
           {/* Stats Breakdown (Fades in partially) */}
           <div className="mt-6 grid grid-cols-3 gap-2.5">
             <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 text-center transition hover:border-white/[0.08]">
-              <span className="block text-sm font-medium uppercase tracking-wider text-white/35">Properties</span>
+              <span className="block text-white/35 label-caps">Properties</span>
               <motion.span
                 animate={{ opacity: progress > 30 ? 1 : 0.2 }}
-                className="mt-1.5 block font-mono text-[16px] font-medium text-white/90"
+                className="mt-1.5 block font-mono font-medium text-white/90 text-lg"
               >
                 {progress > 30 ? targetEntity.stats.properties : "—"}
               </motion.span>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 text-center transition hover:border-white/[0.08]">
-              <span className="block text-sm font-medium uppercase tracking-wider text-white/35">Contacts</span>
+              <span className="block text-white/35 label-caps">Contacts</span>
               <motion.span
                 animate={{ opacity: progress > 55 ? 1 : 0.2 }}
-                className="mt-1.5 block font-mono text-[16px] font-medium text-white/90"
+                className="mt-1.5 block font-mono font-medium text-white/90 text-lg"
               >
                 {progress > 55 ? targetEntity.stats.contacts : "—"}
               </motion.span>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 text-center transition hover:border-white/[0.08]">
-              <span className="block text-sm font-medium uppercase tracking-wider text-white/35">Revenue</span>
+              <span className="block text-white/35 label-caps">Revenue</span>
               <motion.span
                 animate={{ opacity: progress > 80 ? 1 : 0.2 }}
-                className="mt-1.5 block font-mono text-base  font-medium text-[var(--primary)]"
+                className="mt-1.5 block text-[var(--primary)] mono-data"
               >
                 {progress > 80 ? targetEntity.stats.revenue : "—"}
               </motion.span>

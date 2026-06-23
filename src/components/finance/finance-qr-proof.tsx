@@ -107,7 +107,7 @@ export function FinanceQrProof({
         <div className="min-w-0 flex flex-col justify-center h-full">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Badge tone={verified ? "success" : "primary"} className="gap-1.5 px-2.5 py-1 text-xs">
+              <Badge tone={verified ? "success" : "primary"} className="gap-1.5 px-2.5 py-1 text-sm">
                 {verified ? <IconShieldCheck size={14} /> : <IconQrcode size={14} />}
                 {verified ? "Verified Authentic" : "Scan to Verify"}
               </Badge>
@@ -115,26 +115,26 @@ export function FinanceQrProof({
             </div>
           </div>
 
-          <h3 className="title-serif mt-3.5 text-[24px] font-normal tracking-tight text-slate-900 leading-none">{artifactType}</h3>
-          <p className="mt-2 text-[13px] leading-relaxed text-slate-500 max-w-xl">
+          <h3 className="title-serif mt-3.5 font-normal tracking-tight text-slate-900 leading-none">{artifactType}</h3>
+          <p className="mt-2 leading-relaxed text-slate-500 max-w-xl text-sm">
             This document carries a cryptographically generated QR code ensuring its authenticity. Scan the code to verify this artifact against the central immutable registry.
           </p>
 
           <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
             <div className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-colors hover:border-slate-200">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">Entity</p>
+              <p className="text-slate-400 label-caps">Entity</p>
               <p className="mt-1 font-medium text-slate-800 truncate">{entityName}</p>
             </div>
             <div className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-colors hover:border-slate-200">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">Generated</p>
+              <p className="text-slate-400 label-caps">Generated</p>
               <p className="mt-1 font-mono font-medium text-slate-800 truncate">{generatedAt}</p>
             </div>
             <div className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-colors hover:border-slate-200">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">Token ID</p>
+              <p className="text-slate-400 label-caps">Token ID</p>
               <p className="mt-1 font-mono font-medium text-slate-800 truncate">{token}</p>
             </div>
             <div className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-colors hover:border-slate-200">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">Value Auth</p>
+              <p className="text-slate-400 label-caps">Value Auth</p>
               <p className="mt-1 font-mono font-medium text-slate-800 truncate">
                 {typeof amount === "number" ? formatCompactKES(amount) : "Document only"}
               </p>
@@ -152,7 +152,7 @@ export function FinanceQrProof({
             </Button>
             <Link
               href={verificationPath}
-              className="inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-slate-100 px-3.5 text-[13px] font-medium text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900 shadow-sm"
+              className="inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-slate-100 px-3.5 font-medium text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900 shadow-sm text-sm"
             >
               View Registry <IconExternalLink size={14} />
             </Link>

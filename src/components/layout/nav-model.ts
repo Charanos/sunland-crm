@@ -83,7 +83,7 @@ export const navSections: NavSection[] = [
     icon: IconUsersGroup,
     items: [
       { href: "/fin/payroll", label: "Payroll", icon: IconUsersGroup },
-      { href: "/fin/affordable-housing", label: "Affordable Housing", icon: IconBuildingCommunity },
+      { href: "/fin/commissions", label: "Commissions & WHT", icon: IconCashBanknote },
     ],
   },
   {

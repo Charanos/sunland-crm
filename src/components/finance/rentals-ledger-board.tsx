@@ -427,7 +427,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 placeholder="Search unit, property, or tenant..."
-                className="w-full bg-transparent text-[12.5px] text-slate-700 outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-base"
               />
             </div>
             <Button variant="secondary" size="sm" className="bg-white border-slate-200 shadow-sm">
@@ -457,13 +457,13 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconCoins size={16} stroke={2.5} />
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Collection Rate</span>
+            <span className="text-slate-500 label-caps">Collection Rate</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-[#151936]">
-              {metrics.rate} <span className="text-[20px] text-emerald-600/70">+1.4% target</span>
+            <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
+              {metrics.rate} <span className="text-emerald-600/70 text-xl">+1.4% target</span>
             </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Current period</span>
+            <span className="font-medium text-slate-500 mt-1 text-sm">Current period</span>
           </div>
         </BoardPanel>
 
@@ -475,13 +475,13 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
               <IconHome size={16} stroke={2.5} />
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Expected Rent</span>
+            <span className="text-slate-500 label-caps">Expected Rent</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-indigo-700">
+            <span className="font-mono font-normal tracking-tight text-indigo-700 text-3xl">
               KES {(metrics.expected / 1000000).toFixed(2)}M
             </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">June period</span>
+            <span className="font-medium text-slate-500 mt-1 text-sm">June period</span>
           </div>
         </BoardPanel>
 
@@ -493,13 +493,13 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
               <IconAlertTriangle size={16} stroke={2.5} />
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Total Deficits</span>
+            <span className="text-slate-500 label-caps">Total Deficits</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-amber-700">
+            <span className="font-mono font-normal tracking-tight text-amber-700 text-3xl">
               KES {metrics.deficits.toLocaleString()}
             </span>
-            <span className="text-[13px] font-medium text-amber-700 mt-1">
+            <span className="font-medium text-amber-700 mt-1 text-sm">
               {metrics.deficits > 0 ? "Action required" : "Clean ledger"}
             </span>
           </div>
@@ -513,13 +513,13 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="size-8 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-200/50">
               <IconClock size={16} stroke={2.5} />
             </div>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Vacancies / Defaulters</span>
+            <span className="text-slate-500 label-caps">Vacancies / Defaulters</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
-            <span className="text-[28px] font-mono font-normal tracking-tight text-[#151936]">
-              {metrics.vacantCount} <span className="text-[20px] text-slate-400">/</span> {metrics.defaulters}
+            <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
+              {metrics.vacantCount} <span className="text-slate-400 text-xl">/</span> {metrics.defaulters}
             </span>
-            <span className="text-[13px] font-medium text-slate-500 mt-1">Critical queues</span>
+            <span className="font-medium text-slate-500 mt-1 text-sm">Critical queues</span>
           </div>
         </BoardPanel>
       </section>
@@ -528,10 +528,10 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
       <BoardPanel className="p-5 shadow-sm border-slate-200">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-[16px] font-medium text-slate-900">Rent Performance Trends</h3>
+            <h3 className="font-medium text-slate-900 text-lg">Rent Performance Trends</h3>
             <p className="text-base text-slate-500">Expected monthly rental projections compared with committed collections.</p>
           </div>
-          <div className="flex items-center gap-4 text-xs font-medium">
+          <div className="flex items-center gap-4 font-medium text-sm">
             <span className="flex items-center gap-1.5 text-indigo-600">
               <span className="size-2 rounded-full bg-indigo-600" /> Expected
             </span>
@@ -565,10 +565,10 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
 
       {/* ── 5. Segment Content Title & Queue ─────────────────────────────────── */}
       <div className="pt-2 my-2 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 text-[22px] font-normal capitalize">
+        <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab.replace(/-/g, " ")} Ledger Panel
         </h2>
-        <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
           {activeTab === "collections" && "Registry detailing collections book for expected rent, collected rent, and reconciliation status."}
           {activeTab === "deficits" && "Filtered audit queue focusing on units with outstanding tenant deficit balances."}
           {activeTab === "vacancies" && "Pipeline monitoring vacant units with property manager handovers."}
@@ -592,7 +592,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="overflow-x-auto bg-white">
               <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
                 <thead>
-                  <tr className="border-b border-slate-100 text-sm font-medium uppercase tracking-wider text-slate-400">
+                  <tr className="border-b border-slate-100 text-slate-400 label-caps">
                     <th className="px-5 py-3">Unit Code</th>
                     <th className="px-5 py-3">Property / Location</th>
                     <th className="px-5 py-3">Tenant</th>
@@ -612,7 +612,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                       onClick={() => setSelectedUnit(row)}
                       className="transition-colors hover:bg-slate-50/80 cursor-pointer"
                     >
-                      <td className="px-5 py-3.5 font-mono text-[12.5px] font-medium text-slate-900">
+                      <td className="px-5 py-3.5 text-slate-900 mono-data">
                         {row.unitCode}
                       </td>
                       <td className="px-5 py-3.5">
@@ -626,18 +626,18 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                         <span className="text-sm text-slate-400 font-medium">Period: {row.period}</span>
                       </td>
                       {activeTab !== "vacancies" && (
-                        <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-slate-900">
+                        <td className="px-5 py-3.5 text-right text-slate-900 mono-data">
                           KES {row.expectedRent.toLocaleString()}
                         </td>
                       )}
                       {activeTab !== "vacancies" && (
-                        <td className="px-5 py-3.5 text-right font-mono text-[12.5px] font-medium text-emerald-700 bg-emerald-50/40">
+                        <td className="px-5 py-3.5 text-right text-emerald-700 bg-emerald-50/40 mono-data">
                           KES {row.collectedRent.toLocaleString()}
                         </td>
                       )}
                       {activeTab !== "vacancies" && (
                         <td className={cn(
-                          "px-5 py-3.5 text-right font-mono text-[12.5px] font-medium",
+                          "px-5 py-3.5 text-right font-mono text-sm font-medium",
                           row.deficit > 0 ? "text-rose-600 bg-rose-50/30" : "text-slate-400"
                         )}>
                           {row.deficit > 0 ? `KES ${row.deficit.toLocaleString()}` : "—"}
@@ -672,7 +672,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                               <IconCheck size={11} /> KES {row.paymentPlan.installment.toLocaleString()}/wk
                             </span>
                           ) : (
-                            <span className="text-xs text-slate-400 font-medium">None structured</span>
+                            <span className="text-slate-400 font-medium text-sm">None structured</span>
                           )}
                         </td>
                       )}
@@ -776,7 +776,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                 placeholder="125000"
                 value={payAmount}
                 onChange={(e) => setPayAmount(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-base font-mono focus:outline-none focus:border-[#151936]"
+                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 focus:outline-none focus:border-[#151936] mono-data"
               />
             </div>
             <div>
@@ -801,7 +801,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
               placeholder="e.g. MP-REF105-NBO"
               value={payRef}
               onChange={(e) => setPayRef(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-base font-mono focus:outline-none focus:border-[#151936]"
+              className="w-full rounded-lg border border-slate-200 bg-white p-2.5 focus:outline-none focus:border-[#151936] mono-data"
             />
           </div>
 
@@ -849,7 +849,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                 required
                 value={planInstallment}
                 onChange={(e) => setPlanInstallment(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-base font-mono focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 focus:outline-none mono-data"
               />
             </div>
             <div>
@@ -960,11 +960,11 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
               <div className="mt-4 grid grid-cols-3 gap-3 border-t border-slate-100 pt-3">
                 <div>
                   <span className="text-sm  text-slate-400 uppercase font-medium">Expected</span>
-                  <p className="text-base font-mono font-medium text-slate-800 mt-0.5">KES {selectedUnit.expectedRent.toLocaleString()}</p>
+                  <p className="text-slate-800 mt-0.5 mono-data">KES {selectedUnit.expectedRent.toLocaleString()}</p>
                 </div>
                 <div>
                   <span className="text-sm  text-slate-400 uppercase font-medium">Collected</span>
-                  <p className="text-base font-mono font-medium text-emerald-700 mt-0.5">KES {selectedUnit.collectedRent.toLocaleString()}</p>
+                  <p className="text-emerald-700 mt-0.5 mono-data">KES {selectedUnit.collectedRent.toLocaleString()}</p>
                 </div>
                 <div>
                   <span className="text-sm  text-slate-400 uppercase font-medium">Arrears</span>
@@ -981,7 +981,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             {/* Tenant details */}
             {selectedUnit.status !== "Vacant" && (
               <div className="border border-slate-150 rounded-xl p-4 bg-slate-50/50">
-                <p className="text-sm text-slate-400 uppercase tracking-wider font-medium mb-3">Occupying Tenant</p>
+                <p className="text-slate-400 mb-3 label-caps">Occupying Tenant</p>
                 <div className="flex items-center gap-3">
                   <div className="size-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 shrink-0">
                     <IconUser size={18} />
@@ -1005,16 +1005,16 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             {/* Active Plan details */}
             {selectedUnit.paymentPlan?.active && (
               <div className="border border-indigo-100 rounded-xl p-4 bg-indigo-50/20">
-                <p className="text-sm text-indigo-700 uppercase tracking-wider font-semibold mb-2">Active Arrears Payment Plan</p>
-                <div className="flex justify-between text-xs text-slate-700 mt-1">
+                <p className="text-indigo-700 font-normal mb-2 label-caps">Active Arrears Payment Plan</p>
+                <div className="flex justify-between text-slate-700 mt-1 text-sm">
                   <span>Weekly Installment:</span>
                   <span className="font-mono font-medium">KES {selectedUnit.paymentPlan.installment.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-700 mt-1">
+                <div className="flex justify-between text-slate-700 mt-1 text-sm">
                   <span>Duration structured:</span>
                   <span>{selectedUnit.paymentPlan.durationWeeks} Weeks</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-700 mt-1">
+                <div className="flex justify-between text-slate-700 mt-1 text-sm">
                   <span>Commenced:</span>
                   <span>{selectedUnit.paymentPlan.startDate}</span>
                 </div>
@@ -1023,13 +1023,13 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
 
             {/* Payment History */}
             <div>
-              <p className="text-sm text-slate-400 uppercase tracking-wider font-medium mb-3">Collections Receipt Ledger</p>
+              <p className="text-slate-400 mb-3 label-caps">Collections Receipt Ledger</p>
               {selectedUnit.payments.length > 0 ? (
                 <div className="space-y-2">
                   {selectedUnit.payments.map((p) => (
                     <div key={p.id} className="flex items-center justify-between border border-slate-100 bg-white rounded-lg p-3 shadow-xs">
                       <div>
-                        <p className="text-[12.5px] font-medium text-slate-800">KES {p.amount.toLocaleString()}</p>
+                        <p className="font-medium text-slate-800 text-base">KES {p.amount.toLocaleString()}</p>
                         <p className="text-sm text-slate-450 mt-0.5">Ref: {p.reference} ({p.method})</p>
                       </div>
                       <div className="text-right">
@@ -1040,7 +1040,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                 </div>
               ) : (
                 <div className="text-center py-6 border border-slate-100 border-dashed rounded-lg bg-slate-50/50">
-                  <p className="text-xs text-slate-400 font-medium">No rent payments received in this cycle.</p>
+                  <p className="text-slate-400 font-medium text-sm">No rent payments received in this cycle.</p>
                 </div>
               )}
             </div>

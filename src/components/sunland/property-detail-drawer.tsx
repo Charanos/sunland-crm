@@ -130,7 +130,7 @@ export function PropertyDetailDrawer({
             </span>
           </div>
           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-            <p className="text-white/70 text-sm font-medium uppercase tracking-wider mb-1">
+            <p className="text-white/70 mb-1 label-caps">
               {property.type}
             </p>
             <h3 className="text-white text-lg font-medium leading-snug">
@@ -142,7 +142,7 @@ export function PropertyDetailDrawer({
         {/* Price & Location */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[24px] font-mono font-medium text-[#151936] tracking-tight leading-none">
+            <p className="text-[#151936] tracking-tight leading-none mono-stat">
               {property.price}
             </p>
             <div className="flex items-center gap-1.5 mt-2 text-slate-500">
@@ -151,10 +151,10 @@ export function PropertyDetailDrawer({
             </div>
           </div>
           <div className="text-right">
-            <span className="text-[14px] font-mono font-medium text-slate-600">
+            <span className="font-mono font-medium text-slate-600 body-md">
               {property.roi}
             </span>
-            <p className="text-sm  text-slate-400 font-medium uppercase tracking-wider mt-0.5">
+            <p className="text-slate-400 mt-0.5 label-caps">
               Annual ROI
             </p>
           </div>
@@ -176,10 +176,10 @@ export function PropertyDetailDrawer({
                 <tile.icon size={16} stroke={1.5} />
               </div>
               <div>
-                <p className="text-[16px] font-mono font-medium text-slate-800 leading-none">
+                <p className="font-mono font-medium text-slate-800 leading-none text-lg">
                   {tile.value}
                 </p>
-                <p className="text-sm  text-slate-400 font-medium mt-1 uppercase tracking-wider">
+                <p className="text-slate-400 mt-1 label-caps">
                   {tile.label}
                 </p>
               </div>
@@ -238,7 +238,7 @@ export function PropertyDetailDrawer({
                 )}
                 <div className="size-[15px] rounded-full border-2 border-slate-200 bg-white shrink-0 mt-0.5 z-10" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12.5px] text-slate-700 leading-snug">
+                  <p className="text-slate-700 leading-snug text-base">
                     {activity.text}
                   </p>
                   <p className="text-sm text-slate-400 font-medium mt-0.5 flex items-center gap-1">

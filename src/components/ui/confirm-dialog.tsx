@@ -53,7 +53,7 @@ export function ConfirmDialog({
           <IconComponent aria-hidden size={22} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[12.5px] text-slate-500 leading-relaxed">
+          <p className="text-slate-500 leading-relaxed text-base">
             This action is intentional and will be recorded in the activity log
             when audit logging is enabled.
           </p>

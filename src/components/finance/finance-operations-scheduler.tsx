@@ -144,15 +144,15 @@ export function FinanceOperationsScheduler() {
       {/* ── Section Header ── */}
       <div className="py-5 border-t border-slate-200/60 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
         <div>
-          <h2 className="title-serif text-slate-900 text-[22px] font-normal">Finance Operations & Closing Scheduler</h2>
-          <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+          <h2 className="title-serif text-slate-900 font-normal">Finance Operations & Closing Scheduler</h2>
+          <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
             Itinerary, compliance check runs, and closing workflows.
           </p>
         </div>
 
         <button
           onClick={() => setEventModalOpen(true)}
-          className="flex items-center gap-2 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl text-[12.5px] shadow-sm hover:bg-[#e6d220] transition-colors font-medium"
+          className="flex items-center gap-2 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl shadow-sm hover:bg-[#e6d220] transition-colors font-medium text-base"
         >
           <IconPlus size={15} stroke={2.5} />
           <span>Schedule Closing Event</span>
@@ -175,19 +175,19 @@ export function FinanceOperationsScheduler() {
                     <div className="size-8 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shadow-sm border border-blue-200/50">
                       <IconWallet size={16} stroke={2.5} />
                     </div>
-                    <span className="text-[11.5px] font-medium text-slate-500 uppercase tracking-widest">Treasury</span>
+                    <span className="text-slate-500 label-caps">Treasury</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100 text-[10px] uppercase tracking-wider text-blue-700 font-semibold">
+                  <div className="flex items-center gap-1.5 bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100 text-blue-700 font-normal label-caps">
                     <span className="size-1.5 rounded-full bg-blue-500 animate-pulse" /> Reconciled
                   </div>
                 </div>
                 <div className="flex items-end justify-between mt-auto relative z-10">
                   <div>
-                    <h3 className="text-[28px] font-mono font-normal tracking-tight text-blue-700 leading-none">6</h3>
-                    <p className="text-[13px] font-medium text-slate-500 mt-1">Clearing Accounts</p>
+                    <h3 className="font-mono font-normal tracking-tight text-blue-700 leading-none text-3xl">6</h3>
+                    <p className="font-medium text-slate-500 mt-1 text-sm">Clearing Accounts</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] font-mono uppercase tracking-wider text-blue-600/80 font-medium">No holds</p>
+                    <p className="font-mono text-blue-600/80 label-caps">No holds</p>
                   </div>
                 </div>
               </BoardPanel>
@@ -203,19 +203,19 @@ export function FinanceOperationsScheduler() {
                     <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
                       <IconBuildingBank size={16} stroke={2.5} />
                     </div>
-                    <span className="text-[11.5px] font-medium text-slate-500 uppercase tracking-widest">Revenue</span>
+                    <span className="text-slate-500 label-caps">Revenue</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-100 text-[10px] uppercase tracking-wider text-emerald-700 font-semibold">
+                  <div className="flex items-center gap-1.5 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-100 text-emerald-700 font-normal label-caps">
                     <span className="size-1.5 rounded-full bg-emerald-500" /> Active
                   </div>
                 </div>
                 <div className="flex items-end justify-between mt-auto relative z-10">
                   <div>
-                    <h3 className="text-[28px] font-mono font-normal tracking-tight text-emerald-700 leading-none">28</h3>
-                    <p className="text-[13px] font-medium text-slate-500 mt-1">Active Mandates</p>
+                    <h3 className="font-mono font-normal tracking-tight text-emerald-700 leading-none text-3xl">28</h3>
+                    <p className="font-medium text-slate-500 mt-1 text-sm">Active Mandates</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] font-mono uppercase tracking-wider text-emerald-600/80 font-medium">10% standard</p>
+                    <p className="font-mono text-emerald-600/80 label-caps">10% standard</p>
                   </div>
                 </div>
               </BoardPanel>
@@ -231,19 +231,19 @@ export function FinanceOperationsScheduler() {
                     <div className="size-8 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 text-purple-600 flex items-center justify-center shadow-sm border border-purple-200/50">
                       <IconScale size={16} stroke={2.5} />
                     </div>
-                    <span className="text-[11.5px] font-medium text-slate-500 uppercase tracking-widest">Assurance</span>
+                    <span className="text-slate-500 label-caps">Assurance</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-purple-50/80 px-2 py-0.5 rounded-md border border-purple-100 text-[10px] uppercase tracking-wider text-purple-700 font-semibold">
+                  <div className="flex items-center gap-1.5 bg-purple-50/80 px-2 py-0.5 rounded-md border border-purple-100 text-purple-700 font-normal label-caps">
                     Balanced
                   </div>
                 </div>
                 <div className="flex items-end justify-between mt-auto relative z-10">
                   <div>
-                    <h3 className="text-[28px] font-mono font-normal tracking-tight text-purple-700 leading-none">100%</h3>
-                    <p className="text-[13px] font-medium text-slate-500 mt-1">Trial Balance</p>
+                    <h3 className="font-mono font-normal tracking-tight text-purple-700 leading-none text-3xl">100%</h3>
+                    <p className="font-medium text-slate-500 mt-1 text-sm">Trial Balance</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] font-mono uppercase tracking-wider text-purple-600/80 font-medium">JE-2026 Ready</p>
+                    <p className="font-mono text-purple-600/80 label-caps">JE-2026 Ready</p>
                   </div>
                 </div>
               </BoardPanel>
@@ -273,7 +273,7 @@ export function FinanceOperationsScheduler() {
                       <h4 className="text-base text-slate-800 font-medium">June Month-End Reconciliation Ledger</h4>
                       <p className="text-sm  text-slate-500 mt-0.5">Review journal accruals and balance the sheet.</p>
                     </div>
-                    <span className="text-xs  bg-white border border-slate-200 text-slate-400 px-2 py-0.5 rounded shadow-sm uppercase tracking-wider font-mono">Ledger</span>
+                    <span className="bg-white border border-slate-200 text-slate-400 px-2 py-0.5 rounded shadow-sm font-mono label-caps">Ledger</span>
                   </div>
 
                   <div className="flex items-center gap-4 mt-2">
@@ -297,7 +297,7 @@ export function FinanceOperationsScheduler() {
                       <h4 className="text-base text-slate-800 font-medium">Q2 Statutory Tax Filing Prep</h4>
                       <p className="text-sm  text-slate-500 mt-0.5">Compile KRA returns and corporate statutory claims.</p>
                     </div>
-                    <span className="text-xs  bg-white border border-slate-200 text-slate-400 px-2 py-0.5 rounded shadow-sm uppercase tracking-wider font-mono">Tax</span>
+                    <span className="bg-white border border-slate-200 text-slate-400 px-2 py-0.5 rounded shadow-sm font-mono label-caps">Tax</span>
                   </div>
 
                   <div className="flex items-center justify-between mt-2.5">
@@ -318,7 +318,7 @@ export function FinanceOperationsScheduler() {
                       <h4 className="text-base text-slate-800 font-medium">Annual Portfolio Insurance Review</h4>
                       <p className="text-sm  text-slate-500 mt-0.5">Verification of coverage certificates for managed structures.</p>
                     </div>
-                    <span className="text-xs  bg-white border border-slate-200 text-slate-400 px-2 py-0.5 rounded shadow-sm uppercase tracking-wider font-mono">Audit</span>
+                    <span className="bg-white border border-slate-200 text-slate-400 px-2 py-0.5 rounded shadow-sm font-mono label-caps">Audit</span>
                   </div>
 
                   <div className="flex items-center justify-between mt-2.5">
@@ -340,7 +340,7 @@ export function FinanceOperationsScheduler() {
               <button onClick={prevMonth} className="text-slate-400 hover:text-slate-800 transition-colors">
                 <IconChevronLeft size={16} stroke={2.5} />
               </button>
-              <span className="text-[12.5px] text-slate-700 w-24 text-center font-medium">
+              <span className="text-slate-700 w-24 text-center font-medium text-base">
                 {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </span>
               <button onClick={nextMonth} className="text-slate-400 hover:text-slate-800 transition-colors">
@@ -352,7 +352,7 @@ export function FinanceOperationsScheduler() {
           {/* Real Calendar Grid */}
           <div className="grid grid-cols-7 gap-1 mb-5">
             {daysOfWeek.map(d => (
-              <div key={d} className="text-center text-xs  uppercase tracking-wider text-slate-450 mb-1 font-medium">{d}</div>
+              <div key={d} className="text-center text-slate-450 mb-1 label-caps">{d}</div>
             ))}
             {calendarDays.map((day, i) => {
               const isSelected = day &&
@@ -372,7 +372,7 @@ export function FinanceOperationsScheduler() {
                   onClick={() => day && setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day, 12))}
                   disabled={!day}
                   className={cn(
-                    "h-[30px] flex items-center justify-center text-[12.5px] rounded-lg transition-all relative font-medium",
+                    "h-[30px] flex items-center justify-center text-sm rounded-lg transition-all relative font-medium",
                     !day ? "text-transparent pointer-events-none" : "",
                     isSelected
                       ? "bg-[#151936] text-white shadow-sm font-medium"
@@ -410,8 +410,8 @@ export function FinanceOperationsScheduler() {
                   <div key={evt.id} className={cn("p-3 rounded-[12px] border flex gap-3 relative overflow-hidden group shadow-sm transition-all", style.bg)}>
                     <div className={cn("absolute left-0 top-0 bottom-0 w-[3px]", style.accent)} />
                     <div className={cn("flex flex-col items-center justify-center shrink-0 pr-3 border-r border-black/5 min-w-[50px]", style.text)}>
-                      <span className="text-base font-mono leading-none mb-1 font-medium">{evt.time.split(' ')[0]}</span>
-                      <span className="text-[8.5px] uppercase tracking-wider opacity-70 font-medium">{evt.time.split(' ')[1] || "EAT"}</span>
+                      <span className="leading-none mb-1 mono-data">{evt.time.split(' ')[0]}</span>
+                      <span className="body-sm uppercase tracking-wider opacity-70 font-medium">{evt.time.split(' ')[1] || "EAT"}</span>
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <h5 className={cn("text-base tracking-tight truncate leading-snug font-medium", style.text)}>{evt.title}</h5>
@@ -520,13 +520,13 @@ export function FinanceOperationsScheduler() {
             <button
               type="button"
               onClick={() => setEventModalOpen(false)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-xs font-medium"
+              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors text-xs font-medium"
+              className="px-4 py-2 bg-[#151936] text-white rounded-xl hover:bg-slate-800 transition-colors font-medium text-sm"
             >
               Schedule Event
             </button>

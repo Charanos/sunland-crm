@@ -116,7 +116,7 @@ export function UnifiedMarketBoard() {
       {/* ── Unified Header & Controls ── */}
       <div className="py-6 border-t border-slate-200/60 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
         <div>
-          <h2 className="title-serif text-slate-900 text-[22px]">Market Insights & Portfolio</h2>
+          <h2 className="title-serif text-slate-900">Market Insights & Portfolio</h2>
           <p className="text-base text-slate-500 tracking-wide mt-1">Real-time analytical breakdown and inventory tracking.</p>
         </div>
 
@@ -155,10 +155,10 @@ export function UnifiedMarketBoard() {
         <div className="xl:col-span-5 bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:shadow-md transition-all">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h3 className="text-[17px] text-slate-900 tracking-tight mb-1">Market Revenue Overview</h3>
+              <h3 className="text-slate-900 tracking-tight mb-1 text-lg">Market Revenue Overview</h3>
               <p className="text-base text-slate-500">Available rental income this month</p>
               <div className="mt-4 flex items-center gap-3">
-                <span className="text-[28px] font-mono text-slate-900 leading-none">KES {analytics.revenue}</span>
+                <span className="font-mono text-slate-900 leading-none text-3xl">KES {analytics.revenue}</span>
                 <span className="text-sm  text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full flex items-center shadow-sm">
                   {analytics.growth}
                 </span>
@@ -201,7 +201,7 @@ export function UnifiedMarketBoard() {
         {/* Properties Types Donut */}
         <div className="xl:col-span-4 bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col hover:shadow-md transition-all">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[16px] text-slate-900 tracking-tight">Properties Types</h3>
+            <h3 className="text-slate-900 tracking-tight text-lg">Properties Types</h3>
             <span className="text-sm text-[#151936] bg-[#eef2f6] px-2.5 py-1 rounded-md border border-[#eef2f6]/50">{activeType}</span>
           </div>
 
@@ -215,8 +215,8 @@ export function UnifiedMarketBoard() {
                 <circle cx="50" cy="50" r="40" fill="transparent" stroke="#4f46e5" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Commercial' || activeType === 'All Properties' ? '231.1' : '251.2'} transform="rotate(259 50 50)" className="transition-all duration-700" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-full m-[22px] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-                <span className="text-[18px] font-mono text-slate-800 leading-none mb-1 tracking-tight">{analytics.totalProps}</span>
-                <span className="text-xs  text-slate-400 uppercase tracking-widest text-center leading-[1.2]">Total<br />{activeType === 'All Properties' ? 'Property' : activeType}</span>
+                <span className="text-slate-800 leading-none mb-1 tracking-tight mono-stat">{analytics.totalProps}</span>
+                <span className="text-slate-400 text-center leading-[1.2] label-caps">Total<br />{activeType === 'All Properties' ? 'Property' : activeType}</span>
               </div>
             </div>
           </div>
@@ -226,28 +226,28 @@ export function UnifiedMarketBoard() {
               <div className="size-[34px] rounded-xl bg-[#0f766e] flex items-center justify-center text-sm text-white shadow-sm">40%</div>
               <div>
                 <p className="text-sm text-slate-500 leading-none mb-1">House</p>
-                <p className="text-base text-slate-800 font-mono leading-none">1,514</p>
+                <p className="text-slate-800 leading-none mono-data">1,514</p>
               </div>
             </div>
             <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Villa' ? 'opacity-30' : 'opacity-100')}>
               <div className="size-[34px] rounded-xl bg-[#d97706] flex items-center justify-center text-sm text-white shadow-sm">12%</div>
               <div>
                 <p className="text-sm text-slate-500 leading-none mb-1">Villa</p>
-                <p className="text-base text-slate-800 font-mono leading-none">454</p>
+                <p className="text-slate-800 leading-none mono-data">454</p>
               </div>
             </div>
             <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Apartment' ? 'opacity-30' : 'opacity-100')}>
               <div className="size-[34px] rounded-xl bg-[#0ea5e9] flex items-center justify-center text-sm text-white shadow-sm">20%</div>
               <div>
                 <p className="text-sm text-slate-500 leading-none mb-1">Apartment</p>
-                <p className="text-base text-slate-800 font-mono leading-none">757</p>
+                <p className="text-slate-800 leading-none mono-data">757</p>
               </div>
             </div>
             <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Commercial' ? 'opacity-30' : 'opacity-100')}>
               <div className="size-[34px] rounded-xl bg-[#4f46e5] flex items-center justify-center text-sm text-white shadow-sm">8%</div>
               <div>
                 <p className="text-sm text-slate-500 leading-none mb-1">Commercial</p>
-                <p className="text-base text-slate-800 font-mono leading-none">303</p>
+                <p className="text-slate-800 leading-none mono-data">303</p>
               </div>
             </div>
           </div>
@@ -256,7 +256,7 @@ export function UnifiedMarketBoard() {
         {/* Top Agents */}
         <div className="xl:col-span-3 bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col hover:shadow-md transition-all">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[16px] text-slate-900 tracking-tight">Top Agents</h3>
+            <h3 className="text-slate-900 tracking-tight text-lg">Top Agents</h3>
             <button className="text-sm text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100 hover:bg-slate-100 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)]">This Month ⌄</button>
           </div>
 
@@ -273,8 +273,8 @@ export function UnifiedMarketBoard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-base font-mono text-[#151936] leading-none mb-1">{agent.revenue}</p>
-                  <p className="text-xs  text-slate-400 uppercase tracking-widest leading-none">annually</p>
+                  <p className="text-[#151936] leading-none mb-1 mono-data">{agent.revenue}</p>
+                  <p className="text-slate-400 leading-none label-caps">annually</p>
                 </div>
               </div>
             ))}
@@ -317,7 +317,7 @@ export function UnifiedMarketBoard() {
                       </span>
                     </div>
                   </div>
-                  <h4 className="text-[14px] text-slate-800 mt-4 leading-snug line-clamp-1 group-hover:text-[#151936] transition-colors">
+                  <h4 className="text-slate-800 mt-4 leading-snug line-clamp-1 group-hover:text-[#151936] transition-colors body-md">
                     {card.title}
                   </h4>
                   <p className="text-sm  text-slate-400 mt-1 truncate">{card.location}</p>
@@ -335,7 +335,7 @@ export function UnifiedMarketBoard() {
                       <p className="text-sm  text-slate-400 leading-none truncate">Listing Agent</p>
                     </div>
                   </div>
-                  <p className="text-[14px] font-mono text-[#151936] tracking-tight">KES {card.price >= 1000000 ? (card.price / 1000000).toFixed(1) + 'M' : (card.price / 1000).toFixed(0) + 'K'}</p>
+                  <p className="font-mono text-[#151936] tracking-tight body-md">KES {card.price >= 1000000 ? (card.price / 1000000).toFixed(1) + 'M' : (card.price / 1000).toFixed(0) + 'K'}</p>
                 </div>
               </div>
             ))}

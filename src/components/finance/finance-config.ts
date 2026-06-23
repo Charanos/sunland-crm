@@ -24,7 +24,7 @@ export type FinanceSectionId =
   | "ap-ar"
   | "cheques"
   | "fees"
-  | "affordable-housing"
+  | "commissions"
   | "reports";
 
 export type FinanceTab = {
@@ -188,18 +188,18 @@ export const financeSections: FinanceSection[] = [
     ],
   },
   {
-    id: "affordable-housing",
-    label: "Affordable Housing",
-    title: "Affordable Housing",
+    id: "commissions",
+    label: "Commissions & WHT",
+    title: "Commissions & WHT",
     description:
-      "Scheme units, allocations, and Affordable Housing Levy compliance sourced from payroll.",
-    href: "/fin/affordable-housing/units",
-    icon: IconBuildingCommunity,
+      "Agent sales and letting commissions, withholding tax filings, and statutory Affordable Housing Levy compliance.",
+    href: "/fin/commissions/deals",
+    icon: IconCashBanknote,
     groupId: "people-statutory",
     tabs: [
-      { id: "units", label: "Units", href: "/fin/affordable-housing/units" },
-      { id: "allocations", label: "Allocations", href: "/fin/affordable-housing/allocations" },
-      { id: "levy", label: "Levy", href: "/fin/affordable-housing/levy" },
+      { id: "deals", label: "Deals Closed", href: "/fin/commissions/deals" },
+      { id: "wht-filings", label: "WHT Filings", href: "/fin/commissions/wht-filings" },
+      { id: "levy", label: "Housing Levy", href: "/fin/commissions/levy" },
     ],
   },
   {
@@ -256,9 +256,9 @@ export const financeGroups: FinanceGroup[] = [
     id: "people-statutory",
     label: "People & Statutory",
     title: "People & Statutory Hub",
-    description: "Payroll, remittances, payslips, Affordable Housing levy, and compliance obligations.",
+    description: "Payroll, remittances, payslips, Commissions & WHT, and compliance obligations.",
     icon: IconUsersGroup,
-    sectionIds: ["payroll", "affordable-housing"],
+    sectionIds: ["payroll", "commissions"],
   },
   {
     id: "assurance",
@@ -429,19 +429,19 @@ export const financeTabScaffold: Record<FinanceSectionId, {
       { ref: "FEE-R-02", subject: "Sales commission", detail: "Percentage rule", amount: 0, status: "Approved", date: "Active" },
     ],
   },
-  "affordable-housing": {
+  commissions: {
     metrics: [
-      { label: "Scheme Units", value: "14", tone: "brand", progress: 54, icon: IconBuildingCommunity },
-      { label: "Allocations", value: "8", tone: "success", progress: 57, icon: IconHomeDollar },
-      { label: "Levy Due", value: "KES 84K", tone: "warning", progress: 39, icon: IconReceipt },
-      { label: "CEO Gates", value: "1", tone: "data", progress: 20, icon: IconScale },
+      { label: "Closed Deals", value: "48", tone: "brand", progress: 85, icon: IconCoins },
+      { label: "Accrued WHT", value: "KES 376K", tone: "warning", progress: 42, icon: IconReceipt },
+      { label: "Levy Compliance", value: "98.5%", tone: "success", progress: 98, icon: IconScale },
+      { label: "Total Commissions", value: "KES 2.9M", tone: "data", progress: 68, icon: IconReportMoney },
     ],
-    columns: ["Record", "Scheme / Payroll", "Amount", "Status", "Period"],
+    columns: ["Deal Ref", "Deal / Property", "Val/Rent", "Commission", "Status", "Date"],
     rows: [
-      { ref: "AHU-014", subject: "Kiambu programme unit", detail: "CEO approval gate", amount: 0, status: "Pending", date: "2026-06" },
-      { ref: "AHL-2026-06", subject: "Affordable Housing Levy", detail: "Payroll-sourced", amount: 84000, status: "Draft", date: "2026-06" },
-      { ref: "AHA-008", subject: "Allocation record", detail: "Eligibility complete", amount: 0, status: "Approved", date: "2026-06-11" },
-      { ref: "AHU-013", subject: "Managed programme unit", detail: "Active", amount: 0, status: "Approved", date: "2026-05" },
+      { ref: "DEAL-1004", subject: "Westpoint Block Sale", detail: "Sarah W. · Sale KES 85M", amount: 2550000, status: "Approved", date: "2026-06-20" },
+      { ref: "DEAL-1003", subject: "Kilimani Whse Lease", detail: "James M. · Rent KES 1.2M/yr", amount: 120000, status: "Approved", date: "2026-06-18" },
+      { ref: "DEAL-1002", subject: "Nakuru Villas Appraisal", detail: "Grace N. · Valuation KES 45M", amount: 90000, status: "Pending", date: "2026-06-15" },
+      { ref: "DEAL-1001", subject: "Riverside Feasibility", detail: "Albert O. · Study KES 3.5M", amount: 175000, status: "Draft", date: "2026-06-11" },
     ],
   },
   reports: {

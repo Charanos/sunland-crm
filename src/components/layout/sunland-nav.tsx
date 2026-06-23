@@ -122,7 +122,7 @@ function CollapsedFlyout({
       role="menu"
       aria-label={section.label}
     >
-      <p className="px-2 pb-1.5 pt-1 text-sm  uppercase tracking-widest text-white/30">
+      <p className="px-2 pb-1.5 pt-1 text-white/30 label-caps">
         {section.label}
       </p>
       {section.items.map((item, index) => {
@@ -132,7 +132,7 @@ function CollapsedFlyout({
         return (
           <div key={item.href}>
             {showGroup && (
-              <p className="px-2 pb-1 pt-2 text-xs uppercase tracking-widest text-white/25">
+              <p className="px-2 pb-1 pt-2 text-white/25 label-caps">
                 {item.group}
               </p>
             )}
@@ -345,7 +345,7 @@ export function SunlandNav() {
                   className="flex flex-1 items-center justify-between min-w-0"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-[12.5px] font-medium text-white/85">{activeEntity.name}</p>
+                    <p className="truncate font-medium text-white/85 text-base">{activeEntity.name}</p>
                     <p className="truncate text-sm text-white/35">{activeEntity.subtitle}</p>
                   </div>
                   {isSwitcherEnabled && (
@@ -377,7 +377,7 @@ export function SunlandNav() {
                 )}
               >
                 <div className="p-1.5">
-                  <p className="px-2 pb-1 pt-1 text-sm  font-medium uppercase tracking-widest text-white/30">
+                  <p className="px-2 pb-1 pt-1 text-white/30 label-caps">
                     Entities
                   </p>
                   {ENTITIES.map((entity) => {
@@ -523,7 +523,7 @@ export function SunlandNav() {
                       aria-hidden
                       className={cn("relative z-10 transition-colors", isActive ? "text-white" : "group-hover:text-white/75")}
                     />
-                    <span className="relative z-10 text-[13.5px]">{section.label}</span>
+                    <span className="relative z-10 body-md">{section.label}</span>
                   </Link>
                 );
               }
@@ -547,7 +547,7 @@ export function SunlandNav() {
                       aria-hidden
                       className={cn("transition-colors", open ? "text-white/80" : "group-hover:text-white/75")}
                     />
-                    <span className="flex-1 text-[13.5px]">{section.label}</span>
+                    <span className="flex-1 body-md">{section.label}</span>
                     <IconChevronDown
                       size={13}
                       aria-hidden
@@ -576,7 +576,7 @@ export function SunlandNav() {
                             return (
                               <div key={item.href}>
                                 {showGroup && (
-                                  <p className="pb-1 pl-5 pt-2 text-xs uppercase tracking-widest text-white/25">
+                                  <p className="pb-1 pl-5 pt-2 text-white/25 label-caps">
                                     {item.group}
                                   </p>
                                 )}
@@ -728,7 +728,7 @@ export function SunlandNav() {
                   <p className="truncate text-base text-white/92">{currentUser.name}</p>
                   <p className="truncate text-sm  text-white/50">{currentUser.email}</p>
                 </div>
-                <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-sm  uppercase tracking-wider text-white/45 mt-0.5 shrink-0">
+                <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-white/45 mt-0.5 shrink-0 label-caps">
                   {currentUser.role}
                 </span>
               </div>

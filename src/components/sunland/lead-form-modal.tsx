@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { IconX, IconTrendingUp } from "@tabler/icons-react";
-import { cn } from "@/lib/utils/cn";
 import { Lead, PipelineStage, PipelineSource } from "./pipeline-board";
 
 interface LeadFormModalProps {
@@ -10,6 +9,18 @@ interface LeadFormModalProps {
   onClose: () => void;
   onSubmit: (data: Partial<Lead>) => void;
   initialData?: Lead;
+}
+
+interface LeadFormData {
+  clientName: string;
+  email: string;
+  phone: string;
+  budget: number;
+  propertyInterest: string;
+  source: PipelineSource;
+  stage: PipelineStage;
+  assignedAgent: string;
+  notes: string;
 }
 
 const STAGES: { value: PipelineStage; label: string }[] = [
@@ -47,42 +58,52 @@ const PROPERTIES = [
 ];
 
 export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadFormModalProps) {
-  const [formData, setFormData] = useState<any>({
-    clientName: "",
-    email: "",
-    phone: "",
-    budget: 0,
-    propertyInterest: "Runda Grove Villa",
-    source: "website",
-    stage: "inquiry",
-    assignedAgent: "Amina Wanjiku",
-    notes: "",
-  });
-
-  useEffect(() => {
-    if (open) {
-      if (initialData) {
-        setFormData({
-          ...initialData,
-          budget: initialData.budget || 0,
-        });
-      } else {
-        setFormData({
-          clientName: "",
-          email: "",
-          phone: "",
-          budget: 0,
-          propertyInterest: "Runda Grove Villa",
-          source: "website",
-          stage: "inquiry",
-          assignedAgent: "Amina Wanjiku",
-          notes: "",
-        });
-      }
-    }
-  }, [open, initialData]);
-
   if (!open) return null;
+
+  return (
+    <LeadFormModalContent
+      onClose={onClose}
+      onSubmit={onSubmit}
+      initialData={initialData}
+    />
+  );
+}
+
+function LeadFormModalContent({
+  onClose,
+  onSubmit,
+  initialData,
+}: {
+  onClose: () => void;
+  onSubmit: (data: Partial<Lead>) => void;
+  initialData?: Lead;
+}) {
+  const [formData, setFormData] = useState<LeadFormData>(() => {
+    if (initialData) {
+      return {
+        clientName: initialData.clientName || "",
+        email: initialData.email || "",
+        phone: initialData.phone || "",
+        budget: initialData.budget || 0,
+        propertyInterest: initialData.propertyInterest || "Runda Grove Villa",
+        source: initialData.source || "website",
+        stage: initialData.stage || "inquiry",
+        assignedAgent: initialData.assignedAgent || "Amina Wanjiku",
+        notes: initialData.notes || "",
+      };
+    }
+    return {
+      clientName: "",
+      email: "",
+      phone: "",
+      budget: 0,
+      propertyInterest: "Runda Grove Villa",
+      source: "website",
+      stage: "inquiry",
+      assignedAgent: "Amina Wanjiku",
+      notes: "",
+    };
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +114,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center animate-fade-in">
+    <div className="fixed inset-0 z-modal flex items-center justify-center animate-fade-in">
       <button
         aria-label="Close form backdrop"
         className="absolute inset-0 size-full cursor-default bg-[#151936]/20 backdrop-blur-sm"
@@ -109,7 +130,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
               <IconTrendingUp size={20} stroke={1.5} />
             </div>
             <div>
-              <h2 className="text-[16px] font-medium text-slate-900 tracking-tight">
+              <h2 className="font-medium text-slate-900 tracking-tight text-lg">
                 {initialData ? "Modify Deal Status" : "Log New CRM Opportunity"}
               </h2>
               <p className="text-base text-slate-500 mt-0.5">Enlist leads, budget ranges, and property links.</p>
@@ -129,7 +150,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
           <div className="space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Client / Organization Name</label>
+              <label className="block text-slate-500 mb-1.5 label-caps">Client / Organization Name</label>
               <input
                 required
                 type="text"
@@ -143,7 +164,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
             {/* Email & Phone */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
+                <label className="block text-slate-500 mb-1.5 label-caps">Email Address</label>
                 <input
                   required
                   type="email"
@@ -154,14 +175,14 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
                 />
               </div>
               <div>
-                <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Phone Number</label>
+                <label className="block text-slate-500 mb-1.5 label-caps">Phone Number</label>
                 <input
                   required
                   type="tel"
                   placeholder="+254 7XX XXX XXX"
                   value={formData.phone}
                   onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl font-mono focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm mono-data"
                 />
               </div>
             </div>
@@ -169,7 +190,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
             {/* Property Interest & Budget */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Property of Interest</label>
+                <label className="block text-slate-500 mb-1.5 label-caps">Property of Interest</label>
                 <select
                   value={formData.propertyInterest}
                   onChange={e => setFormData({ ...formData, propertyInterest: e.target.value })}
@@ -179,14 +200,14 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
                 </select>
               </div>
               <div>
-                <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Estimated Budget (KES)</label>
+                <label className="block text-slate-500 mb-1.5 label-caps">Estimated Budget (KES)</label>
                 <input
                   required
                   type="number"
                   placeholder="Budget KES"
                   value={formData.budget || ""}
-                  onChange={e => setFormData({ ...formData, budget: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl font-mono focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                  onChange={e => setFormData({ ...formData, budget: Number(e.target.value) || 0 })}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm mono-data"
                 />
               </div>
             </div>
@@ -194,7 +215,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
             {/* Stage & Source */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Deal Stage</label>
+                <label className="block text-slate-500 mb-1.5 label-caps">Deal Stage</label>
                 <select
                   value={formData.stage}
                   onChange={e => setFormData({ ...formData, stage: e.target.value as PipelineStage })}
@@ -204,7 +225,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
                 </select>
               </div>
               <div>
-                <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Lead Source</label>
+                <label className="block text-slate-500 mb-1.5 label-caps">Lead Source</label>
                 <select
                   value={formData.source}
                   onChange={e => setFormData({ ...formData, source: e.target.value as PipelineSource })}
@@ -217,7 +238,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
 
             {/* Agent */}
             <div>
-              <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Assigned Agent</label>
+              <label className="block text-slate-500 mb-1.5 label-caps">Assigned Agent</label>
               <select
                 value={formData.assignedAgent}
                 onChange={e => setFormData({ ...formData, assignedAgent: e.target.value })}
@@ -231,7 +252,7 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
 
             {/* Notes */}
             <div>
-              <label className="block text-[12.5px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">Notes & Specific Requests</label>
+              <label className="block text-slate-500 mb-1.5 label-caps">Notes & Specific Requests</label>
               <textarea
                 placeholder="Client is looking for a penthouse. Needs flexible payments."
                 rows={3}

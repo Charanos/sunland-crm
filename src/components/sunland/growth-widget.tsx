@@ -22,7 +22,7 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
           <IconTrendingUp size={20} stroke={2} />
         </div>
         <div>
-          <h3 className="text-[16px] text-slate-800 font-medium tracking-wide">Growth Metrics</h3>
+          <h3 className="text-slate-800 font-medium tracking-wide text-lg">Growth Metrics</h3>
           <p className="text-base text-slate-500 font-medium mt-0.5">Quarterly Objectives</p>
         </div>
       </div>
@@ -31,10 +31,10 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
         {data.map((item, idx) => (
           <div key={item.label} className="animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[12.5px] font-medium text-slate-700">{item.label}</span>
+              <span className="font-medium text-slate-700 text-base">{item.label}</span>
               <div className="flex items-center gap-2">
-                <span className="text-sm  uppercase tracking-wider font-medium text-slate-400 border border-slate-100 px-1.5 rounded bg-slate-50">{item.target}</span>
-                <span className="text-[12.5px] font-mono font-medium text-slate-900">{item.value}</span>
+                <span className="text-slate-400 border border-slate-100 px-1.5 rounded bg-slate-50 label-caps">{item.target}</span>
+                <span className="text-slate-900 mono-data">{item.value}</span>
               </div>
             </div>
             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">

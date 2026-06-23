@@ -649,28 +649,28 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
             className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
           >
             <span>Contacts</span>
-            <span className="bg-[#f3df27] text-[#151936] text-xs  px-1.5 py-0.2 rounded-full font-medium">Active</span>
+            <span className="bg-[#f3df27] text-[#151936] px-1.5 py-0.2 rounded-full font-medium text-sm">Active</span>
           </Link>
           <Link
             href="/admin/pipeline"
             className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Deals Pipeline</span>
-            <span className="bg-slate-200 text-slate-650 text-xs  px-1.5 py-0.2 rounded-full font-medium">Deals</span>
+            <span className="bg-slate-200 text-slate-650 px-1.5 py-0.2 rounded-full font-medium text-sm">Deals</span>
           </Link>
           <Link
             href="/admin/leases"
             className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Leases</span>
-            <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">Tenancies</span>
+            <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">Tenancies</span>
           </Link>
           <Link
             href="/admin/maintenance"
             className="px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Maintenance</span>
-            <span className="bg-slate-200 text-slate-600 text-xs  px-1.5 py-0.2 rounded-full font-medium">Tickets</span>
+            <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">Tickets</span>
           </Link>
         </div>
       </BoardPanel>
@@ -723,7 +723,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
             <div className="flex items-center gap-2 flex-wrap">
 
               {/* Type Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600">
+              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 text-base">
                 <span className="text-slate-400">Type:</span>
                 <select
                   value={typeFilter}
@@ -736,7 +736,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
               </div>
 
               {/* Status Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600">
+              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 text-base">
                 <span className="text-slate-400">Status:</span>
                 <select
                   value={statusFilter}
@@ -748,7 +748,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                 </select>
               </div>
               {/* Source Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600 font-normal">
+              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 font-normal text-base">
                 <span className="text-slate-400">Source:</span>
                 <select
                   value={sourceFilter}
@@ -761,7 +761,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
               </div>
 
               {/* Scope Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-[12.5px] text-slate-600 font-normal">
+              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 font-normal text-base">
                 <span className="text-slate-400">Scope:</span>
                 <select
                   value={role}
@@ -776,7 +776,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
               {/* New Contact Trigger */}
               <button
                 onClick={() => { setEditingContact(undefined); setIsModalOpen(true); }}
-                className="flex items-center gap-1.5 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl text-[12.5px] font-medium hover:bg-[#e6d220] transition-colors shadow-sm cursor-pointer"
+                className="flex items-center gap-1.5 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl font-medium hover:bg-[#e6d220] transition-colors shadow-sm cursor-pointer text-base"
               >
                 <IconPlus size={15} stroke={2.5} />
                 <span>Add Record</span>
@@ -787,7 +787,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
           {/* Active Filter Chips */}
           {(typeFilter !== "all" || statusFilter !== "all" || sourceFilter !== "all" || searchQuery !== "") && (
             <div className="flex items-center gap-2 flex-wrap pt-2 animate-fade-in">
-              <span className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active Filters:</span>
+              <span className="text-slate-400 label-caps">Active Filters:</span>
 
               {searchQuery && (
                 <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
@@ -833,7 +833,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
         <div className="overflow-x-auto min-h-[300px]">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100 text-sm font-medium text-slate-400 uppercase tracking-widest select-none">
+              <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 select-none label-caps">
                 <th className="py-4 pl-6 pr-2 w-10 text-center">
                   <input
                     type="checkbox"
@@ -929,7 +929,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                             )} />
                           </div>
                           <div>
-                            <span className="font-normal text-[14px] text-slate-900 group-hover:text-[#151936] transition-colors leading-snug block">
+                            <span className="font-normal text-slate-900 group-hover:text-[#151936] transition-colors leading-snug block body-md">
                               {contact.name}
                             </span>
                             <span className="text-sm text-slate-400 mt-0.5 block font-medium capitalize">
@@ -981,7 +981,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                       {/* Financial values (Paid & Arrears) */}
                       <td className="py-4 px-4 text-right">
                         <div className="space-y-0.5">
-                          <span className="text-base font-medium font-mono text-emerald-600 block leading-tight">
+                          <span className="text-emerald-600 block leading-tight mono-data">
                             {formatCompactKES(contact.financials.paid)} Paid
                           </span>
                           {contact.financials.arrears > 0 && (
@@ -994,7 +994,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
                       {/* Last contacted / Activity snippet */}
                       <td className="py-4 px-4 text-slate-500">
-                        <span className="font-mono text-[12px]">{contact.createdDate}</span>
+                        <span className="font-mono body-sm">{contact.createdDate}</span>
                       </td>
 
                       {/* Row actions */}
@@ -1012,13 +1012,13 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                             <div className="absolute right-6 top-10 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 text-left animate-scale-in">
                               <button
                                 onClick={() => { setSelectedContactId(contact.id); setRowMenuId(null); }}
-                                className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                                className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
                               >
                                 <IconUserCircle size={14} /> View Details
                               </button>
                               <button
                                 onClick={() => { setEditingContact(contact); setIsModalOpen(true); setRowMenuId(null); }}
-                                className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                                className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
                               >
                                 <IconEdit size={14} /> Edit Profile
                               </button>
@@ -1027,7 +1027,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                                   setSelectedChatDMId(getDMIdForContact(contact.name));
                                   setRowMenuId(null);
                                 }}
-                                className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                                className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
                               >
                                 <IconMessageCircle size={14} /> Send Message
                               </button>
@@ -1035,7 +1035,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
 
                               <button
                                 onClick={() => { handleDeleteContact(contact.id); setRowMenuId(null); }}
-                                className="flex items-center gap-2 w-full px-3.5 py-2 text-[12.5px] text-red-650 hover:bg-red-50 font-medium transition-colors"
+                                className="flex items-center gap-2 w-full px-3.5 py-2 text-red-650 hover:bg-red-50 font-medium transition-colors text-base"
                               >
                                 <IconTrash size={14} /> Scrub Record
                               </button>
@@ -1053,7 +1053,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                         <div className="size-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-sm">
                           <IconUserCircle size={28} />
                         </div>
-                        <h4 className="text-[14px] font-medium text-slate-800 leading-none">No contact records found</h4>
+                        <h4 className="font-medium text-slate-800 leading-none body-md">No contact records found</h4>
                         <p className="text-base text-slate-400 mt-2 leading-relaxed">
                           Your current search filters or security scope returned zero matches.
                         </p>
@@ -1064,7 +1064,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                             setStatusFilter("all");
                             setSourceFilter("all");
                           }}
-                          className="mt-4 px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-[12.5px] font-medium transition-all shadow-sm"
+                          className="mt-4 px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-medium transition-all shadow-sm text-base"
                         >
                           Reset Filters
                         </button>
@@ -1099,11 +1099,11 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
             className="fixed bottom-6 inset-x-0 mx-auto w-full max-w-2xl bg-[#151936] text-white p-4 rounded-2xl shadow-[0_20px_50px_rgba(21,25,54,0.3)] flex items-center justify-between z-[70] border border-slate-800/40"
           >
             <div className="flex items-center gap-3">
-              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center text-base font-mono font-medium">
+              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center mono-data">
                 {selectedIds.length}
               </span>
               <div>
-                <p className="text-[12.5px] font-medium leading-none">Contacts Selected</p>
+                <p className="font-medium leading-none text-base">Contacts Selected</p>
                 <p className="text-sm text-slate-400 mt-1">Batch actions apply to selected records only.</p>
               </div>
             </div>
