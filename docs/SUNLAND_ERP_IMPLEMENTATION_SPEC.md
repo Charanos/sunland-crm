@@ -269,12 +269,12 @@ service_fee_charges
   id, rule_id, related_table, related_id, amount_charged, status
 ```
 
-### 5.8 Affordable Housing Scheme Tracking
+### 5.8 Commissions & WHT Compliance Tracking
 
 Two distinct concerns, both real and both needed:
 
 1. **Statutory compliance:** the Affordable Housing Levy (1.5% employer + 1.5% employee) flows through payroll (5.5) as a standard statutory remittance line, tracked per run.
-2. **Programme participation:** if Sunland develops, sells, or manages units under the government Affordable Housing scheme, a separate `affordable_housing_units` and `affordable_housing_allocations` table tracks unit-level scheme compliance, allottee eligibility records, and remittances to the Affordable Housing Fund where Sunland acts as a collecting agent. This is CEO-approval-gated at the programme level (Section 4.7) since it is a government-facing commitment, not a routine transaction.
+2. **Agent Commissions & WHT:** Sunland acts as a private agency (property sales/letting, valuations, project management, feasibility studies). When deals close, agent commissions are calculated, and a statutory 10% Withholding Tax (WHT) is deducted and filed with the Kenya Revenue Authority (KRA). Tracking handles deal margins, agent shares, WHT retentions, and KRA submission validation.
 
 ### 5.9 Exportable Reports & QR Retrieval (Feasibility Assessment)
 
@@ -413,7 +413,7 @@ Consolidated access to every exportable report across Finance, HR, BD, and Front
 /admin/finance/receivables
 /admin/finance/cheques                   Banker's cheque verification
 /admin/finance/fees                      Service fee rules & charges
-/admin/finance/affordable-housing
+/admin/finance/commissions               Commissions & WHT tracking
 /admin/finance/reports                   Exportable reports + QR verification
 
 /admin/hr                                HR dashboard
@@ -481,7 +481,7 @@ Finance-first, with each phase unlocking the data the next phase depends on. No 
 | 0 | Approval Engine (3.3), RBAC matrix expansion (3.2) | Every later phase needs somewhere to route a sign-off |
 | 1 | Finance Core: Ledger, Chart of Accounts, Balance Sheet, Cash Flow (5.1–5.2) | Nothing else in Finance is derivable without this |
 | 2 | Finance: Rental Management & Property Mandates (5.3–5.4) | The highest-value, most error-prone logic (10% rule) ships early and gets the most real-world testing time |
-| 3 | Finance: Payroll, AP/AR, Cheques, Service Fees, Affordable Housing, Reports/QR (5.5–5.9) | Depends on Phase 1's ledger; payroll specifically depends on Phase 4 |
+| 3 | Finance: Payroll, AP/AR, Cheques, Service Fees, Commissions & WHT, Reports/QR (5.5–5.9) | Depends on Phase 1's ledger; payroll specifically depends on Phase 4 |
 | 4 | HR Core: employees, leave, time tracking (6.1–6.2, 6.6) | Feeds Finance payroll (5.5); built in parallel with late Phase 3 |
 | 5 | HR Extended: complaints, credentials, medical, interviews, promotions (6.3–6.5) | Lower urgency, no other module blocks on it |
 | 6 | Front Office: logistics, appointments, petty cash, paperwork (8.1–8.4) | Needed before Line Manager workflows that depend on it |
@@ -497,5 +497,5 @@ These are flagged rather than assumed, since getting them wrong is expensive to 
 
 - Confirm the default approval thresholds in Section 4.7; they are reasonable defaults, not confirmed policy.
 - Confirm whether landlord and tenant self-service portals are in scope for a later phase; this spec assumes internal-only access for now.
-- Confirm the Affordable Housing programme participation model: is Sunland a collecting agent only, or a developer/seller of units under the scheme? This changes the depth of 5.8.
+- Confirm standard commission percentages for agent divisions (Sales 3%, Lettings 10%, Valuations 2%, Feasibility Studies 5%) and the filing schedule of the statutory 10% WHT.
 - Confirm whether Valuers Ltd needs its own fee schedule distinct from Commercial/Residential service fees, or shares the rules table in 5.7.
