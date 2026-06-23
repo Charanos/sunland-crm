@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, JetBrains_Mono, Nunito } from "next/font/google";
+import { Cardo, JetBrains_Mono, Figtree, Libre_Baskerville } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
-const nunito = Nunito({
-  variable: "--font-nunito",
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
   weight: ["300", "400", "500"],
 });
@@ -15,11 +15,11 @@ const jetbrains = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const cardo = Cardo({
+  variable: "--font-cardo",
   subsets: ["latin"],
   style: ["normal", "italic"],
-  weight: ["300", "400", "500"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${nunito.variable} ${jetbrains.variable} ${cormorant.variable} h-full antialiased`}
+      className={`${figtree.variable} ${jetbrains.variable} ${cardo.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <AppProviders>{children}</AppProviders>

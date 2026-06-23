@@ -45,7 +45,7 @@ export default function RevenueStreamChart({ entityId = "group" }: { entityId?: 
       return (
         <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
           <p className="text-base font-medium text-slate-400 uppercase tracking-wider mb-1.5">{dataPoint.name}</p>
-          <p className="text-sm  font-medium font-mono text-slate-800">
+          <p className="text-body-primary">
             {formatCompactKES(dataPoint.Value)} KES
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function RevenueStreamChart({ entityId = "group" }: { entityId?: 
             tickLine={false}
             axisLine={false}
             dy={8}
-            className="font-medium text-slate-500"
+            className="text-desc-secondary"
           />
           <YAxis
             stroke="#94a3b8"

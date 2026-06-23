@@ -681,7 +681,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
         <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab.replace(/-/g, " ")} Panel
         </h2>
-        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+        <p className="text-desc-secondary mt-1">
           {renderTabDescription()}
         </p>
       </div>
@@ -695,7 +695,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             <div className="p-6 bg-slate-50/40 border-b border-slate-100 animate-fade-in">
               <div className="mb-4">
                 <h4 className="text-base font-medium uppercase tracking-wider text-slate-450">Featured Active Ledger Units</h4>
-                <p className="text-sm  text-slate-500 font-medium mt-0.5">Real property profiles linked to recent general ledger postings.</p>
+                <p className="mt-0.5 text-desc-secondary">Real property profiles linked to recent general ledger postings.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -715,7 +715,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   </div>
                   <div className="p-3 flex flex-col flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-base font-medium text-slate-800">Rent Collection & Mgt Fee</span>
+                      <span className="text-title-primary">Rent Collection & Mgt Fee</span>
                       <span className="text-sm font-mono font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100/80">
                         KES 150,000
                       </span>
@@ -725,7 +725,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     </p>
                     <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-sm  text-slate-400 font-medium">
                       <span>Ref: JE-1042</span>
-                      <span className="text-slate-500 font-medium">Last Post: Today</span>
+                      <span className="text-desc-secondary">Last Post: Today</span>
                     </div>
                   </div>
                 </div>
@@ -745,8 +745,8 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   </div>
                   <div className="p-3 flex flex-col flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-base font-medium text-slate-800">Petty Cash Replenishment</span>
-                      <span className="text-sm font-mono font-medium text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/60">
+                      <span className="text-title-primary">Petty Cash Replenishment</span>
+                      <span className="bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/60 text-body-primary">
                         KES 50,000
                       </span>
                     </div>
@@ -755,7 +755,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     </p>
                     <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-sm  text-slate-400 font-medium">
                       <span>Ref: JE-1041</span>
-                      <span className="text-slate-500 font-medium">Last Post: Yesterday</span>
+                      <span className="text-desc-secondary">Last Post: Yesterday</span>
                     </div>
                   </div>
                 </div>
@@ -775,7 +775,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   </div>
                   <div className="p-3 flex flex-col flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-base font-medium text-slate-800">Duplicate Accrual Void</span>
+                      <span className="text-title-primary">Duplicate Accrual Void</span>
                       <span className="text-sm font-mono font-medium text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100/80">
                         KES 200,000
                       </span>
@@ -795,7 +795,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
               <div>
-                <h3 className="text-base  font-medium text-slate-900 tracking-tight">Ledger Postings Registry</h3>
+                <h3 className="text-title-primary">Ledger Postings Registry</h3>
                 <p className="mt-0.5 text-sm  text-slate-400">Double-entry audit records. Posted accounts are closed and immutable.</p>
               </div>
               <Button variant="secondary" size="sm" className="h-8 text-base bg-slate-50 border-slate-200 shadow-sm">
@@ -829,7 +829,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       <td className="px-5 py-3.5 text-right text-slate-750 mono-data">
                         {row.credit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-5 py-3.5 text-base text-slate-500 font-medium">{row.user}</td>
+                      <td className="px-5 py-3.5 text-desc-secondary">{row.user}</td>
                       <td className="px-5 py-3.5">
                         <Badge tone={row.status === "Posted" ? "success" : "neutral"} className="py-0.5 px-2 font-medium">
                           {row.status}
@@ -974,7 +974,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="w-[45%] text-sm font-medium text-slate-500 space-y-1 pl-2">
+                  <div className="w-[45%] space-y-1 pl-2 text-desc-secondary">
                     <h5 className="text-slate-400 mb-1.5 label-caps">Balance Mix</h5>
                     {coaChartData.map((entry) => (
                       <div key={entry.name} className="flex items-center gap-1.5">
@@ -1068,7 +1068,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
           <>
             <div className="flex flex-wrap items-center justify-between p-5 border-b border-slate-100 bg-white gap-3">
               <div>
-                <h3 className="text-base  font-medium text-slate-900 tracking-tight">Equilibrium Snapshot</h3>
+                <h3 className="text-title-primary">Equilibrium Snapshot</h3>
                 <p className="mt-0.5 text-sm  text-slate-400">Verifying debit/credit ledger equality as of current transactional block.</p>
               </div>
               <div className="flex items-center gap-2">
@@ -1122,7 +1122,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <div className="bg-white border border-slate-200/70 p-5 rounded-xl shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div>
-                    <h4 className="font-medium text-slate-800 text-base">Visual Equilibrium Breakdown</h4>
+                    <h4 className="text-title-primary">Visual Equilibrium Breakdown</h4>
                     <p className="text-sm text-slate-450 font-medium mt-0.5">Asset & Expense debits balancing against Liability, Equity & Revenue credits.</p>
                   </div>
                   <Badge tone={Math.abs(trialBalanceData.totalDr - trialBalanceData.totalCr) < 0.01 ? "success" : "risk"}>
@@ -1224,7 +1224,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
           <>
             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
               <div>
-                <h3 className="text-base  font-medium text-slate-900 tracking-tight">Statement of Financial Position</h3>
+                <h3 className="text-title-primary">Statement of Financial Position</h3>
                 <p className="mt-0.5 text-sm  text-slate-400">Statement layout for active assets, liabilities, and shareholder equity.</p>
               </div>
               <Button variant="secondary" size="sm" className="h-8 text-base bg-slate-50 border-slate-200 shadow-sm">
@@ -1242,7 +1242,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   <div className="border-b border-slate-100 pb-4 text-center">
                     <h4 className="title-serif text-slate-900 font-normal">Sunland Real Estate Group</h4>
                     <p className="text-slate-400 font-mono mt-1 label-caps">Statement of Financial Position</p>
-                    <p className="text-base text-slate-500 font-medium mt-0.5">As of June 21, 2026</p>
+                    <p className="text-desc-secondary mt-0.5">As of June 21, 2026</p>
                   </div>
 
                   {/* Assets Section */}
@@ -1271,7 +1271,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       {(() => {
                         const totalAssets = coa.filter(a => a.type === "Asset").reduce((s, a) => s + a.balance, 0);
                         return (
-                          <div className="flex justify-between text-base text-slate-900 font-medium border-t border-slate-100 pt-2 font-medium px-2">
+                          <div className="flex justify-between border-t border-slate-100 pt-2 px-2 text-title-primary">
                             <span>Total Assets</span>
                             <span className="font-mono text-[#1b431e] body-md">{totalAssets.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           </div>
@@ -1306,7 +1306,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       {(() => {
                         const totalLiab = coa.filter(a => a.type === "Liability").reduce((s, a) => s + a.balance, 0);
                         return (
-                          <div className="flex justify-between text-base text-slate-900 font-medium border-t border-slate-100 pt-2 font-medium px-2">
+                          <div className="flex justify-between border-t border-slate-100 pt-2 px-2 text-title-primary">
                             <span>Total Liabilities</span>
                             <span className="font-mono text-slate-800 body-md">{totalLiab.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           </div>
@@ -1341,7 +1341,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       {(() => {
                         const totalEquity = coa.filter(a => a.type === "Equity").reduce((s, a) => s + a.balance, 0);
                         return (
-                          <div className="flex justify-between text-base text-slate-900 font-medium border-t border-slate-100 pt-2 font-medium px-2">
+                          <div className="flex justify-between border-t border-slate-100 pt-2 px-2 text-title-primary">
                             <span>Total Shareholder Equity</span>
                             <span className="font-mono text-slate-800 body-md">{totalEquity.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           </div>
@@ -1384,7 +1384,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                   {/* Donut Chart: Asset reserve mix */}
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4">
-                    <h5 className="text-base font-medium text-slate-800 uppercase tracking-wider">Asset Reserve Mix</h5>
+                    <h5 className="text-title-primary uppercase tracking-wider">Asset Reserve Mix</h5>
                     <div className="h-44 w-full text-sm">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -1422,7 +1422,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                   {/* Donut Chart: Funding structure mix */}
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4">
-                    <h5 className="text-base font-medium text-slate-800 uppercase tracking-wider">Funding Composition</h5>
+                    <h5 className="text-title-primary uppercase tracking-wider">Funding Composition</h5>
                     <div className="h-44 w-full text-sm">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -1470,7 +1470,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
           <>
             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
               <div>
-                <h3 className="text-base  font-medium text-slate-900 tracking-tight">Statement of Cash Flows</h3>
+                <h3 className="text-title-primary">Statement of Cash Flows</h3>
                 <p className="mt-0.5 text-sm  text-slate-400">Direct operational movements across bank accounts and petty cash reserves.</p>
               </div>
               <Button variant="secondary" size="sm" className="h-8 text-base bg-slate-50 border-slate-200 shadow-sm">
@@ -1488,7 +1488,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   <div className="border-b border-slate-100 pb-4 text-center">
                     <h4 className="title-serif text-slate-900 font-normal">Sunland Real Estate Group</h4>
                     <p className="text-slate-400 font-mono mt-1 label-caps">Statement of Cash Flows</p>
-                    <p className="text-base text-slate-500 font-medium mt-0.5">Period ended June 21, 2026</p>
+                    <p className="text-desc-secondary mt-0.5">Period ended June 21, 2026</p>
                   </div>
 
                   {/* Operating Cash flow */}
@@ -1510,7 +1510,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                           </span>
                         </div>
                       ))}
-                      <div className="flex justify-between text-base text-slate-900 border-t border-slate-100 pt-2 font-medium px-2">
+                      <div className="flex justify-between border-t border-slate-100 pt-2 px-2 text-title-primary">
                         <span>Net Cash generated by Operating Activities</span>
                         <span className="font-mono text-emerald-700 body-md">
                           {cashFlowData.operating.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -1542,7 +1542,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       ) : (
                         <p className="text-sm  text-slate-400 py-1 pl-2">No investing movements recorded.</p>
                       )}
-                      <div className="flex justify-between text-base text-slate-900 border-t border-slate-100 pt-2 font-medium px-2">
+                      <div className="flex justify-between border-t border-slate-100 pt-2 px-2 text-title-primary">
                         <span>Net Cash used in Investing Activities</span>
                         <span className="font-mono text-slate-650 body-md">
                           {cashFlowData.investing.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -1570,7 +1570,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                           </span>
                         </div>
                       ))}
-                      <div className="flex justify-between text-base text-slate-900 border-t border-slate-100 pt-2 font-medium px-2">
+                      <div className="flex justify-between border-t border-slate-100 pt-2 px-2 text-title-primary">
                         <span>Net Cash used in Financing Activities</span>
                         <span className="font-mono text-rose-700 body-md">
                           {cashFlowData.financing.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -1594,7 +1594,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 {/* Right Column: Statement Visualizations */}
                 <div className="lg:col-span-4 space-y-4">
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4">
-                    <h5 className="text-base font-medium text-slate-800 uppercase tracking-wider">Cash Movements</h5>
+                    <h5 className="text-title-primary uppercase tracking-wider">Cash Movements</h5>
                     <div className="h-52 w-full text-sm ">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
@@ -1622,7 +1622,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4 animate-scale-in">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <div>
-                        <h5 className="text-base font-medium text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <h5 className="text-title-primary uppercase tracking-wider flex items-center gap-1.5">
                           <IconCalendarStats size={15} className="text-slate-400" />
                           Cash Flow Forecaster
                         </h5>
@@ -1641,7 +1641,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                     <div className="grid grid-cols-2 gap-3 text-sm ">
                       <div className="grid gap-1">
-                        <label className="text-slate-500 font-medium">Est. Monthly Receipts</label>
+                        <label className="text-desc-secondary">Est. Monthly Receipts</label>
                         <input
                           type="number"
                           value={expectedMonthlyCollections || ""}
@@ -1650,7 +1650,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         />
                       </div>
                       <div className="grid gap-1">
-                        <label className="text-slate-500 font-medium">Est. Monthly Outlays</label>
+                        <label className="text-desc-secondary">Est. Monthly Outlays</label>
                         <input
                           type="number"
                           value={expectedMonthlyExpenses || ""}
@@ -1700,7 +1700,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               placeholder="e.g. Accrued Office Rent Accrual"
               value={newJournalMemo}
               onChange={(e) => setNewJournalMemo(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm  outline-none focus:border-slate-400 transition-colors font-medium text-slate-800 disabled:bg-slate-50 disabled:text-slate-400"
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-slate-400 transition-colors disabled:bg-slate-50 disabled:text-slate-400 text-body-primary"
             />
           </div>
 
@@ -1729,7 +1729,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         copy[idx].account = e.target.value;
                         setNewJournalLines(copy);
                       }}
-                      className="w-full border border-slate-200 rounded-xl px-2.5 py-2 outline-none bg-white font-medium text-slate-700 disabled:bg-slate-50 text-sm"
+                      className="w-full border border-slate-200 rounded-xl px-2.5 py-2 outline-none bg-white disabled:bg-slate-50 text-body-primary"
                       required
                     >
                       <option value="">Select Ledger Account...</option>
@@ -1843,7 +1843,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 placeholder="e.g. 1100"
                 value={newAccId}
                 onChange={(e) => setNewAccId(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm  outline-none focus:border-slate-400 font-mono font-medium text-slate-700"
+                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-slate-400 text-body-primary"
               />
             </div>
             <div className="grid gap-1.5">
@@ -1851,7 +1851,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <select
                 value={newAccType}
                 onChange={(e) => setNewAccType(e.target.value as Account["type"])}
-                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm  outline-none bg-white font-medium text-slate-700"
+                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none bg-white text-body-primary"
               >
                 <option value="Asset">Asset</option>
                 <option value="Liability">Liability</option>
@@ -1870,7 +1870,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               placeholder="e.g. NCBA Savings Reserve Account"
               value={newAccName}
               onChange={(e) => setNewAccName(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm  outline-none focus:border-slate-400 font-medium text-slate-700"
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-slate-400 text-body-primary"
             />
           </div>
 
@@ -1881,7 +1881,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               placeholder="0.00"
               value={newAccBalance}
               onChange={(e) => setNewAccBalance(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm  outline-none focus:border-slate-400 font-mono font-medium text-slate-700"
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-slate-400 text-body-primary"
             />
           </div>
 
@@ -1927,7 +1927,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
           <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div>
-                <p className="text-slate-500 font-medium text-base">
+                <p className="text-desc-secondary">
                   {selectedJournal.date} • Entered by {selectedJournal.user}
                 </p>
               </div>
@@ -2022,7 +2022,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="text-slate-400 label-caps">Account Title</h4>
-                  <p className="text-base  font-medium text-slate-800 mt-1">{selectedCoaAccount.name}</p>
+                  <p className="mt-1 text-title-primary">{selectedCoaAccount.name}</p>
                 </div>
                 <Badge
                   tone={
@@ -2037,7 +2037,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 </Badge>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/50 flex justify-between items-center">
-                <span className="text-base text-slate-500 font-medium">Current Balance</span>
+                <span className="text-desc-secondary">Current Balance</span>
                 <span className="text-slate-805 mono-data">
                   {selectedCoaAccount.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} KES
                 </span>
@@ -2123,7 +2123,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             {/* Summary block */}
             <div className="bg-slate-50 border border-slate-200/70 p-4 rounded-xl shadow-sm space-y-2">
               <div className="flex justify-between items-center text-base">
-                <span className="text-slate-500 font-medium">Ledger Book Balance</span>
+                <span className="text-desc-secondary">Ledger Book Balance</span>
                 <span className="font-mono font-medium text-slate-800">
                   {reconciliationAccount.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} KES
                 </span>
@@ -2157,7 +2157,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     value={bankStatementBalance}
                     onChange={(e) => setBankStatementBalance(e.target.value)}
                     placeholder="Enter statement balance"
-                    className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm  outline-none focus:border-slate-400 transition-colors font-medium text-slate-800"
+                    className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-slate-400 transition-colors text-body-primary"
                   />
                   <span className="absolute right-3 top-3 text-sm text-slate-400 font-medium font-mono">KES</span>
                 </div>
@@ -2217,7 +2217,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   value={reconNotes}
                   onChange={(e) => setReconNotes(e.target.value)}
                   placeholder="Describe matching variances, timing differences, etc."
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm  outline-none focus:border-slate-400 transition-colors font-medium text-slate-700"
+                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-slate-400 transition-colors text-body-primary"
                 />
               </div>
             </div>
@@ -2227,7 +2227,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <button
                 type="button"
                 onClick={() => setReconciliationAccount(null)}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm"
+                className="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-body-regular"
               >
                 Close
               </button>
@@ -2292,8 +2292,8 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <span className="text-slate-400 label-caps">Line Item Title</span>
               <p className="font-medium text-slate-808 mt-1 body-md">{reclassLine.name}</p>
               <div className="mt-3 pt-3 border-t border-slate-200/50 flex justify-between items-center">
-                <span className="text-sm  text-slate-500 font-medium">Transaction Amount</span>
-                <span className="font-mono text-sm  font-medium text-slate-800">
+                <span className="text-desc-secondary">Transaction Amount</span>
+                <span className="text-body-primary">
                   {reclassLine.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} KES
                 </span>
               </div>
@@ -2341,7 +2341,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <button
                 type="button"
                 onClick={() => setReclassLine(null)}
-                className="px-4 py-2 border border-slate-205 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors font-medium w-full text-sm"
+                className="px-4 py-2 border border-slate-205 rounded-xl hover:bg-slate-50 transition-colors w-full text-body-regular"
               >
                 Cancel
               </button>

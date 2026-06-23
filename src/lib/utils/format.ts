@@ -5,16 +5,22 @@ const kesFormatter = new Intl.NumberFormat("en-KE", {
 });
 
 export function formatKES(value: number) {
-  return kesFormatter.format(value);
+  const isNegative = value < 0;
+  const absValue = Math.abs(value);
+  return `${isNegative ? "-" : ""}KES ${absValue.toLocaleString("en-KE")}`;
 }
 
 export function formatCompactKES(value: number) {
-  if (value >= 1_000_000) {
-    return `KES ${(value / 1_000_000).toFixed(1)}M`;
+  const isNegative = value < 0;
+  const absValue = Math.abs(value);
+  const sign = isNegative ? "-" : "";
+
+  if (absValue >= 1_000_000) {
+    return `${sign}KES ${(absValue / 1_000_000).toFixed(1)}M`;
   }
 
-  if (value >= 1_000) {
-    return `KES ${(value / 1_000).toFixed(0)}K`;
+  if (absValue >= 1_000) {
+    return `${sign}KES ${(absValue / 1_000).toFixed(0)}K`;
   }
 
   return formatKES(value);

@@ -295,7 +295,7 @@ export function FinancePageScaffold({
         <BoardPanel className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-medium text-slate-900 text-lg">
+              <h2 className="text-heading-primary">
                 {tab?.label ?? section.label} Work Queue
               </h2>
               <p className="mt-1 text-slate-500 text-base">
@@ -311,7 +311,7 @@ export function FinancePageScaffold({
           {visibleRows.length > 0 ? (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
+                <table className="w-full min-w-[760px] text-left text-body-regular">
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 label-caps">
                       {scaffold.columns.map((column) => (
@@ -329,7 +329,7 @@ export function FinancePageScaffold({
                           {row.ref}
                         </td>
                         <td className="px-2 py-3">
-                          <p className="text-base font-medium text-slate-800">{row.subject}</p>
+                          <p className="text-title-primary">{row.subject}</p>
                           <p className="mt-0.5 text-base text-slate-500">{row.detail}</p>
                         </td>
                         <td className="px-2 py-3 text-right text-slate-900 mono-data">

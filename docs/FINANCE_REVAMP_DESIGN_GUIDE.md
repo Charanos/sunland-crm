@@ -24,7 +24,7 @@ Every sub-page must feel dense, premium, and structured. Do not use generic layo
 ### 1.2 Strict Typography Rules
 - **Font-Weight Cap:** The project strictly prohibits `font-semibold` or `font-bold` (capped at font weights of 500 / `font-medium`). Use text size, color contrast (e.g. `text-slate-900` vs `text-slate-500`), letter-spacing, and casing to create visual hierarchy.
 - **Serif Accents:** All page and section headings use the `title-serif` style (Cormorant Garamond, `font-normal` / 300).
-- **Interface Text:** Body, labels, and generic text use nunito.
+- **Interface Text:** Body, labels, and generic text use figtree.
 - **Monospace Figures:** All KES currency values, dates, percentages, transactional reference IDs (e.g. `JE-0042`, `MDT-109`), cheque numbers, and ticket hashes must use JetBrains Mono (`font-mono`).
 
 ---

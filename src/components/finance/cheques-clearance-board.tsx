@@ -11,7 +11,8 @@ import {
   IconTimeline,
   IconBan,
   IconTransfer,
-  IconScale
+  IconScale,
+  IconClock
 } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast-provider";
@@ -423,7 +424,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                   <Badge tone="primary" className="bg-slate-700/60 text-slate-200 border-slate-600/50 px-3 py-1 shadow-sm backdrop-blur-md">
                     {activeEntity.name}
                   </Badge>
-                  <span className="text-slate-400 label-caps text-xs tracking-wider">Treasury Control Console</span>
+                  <span className="label-caps tracking-wider text-meta-muted">Treasury Control Console</span>
                 </div>
                 <div>
                   <h2 className="title-serif font-normal leading-tight tracking-tight text-white mb-3">
@@ -446,17 +447,68 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 </div>
               </div>
 
-              {/* Right Column: Key Metrics Panel */}
-              <div className="flex-1 w-full lg:max-w-md shrink-0 h-full">
-                <div className="relative h-full flex flex-col justify-between overflow-hidden rounded-[20px] border border-white/10 bg-slate-950/40 backdrop-blur-xl shadow-2xl transition-all duration-500 hover:shadow-[0_0_30px_rgba(243,223,39,0.08)] hover:border-white/15 group">
-                  {/* Subtle Grid Artwork Background */}
-                  <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center" />
+              {/* Right Column: Sleek HUD Panel */}
+              <div className="w-full lg:max-w-xs shrink-0 self-stretch flex flex-col justify-center">
+                <div className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 hover:border-white/15 group">
+                  {/* Subtle Grid overlay */}
+                  <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center" />
+                  
+                  <div className="relative z-10 flex flex-col gap-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 label-caps">Clearance Policy Threshold</span>
+                      <IconScale size={16} stroke={1.8} className="text-amber-400" />
+                    </div>
 
-                  {/* Gradients & Glows */}
-                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-500/50 to-transparent" />
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-slate-500/10 rounded-full blur-3xl -mr-20 -mt-20 transition-all duration-500 group-hover:bg-slate-500/15" />
+                    {/* Value Area */}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="text-3xl font-medium tracking-tight font-sans text-amber-400">
+                        {formatCompactKES(CHEQUE_APPROVAL_THRESHOLD)}
+                      </div>
+                      <span className="text-sm text-slate-400 font-medium tracking-wide">
+                        Auto-credit clearance threshold limit
+                      </span>
+                    </div>
 
-                  {/*  */}
+                    {/* Proportional Limit Meter */}
+                    {(() => {
+                      const clearingVal = metrics.depositedValue;
+                      const thresholdPct = Math.min(100, Math.round((clearingVal / CHEQUE_APPROVAL_THRESHOLD) * 100));
+                      return (
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex items-center justify-between text-slate-400 label-caps">
+                            <span>Clearing: {formatCompactKES(clearingVal)}</span>
+                            <span>Limit: {thresholdPct}%</span>
+                          </div>
+                          <div className="h-1 w-full rounded-full bg-slate-900/80 overflow-hidden flex border border-white/[0.02]">
+                            <div 
+                              style={{ width: `${thresholdPct}%` }} 
+                              className={cn("h-full transition-all duration-500", clearingVal > CHEQUE_APPROVAL_THRESHOLD ? "bg-rose-500/80 animate-pulse" : "bg-amber-500/70")} 
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Divider */}
+                    <div className="h-px bg-white/5 my-1" />
+
+                    {/* Divider-divided bottom strip */}
+                    <div className="grid grid-cols-3 divide-x divide-white/5 border border-white/5 rounded-lg bg-slate-950/20 text-center overflow-hidden">
+                      <div className="py-2 px-1">
+                        <div className="text-slate-400 label-caps">Approval</div>
+                        <div className="mt-0.5 text-slate-200 font-mono text-sm font-normal">{metrics.approvalHeld}</div>
+                      </div>
+                      <div className="py-2 px-1">
+                        <div className="text-slate-400 label-caps">Stale</div>
+                        <div className="mt-0.5 text-slate-200 font-mono text-sm font-normal">{metrics.staleClearing}</div>
+                      </div>
+                      <div className="py-2 px-1">
+                        <div className="text-slate-400 label-caps">Returned</div>
+                        <div className="mt-0.5 text-slate-200 font-mono text-sm font-normal">{metrics.returnedCount}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -468,7 +520,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="font-medium text-slate-900 tracking-tight font-sans text-xl">Clearance Queue</h3>
-                <p className="mt-1 font-medium text-slate-500 text-sm">Highest-risk deposited and returned instruments.</p>
+                <p className="mt-1 text-desc-secondary">Highest-risk deposited and returned instruments.</p>
               </div>
               <Badge tone={clearanceQueue.length > 0 ? "warning" : "success"} className="shadow-sm px-3 py-1.5">{clearanceQueue.length} Active</Badge>
             </div>
@@ -496,7 +548,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                     </Badge>
                   </div>
                   <p className="truncate font-medium text-slate-800 leading-snug body-md">{item.payerName}</p>
-                  <p className="mt-0.5 truncate font-medium text-slate-500 text-base">{item.source} - {item.holder}</p>
+                  <p className="mt-0.5 truncate text-desc-secondary">{item.source} - {item.holder}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <span className="tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors mono-stat">
@@ -512,170 +564,80 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
       {/* ── 1. KPI Cards Row ─────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
         {/* KPI 1: Awaiting Clearance */}
-        {(() => {
-          const pendingCheques = cheques.filter(c => c.status === "Pending").length;
-          const totalCheques = cheques.length || 1;
-          const transitRatio = (pendingCheques / totalCheques) * 100;
-          return (
-            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-300/60 bg-white border border-slate-200/50">
-              {/* Subtle visual card background */}
-              <div
-                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=600&auto=format&fit=crop)` }}
-              />
-              {/* Top Accent line */}
-              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-amber-500" />
-
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-slate-500 label-caps text-xs tracking-wider">Awaiting Clearance</span>
-                <div className="size-7 rounded-lg bg-amber-50/50 text-amber-600 flex items-center justify-center border border-amber-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
-                  <IconBuildingBank size={14} stroke={2.5} />
-                </div>
-              </div>
-
-              <div className="flex flex-col mt-auto relative z-10">
-                <span className="font-mono font-normal tracking-tight text-[#151936] text-2xl">
-                  {formatMoney(metrics.depositedValue)}
-                </span>
-
-                {/* Micro visual progress meter */}
-                <div className="mt-2 space-y-1.5">
-                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${transitRatio}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
-                    <span>In transit</span>
-                    <span>{pendingCheques} of {totalCheques} instruments</span>
-                  </div>
-                </div>
-              </div>
-            </BoardPanel>
-          );
-        })()}
+        <BoardPanel className="p-5 flex flex-col justify-between min-h-[142px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-250 bg-gradient-to-b from-white to-amber-50/10">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
+            <IconBuildingBank size={100} stroke={1} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
+              <IconBuildingBank size={16} stroke={2.5} />
+            </div>
+            <span className="text-slate-500 label-caps text-xs">Awaiting Clearance</span>
+          </div>
+          <div className="flex flex-col mt-auto relative z-10">
+            <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
+              {formatMoney(metrics.depositedValue)}
+            </span>
+            <span className="mt-1 text-desc-secondary">Instruments in bank transit</span>
+          </div>
+        </BoardPanel>
 
         {/* KPI 2: Cleared & Posted */}
-        {(() => {
-          const clearedCheques = cheques.filter(c => c.status === "Credited").length;
-          const totalCheques = cheques.length || 1;
-          const clearedRatio = (clearedCheques / totalCheques) * 100;
-          return (
-            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-300/60 bg-white border border-slate-200/50">
-              {/* Subtle visual card background */}
-              <div
-                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop)` }}
-              />
-              {/* Top Accent line */}
-              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-emerald-500" />
+        <BoardPanel className="p-5 flex flex-col justify-between min-h-[142px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-250 bg-gradient-to-b from-white to-emerald-50/10">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
+            <IconCheck size={100} stroke={1} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
+              <IconCheck size={16} stroke={2.5} />
+            </div>
+            <span className="text-slate-500 label-caps text-xs">Cleared & Posted</span>
+          </div>
+          <div className="flex flex-col mt-auto relative z-10">
+            <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
+              {formatMoney(metrics.clearedValue)}
+            </span>
+            <span className="mt-1 text-desc-secondary">Settled ledger postings</span>
+          </div>
+        </BoardPanel>
 
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-slate-500 label-caps text-xs tracking-wider">Cleared & Posted</span>
-                <div className="size-7 rounded-lg bg-emerald-50/50 text-emerald-600 flex items-center justify-center border border-emerald-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
-                  <IconCheck size={14} stroke={2.5} />
-                </div>
-              </div>
+        {/* KPI 3: Returned Cheques */}
+        <BoardPanel className="p-5 flex flex-col justify-between min-h-[142px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-250 bg-gradient-to-b from-white to-rose-50/10">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
+            <IconAlertTriangle size={100} stroke={1} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-200/50">
+              <IconAlertTriangle size={16} stroke={2.5} />
+            </div>
+            <span className="text-slate-500 label-caps text-xs">Returned Cheques</span>
+          </div>
+          <div className="flex flex-col mt-auto relative z-10">
+            <span className="font-mono font-normal tracking-tight text-rose-700 text-3xl">
+              {metrics.returnedCount} <span className="text-rose-700/65 text-lg">Cheques</span>
+            </span>
+            <span className="mt-1 text-desc-secondary">Dishonored & returned items</span>
+          </div>
+        </BoardPanel>
 
-              <div className="flex flex-col mt-auto relative z-10">
-                <span className="font-mono font-normal tracking-tight text-[#151936] text-2xl">
-                  {formatMoney(metrics.clearedValue)}
-                </span>
-
-                {/* Micro visual progress meter */}
-                <div className="mt-2 space-y-1.5">
-                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${clearedRatio}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
-                    <span>Settled Ledger Postings</span>
-                    <span>{clearedCheques} of {totalCheques}</span>
-                  </div>
-                </div>
-              </div>
-            </BoardPanel>
-          );
-        })()}
-
-        {/* KPI 3: Returned cheques */}
-        {(() => {
-          const returnedCheques = cheques.filter(c => c.status === "Returned").length;
-          const totalCheques = cheques.length || 1;
-          const returnedRatio = (returnedCheques / totalCheques) * 100;
-          return (
-            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-300/60 bg-white border border-slate-200/50">
-              {/* Subtle visual card background */}
-              <div
-                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1507206130007-be9c29b29330?q=80&w=600&auto=format&fit=crop)` }}
-              />
-              {/* Top Accent line */}
-              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-rose-500" />
-
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-slate-500 label-caps text-xs tracking-wider">Returned Cheques</span>
-                <div className="size-7 rounded-lg bg-rose-50/50 text-rose-600 flex items-center justify-center border border-rose-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
-                  <IconAlertTriangle size={14} stroke={2.5} />
-                </div>
-              </div>
-
-              <div className="flex flex-col mt-auto relative z-10">
-                <span className="font-mono font-normal tracking-tight text-rose-700 text-2xl">
-                  {metrics.returnedCount} <span className="text-rose-700/65 text-lg">Cheques</span>
-                </span>
-
-                {/* Micro visual progress meter */}
-                <div className="mt-2 space-y-1.5">
-                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-rose-500 transition-all duration-500" style={{ width: `${returnedRatio}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
-                    <span>Dishonored / Returned</span>
-                    <span>{returnedCheques} of {totalCheques}</span>
-                  </div>
-                </div>
-              </div>
-            </BoardPanel>
-          );
-        })()}
-
-        {/* KPI 4: Month Clearance Rate */}
-        {(() => {
-          const timeRatio = (3.5 / 5.0) * 100; // max 5 days scale
-          return (
-            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-300/60 bg-white border border-slate-200/50">
-              {/* Subtle visual card background */}
-              <div
-                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600&auto=format&fit=crop)` }}
-              />
-              {/* Top Accent line */}
-              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-indigo-500" />
-
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-slate-500 label-caps text-xs tracking-wider">Average Clear Time</span>
-                <div className="size-7 rounded-lg bg-indigo-50/50 text-indigo-600 flex items-center justify-center border border-indigo-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
-                  <IconTransfer size={14} stroke={2.5} />
-                </div>
-              </div>
-
-              <div className="flex flex-col mt-auto relative z-10">
-                <span className="font-mono font-normal tracking-tight text-indigo-700 text-2xl">
-                  3.5 <span className="text-indigo-700/65 text-lg">Biz Days</span>
-                </span>
-
-                {/* Micro visual progress meter */}
-                <div className="mt-2 space-y-1.5">
-                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${timeRatio}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
-                    <span>Performance Target (3d)</span>
-                    <span>{Math.round(timeRatio)}% target width</span>
-                  </div>
-                </div>
-              </div>
-            </BoardPanel>
-          );
-        })()}
+        {/* KPI 4: Average Clear Time */}
+        <BoardPanel className="p-5 flex flex-col justify-between min-h-[142px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-250 bg-gradient-to-b from-white to-indigo-50/10">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
+            <IconClock size={100} stroke={1} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
+              <IconClock size={16} stroke={2.5} />
+            </div>
+            <span className="text-slate-500 label-caps text-xs">Average Clear Time</span>
+          </div>
+          <div className="flex flex-col mt-auto relative z-10">
+            <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
+              3.5 <span className="text-slate-500 text-lg">Biz Days</span>
+            </span>
+            <span className="mt-1 text-desc-secondary">Performance target (3.0d)</span>
+          </div>
+        </BoardPanel>
       </section>
 
       {/* ── 2. Visualization Section ────────────────────────────────────────── */}
@@ -729,7 +691,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
 
       <div className="pt-6 border-t border-slate-200/60 my-2 animate-fade-in-up">
         <h2 className="title-serif text-slate-900 font-normal">Policy Gates & Ledger Impact</h2>
-        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+        <p className="text-desc-secondary mt-1">
           Deposited cheques have zero statement impact; only credited cheques post to the ledger, while returns open debtor follow-up.
         </p>
       </div>
@@ -770,7 +732,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                   <ItemIcon size={20} />
                 </div>
               </div>
-              <p className="mt-4 font-medium leading-relaxed text-slate-500 text-sm">{item.body}</p>
+              <p className="mt-4 leading-relaxed text-desc-secondary">{item.body}</p>
             </BoardPanel>
           );
         })}
@@ -782,7 +744,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
         <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab} Cheques Panel
         </h2>
-        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+        <p className="text-desc-secondary mt-1">
           {activeTab === "deposited" && "Review cheques currently sitting in bank clearance queues awaiting credit notifications."}
           {activeTab === "credited" && "Successfully posted banker's cheques marked as reconciled with general ledger impact logs."}
           {activeTab === "returned" && "List of bounced or returned checks. Log dishonor reason or represent for clearing."}
@@ -804,7 +766,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
+          <table className="w-full min-w-[760px] text-left text-body-regular">
             <thead>
               <tr className="border-b border-slate-100 text-slate-400 bg-slate-50/50 label-caps">
                 <th className="px-5 py-3">Cheque Number</th>
@@ -826,7 +788,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 >
                   <td className="px-5 py-3.5 text-slate-900 mono-data">{c.chequeNumber}</td>
                   <td className="px-5 py-3.5">
-                    <p className="text-base font-medium text-slate-800 leading-snug">{c.payerName}</p>
+                    <p className="text-title-primary leading-snug">{c.payerName}</p>
                     <p className="text-sm text-slate-400 mt-0.5">{c.description}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       <Badge tone="data" className="h-5 text-sm ">{c.source}</Badge>

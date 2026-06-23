@@ -440,7 +440,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
               {metrics.active} <span className="text-slate-400 text-xl">Contracts</span>
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">Currently active</span>
+            <span className="mt-1 text-desc-secondary">Currently active</span>
           </div>
         </BoardPanel>
 
@@ -459,7 +459,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <span className="font-mono font-normal tracking-tight text-indigo-700 text-3xl">
               KES {metrics.fees.toLocaleString()}
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">Avg Rate: {metrics.avgFee}</span>
+            <span className="mt-1 text-desc-secondary">Avg Rate: {metrics.avgFee}</span>
           </div>
         </BoardPanel>
 
@@ -478,7 +478,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <span className="font-mono font-normal tracking-tight text-emerald-700 text-3xl">
               KES {metrics.payoutQueue.toLocaleString()}
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">Net split total</span>
+            <span className="mt-1 text-desc-secondary">Net split total</span>
           </div>
         </BoardPanel>
 
@@ -497,7 +497,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <span className="font-mono font-normal tracking-tight text-amber-700 text-3xl">
               {metrics.pending} <span className="text-amber-700/70 text-xl">Contracts</span>
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">Awaiting CEO approval</span>
+            <span className="mt-1 text-desc-secondary">Awaiting CEO approval</span>
           </div>
         </BoardPanel>
       </section>
@@ -507,7 +507,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
         <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8 items-center">
           <div>
             <h3 className="font-normal tracking-tight text-slate-900 text-xl">Contract Financial Payout Split</h3>
-            <p className="font-medium text-slate-500 mt-1 leading-relaxed text-sm">Summary of how collected rent is split between company management fees, utility/maintenance deductions, and net landlord disbursements.</p>
+            <p className="mt-1 leading-relaxed text-desc-secondary">Summary of how collected rent is split between company management fees, utility/maintenance deductions, and net landlord disbursements.</p>
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="rounded-xl border border-slate-200/60 bg-gradient-to-b from-slate-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-slate-300">
                 <span className="text-slate-500 label-caps">Total Collected Rent</span>
@@ -562,7 +562,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
         <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab.replace(/-/g, " ")} Contracts Panel
         </h2>
-        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+        <p className="text-desc-secondary mt-1">
           {activeTab === "active" && "Registry of active landlord management mandates showing collections, fee splits, and remittance balances."}
           {activeTab === "pending-approval" && "Contracts awaiting CEO verification signatures and cryptographic signoff audits."}
           {activeTab === "draft" && "Terms and parameters for draft contracts currently under negotiation."}
@@ -573,7 +573,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
       <BoardPanel className="p-0 overflow-hidden shadow-sm border-slate-200 animate-fade-in-up">
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
           <div>
-            <h3 className="text-base  font-medium text-slate-900 tracking-tight">Landlord Contracts Queue</h3>
+            <h3 className="text-title-primary">Landlord Contracts Queue</h3>
             <p className="mt-0.5 text-sm  text-slate-400">Click any row to reveal contract units, split parameters, and payout schedules.</p>
           </div>
           <Button variant="secondary" size="sm" className="bg-white border-slate-200">
@@ -584,7 +584,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
         {paginatedRows.length > 0 ? (
           <>
             <div className="overflow-x-auto bg-white">
-              <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
+              <table className="w-full min-w-[760px] text-left text-body-regular">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 label-caps">
                     <th className="px-5 py-3">Contract Code</th>
@@ -614,11 +614,11 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                           {row.mandateCode}
                         </td>
                         <td className="px-5 py-3.5">
-                          <p className="text-base font-medium text-slate-800 leading-snug">{row.propertyName}</p>
+                          <p className="text-title-primary leading-snug">{row.propertyName}</p>
                           <p className="text-sm text-slate-400 mt-0.5">{row.unitsCount} active units assigned</p>
                         </td>
                         <td className="px-5 py-3.5">
-                          <p className="text-base font-medium text-slate-800">{row.landlordName}</p>
+                          <p className="text-title-primary">{row.landlordName}</p>
                           <span className="text-sm text-slate-400 font-mono">Started: {row.startDate}</span>
                         </td>
                         <td className="px-5 py-3.5 text-right text-slate-800 mono-data">
@@ -716,7 +716,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
       >
         <form onSubmit={handleAddExpense} className="space-y-4">
           <div>
-            <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Select Active Mandate</label>
+            <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Select Active Mandate</label>
             <select
               value={expMandateId}
               onChange={(e) => setExpMandateId(e.target.value)}
@@ -733,7 +733,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
           </div>
 
           <div>
-            <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Expense Description</label>
+            <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Expense Description</label>
             <input
               type="text"
               required
@@ -746,7 +746,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Expense Amount (KES)</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Expense Amount (KES)</label>
               <input
                 type="number"
                 required
@@ -757,7 +757,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
               />
             </div>
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Deduction Category</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Deduction Category</label>
               <select
                 value={expCategory}
                 onChange={(e) => setExpCategory(e.target.value as MandateExpense["category"])}
@@ -794,7 +794,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-slate-700 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Contract Reference:</span>
-                <span className="font-mono font-medium text-slate-900">{approveMandate.mandateCode}</span>
+                <span className="text-value-mono">{approveMandate.mandateCode}</span>
               </div>
               <div className="flex justify-between">
                 <span>Property Details:</span>
@@ -897,7 +897,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-100/60">
                   <span className="text-slate-400">Total Collected:</span>
-                  <span className="font-mono font-medium text-slate-900">KES {selectedMandate.collectedRent.toLocaleString()}</span>
+                  <span className="text-value-mono">KES {selectedMandate.collectedRent.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-100/60">
                   <span className="text-slate-400">Statutory Deductions:</span>
@@ -969,7 +969,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                   {selectedMandate.expenses.map((exp) => (
                     <div key={exp.id} className="flex items-center justify-between border border-slate-100 bg-white rounded-lg p-3 shadow-xs">
                       <div>
-                        <p className="font-medium text-slate-800 text-base">{exp.description}</p>
+                        <p className="text-title-primary">{exp.description}</p>
                         <p className="text-sm text-slate-450 mt-0.5">Category: {exp.category}</p>
                       </div>
                       <div className="text-right">

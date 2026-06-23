@@ -783,7 +783,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               <span className="body-sm font-medium uppercase tracking-wider">Pending Runs</span>
             </div>
             <div className="mt-auto">
-              <span className="text-2xl font-mono font-medium tracking-tight text-slate-900 leading-none">
+              <span className="text-2xl leading-none text-value-mono">
                 {runs.filter((r) => r.status === "Pending").length} Runs
               </span>
               <p className="body-sm text-slate-400 mt-1">Awaiting GM payout</p>
@@ -796,7 +796,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               <span className="body-sm font-medium uppercase tracking-wider">MTD Disbursed</span>
             </div>
             <div className="mt-auto">
-              <span className="text-2xl font-mono font-medium tracking-tight text-slate-900 leading-none">
+              <span className="text-2xl leading-none text-value-mono">
                 {formatMoney(runs.filter((r) => r.status === "Disbursed").reduce((sum, r) => sum + r.netPay, 0))}
               </span>
               <p className="body-sm text-slate-400 mt-1">Net payroll posted</p>
@@ -863,7 +863,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         {paginatedRows.length > 0 ? (
           <div className="space-y-4">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm text-slate-600">
+              <table className="w-full min-w-[760px] text-left text-body-regular">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 label-caps">
                     {tabId === "runs" && (
@@ -1020,7 +1020,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               <div className="size-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-100 shadow-sm">
                 <IconEye size={20} />
               </div>
-              <h4 className="text-sm font-medium text-slate-800">No records found</h4>
+              <h4 className="text-body-primary">No records found</h4>
               <p className="text-slate-450 leading-relaxed text-base">
                 We couldn't find any values matching your active search queries. Try adjusting your query or filter configurations.
               </p>
@@ -1088,7 +1088,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                 <div className="my-2 flex items-baseline justify-between">
                   <div>
                     <p className="text-slate-400 font-mono label-caps">Gross Pay Accrual</p>
-                    <p className="font-mono text-4xl font-medium text-slate-900 leading-none mt-1">
+                    <p className="text-4xl leading-none mt-1 text-value-mono">
                       {formatMoney(selectedRun.grossPay)}
                     </p>
                   </div>
@@ -1264,7 +1264,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               {/* Kenyan Tax & Relief Ledger Breakdown */}
               <div className="space-y-2 mt-4 font-sans">
                 <span className="text-slate-450 label-caps">KRA PAYE & Relief Ledger Breakdown</span>
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 text-slate-600 text-sm">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 text-body-regular">
                   {(() => {
                     const calc = calculateKenyanStatutories(selectedPayslip.grossPay);
                     return (
@@ -1537,7 +1537,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               {MOCK_TIME_LOGS.map((log) => (
                 <div key={log.employeeName} className="flex justify-between items-center p-3 hover:bg-slate-50/40">
                   <div>
-                    <p className="font-medium text-slate-800 text-base">{log.employeeName}</p>
+                    <p className="text-title-primary">{log.employeeName}</p>
                     <p className="text-slate-400 font-sans text-sm">{log.department} · {log.hoursLogged} hours logged</p>
                   </div>
                   <p className="text-slate-700 mono-data">Gross: {formatMoney(log.computedGross)}</p>

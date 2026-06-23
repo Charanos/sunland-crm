@@ -51,7 +51,7 @@ export function FinanceModuleNav() {
               <GroupIcon size={18} stroke={1.7} />
             </div>
             <div className="min-w-0">
-              <h2 className="truncate text-base font-medium leading-none text-slate-800">
+              <h2 className="truncate leading-none text-title-primary">
                 {activeGroup.title}
               </h2>
               <p className="mt-1.5 truncate text-sm text-slate-500">

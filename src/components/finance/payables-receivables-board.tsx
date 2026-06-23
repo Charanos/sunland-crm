@@ -576,14 +576,14 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
           <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl" />
 
           <div className="relative z-10 flex h-full flex-col justify-between gap-8">
-            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8 w-full">
               {/* Left Column: Context & Title */}
               <div className="max-w-xl space-y-5">
                 <div className="flex items-center gap-3">
                   <Badge tone="primary" className="bg-slate-700/60 text-slate-200 border-slate-600/50 px-3 py-1 shadow-sm backdrop-blur-md">
                     {activeEntity.name}
                   </Badge>
-                  <span className="text-slate-400 label-caps text-xs tracking-wider">Treasury Control Console</span>
+                  <span className="label-caps tracking-wider text-meta-muted">Treasury Control Console</span>
                 </div>
                 <div>
                   <h2 className="title-serif font-normal leading-tight tracking-tight text-white mb-3">
@@ -605,6 +605,76 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   <span className="font-normal text-slate-400 body-sm">Active Controllers</span>
                 </div>
               </div>
+
+              {/* Right Column: Sleek HUD Panel */}
+              <div className="w-full lg:max-w-xs shrink-0 self-stretch flex flex-col justify-center">
+                <div className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 hover:border-white/15 group">
+                  {/* Subtle Grid overlay */}
+                  <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center" />
+                  
+                  <div className="relative z-10 flex flex-col gap-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 label-caps">Net Posted Cash Position</span>
+                      <IconScale size={16} stroke={1.8} className="text-emerald-400" />
+                    </div>
+
+                    {/* Value Area */}
+                    <div className="flex flex-col gap-0.5">
+                      <div className={cn(
+                        "text-3xl font-medium tracking-tight font-sans",
+                        metrics.postedCash >= 0 ? "text-emerald-400" : "text-rose-400"
+                      )}>
+                        {formatCompactKES(metrics.postedCash)}
+                      </div>
+                      <span className="text-sm text-slate-400 font-medium tracking-wide">
+                        Net balance of posted AR/AP ledger transactions
+                      </span>
+                    </div>
+
+                    {/* Proportional Split Meter */}
+                    {(() => {
+                      const totalPR = metrics.payables + metrics.receivables || 1;
+                      const payablePct = Math.round((metrics.payables / totalPR) * 100);
+                      const receivablePct = 100 - payablePct;
+                      return (
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex items-center justify-between text-slate-400 label-caps">
+                            <span>Payables: {payablePct}%</span>
+                            <span>Receivables: {receivablePct}%</span>
+                          </div>
+                          <div className="h-1 w-full rounded-full bg-slate-900/80 overflow-hidden flex border border-white/[0.02]">
+                            <div style={{ width: `${payablePct}%` }} className="h-full bg-amber-500/70" />
+                            <div style={{ width: `${receivablePct}%` }} className="h-full bg-indigo-500/70" />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Divider */}
+                    <div className="h-px bg-white/5 my-1" />
+
+                    {/* Divider-divided bottom strip */}
+                    <div className="grid grid-cols-3 divide-x divide-white/5 border border-white/5 rounded-lg bg-slate-950/20 text-center overflow-hidden">
+                      <div className="py-2 px-1">
+                        <div className="text-slate-400 label-caps">Due Soon</div>
+                        <div className="mt-0.5 text-slate-200 font-mono text-sm font-normal">{metrics.dueThisWeek}</div>
+                      </div>
+                      <div className="py-2 px-1">
+                        <div className="text-slate-400 label-caps">Disputes</div>
+                        <div className="mt-0.5 text-slate-200 font-mono text-sm font-normal">{metrics.disputes}</div>
+                      </div>
+                      <div className="py-2 px-1">
+                        <div className="text-slate-400 label-caps">Ledger</div>
+                        <div className="mt-0.5 text-slate-200 font-mono text-sm font-normal">
+                          {bills.filter(b => b.status === "Posted").length + invoices.filter(inv => inv.status === "Posted").length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -614,7 +684,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="font-medium text-slate-900 tracking-tight font-sans text-xl">Exception Run</h3>
-                <p className="mt-1 font-medium text-slate-500 text-sm">Prioritized items that need collection, settlement, or hold review.</p>
+                <p className="mt-1 text-desc-secondary">Prioritized items that need collection, settlement, or hold review.</p>
               </div>
               <Badge tone={exceptionQueue.length > 0 ? "warning" : "success"} className="shadow-sm px-3 py-1.5">{exceptionQueue.length} Active</Badge>
             </div>
@@ -642,7 +712,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                     <Badge tone={item.tone} className="h-5 font-normal px-2 shadow-sm label-caps text-xs">{item.status}</Badge>
                   </div>
                   <p className="truncate font-medium text-slate-800 leading-snug body-md">{item.label}</p>
-                  <p className="mt-0.5 truncate font-medium text-slate-500 text-sm">{item.meta}</p>
+                  <p className="mt-0.5 truncate text-desc-secondary">{item.meta}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <span className="tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors mono-stat">
@@ -655,175 +725,85 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         </BoardPanel>
       </section>
 
-      {/* ── 1. KPI Cards Row ─────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
         {/* KPI 1: Payables outstanding */}
-        {(() => {
-          const pendingBillsCount = bills.filter(b => b.status === "Pending").length;
-          const totalBillsCount = bills.length || 1;
-          const billsRatio = (pendingBillsCount / totalBillsCount) * 100;
-          return (
-            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-300/60 bg-white border border-slate-200/50">
-              {/* Subtle visual card background */}
-              <div
-                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600&auto=format&fit=crop)` }}
-              />
-              {/* Top Accent line */}
-              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-amber-500" />
-
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-slate-500 label-caps text-xs tracking-wider">A/P Outstanding</span>
-                <div className="size-7 rounded-lg bg-amber-50/50 text-amber-600 flex items-center justify-center border border-amber-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
-                  <IconTrendingDown size={14} stroke={2.5} />
-                </div>
-              </div>
-
-              <div className="flex flex-col mt-auto relative z-10">
-                <span className="font-mono font-normal tracking-tight text-[#151936] text-2xl">
-                  {formatMoney(metrics.payables)}
-                </span>
-
-                {/* Micro visual progress meter */}
-                <div className="mt-2 space-y-1.5">
-                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${billsRatio}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
-                    <span>Verification Pending</span>
-                    <span>{pendingBillsCount} of {totalBillsCount}</span>
-                  </div>
-                </div>
-              </div>
-            </BoardPanel>
-          );
-        })()}
+        <BoardPanel className="p-5 flex flex-col justify-between min-h-[142px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-amber-250 bg-gradient-to-b from-white to-amber-50/10">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
+            <IconTrendingDown size={100} stroke={1} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
+              <IconTrendingDown size={16} stroke={2.5} />
+            </div>
+            <span className="text-slate-500 label-caps text-xs">A/P Outstanding</span>
+          </div>
+          <div className="flex flex-col mt-auto relative z-10">
+            <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
+              {formatMoney(metrics.payables)}
+            </span>
+            <span className="mt-1 text-desc-secondary">Pending vendor settlements</span>
+          </div>
+        </BoardPanel>
 
         {/* KPI 2: Receivables outstanding */}
-        {(() => {
-          const unpaidInvoicesCount = invoices.filter(i => i.status !== "Posted").length;
-          const totalInvoicesCount = invoices.length || 1;
-          const invoicesRatio = (unpaidInvoicesCount / totalInvoicesCount) * 100;
-          return (
-            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-300/60 bg-white border border-slate-200/50">
-              {/* Subtle visual card background */}
-              <div
-                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop)` }}
-              />
-              {/* Top Accent line */}
-              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-indigo-500" />
-
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-slate-500 label-caps text-xs tracking-wider">A/R Outstanding</span>
-                <div className="size-7 rounded-lg bg-indigo-50/50 text-indigo-600 flex items-center justify-center border border-indigo-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
-                  <IconArrowUpRight size={14} stroke={2.5} />
-                </div>
-              </div>
-
-              <div className="flex flex-col mt-auto relative z-10">
-                <span className="font-mono font-normal tracking-tight text-[#151936] text-2xl">
-                  {formatMoney(metrics.receivables)}
-                </span>
-
-                {/* Micro visual progress meter */}
-                <div className="mt-2 space-y-1.5">
-                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${invoicesRatio}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
-                    <span>Awaiting Collection</span>
-                    <span>{unpaidInvoicesCount} of {totalInvoicesCount}</span>
-                  </div>
-                </div>
-              </div>
-            </BoardPanel>
-          );
-        })()}
+        <BoardPanel className="p-5 flex flex-col justify-between min-h-[142px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-indigo-250 bg-gradient-to-b from-white to-indigo-50/10">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
+            <IconArrowUpRight size={100} stroke={1} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
+              <IconArrowUpRight size={16} stroke={2.5} />
+            </div>
+            <span className="text-slate-500 label-caps text-xs">A/R Outstanding</span>
+          </div>
+          <div className="flex flex-col mt-auto relative z-10">
+            <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
+              {formatMoney(metrics.receivables)}
+            </span>
+            <span className="mt-1 text-desc-secondary">Awaiting client receipts</span>
+          </div>
+        </BoardPanel>
 
         {/* KPI 3: Net position */}
-        {(() => {
-          const capRatio = Math.min(100, Math.max(0, (metrics.capital / (metrics.receivables || 1)) * 100));
-          return (
-            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-300/60 bg-white border border-slate-200/50">
-              {/* Subtle visual card background */}
-              <div
-                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop)` }}
-              />
-              {/* Top Accent line */}
-              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-emerald-500" />
-
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-slate-500 label-caps text-xs tracking-wider">Net Capital</span>
-                <div className="size-7 rounded-lg bg-emerald-50/50 text-emerald-600 flex items-center justify-center border border-emerald-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
-                  <IconCoins size={14} stroke={2.5} />
-                </div>
-              </div>
-
-              <div className="flex flex-col mt-auto relative z-10">
-                <span className={cn(
-                  "text-2xl font-mono font-normal tracking-tight",
-                  metrics.capital >= 0 ? "text-emerald-700" : "text-rose-600"
-                )}>
-                  {formatMoney(metrics.capital)}
-                </span>
-
-                {/* Micro visual progress meter */}
-                <div className="mt-2 space-y-1.5">
-                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${capRatio}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
-                    <span>Receivable Coverage</span>
-                    <span>{Math.round(capRatio)}%</span>
-                  </div>
-                </div>
-              </div>
-            </BoardPanel>
-          );
-        })()}
+        <BoardPanel className="p-5 flex flex-col justify-between min-h-[142px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-emerald-250 bg-gradient-to-b from-white to-emerald-50/10">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
+            <IconCoins size={100} stroke={1} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
+              <IconCoins size={16} stroke={2.5} />
+            </div>
+            <span className="text-slate-500 label-caps text-xs">Net Working Capital</span>
+          </div>
+          <div className="flex flex-col mt-auto relative z-10">
+            <span className={cn(
+              "text-3xl font-mono font-normal tracking-tight",
+              metrics.capital >= 0 ? "text-emerald-700" : "text-rose-600"
+            )}>
+              {formatMoney(metrics.capital)}
+            </span>
+            <span className="mt-1 text-desc-secondary">A/R balance less A/P balance</span>
+          </div>
+        </BoardPanel>
 
         {/* KPI 4: Overdue counts */}
-        {(() => {
-          const unpaidInvoicesCount = invoices.filter(i => i.status !== "Posted").length;
-          const overdueRatio = (metrics.overdue / (unpaidInvoicesCount || 1)) * 100;
-          return (
-            <BoardPanel className="p-5 flex flex-col justify-between h-[140px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-300/60 bg-white border border-slate-200/50">
-              {/* Subtle visual card background */}
-              <div
-                className="absolute inset-0 opacity-[0.015] mix-blend-overlay bg-cover bg-center transition-opacity duration-300 group-hover:opacity-[0.03]"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1507206130007-be9c29b29330?q=80&w=600&auto=format&fit=crop)` }}
-              />
-              {/* Top Accent line */}
-              <div className="absolute top-0 inset-x-0 h-[2.5px] bg-rose-500" />
-
-              <div className="flex items-center justify-between relative z-10">
-                <span className="text-slate-500 label-caps text-xs tracking-wider">Overdue Risk</span>
-                <div className="size-7 rounded-lg bg-rose-50/50 text-rose-600 flex items-center justify-center border border-rose-100/50 shadow-sm transition-all duration-300 group-hover:scale-110">
-                  <IconClock size={14} stroke={2.5} />
-                </div>
-              </div>
-
-              <div className="flex flex-col mt-auto relative z-10">
-                <span className="font-mono font-normal tracking-tight text-rose-700 text-2xl">
-                  {metrics.overdue} <span className="text-rose-700/65 text-lg">Invoices</span>
-                </span>
-
-                {/* Micro visual progress meter */}
-                <div className="mt-2 space-y-1.5">
-                  <div className="h-[3px] w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-rose-500 transition-all duration-500" style={{ width: `${overdueRatio}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9.5px] text-slate-400 font-mono">
-                    <span>Overdue Share</span>
-                    <span>{Math.round(overdueRatio)}% of outstanding</span>
-                  </div>
-                </div>
-              </div>
-            </BoardPanel>
-          );
-        })()}
+        <BoardPanel className="p-5 flex flex-col justify-between min-h-[142px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-rose-250 bg-gradient-to-b from-white to-rose-50/10">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
+            <IconClock size={100} stroke={1} />
+          </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-200/50">
+              <IconClock size={16} stroke={2.5} />
+            </div>
+            <span className="text-slate-500 label-caps text-xs">Overdue Risk</span>
+          </div>
+          <div className="flex flex-col mt-auto relative z-10">
+            <span className="font-mono font-normal tracking-tight text-rose-700 text-3xl">
+              {metrics.overdue} <span className="text-rose-700/65 text-lg">Invoices</span>
+            </span>
+            <span className="mt-1 text-desc-secondary">Overdue client receivables</span>
+          </div>
+        </BoardPanel>
       </section>
 
       {/* ── 2. Visualization Section ────────────────────────────────────────── */}
@@ -867,7 +847,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
 
       <div className="pt-6 border-t border-slate-200/60 my-2 animate-fade-in-up">
         <h2 className="title-serif text-slate-900 font-normal">Aging, Holds & Ledger Impact</h2>
-        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+        <p className="text-desc-secondary mt-1">
           Surface due-date exposure, dispute freezes, and the journal impact that will be created by payment or receipt actions.
         </p>
       </div>
@@ -901,7 +881,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   <p className={cn("text-sm font-medium uppercase tracking-widest", isRisk ? "text-rose-700" : "text-slate-500")}>{bucket}</p>
                   <div className="mt-auto pt-4">
                     <p className="tracking-tight text-slate-900 mono-stat">{formatMoney(bucketValue)}</p>
-                    <p className="mt-1 font-medium text-slate-500 text-base">{bucketRows.length} records</p>
+                    <p className="mt-1 text-desc-secondary">{bucketRows.length} records</p>
                   </div>
                 </div>
               );
@@ -913,7 +893,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="font-normal text-slate-900 tracking-tight headline-md">Posting Preview</h3>
-              <p className="mt-1 font-medium text-slate-500 text-sm">Finance actions create ledger entries automatically after validation.</p>
+              <p className="mt-1 text-desc-secondary">Finance actions create ledger entries automatically after validation.</p>
             </div>
             <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 group-hover:text-indigo-500 transition-colors">
               <IconTransfer size={20} />
@@ -974,7 +954,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab} Queue
         </h2>
-        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+        <p className="text-desc-secondary mt-1">
           {activeTab === "payables" && "Track incoming vendor bills, security invoices, lift contractors, and record corporate settlements."}
           {activeTab === "receivables" && "Monitor valuation consultancy invoices, lease documentation fee receipts, and customer payments."}
         </p>
@@ -997,7 +977,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
         <div className="overflow-x-auto">
           {activeTab === "payables" ? (
             /* Payables Table */
-            <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
+            <table className="w-full min-w-[760px] text-left text-body-regular">
               <thead>
                 <tr className="border-b border-slate-100 text-slate-400 bg-slate-50/50 label-caps">
                   <th className="px-5 py-3">Bill Code</th>
@@ -1019,7 +999,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   >
                     <td className="px-5 py-3.5 text-slate-900 mono-data">{b.billCode}</td>
                     <td className="px-5 py-3.5">
-                      <p className="text-base font-medium text-slate-800 leading-snug">{b.vendorName}</p>
+                      <p className="text-title-primary leading-snug">{b.vendorName}</p>
                       <p className="text-sm text-slate-400 mt-0.5">{b.description}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <Badge tone="data" className="h-5 text-sm ">{b.source}</Badge>
@@ -1029,7 +1009,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                       </div>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-sm font-medium text-slate-600">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-body-regular">
                         {b.category}
                       </span>
                     </td>
@@ -1080,7 +1060,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             </table>
           ) : (
             /* Receivables Table */
-            <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
+            <table className="w-full min-w-[760px] text-left text-body-regular">
               <thead>
                 <tr className="border-b border-slate-100 text-slate-400 bg-slate-50/50 label-caps">
                   <th className="px-5 py-3">Invoice</th>
@@ -1101,7 +1081,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   >
                     <td className="px-5 py-3.5 text-slate-900 mono-data">{inv.invoiceCode}</td>
                     <td className="px-5 py-3.5">
-                      <p className="text-base font-medium text-slate-800 leading-snug">{inv.clientName}</p>
+                      <p className="text-title-primary leading-snug">{inv.clientName}</p>
                       <p className="text-sm text-slate-400 mt-0.5">{inv.description}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <Badge tone="data" className="h-5 text-sm ">{inv.source}</Badge>
@@ -1379,7 +1359,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   <div className="flex flex-col">
                     <span className="text-slate-400 font-mono label-caps">Payee / Creditor</span>
                     <span className="text-sm font-normal text-slate-800 leading-tight mt-0.5">{selectedBill.vendorName}</span>
-                    <span className="text-slate-500 mt-0.5 font-medium text-sm">{selectedBill.category} · Allocation: {selectedBill.propertyName}</span>
+                    <span className="mt-0.5 text-desc-secondary">{selectedBill.category} · Allocation: {selectedBill.propertyName}</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-lg font-normal text-slate-800 font-mono shadow-[inset_0_1px_1.5px_rgba(0,0,0,0.03)] shrink-0 body-md">
                     {formatMoney(selectedBill.amount)}
@@ -1406,7 +1386,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
                   <span className="text-slate-400 label-caps">Linkage Property</span>
-                  <p className="text-slate-800 mt-1 flex items-center gap-1 font-medium text-base"><IconBuilding size={12} /> {selectedBill.propertyName}</p>
+                  <p className="mt-1 flex items-center gap-1 text-title-primary"><IconBuilding size={12} /> {selectedBill.propertyName}</p>
                 </div>
                 <div>
                   <span className="text-slate-400 label-caps">Payment Status</span>
@@ -1554,7 +1534,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   <div className="flex flex-col">
                     <span className="text-slate-400 font-mono label-caps">Bill to / Client</span>
                     <span className="text-sm font-normal text-slate-800 leading-tight mt-0.5">{selectedInvoice.clientName}</span>
-                    <span className="text-slate-500 mt-0.5 font-medium text-sm">Property: {selectedInvoice.propertyName}</span>
+                    <span className="mt-0.5 text-desc-secondary">Property: {selectedInvoice.propertyName}</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-lg font-normal text-slate-800 font-mono shadow-[inset_0_1px_1.5px_rgba(0,0,0,0.03)] shrink-0 body-md">
                     {formatMoney(selectedInvoice.amount)}
@@ -1581,7 +1561,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
                   <span className="text-slate-400 label-caps">Property Link</span>
-                  <p className="text-slate-800 mt-1 flex items-center gap-1 font-medium text-base"><IconBuilding size={12} /> {selectedInvoice.propertyName}</p>
+                  <p className="mt-1 flex items-center gap-1 text-title-primary"><IconBuilding size={12} /> {selectedInvoice.propertyName}</p>
                 </div>
                 <div>
                   <span className="text-slate-400 label-caps">Invoice Status</span>

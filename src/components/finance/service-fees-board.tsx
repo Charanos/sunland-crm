@@ -306,7 +306,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
               {metrics.activeRules} <span className="text-slate-400 text-xl">Rules</span>
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">Billing logic profiles</span>
+            <span className="mt-1 text-desc-secondary">Billing logic profiles</span>
           </div>
         </BoardPanel>
 
@@ -324,7 +324,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <span className="font-mono font-normal tracking-tight text-emerald-700 text-3xl">
               KES {metrics.generated.toLocaleString()}
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">Accumulated income</span>
+            <span className="mt-1 text-desc-secondary">Accumulated income</span>
           </div>
         </BoardPanel>
 
@@ -369,7 +369,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
       <BoardPanel className="p-5 shadow-sm border-slate-200">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-medium text-slate-900 font-sans text-lg">Monthly Fee Earnings Categories</h3>
+            <h3 className="font-sans text-heading-primary">Monthly Fee Earnings Categories</h3>
             <p className="text-base text-slate-500 font-sans">Revenue generated grouped by letting fee, valuation, and late penalties.</p>
           </div>
           <div className="flex items-center gap-4 font-medium text-sm">
@@ -413,7 +413,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
         <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab.replace(/-/g, " ")} Panel
         </h2>
-        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+        <p className="text-desc-secondary mt-1">
           {activeTab === "rules" && "Registry of configurable service fee logic determining letting commission, late penalties, and sales commission parameters."}
           {activeTab === "charges" && "Audit registry of generated billing charges. Click Post on any line to audit ledger entry impacts."}
         </p>
@@ -422,7 +422,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
       <BoardPanel className="p-0 overflow-hidden shadow-sm border-slate-200 animate-fade-in-up">
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
           <div>
-            <h3 className="text-base  font-medium text-slate-900 tracking-tight">
+            <h3 className="text-title-primary">
               {activeTab === "rules" ? "Billing Logic Registry" : "Service Charges Queue"}
             </h3>
             <p className="mt-0.5 text-sm  text-slate-400">
@@ -441,7 +441,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <div className="overflow-x-auto bg-white">
               {activeTab === "rules" ? (
                 /* Rules Table */
-                <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
+                <table className="w-full min-w-[760px] text-left text-body-regular">
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 label-caps">
                       <th className="px-5 py-3">Rule Code</th>
@@ -460,7 +460,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
                           {r.ruleCode}
                         </td>
                         <td className="px-5 py-3.5">
-                          <p className="text-base font-medium text-slate-800">{r.name}</p>
+                          <p className="text-title-primary">{r.name}</p>
                         </td>
                         <td className="px-5 py-3.5 text-slate-600 text-base">
                           {r.scope}
@@ -488,7 +488,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
                 </table>
               ) : (
                 /* Charges Table */
-                <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
+                <table className="w-full min-w-[760px] text-left text-body-regular">
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 label-caps">
                       <th className="px-5 py-3">Charge Code</th>
@@ -512,7 +512,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
                           {c.chargeCode}
                         </td>
                         <td className="px-5 py-3.5">
-                          <p className="text-base font-medium text-slate-800 leading-snug">{c.description}</p>
+                          <p className="text-title-primary leading-snug">{c.description}</p>
                           <p className="text-sm text-slate-400 mt-0.5 flex items-center gap-1">
                             <IconBuilding size={12} /> {c.propertyName}
                           </p>
@@ -591,7 +591,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
       >
         <form onSubmit={handleCreateRule} className="space-y-4">
           <div>
-            <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Rule/Commission Name</label>
+            <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Rule/Commission Name</label>
             <input
               type="text"
               required
@@ -604,7 +604,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Target Scope</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Target Scope</label>
               <select
                 value={ruleScope}
                 onChange={(e) => setRuleScope(e.target.value)}
@@ -617,7 +617,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
               </select>
             </div>
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Billing Frequency</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Billing Frequency</label>
               <select
                 value={ruleFrequency}
                 onChange={(e) => setRuleFrequency(e.target.value as FeeRule["frequency"])}
@@ -632,7 +632,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Billing Method</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Billing Method</label>
               <select
                 value={ruleType}
                 onChange={(e) => setRuleType(e.target.value as FeeRule["type"])}
@@ -643,7 +643,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
               </select>
             </div>
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">
                 {ruleType === "Percentage" ? "Percentage Rate (%)" : "Flat Rate (KES)"}
               </label>
               <input
@@ -680,7 +680,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-2.5 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-400 font-medium">Charge Reference:</span>
-                <span className="font-mono font-medium text-slate-900">{postCharge.chargeCode}</span>
+                <span className="text-value-mono">{postCharge.chargeCode}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 font-medium">Fee Description:</span>
@@ -688,7 +688,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 font-medium">Account Total:</span>
-                <span className="font-mono font-medium text-slate-900">KES {postCharge.amount.toLocaleString()}</span>
+                <span className="text-value-mono">KES {postCharge.amount.toLocaleString()}</span>
               </div>
             </div>
 
@@ -696,7 +696,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <div>
               <p className="text-slate-400 font-normal mb-2 label-caps">Double-Entry Journal Accrual lines</p>
               <div className="border border-slate-200 rounded-lg overflow-hidden font-mono bg-white text-sm">
-                <div className="grid grid-cols-[180px_1fr_80px_80px] bg-slate-50 p-2 font-sans font-medium text-slate-500 border-b border-slate-200">
+                <div className="grid grid-cols-[180px_1fr_80px_80px] bg-slate-50 p-2 font-sans border-b border-slate-200 text-desc-secondary">
                   <span>Account</span>
                   <span>Memo</span>
                   <span className="text-right">Debit</span>
@@ -779,11 +779,11 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
               <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-sm">
                 <div className="flex justify-between py-1 border-b border-slate-100/60">
                   <span className="text-slate-400">Accrued Amount:</span>
-                  <span className="font-mono font-medium text-slate-900">KES {selectedCharge.amount.toLocaleString()}</span>
+                  <span className="text-value-mono">KES {selectedCharge.amount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-100/60">
                   <span className="text-slate-400">Charge Date:</span>
-                  <span className="font-mono font-medium text-slate-900">{selectedCharge.date}</span>
+                  <span className="text-value-mono">{selectedCharge.date}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-100/60">
                   <span className="text-slate-400">Originating Rule:</span>

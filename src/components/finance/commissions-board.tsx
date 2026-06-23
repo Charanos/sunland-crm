@@ -603,7 +603,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
               <span className="body-sm font-medium uppercase tracking-wider">Closed Deals</span>
             </div>
             <div className="mt-auto">
-              <span className="text-2xl font-mono font-medium tracking-tight text-slate-900 leading-none">
+              <span className="text-2xl leading-none text-value-mono">
                 {aggregates.totalCount} Deals
               </span>
               <p className="body-sm text-slate-400 mt-1">Sourced MTD</p>
@@ -616,7 +616,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
               <span className="body-sm font-medium uppercase tracking-wider">Accrued WHT</span>
             </div>
             <div className="mt-auto">
-              <span className="text-2xl font-mono font-medium tracking-tight text-slate-900 leading-none">
+              <span className="text-2xl leading-none text-value-mono">
                 {formatMoney(aggregates.totalWht)}
               </span>
               <p className="body-sm text-slate-400 mt-1">Due July 9</p>
@@ -629,7 +629,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
               <span className="body-sm font-medium uppercase tracking-wider">AHL Compliance</span>
             </div>
             <div className="mt-auto">
-              <span className="text-2xl font-mono font-medium tracking-tight text-slate-900 leading-none">
+              <span className="text-2xl leading-none text-value-mono">
                 98.5%
               </span>
               <p className="body-sm text-slate-400 mt-1">100% Remitted</p>
@@ -802,7 +802,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
 
                       <div className="my-3 font-sans">
                         <span className="body-sm text-slate-400 uppercase tracking-widest block mb-0.5">Tax Period</span>
-                        <h4 className="text-lg font-medium text-slate-900">{wht.period}</h4>
+                        <h4 className="text-heading-primary">{wht.period}</h4>
                       </div>
 
                       <div className="border-t border-b border-slate-100 py-3 my-3">
@@ -854,7 +854,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                         <div className="flex justify-between items-start">
                           <div className="space-y-0.5">
                             <span className="font-mono text-sm text-slate-400">{levy.levyCode}</span>
-                            <h4 className="text-lg font-medium text-slate-900">{levy.period}</h4>
+                            <h4 className="text-heading-primary">{levy.period}</h4>
                           </div>
                           <Badge tone={isRemitted ? "success" : "neutral"}>{levy.status}</Badge>
                         </div>
@@ -909,7 +909,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                           )}
                         </div>
 
-                        <span className="font-mono text-sm font-medium text-slate-800">
+                        <span className="text-body-primary">
                           {isRemitted ? "100%" : "0%"} Filed
                         </span>
                       </div>
@@ -932,7 +932,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
               <div className="size-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-100 shadow-sm">
                 <IconEye size={20} />
               </div>
-              <h4 className="text-sm font-medium text-slate-800">No records found</h4>
+              <h4 className="text-body-primary">No records found</h4>
               <p className="text-sm text-slate-455 leading-relaxed font-sans">
                 Adjust the active search term or filter rules to locate specific ledger items.
               </p>
@@ -1141,7 +1141,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                 <span className="body-sm text-slate-450 uppercase tracking-wider font-medium font-sans">Filing Schedule Details</span>
                 <div className="rounded-xl border border-slate-200/60 overflow-hidden bg-slate-50/20">
                   <table className="w-full border-collapse text-left text-sm text-slate-700">
-                    <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                    <thead className="bg-slate-50 border-b border-slate-100 text-desc-secondary">
                       <tr>
                         <th className="px-4 py-2 font-mono body-sm">Agent Name / PIN</th>
                         <th className="px-4 py-2 text-right font-mono body-sm">Gross Commission</th>
@@ -1285,7 +1285,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                 <span className="body-sm text-slate-450 uppercase tracking-wider font-medium font-sans">Employee AHL Schedule</span>
                 <div className="rounded-xl border border-slate-200/60 overflow-hidden bg-slate-50/20">
                   <table className="w-full border-collapse text-left text-sm text-slate-700">
-                    <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                    <thead className="bg-slate-50 border-b border-slate-100 text-desc-secondary">
                       <tr>
                         <th className="px-4 py-2 font-mono body-sm">Employee Name / PIN</th>
                         <th className="px-4 py-2 text-right font-mono body-sm">Gross Salary</th>
@@ -1440,7 +1440,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                   onChange={(e) => setNewCommRate(Number(e.target.value))}
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-indigo-400 font-mono"
                 />
-                <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-sans">
+                <span className="absolute right-3 top-2.5 text-meta-muted font-sans">
                   Std: {SERVICE_STANDARD_RATES[newCategory]}%
                 </span>
               </div>

@@ -463,7 +463,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
               {metrics.rate} <span className="text-emerald-600/70 text-xl">+1.4% target</span>
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">Current period</span>
+            <span className="mt-1 text-desc-secondary">Current period</span>
           </div>
         </BoardPanel>
 
@@ -481,7 +481,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <span className="font-mono font-normal tracking-tight text-indigo-700 text-3xl">
               KES {(metrics.expected / 1000000).toFixed(2)}M
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">June period</span>
+            <span className="mt-1 text-desc-secondary">June period</span>
           </div>
         </BoardPanel>
 
@@ -519,7 +519,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
               {metrics.vacantCount} <span className="text-slate-400 text-xl">/</span> {metrics.defaulters}
             </span>
-            <span className="font-medium text-slate-500 mt-1 text-sm">Critical queues</span>
+            <span className="mt-1 text-desc-secondary">Critical queues</span>
           </div>
         </BoardPanel>
       </section>
@@ -528,7 +528,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
       <BoardPanel className="p-5 shadow-sm border-slate-200">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-medium text-slate-900 text-lg">Rent Performance Trends</h3>
+            <h3 className="text-heading-primary">Rent Performance Trends</h3>
             <p className="text-base text-slate-500">Expected monthly rental projections compared with committed collections.</p>
           </div>
           <div className="flex items-center gap-4 font-medium text-sm">
@@ -568,7 +568,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
         <h2 className="title-serif text-slate-900 font-normal capitalize">
           {activeTab.replace(/-/g, " ")} Ledger Panel
         </h2>
-        <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+        <p className="text-desc-secondary mt-1">
           {activeTab === "collections" && "Registry detailing collections book for expected rent, collected rent, and reconciliation status."}
           {activeTab === "deficits" && "Filtered audit queue focusing on units with outstanding tenant deficit balances."}
           {activeTab === "vacancies" && "Pipeline monitoring vacant units with property manager handovers."}
@@ -579,7 +579,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
       <BoardPanel className="p-0 overflow-hidden shadow-sm border-slate-200 animate-fade-in-up">
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
           <div>
-            <h3 className="text-base  font-medium text-slate-900 tracking-tight">Active Accounts Queue</h3>
+            <h3 className="text-title-primary">Active Accounts Queue</h3>
             <p className="mt-0.5 text-sm  text-slate-400">Click any row to reveal detailed ledger cards and historical statements.</p>
           </div>
           <Button variant="secondary" size="sm" className="bg-white border-slate-200">
@@ -590,7 +590,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
         {paginatedRows.length > 0 ? (
           <>
             <div className="overflow-x-auto bg-white">
-              <table className="w-full min-w-[760px] text-left text-sm  text-slate-600">
+              <table className="w-full min-w-[760px] text-left text-body-regular">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 label-caps">
                     <th className="px-5 py-3">Unit Code</th>
@@ -616,13 +616,13 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                         {row.unitCode}
                       </td>
                       <td className="px-5 py-3.5">
-                        <p className="text-base font-medium text-slate-800 leading-snug">{row.property}</p>
+                        <p className="text-title-primary leading-snug">{row.property}</p>
                         <p className="text-sm  text-slate-400 mt-0.5 flex items-center gap-1">
                           <IconMapPin size={12} className="text-slate-400" /> {row.location}
                         </p>
                       </td>
                       <td className="px-5 py-3.5">
-                        <p className="text-base font-medium text-slate-800">{row.tenantName}</p>
+                        <p className="text-title-primary">{row.tenantName}</p>
                         <span className="text-sm text-slate-400 font-medium">Period: {row.period}</span>
                       </td>
                       {activeTab !== "vacancies" && (
@@ -751,7 +751,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
       >
         <form onSubmit={handleLogPayment} className="space-y-4">
           <div>
-            <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Select Rental Unit</label>
+            <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Select Rental Unit</label>
             <select
               value={payUnitId}
               onChange={(e) => openPayModalFor(e.target.value)}
@@ -769,7 +769,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Payment Amount (KES)</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Payment Amount (KES)</label>
               <input
                 type="number"
                 required
@@ -780,7 +780,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
               />
             </div>
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Payment Method</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Payment Method</label>
               <select
                 value={payMethod}
                 onChange={(e) => setPayMethod(e.target.value as PaymentRecord["method"])}
@@ -795,7 +795,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
           </div>
 
           <div>
-            <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Transaction/Bank Reference</label>
+            <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Transaction/Bank Reference</label>
             <input
               type="text"
               placeholder="e.g. MP-REF105-NBO"
@@ -825,7 +825,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
       >
         <form onSubmit={handleSetPaymentPlan} className="space-y-4">
           <div>
-            <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Defaulter Unit</label>
+            <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Defaulter Unit</label>
             <select
               value={planUnitId}
               onChange={(e) => setPlanUnitId(e.target.value)}
@@ -843,7 +843,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Weekly Installment (KES)</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Weekly Installment (KES)</label>
               <input
                 type="number"
                 required
@@ -853,7 +853,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
               />
             </div>
             <div>
-              <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Plan Duration</label>
+              <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Plan Duration</label>
               <select
                 value={planWeeks}
                 onChange={(e) => setPlanWeeks(e.target.value)}
@@ -868,7 +868,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
           </div>
 
           <div>
-            <label className="text-base font-medium text-slate-500 uppercase tracking-wider block mb-1">Start Date</label>
+            <label className="uppercase tracking-wider block mb-1 text-desc-secondary">Start Date</label>
             <input
               type="date"
               required
@@ -941,7 +941,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
-                  <h4 className="text-base  font-medium text-slate-900 leading-snug">{selectedUnit.property}</h4>
+                  <h4 className="leading-snug text-title-primary">{selectedUnit.property}</h4>
                   <p className="text-base text-slate-500 mt-1 flex items-center gap-1">
                     <IconMapPin size={12} /> {selectedUnit.location}
                   </p>
@@ -987,7 +987,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                     <IconUser size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-base font-medium text-slate-800 leading-none mb-1">{selectedUnit.tenantName}</p>
+                    <p className="text-title-primary leading-none mb-1">{selectedUnit.tenantName}</p>
                     <p className="text-sm text-slate-400 leading-none">Active Leaseholder</p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -1029,7 +1029,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                   {selectedUnit.payments.map((p) => (
                     <div key={p.id} className="flex items-center justify-between border border-slate-100 bg-white rounded-lg p-3 shadow-xs">
                       <div>
-                        <p className="font-medium text-slate-800 text-base">KES {p.amount.toLocaleString()}</p>
+                        <p className="text-title-primary">KES {p.amount.toLocaleString()}</p>
                         <p className="text-sm text-slate-450 mt-0.5">Ref: {p.reference} ({p.method})</p>
                       </div>
                       <div className="text-right">

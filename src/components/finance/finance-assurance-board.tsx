@@ -316,7 +316,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
             <div className="space-y-6">
               <div>
                 <h3 className="title-serif font-normal text-slate-900">Assurance Drafting Desk</h3>
-                <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+                <p className="text-desc-secondary mt-1">
                   Select parameters to construct a cryptographically signed financial statement.
                 </p>
               </div>
@@ -523,7 +523,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
                 <div className="size-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-100 shadow-sm">
                   <IconFolder size={20} />
                 </div>
-                <h4 className="text-sm font-medium text-slate-800 font-sans">Audit Vault Empty</h4>
+                <h4 className="font-sans text-body-primary">Audit Vault Empty</h4>
                 <p className="text-slate-450 leading-relaxed font-sans text-base">
                   No generated statements are cataloged under this entity namespace. Switch to Generate to compile files.
                 </p>
@@ -548,7 +548,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
             <div className="space-y-6">
               <div>
                 <h3 className="title-serif font-normal text-slate-900">Cryptographic authenticator</h3>
-                <p className="text-slate-500 font-medium tracking-wide mt-1 text-base">
+                <p className="text-desc-secondary mt-1">
                   Validate the integrity hash of a printed statement against central registers.
                 </p>
               </div>
@@ -617,7 +617,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
                   <IconQrcode size={48} className="text-slate-400 opacity-60" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-slate-800 font-sans">Decrypting Hash Credentials</h4>
+                  <h4 className="font-sans text-body-primary">Decrypting Hash Credentials</h4>
                   <p className="text-slate-550 mt-1 font-sans text-sm">Comparing SHA-256 signatures against secure database ledger arrays...</p>
                 </div>
               </div>
