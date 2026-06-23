@@ -89,9 +89,9 @@ export function FinanceOperationsScheduler({
 
   // Closing Workflows State
   const [closingWorkflows, setClosingWorkflows] = useState([
-    { id: "cw1", title: "June Month-End Reconciliation Ledger", desc: "Review journal accruals and balance the sheet.", type: "Ledger", progress: 80, status: "In Progress" },
-    { id: "cw2", title: "Q2 Statutory Tax Filing Prep", desc: "Compile KRA returns and corporate statutory claims.", type: "Tax", progress: 0, status: "Awaiting Sign-off" },
-    { id: "cw3", title: "Annual Portfolio Insurance Review", desc: "Verification of coverage certificates for managed structures.", type: "Audit", progress: 0, status: "Scheduled" }
+    { id: "cw1", title: "Unposted General Journals", desc: "15 journal entries require posting to the general ledger.", type: "Ledger", progress: 60, status: "In Progress" },
+    { id: "cw2", title: "Suspense Account Clearance", desc: "Unallocated funds in suspense account need matching.", type: "Reconciliation", progress: 0, status: "Awaiting Sign-off" },
+    { id: "cw3", title: "Bank Reconciliation - Equity", desc: "Match statement balances for equity operational account.", type: "Banking", progress: 0, status: "Scheduled" }
   ]);
 
   // Modal form states
@@ -178,16 +178,24 @@ export function FinanceOperationsScheduler({
   };
 
   const handleWorkflowAction = (id: string) => {
+    const target = closingWorkflows.find(w => w.id === id);
+    if (target) {
+      if (target.status === "In Progress") {
+        pushToast({ tone: "success", title: "Journals Posted", body: `"${target.title}" successfully posted to ledger.` });
+      } else if (target.status === "Awaiting Sign-off") {
+        pushToast({ tone: "success", title: "Reconciliation Approved", body: `"${target.title}" signed off.` });
+      } else if (target.status === "Scheduled") {
+        pushToast({ tone: "success", title: "Reconciliation Started", body: `"${target.title}" verification logged.` });
+      }
+    }
+
     setClosingWorkflows(prev => prev.map(w => {
       if (w.id === id) {
         if (w.status === "In Progress") {
-          pushToast({ tone: "success", title: "Workflow Completed", body: `"${w.title}" has been balanced and closed.` });
           return { ...w, progress: 100, status: "Completed" };
         } else if (w.status === "Awaiting Sign-off") {
-          pushToast({ tone: "success", title: "Tax Returns Signed Off", body: `"${w.title}" signed off and filed with KRA.` });
           return { ...w, progress: 100, status: "Filed" };
         } else if (w.status === "Scheduled") {
-          pushToast({ tone: "success", title: "Audit Verification Logged", body: `"${w.title}" verified and logged.` });
           return { ...w, progress: 100, status: "Completed" };
         }
       }
@@ -353,7 +361,7 @@ export function FinanceOperationsScheduler({
         <div className="lg:col-span-5 flex flex-col">
           <BoardPanel className="flex flex-1 flex-col h-full">
             <div className="flex items-center justify-between mb-5 border-b border-slate-50 pb-3">
-              <h3 className="text-title-primary">Financial Closing Workflows</h3>
+              <h3 className="text-title-primary">Ledger Reconciliation & Posting Queue</h3>
               <span className="text-sm text-slate-450 font-normal">Click a card to progress task</span>
             </div>
 
@@ -362,7 +370,8 @@ export function FinanceOperationsScheduler({
                 const getToneStyle = (type: string) => {
                   switch (type.toLowerCase()) {
                     case "ledger": return { bg: "bg-blue-500", text: "text-blue-600", dot: "bg-blue-500", border: "group-hover:bg-blue-100" };
-                    case "tax": return { bg: "bg-purple-500", text: "text-purple-600", dot: "bg-purple-500", border: "group-hover:bg-purple-100" };
+                    case "reconciliation": return { bg: "bg-purple-500", text: "text-purple-600", dot: "bg-purple-500", border: "group-hover:bg-purple-100" };
+                    case "banking": return { bg: "bg-emerald-500", text: "text-emerald-600", dot: "bg-emerald-500", border: "group-hover:bg-emerald-100" };
                     default: return { bg: "bg-amber-500", text: "text-amber-600", dot: "bg-amber-500", border: "group-hover:bg-amber-100" };
                   }
                 };
