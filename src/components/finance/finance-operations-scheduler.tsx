@@ -211,7 +211,7 @@ export function FinanceOperationsScheduler({
       {/* ── Section Header ── */}
       <div className="py-5 border-t border-slate-200/60 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
         <div>
-          <h2 className="title-serif text-slate-900 font-normal">Finance Operations & Closing Scheduler</h2>
+          <h2 className="title-serif text-slate-900 font-normal">Financal Operations & Closing Scheduler</h2>
           <p className="text-desc-secondary mt-1">
             Itinerary, compliance check runs, and closing workflows.
           </p>
@@ -233,7 +233,7 @@ export function FinanceOperationsScheduler({
           {/* Quick Command Menu */}
           <div className="flex flex-col gap-3">
             <h3 className="text-title-primary px-1 mb-1">Quick Commands</h3>
-            
+
             <button onClick={onNewJournal} className="group relative w-full flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-[#151936] to-[#20254f] text-white shadow-md shadow-blue-900/20 hover:-translate-y-0.5 transition-all">
               <div className="flex items-center gap-3">
                 <div className="size-8 rounded-xl bg-white/10 flex items-center justify-center">
