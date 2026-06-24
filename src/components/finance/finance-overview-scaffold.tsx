@@ -666,7 +666,7 @@ export function FinanceOverviewScaffold() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h1 className="title-serif text-slate-900 text-3xl font-normal tracking-tight">
-              Financial Operations Command Center
+              Finance Command Center
             </h1>
             <Badge className="bg-blue-50 text-blue-700 border-none shadow-sm font-medium tracking-wide py-0.5 px-3 rounded-full">
               {context === "commercial" ? "Commercial Ledger" : "Consolidated Ledger"}
@@ -772,7 +772,7 @@ export function FinanceOverviewScaffold() {
       <FinanceOverviewCharts />
 
       {/* ── Finance Operations & Closing Scheduler ── */}
-      <FinanceOperationsScheduler 
+      <FinanceOperationsScheduler
         onNewJournal={() => { resetJournalForm(); setActiveModal("journal"); }}
         onLogCheque={() => setActiveModal("cheque")}
         onDraftMandate={() => setActiveModal("mandate")}
@@ -899,7 +899,7 @@ export function FinanceOverviewScaffold() {
                         {item.desc}
                       </p>
                     </div>
-                    
+
                     <div className="relative z-10 size-8 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-700 transition-colors shrink-0 group-hover:scale-105">
                       <IconArrowRight size={14} stroke={2.5} />
                     </div>
