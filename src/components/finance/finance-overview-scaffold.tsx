@@ -668,9 +668,6 @@ export function FinanceOverviewScaffold() {
             <h1 className="title-serif text-slate-900 text-3xl font-normal tracking-tight">
               Finance Command Center
             </h1>
-            <Badge className="bg-blue-50 text-blue-700 border-none shadow-sm font-medium tracking-wide py-0.5 px-3 rounded-full">
-              {context === "commercial" ? "Commercial Ledger" : "Consolidated Ledger"}
-            </Badge>
           </div>
 
           <div className="flex items-center gap-4">
