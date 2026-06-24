@@ -340,7 +340,7 @@ export default function LoginPage() {
       {/* Secure Session Redirection Overlay */}
       {loadingRole && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#151936]/90 backdrop-blur-sm text-white animate-fade-in">
-          <div className="flex flex-col items-center max-w-sm px-6 text-center">
+          <div className="flex flex-col items-center max-w-full px-6 text-center">
             <div className="relative mb-6">
               {/* Outer pulsing ring */}
               <div className="absolute inset-0 rounded-full border border-[#f3df27]/25 animate-ping" />

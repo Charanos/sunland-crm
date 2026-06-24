@@ -560,7 +560,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
       {/* ── Hero & KPI Cards Section ────────────────────────────────────────── */}
       <section className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4">
         {/* Left Column: Compact Hero Card */}
-        <div className="relative min-h-[220px] xl:min-h-auto overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#0c1f24] via-[#122a20] to-[#1e1b4b] p-6 text-white shadow-xl flex flex-col justify-between">
+        <div className="relative min-h-[220px] xl:min-h-auto overflow-hidden rounded-2xl border border-white/[0.06] bg-tertiary-gradient p-6 text-white shadow-xl flex flex-col justify-between">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.1),transparent_60%)]" />
           {/* Subtle background image */}
           <div
@@ -1153,7 +1153,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                         <tr key={deal.id}>
                           <td className="px-4 py-2">
                             <p className="font-medium text-slate-900 leading-none">{deal.agentName}</p>
-                            <span className="text-[10px] text-slate-400 font-mono tracking-tight">{deal.agentPin}</span>
+                            <span className="text-xs text-slate-400 font-mono tracking-tight">{deal.agentPin}</span>
                           </td>
                           <td className="px-4 py-2 text-right font-mono text-slate-700">{formatMoney(deal.grossPayout)}</td>
                           <td className="px-4 py-2 text-right font-mono text-rose-600 font-medium">-{formatMoney(deal.whtAmount)}</td>
@@ -1298,7 +1298,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                         <tr key={idx}>
                           <td className="px-4 py-2">
                             <p className="font-medium text-slate-900 leading-none">{emp.employeeName}</p>
-                            <span className="text-[10px] text-slate-400 font-mono tracking-tight">{emp.kraPin}</span>
+                            <span className="text-xs text-slate-400 font-mono tracking-tight">{emp.kraPin}</span>
                           </td>
                           <td className="px-4 py-2 text-right font-mono text-slate-700">{formatMoney(emp.grossPay)}</td>
                           <td className="px-4 py-2 text-right font-mono text-slate-600">{formatMoney(emp.employeeShare)}</td>

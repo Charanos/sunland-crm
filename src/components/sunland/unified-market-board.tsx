@@ -7,6 +7,16 @@ import { IconArrowUpRight } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
 import { PropertyDetailDrawer } from "./property-detail-drawer";
 import { PaginationControls } from "@/components/ui/erp-primitives";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  TooltipContentProps,
+} from "recharts";
 
 type PropertyType = "All Properties" | "Apartment" | "Commercial" | "House" | "Land" | "Villa";
 
@@ -48,6 +58,42 @@ const MASTER_INVENTORY: ListingCard[] = [
   { id: "8", title: "Kilimani Tech Hub", type: "Commercial", location: "Kilimani, Nairobi", price: 85000000, status: "Occupied", imageUrl: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=400&h=260&q=80", agent: AGENTS.michele },
   { id: "9", title: "Nanyuki Prime Plot", type: "Land", location: "Nanyuki", price: 15000000, status: "Available", imageUrl: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=400&h=260&q=80", agent: AGENTS.sarah },
 ];
+
+type ChartValue = number | string | readonly (number | string)[];
+type ChartName = number | string;
+
+// ── Custom Tooltips ──
+
+const OccupancyTooltip = ({ active, payload }: Partial<TooltipContentProps<ChartValue, ChartName>>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-xl border border-slate-100 bg-white/95 p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
+        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1">Portfolio Segment</p>
+        <div className="flex items-center gap-2">
+          <div className="size-2 rounded-full bg-[#122a20]" />
+          <span className="text-sm font-medium text-slate-800">Occupancy: {payload[0].value}%</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const PropertyPieTooltip = ({ active, payload }: Partial<TooltipContentProps<ChartValue, ChartName>>) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="rounded-xl border border-slate-100 bg-white/95 p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in font-sans">
+        <div className="flex items-center gap-2">
+          <div className="size-2.5 rounded-full" style={{ backgroundColor: data.color }} />
+          <span className="text-sm font-medium text-slate-800">{data.name}: {data.value}%</span>
+        </div>
+        <p className="text-xs text-slate-400 mt-0.5">{data.count} units in portfolio</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function UnifiedMarketBoard() {
   const [activeType, setActiveType] = useState<PropertyType>("All Properties");
@@ -111,6 +157,29 @@ export function UnifiedMarketBoard() {
     };
   }, [activeType]);
 
+  const barChartData = useMemo(() => {
+    return Array.from({ length: 47 }).map((_, i) => {
+      const h = activeType === "All Properties"
+        ? Math.max(20, Math.sin(i * 0.2) * 40 + 50 + (Math.sin(i * 0.5) * 10 - 5))
+        : Math.max(10, Math.sin(i * 0.4) * 30 + 40 + (Math.sin(i * 0.8) * 20 - 10));
+      return {
+        id: i,
+        occupancy: Math.round(h),
+      };
+    });
+  }, [activeType]);
+
+  const pieChartData = useMemo(() => {
+    return [
+      { name: "House", value: 40, color: "#0f766e", count: "1,514" },
+      { name: "Apartment", value: 20, color: "#0ea5e9", count: "757" },
+      { name: "Villa", value: 12, color: "#d97706", count: "454" },
+      { name: "Commercial", value: 8, color: "#4f46e5", count: "303" },
+      { name: "Land", value: 4, color: "#8b5cf6", count: "152" },
+      { name: "Other", value: 16, color: "#64748b", count: "606" },
+    ];
+  }, []);
+
   return (
     <div className="w-full my-12 md:my-16">
       {/* ── Unified Header & Controls ── */}
@@ -170,16 +239,13 @@ export function UnifiedMarketBoard() {
           </div>
 
           <div className="flex-1 flex flex-col justify-end">
-            <div className="flex items-end justify-between h-[120px] gap-[2px] mt-4 mb-2 relative overflow-hidden">
-              {/* Dynamic Bar Chart representation */}
-              {Array.from({ length: 47 }).map((_, i) => {
-                const h = activeType === "All Properties"
-                  ? Math.max(20, Math.sin(i * 0.2) * 40 + 50 + (Math.sin(i * 0.5) * 10 - 5))
-                  : Math.max(10, Math.sin(i * 0.4) * 30 + 40 + (Math.sin(i * 0.8) * 20 - 10));
-                return (
-                  <div key={i} className="w-full bg-[#151936] rounded-t-[2px] transition-all duration-700 hover:opacity-80" style={{ height: `${h}%` }}></div>
-                )
-              })}
+            <div className="h-[120px] w-full mt-4 mb-2 relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barChartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <Tooltip content={<OccupancyTooltip />} cursor={{ fill: "rgba(0,0,0,0.02)" }} />
+                  <Bar dataKey="occupancy" fill="#122a20" radius={[2, 2, 0, 0]} maxBarSize={6} animationDuration={800} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
             <div className="flex justify-between text-sm  text-slate-400 border-b border-slate-100 pb-3 mb-4">
               <span>Mon</span>
@@ -187,7 +253,7 @@ export function UnifiedMarketBoard() {
             </div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <div className="size-[12px] rounded-[3px] bg-[#151936]"></div>
+                <div className="size-[12px] rounded-[3px] bg-tertiary-emerald"></div>
                 <span className="text-sm text-slate-500">Occupied Units - {analytics.occupiedPercent}%</span>
               </div>
               <div className="flex items-center gap-2">
@@ -205,51 +271,65 @@ export function UnifiedMarketBoard() {
             <span className="text-sm text-[#151936] bg-[#eef2f6] px-2.5 py-1 rounded-md border border-[#eef2f6]/50">{activeType}</span>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center mb-6 mt-2">
+          <div className="flex-1 flex flex-col items-center justify-center mb-6 mt-2 relative">
             <div className="relative size-[140px] flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90 drop-shadow-sm">
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f8fafc" strokeWidth="16" />
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0f766e" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'House' || activeType === 'All Properties' ? '150.72' : '251.2'} className="transition-all duration-700" />
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0ea5e9" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Apartment' || activeType === 'All Properties' ? '200.96' : '251.2'} transform="rotate(144 50 50)" className="transition-all duration-700" />
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#d97706" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Villa' || activeType === 'All Properties' ? '221.05' : '251.2'} transform="rotate(216 50 50)" className="transition-all duration-700" />
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#4f46e5" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset={activeType === 'Commercial' || activeType === 'All Properties' ? '231.1' : '251.2'} transform="rotate(259 50 50)" className="transition-all duration-700" />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-full m-[22px] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Tooltip content={<PropertyPieTooltip />} />
+                  <Pie
+                    data={pieChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={60}
+                    paddingAngle={3}
+                    dataKey="value"
+                    stroke="none"
+                    animationDuration={800}
+                  >
+                    {pieChartData.map((entry, index) => {
+                      const isHighlighted = activeType === "All Properties" || activeType === entry.name;
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          opacity={isHighlighted ? 1 : 0.25}
+                          className="transition-all duration-300 outline-none"
+                        />
+                      );
+                    })}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-slate-800 leading-none mb-1 tracking-tight mono-stat">{analytics.totalProps}</span>
                 <span className="text-slate-400 text-center leading-[1.2] label-caps">Total<br />{activeType === 'All Properties' ? 'Property' : activeType}</span>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-y-5 gap-x-2 mt-auto">
-            <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'House' ? 'opacity-30' : 'opacity-100')}>
-              <div className="size-[34px] rounded-xl bg-[#0f766e] flex items-center justify-center text-sm text-white shadow-sm">40%</div>
-              <div>
-                <p className="text-sm text-slate-500 leading-none mb-1">House</p>
-                <p className="text-slate-800 leading-none mono-data">1,514</p>
-              </div>
-            </div>
-            <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Villa' ? 'opacity-30' : 'opacity-100')}>
-              <div className="size-[34px] rounded-xl bg-[#d97706] flex items-center justify-center text-sm text-white shadow-sm">12%</div>
-              <div>
-                <p className="text-sm text-slate-500 leading-none mb-1">Villa</p>
-                <p className="text-slate-800 leading-none mono-data">454</p>
-              </div>
-            </div>
-            <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Apartment' ? 'opacity-30' : 'opacity-100')}>
-              <div className="size-[34px] rounded-xl bg-[#0ea5e9] flex items-center justify-center text-sm text-white shadow-sm">20%</div>
-              <div>
-                <p className="text-sm text-slate-500 leading-none mb-1">Apartment</p>
-                <p className="text-slate-800 leading-none mono-data">757</p>
-              </div>
-            </div>
-            <div className={cn("flex items-center gap-3 transition-opacity duration-300", activeType !== 'All Properties' && activeType !== 'Commercial' ? 'opacity-30' : 'opacity-100')}>
-              <div className="size-[34px] rounded-xl bg-[#4f46e5] flex items-center justify-center text-sm text-white shadow-sm">8%</div>
-              <div>
-                <p className="text-sm text-slate-500 leading-none mb-1">Commercial</p>
-                <p className="text-slate-800 leading-none mono-data">303</p>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-y-4 gap-x-2 mt-auto">
+            {pieChartData.filter(d => d.name !== "Other").map((item) => {
+              const isHighlighted = activeType === "All Properties" || activeType === item.name;
+              return (
+                <div
+                  key={item.name}
+                  onClick={() => setActiveType(item.name as PropertyType)}
+                  className={cn(
+                    "flex items-center gap-3 transition-all duration-300 cursor-pointer p-1 rounded-lg hover:bg-slate-50/60",
+                    isHighlighted ? "opacity-100" : "opacity-35"
+                  )}
+                >
+                  <div className="size-[28px] rounded-lg flex items-center justify-center text-xs text-white shadow-sm font-mono shrink-0" style={{ backgroundColor: item.color }}>
+                    {item.value}%
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-slate-500 leading-none mb-1">{item.name}</p>
+                    <p className="text-slate-800 leading-none font-mono font-medium text-xs">{item.count}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -36,6 +36,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { cn } from "@/lib/utils/cn";
 import { formatCompactKES } from "@/lib/utils/format";
 import { Modal } from "@/components/ui/modal";
+import { FinanceOverviewCharts } from "./finance-overview-charts";
 import { FinanceOperationsScheduler } from "./finance-operations-scheduler";
 import { BoardPanel } from "@/components/ui/erp-primitives";
 import { useUIStore } from "@/store/ui";
@@ -214,6 +215,7 @@ export function FinanceOverviewScaffold() {
   // Shared state for live updates
   const [metrics, setMetrics] = useState(INITIAL_FINANCE_METRICS);
   const [activity, setActivity] = useState(INITIAL_RECENT_ACTIVITY);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [alerts, setAlerts] = useState(INITIAL_FINANCE_ALERTS);
   const [journalPostings, setJournalPostings] = useState(MOCK_JOURNAL_POSTINGS);
 
@@ -388,7 +390,8 @@ export function FinanceOverviewScaffold() {
   }), []);
 
   useEffect(() => {
-    setMounted(true);
+    const t = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(t);
   }, []);
 
   const handleRefresh = async () => {
@@ -693,7 +696,7 @@ export function FinanceOverviewScaffold() {
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
         {/* Net Cash Position */}
         <Link href="/fin/ledger/cash-flow" className="animate-fade-in-up">
-          <div className="relative p-5 rounded-2xl bg-[#151936] h-[145px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
+          <div className="relative p-5 rounded-2xl bg-tertiary-gradient h-[145px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
             <div className="absolute top-0 right-0 p-4 opacity-10 text-white"><IconBuildingBank size={80} /></div>
             <div className="flex items-center gap-2 relative z-10">
               <div className="size-[24px] rounded-full bg-white/10 flex items-center justify-center text-white">
@@ -765,56 +768,9 @@ export function FinanceOverviewScaffold() {
         </Link>
       </section>
 
-      {/* ── Quick Navigation Hub ── */}
-      <div className="pt-6 border-t border-slate-200/60 my-4 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 font-normal">Finance Dashboards Navigation</h2>
-        <p className="text-desc-secondary mt-1">
-          Quickly switch to specialized financial ledgers and sub-consoles.
-        </p>
-      </div>
+      {/* ── Data Visualization Tier ── */}
+      <FinanceOverviewCharts />
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-fade-in-up">
-        {[
-          { title: "Payables & Receivables", href: "/fin/ap-ar", desc: "Track corporate accounts payable and client receivables.", icon: IconScale, theme: "blue" },
-          { title: "Cheque Clearance", href: "/fin/cheques", desc: "Manage clearance, banking delays, and high-value approvals.", icon: IconReceipt2, theme: "amber" },
-          { title: "Payroll & Deductions", href: "/fin/payroll", desc: "Oversee employee compensations, PAYE, NSSF, and housing levies.", icon: IconCreditCardPay, theme: "purple" },
-          { title: "Commissions & WHT", href: "/fin/commissions", desc: "Reconcile agent payouts, sales fees, and withholding tax.", icon: IconCoins, theme: "emerald" },
-          { title: "General Ledger & Accounts", href: "/fin/ledger", desc: "Balance double-entry journals, chart of accounts, and Trial Balance.", icon: IconBuildingBank, theme: "slate" },
-          { title: "Rentals Ledger & Arrears", href: "/fin/rentals", desc: "Assess tenant collection rates, deposits, and rent arrears.", icon: IconBuildingEstate, theme: "teal" },
-          { title: "Landlord Mandates Ledger", href: "/fin/mandates", desc: "Oversee active property management rates and commission schedules.", icon: IconBuildingSkyscraper, theme: "indigo" }
-        ].map((item, idx) => {
-          const ItemIcon = item.icon;
-
-          // Generate theme classes dynamically
-          const wrapperClass = `bg-gradient-to-b from-white to-${item.theme}-50/30 border border-${item.theme}-100 hover:border-${item.theme}-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]`;
-          const iconWrapperClass = `bg-gradient-to-br from-${item.theme}-50 to-${item.theme}-100/50 text-${item.theme}-600 border border-${item.theme}-200/50`;
-          const titleHoverClass = `group-hover:text-${item.theme}-700`;
-
-          return (
-            <Link key={idx} href={item.href} className="group block h-full">
-              <div className={cn("p-5 rounded-2xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col justify-between h-full", wrapperClass)}>
-                {/* Large faint background icon */}
-                <div className={`absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4 text-${item.theme}-600`}>
-                  <ItemIcon size={80} stroke={1} />
-                </div>
-
-                <div className="relative z-10">
-                  <h3 className={cn("text-title-primary leading-snug transition-colors", titleHoverClass)}>
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed font-normal">
-                    {item.desc}
-                  </p>
-                </div>
-                <div className="mt-5 flex items-center gap-1.5 text-sm font-medium text-slate-400 group-hover:text-slate-700 transition-colors relative z-10">
-                  <span>Enter Ledger</span>
-                  <IconArrowRight size={14} stroke={2.5} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </section>
       {/* ── Finance Operations & Closing Scheduler ── */}
       <FinanceOperationsScheduler 
         onNewJournal={() => { resetJournalForm(); setActiveModal("journal"); }}
@@ -822,86 +778,138 @@ export function FinanceOverviewScaffold() {
         onDraftMandate={() => setActiveModal("mandate")}
         onRunPayroll={() => setActiveModal("payroll")}
       />
-      {/* ── Pending Approvals ── */}
-      <div className="pt-6 border-t border-slate-200/60 my-4 animate-fade-in-up">
-        <h2 className="title-serif text-slate-900 font-normal">Pending Approvals & Awaiting Decisions</h2>
-        <p className="text-desc-secondary mt-1">
-          Review and authorize pending financial transactions requiring secondary verification and sign-off.
-        </p>
-      </div>
 
-      <BoardPanel className="animate-fade-in-up">
-        {activeApprovals.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-body-regular">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 label-caps">
-                  <th className="pb-2.5 px-3 text-xs">Reference</th>
-                  <th className="pb-2.5 px-3 text-xs">Transaction Details</th>
-                  <th className="pb-2.5 px-3 text-right text-xs">Value (KES)</th>
-                  <th className="pb-2.5 px-3 text-center text-xs">Required Role</th>
-                  <th className="pb-2.5 px-3 text-right text-xs">Initiated By</th>
-                  <th className="pb-2.5 px-3 text-right text-xs">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {activeApprovals.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-3 text-value-mono">
-                      {item.id}
-                    </td>
-                    <td className="py-3 px-3">
-                      <p className="font-medium text-slate-800">{item.type}</p>
-                      <p className="text-meta-muted mt-0.5">{item.detail}</p>
-                    </td>
-                    <td className="py-3 px-3 text-right text-value-mono">
-                      KES {item.amount.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      <Badge tone="warning" className="py-0.5 px-2 font-medium">
-                        {item.role}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-3 text-right text-slate-500">
-                      <p className="font-medium text-slate-700">{item.requestedBy}</p>
-                      <p className="mt-0.5 text-meta-muted">{item.requestedAt}</p>
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setApprovalConfirm({ type: "approve", item })}
-                          className="flex items-center justify-center px-3 py-1 bg-[#f3df27] hover:bg-[#e6d220] text-[#151936] text-sm rounded-lg shadow-sm font-medium hover:-translate-y-0.5 transition-all"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setApprovalConfirm({ type: "reject", item });
-                            setRejectionReason("");
-                          }}
-                          className="flex items-center justify-center px-3 py-1 bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 text-sm rounded-lg shadow-sm font-medium hover:-translate-y-0.5 transition-all"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ── Split Screen: Approvals (Left) & Nav Hub (Right) ── */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 mt-4">
+        {/* Left Column: Pending Approvals (Col 8) */}
+        <div className="xl:col-span-8 flex flex-col">
+          <div className="pt-4 border-t border-slate-200/60 mb-4">
+            <h2 className="title-serif text-slate-900 font-normal">Pending Approvals & Awaiting Decisions</h2>
+            <p className="text-desc-secondary mt-1">
+              Review and authorize pending financial transactions requiring secondary verification and sign-off.
+            </p>
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="size-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
-              <IconCheck size={18} stroke={2.5} />
-            </div>
-            <p className="text-title-primary">All Transactions Authorized</p>
-            <p className="text-sm text-slate-400 mt-0.5">No pending items await GM/CEO decision sign-off.</p>
+
+          <BoardPanel className="flex-1 animate-fade-in-up">
+            {activeApprovals.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-body-regular">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-400 label-caps">
+                      <th className="pb-2.5 px-3 text-xs">Reference</th>
+                      <th className="pb-2.5 px-3 text-xs">Transaction Details</th>
+                      <th className="pb-2.5 px-3 text-right text-xs">Value (KES)</th>
+                      <th className="pb-2.5 px-3 text-center text-xs">Required Role</th>
+                      <th className="pb-2.5 px-3 text-right text-xs">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {activeApprovals.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="py-3 px-3 text-value-mono">
+                          {item.id}
+                        </td>
+                        <td className="py-3 px-3">
+                          <p className="font-medium text-slate-800">{item.type}</p>
+                          <p className="text-meta-muted mt-0.5">{item.detail}</p>
+                        </td>
+                        <td className="py-3 px-3 text-right text-value-mono whitespace-nowrap">
+                          KES {item.amount.toLocaleString()}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <Badge tone="warning" className="py-0.5 px-2 font-medium">
+                            {item.role}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setApprovalConfirm({ type: "approve", item })}
+                              className="flex items-center justify-center px-3 py-1.5 bg-[#f3df27] hover:bg-[#e6d220] text-[#151936] text-sm rounded-lg shadow-sm font-medium hover:-translate-y-0.5 transition-all"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setApprovalConfirm({ type: "reject", item });
+                                setRejectionReason("");
+                              }}
+                              className="flex items-center justify-center px-3 py-1.5 bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 text-sm rounded-lg shadow-sm font-medium hover:-translate-y-0.5 transition-all"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center h-full">
+                <div className="size-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
+                  <IconCheck size={18} stroke={2.5} />
+                </div>
+                <p className="text-title-primary">All Transactions Authorized</p>
+                <p className="text-sm text-slate-400 mt-0.5">No pending items await GM/CEO decision sign-off.</p>
+              </div>
+            )}
+          </BoardPanel>
+        </div>
+
+        {/* Right Column: Quick Navigation Hub (Col 4) */}
+        <div className="xl:col-span-4 flex flex-col">
+          <div className="pt-4 border-t border-slate-200/60 mb-4">
+            <h2 className="title-serif text-slate-900 font-normal">Dashboards Navigation</h2>
+            <p className="text-desc-secondary mt-1">
+              Switch to specialized financial ledgers.
+            </p>
           </div>
-        )}
-      </BoardPanel>
+
+          <div className="flex flex-col gap-3 animate-fade-in-up">
+            {[
+              { title: "Payables & Receivables", href: "/fin/ap-ar", desc: "Track accounts payable & receivables.", icon: IconScale, theme: "blue" },
+              { title: "Cheque Clearance", href: "/fin/cheques", desc: "Manage clearance and banking delays.", icon: IconReceipt2, theme: "amber" },
+              { title: "Payroll & Deductions", href: "/fin/payroll", desc: "Oversee compensations & PAYE.", icon: IconCreditCardPay, theme: "purple" },
+              { title: "Commissions & WHT", href: "/fin/commissions", desc: "Reconcile agent payouts & sales fees.", icon: IconCoins, theme: "emerald" },
+              { title: "General Ledger", href: "/fin/ledger", desc: "Double-entry journals & Trial Balance.", icon: IconBuildingBank, theme: "slate" },
+              { title: "Rentals & Arrears", href: "/fin/rentals", desc: "Assess tenant collection rates.", icon: IconBuildingEstate, theme: "teal" },
+              { title: "Mandates Ledger", href: "/fin/mandates", desc: "Manage active property commission rates.", icon: IconBuildingSkyscraper, theme: "indigo" }
+            ].map((item, idx) => {
+              const ItemIcon = item.icon;
+
+              const wrapperClass = `bg-gradient-to-r from-white to-${item.theme}-50/40 border border-${item.theme}-100 hover:border-${item.theme}-300 hover:shadow-[0_4px_20px_rgb(0,0,0,0.04)]`;
+              const titleHoverClass = `group-hover:text-${item.theme}-700`;
+
+              return (
+                <Link key={idx} href={item.href} className="group block">
+                  <div className={cn("px-4 py-3 rounded-xl transition-all duration-300 hover:-translate-y-0.5 relative overflow-hidden flex items-center justify-between gap-4", wrapperClass)}>
+                    {/* Background faint icon */}
+                    <div className={`absolute -right-2 top-1/2 -translate-y-1/2 opacity-5 group-hover:opacity-10 transition-opacity text-${item.theme}-600`}>
+                      <ItemIcon size={64} stroke={1} />
+                    </div>
+
+                    <div className="relative z-10 flex-1">
+                      <h3 className={cn("headline-md text-slate-800 leading-snug transition-colors", titleHoverClass)}>
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed font-normal truncate">
+                        {item.desc}
+                      </p>
+                    </div>
+                    
+                    <div className="relative z-10 size-8 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-700 transition-colors shrink-0 group-hover:scale-105">
+                      <IconArrowRight size={14} stroke={2.5} />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* ── Monotony Breaker: Collections & Landlord Mandates Ledger ── */}
       <div className="pt-6 border-t border-slate-200/60 my-4">

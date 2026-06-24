@@ -551,3 +551,16 @@ body.modal-open {
   background-color: rgba(21, 25, 54, 0.06);
   color: var(--sidebar);
 }
+
+/* ── Tertiary Dark Emerald/Forest Theme Utilities ── */
+.bg-tertiary-gradient {
+  background: linear-gradient(135deg, #0c1f24 0%, #122a20 50%, #1e1b4b 100%);
+}
+
+.bg-tertiary-emerald {
+  background-color: #122a20;
+}
+
+.text-tertiary-emerald {
+  color: #122a20;
+}

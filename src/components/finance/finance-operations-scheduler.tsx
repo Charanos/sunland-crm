@@ -290,16 +290,16 @@ export function FinanceOperationsScheduler({
                     <div className="size-7 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shadow-sm border border-blue-200/50">
                       <IconWallet size={14} stroke={2.5} />
                     </div>
-                    <span className="text-slate-500 label-caps text-[10px]">Treasury</span>
+                    <span className="text-slate-500 label-caps">Treasury</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100 text-blue-700 font-normal label-caps text-[10px]">
+                  <div className="flex items-center gap-1.5 bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100 text-blue-700 font-normal label-caps">
                     <span className="size-1.5 rounded-full bg-blue-500 animate-pulse" /> Reconciled
                   </div>
                 </div>
                 <div className="flex items-end justify-between mt-auto relative z-10">
                   <h3 className="font-mono font-normal tracking-tight text-blue-700 leading-none text-2xl">6</h3>
                   <div className="text-right">
-                    <p className="font-mono text-blue-600/80 label-caps text-[10px]">No holds</p>
+                    <p className="font-mono text-blue-600/80 label-caps">No holds</p>
                   </div>
                 </div>
               </BoardPanel>
@@ -315,16 +315,16 @@ export function FinanceOperationsScheduler({
                     <div className="size-7 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
                       <IconBuildingBank size={14} stroke={2.5} />
                     </div>
-                    <span className="text-slate-500 label-caps text-[10px]">Revenue</span>
+                    <span className="text-slate-500 label-caps">Revenue</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-100 text-emerald-700 font-normal label-caps text-[10px]">
+                  <div className="flex items-center gap-1.5 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-100 text-emerald-700 font-normal label-caps">
                     <span className="size-1.5 rounded-full bg-emerald-500" /> Active
                   </div>
                 </div>
                 <div className="flex items-end justify-between mt-auto relative z-10">
                   <h3 className="font-mono font-normal tracking-tight text-emerald-700 leading-none text-2xl">28</h3>
                   <div className="text-right">
-                    <p className="font-mono text-emerald-600/80 label-caps text-[10px]">10% std</p>
+                    <p className="font-mono text-emerald-600/80 label-caps">10% std</p>
                   </div>
                 </div>
               </BoardPanel>
@@ -340,16 +340,16 @@ export function FinanceOperationsScheduler({
                     <div className="size-7 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100/50 text-purple-600 flex items-center justify-center shadow-sm border border-purple-200/50">
                       <IconScale size={14} stroke={2.5} />
                     </div>
-                    <span className="text-slate-500 label-caps text-[10px]">Assurance</span>
+                    <span className="text-slate-500 label-caps">Assurance</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-purple-50/80 px-2 py-0.5 rounded-md border border-purple-100 text-purple-700 font-normal label-caps text-[10px]">
+                  <div className="flex items-center gap-1.5 bg-purple-50/80 px-2 py-0.5 rounded-md border border-purple-100 text-purple-700 font-normal label-caps">
                     Balanced
                   </div>
                 </div>
                 <div className="flex items-end justify-between mt-auto relative z-10">
                   <h3 className="font-mono font-normal tracking-tight text-purple-700 leading-none text-2xl">100%</h3>
                   <div className="text-right">
-                    <p className="font-mono text-purple-600/80 label-caps text-[10px]">JE-2026 Ready</p>
+                    <p className="font-mono text-purple-600/80 label-caps">JE-2026 Ready</p>
                   </div>
                 </div>
               </BoardPanel>
