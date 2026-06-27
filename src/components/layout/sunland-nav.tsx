@@ -164,6 +164,7 @@ function CollapsedFlyout({
 
 export function SunlandNav() {
   const pathname = usePathname();
+  const portalPrefix = pathname.startsWith("/fin") ? "/fin" : "/admin";
   const {
     activeSidebarSection,
     sidebarCollapsed,
@@ -446,9 +447,18 @@ export function SunlandNav() {
               return isFinRoute ? isFinSection : !isFinSection;
             })
             .map((section) => {
-              const items = section.items.filter((item) =>
-                canAccess(currentUser.role as UserRole, item.href)
-              );
+              const items = section.items
+                .filter((item) => canAccess(currentUser.role as UserRole, item.href))
+                .map((item) => {
+                  if (portalPrefix === "/fin" && item.href.startsWith("/admin/")) {
+                    const keys = ["settings", "profile", "notifications", "security", "messages"];
+                    const segment = item.href.split("/")[2];
+                    if (keys.includes(segment)) {
+                      return { ...item, href: item.href.replace("/admin/", "/fin/") };
+                    }
+                  }
+                  return item;
+                });
               return { ...section, items };
             })
             .filter((section) => section.items.length > 0)
@@ -739,7 +749,7 @@ export function SunlandNav() {
               {/* Actions */}
               <div className="p-1">
                 <Link
-                  href="/admin/profile"
+                  href={`${portalPrefix}/profile`}
                   onClick={() => setIsProfileOpen(false)}
                   className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
                 >
@@ -747,7 +757,7 @@ export function SunlandNav() {
                   My Profile
                 </Link>
                 <Link
-                  href="/admin/settings"
+                  href={`${portalPrefix}/settings`}
                   onClick={() => setIsProfileOpen(false)}
                   className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
                 >
@@ -755,7 +765,7 @@ export function SunlandNav() {
                   Settings & Preferences
                 </Link>
                 <Link
-                  href="/admin/messages"
+                  href={`${portalPrefix}/messages`}
                   onClick={() => setIsProfileOpen(false)}
                   className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
                 >
@@ -763,7 +773,7 @@ export function SunlandNav() {
                   Team Messages
                 </Link>
                 <Link
-                  href="/admin/security"
+                  href={`${portalPrefix}/security`}
                   onClick={() => setIsProfileOpen(false)}
                   className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
                 >

@@ -217,6 +217,8 @@ function NavActionBtn({
 
 function NotificationsPanel({ onClose }: { onClose: () => void }) {
   const [items, setItems] = useState(INITIAL_NOTIFICATIONS);
+  const pathname = usePathname();
+  const portalPrefix = pathname.startsWith("/fin") ? "/fin" : "/admin";
   const unread = items.filter((n) => !n.read).length;
 
   return (
@@ -289,7 +291,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
       {/* Footer */}
       <div className="border-t border-slate-100 px-4 py-2.5">
         <Link
-          href="/admin/notifications"
+          href={`${portalPrefix}/notifications`}
           onClick={onClose}
           className="text-caption flex items-center gap-1 text-[var(--tertiary)] transition-opacity hover:opacity-70"
         >
@@ -710,6 +712,8 @@ function Breadcrumb() {
 export function TopNav() {
   const { openMobileNav } = useUIStore();
   const router = useRouter();
+  const pathname = usePathname();
+  const portalPrefix = pathname.startsWith("/fin") ? "/fin" : "/admin";
 
   const [currentUser, setCurrentUser] = useState({
     name: "Paul Amos",
@@ -812,7 +816,7 @@ export function TopNav() {
 
           {/* Settings */}
           <Link
-            href="/admin/settings"
+            href={`${portalPrefix}/settings`}
             aria-label="Settings"
             onClick={closeAll}
             className="focus-ring relative flex size-9 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100/80 hover:text-slate-700"
@@ -862,15 +866,15 @@ export function TopNav() {
               <p className="text-base font-medium text-slate-800 truncate">{currentUser.name}</p>
               <p className="text-sm  text-slate-450 truncate mt-0.5">{formatRole(currentUser.role)}</p>
             </div>
-            <DropdownItem onClick={() => window.location.href = "/admin/profile"}>
+            <DropdownItem onClick={() => window.location.href = `${portalPrefix}/profile`}>
               <IconUser size={15} stroke={1.8} className="text-slate-500" />
               <span>My Profile</span>
             </DropdownItem>
-            <DropdownItem onClick={() => window.location.href = "/admin/settings"}>
+            <DropdownItem onClick={() => window.location.href = `${portalPrefix}/settings`}>
               <IconSettings size={15} stroke={1.8} className="text-slate-500" />
               <span>System Settings</span>
             </DropdownItem>
-            <DropdownItem onClick={() => window.location.href = "/admin/security"}>
+            <DropdownItem onClick={() => window.location.href = `${portalPrefix}/security`}>
               <IconShieldLock size={15} stroke={1.8} className="text-slate-500" />
               <span>Security & Keys</span>
             </DropdownItem>
@@ -917,7 +921,7 @@ export function TopNav() {
         <button
           type="button"
           aria-label="Notifications"
-          onClick={() => { closeAll(); router.push("/admin/notifications"); }}
+          onClick={() => { closeAll(); router.push(`${portalPrefix}/notifications`); }}
           className="relative flex size-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100"
         >
           <IconBell size={18} stroke={1.5} aria-hidden />
@@ -928,7 +932,7 @@ export function TopNav() {
 
         {/* Mobile profile avatar — navigates to profile page */}
         <Link
-          href="/admin/profile"
+          href={`${portalPrefix}/profile`}
           aria-label="My profile"
           className="shrink-0"
         >

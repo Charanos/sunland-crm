@@ -8,6 +8,11 @@ export const UNIVERSAL_PATHS = [
   "/admin/notifications",
   "/admin/security",
   "/admin/messages",
+  "/fin/profile",
+  "/fin/settings",
+  "/fin/notifications",
+  "/fin/security",
+  "/fin/messages",
 ];
 
 // ─── Role → allowed path prefixes ─────────────────────────────────────────────

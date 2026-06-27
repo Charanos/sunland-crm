@@ -174,3 +174,45 @@ A non-generic, creative reports dashboard was created under `/fin/reports` to ma
   3. **Verification Receipt:** Generates the secure scannable QR receipt displaying check assets side-by-side.
 - **Impurity Safeguard:** Enforces React purity rules by calculating hashes at event-time, preserving stable states during page layouts.
 
+---
+
+## 10. Standalone Account Portals under Finance Route Scopes
+
+### 10.1 Portal Routing Integrity
+- **Routes Created:**
+  - `/fin/profile`
+  - `/fin/settings`
+  - `/fin/notifications`
+  - `/fin/messages`
+  - `/fin/security`
+- **Reusability:** Created modular shared views under `src/components/shared/*` which are rendered within both `/admin/*` and `/fin/*` route definitions. This keeps layout state local to the active portal and guarantees the URL prefix never forces a cross-portal redirect to `/admin`.
+- **Whitelisted Permissions:** Expanded `UNIVERSAL_PATHS` inside [roles.ts](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/lib/auth/roles.ts) to permit `/fin` prefixes as universal, allowing any authenticated employee in the Finance dashboard to access settings/notifications directly.
+
+### 10.2 Dynamic Portal Prefix Navigation
+- **Files Modified:** [top-nav.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/layout/top-nav.tsx), [sunland-nav.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/layout/sunland-nav.tsx), [mobile-nav.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/layout/mobile-nav.tsx)
+- **Mechanism:** Inspects pathnames using `usePathname()`. Resolves links dynamically to `/fin` or `/admin` routes on-the-fly, ensuring the profile dropdown, header icons, and mobile drawer routes remain within the user's active portal boundary.
+
+---
+
+## 11. Elevated Visual Designs and Interactivity
+
+### 11.1 Premium Satin Design Standard
+- **Uniform Page Widths:** Raised maximum page width constraints to `max-w-[98rem]` across Settings, Profile, Notifications, Messages, and Security. This matches the exact dimensions of main dashboards, establishing architectural grid uniformity.
+- **Design Tokens Integration:** Eliminated all ad-hoc inline text styling and font weights, replacing them with standardized design classes (`.headline-md`, `.text-label`, `.mono-data`, `label-caps`, `badge-pill`) to preserve theme consistency.
+
+### 11.2 Premium Notifications Hub Revamp
+- **Aesthetic:** Wrapped header details in deep satin gradient panels matching the commissions board.
+- **Interactivity:**
+  - **Unread Status:** Styled unread messages with custom left borders and subtle background highlights.
+  - **Inspection Drawer:** Clicking a notification opens a custom details modal printing audit logs, transaction parameters, and metadata.
+  - **Bulk Actions:** Standardized "Mark all read" and "Clear Read" actions displaying progress spinners during state operations.
+
+### 11.3 Collaborative Messages Center Revamp
+- **Layout:** Re-engineered DM & Channels into a professional split-pane chat console.
+- **Features:** Grouped message logs by day badges, color-coded bubble states, read/delivery checkmarks, typing indicators, and mock database query auto-replies with push alert triggers.
+
+### 11.4 Security & Key Management Revamp
+- **MFA setup wizard:** Setup flow displaying a TOTP barcode setup using `qrcode.react`, secret key copy controls, and verification steps.
+- **Security Logs:** Segmented risk indexes (Low / Medium / High) inside scrollable logs displaying IP logs and actors.
+
+

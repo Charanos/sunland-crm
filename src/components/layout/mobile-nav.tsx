@@ -72,18 +72,32 @@ export function MobileBottomNav() {
 
 export function MobileNavigationDrawer() {
   const pathname = usePathname();
+  const portalPrefix = pathname.startsWith("/fin") ? "/fin" : "/admin";
   const router = useRouter();
   const { closeMobileNav, mobileNavOpen, setSelectedChatDMId } = useUIStore();
   const activeNavItem = getActiveNavItem(pathname);
   const activeSection = findSectionByPath(pathname);
   const navRef = useRef<HTMLDivElement>(null);
 
-  // Route-aware section filtering (match desktop sidebar logic)
   const isFinRoute = pathname.startsWith("/fin");
-  const filteredSections = navSections.filter((section) => {
-    const isFinSection = section.id.startsWith("finance");
-    return isFinRoute ? isFinSection : !isFinSection;
-  });
+  const filteredSections = navSections
+    .filter((section) => {
+      const isFinSection = section.id.startsWith("finance");
+      return isFinRoute ? isFinSection : !isFinSection;
+    })
+    .map((section) => {
+      const items = section.items.map((item) => {
+        if (portalPrefix === "/fin" && item.href.startsWith("/admin/")) {
+          const keys = ["settings", "profile", "notifications", "security", "messages"];
+          const segment = item.href.split("/")[2];
+          if (keys.includes(segment)) {
+            return { ...item, href: item.href.replace("/admin/", "/fin/") };
+          }
+        }
+        return item;
+      });
+      return { ...section, items };
+    });
 
   // Accordion: allow multiple open sections, auto-open active one
   const [openSections, setOpenSections] = useState<string[]>([activeSection.id]);
@@ -344,7 +358,7 @@ export function MobileNavigationDrawer() {
         <div className="shrink-0 border-t border-white/[0.08] p-3">
           <div className="flex items-center gap-2">
             <Link
-              href="/admin/profile"
+              href={`${portalPrefix}/profile`}
               onClick={closeMobileNav}
               className="flex flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-white/[0.06]"
             >
@@ -358,7 +372,7 @@ export function MobileNavigationDrawer() {
             </Link>
             <div className="flex items-center gap-1">
               <Link
-                href="/admin/settings"
+                href={`${portalPrefix}/settings`}
                 onClick={closeMobileNav}
                 aria-label="Settings"
                 className="flex size-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/[0.08] hover:text-white/70"
@@ -366,7 +380,7 @@ export function MobileNavigationDrawer() {
                 <IconSettings size={15} aria-hidden />
               </Link>
               <Link
-                href="/admin/security"
+                href={`${portalPrefix}/security`}
                 onClick={closeMobileNav}
                 aria-label="Security"
                 className="flex size-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/[0.08] hover:text-white/70"

@@ -1,5 +1,5 @@
 import { SecurityPageContent } from "@/components/shared/security-page-content";
 
-export default function SecurityPage() {
+export default function FinSecurityPage() {
   return <SecurityPageContent />;
 }

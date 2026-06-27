@@ -1,5 +1,5 @@
 import { MessagesPageContent } from "@/components/shared/messages-page-content";
 
-export default function MessagesPage() {
+export default function FinMessagesPage() {
   return <MessagesPageContent />;
 }
