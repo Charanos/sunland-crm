@@ -114,3 +114,63 @@ A non-generic, creative reports dashboard was created under `/fin/reports` to ma
 
 - **Type Safety:** Running `npm run typecheck` completes with **0 compilation errors**, confirming all React nodes and Tabler icons have correct TypeScript bindings.
 - **Realtime / DB Integrity:** Submissions dynamically post records into the PostgreSQL schema, recalculating metric cards immediately on page reload.
+
+---
+
+## 7. Next.js 16 Proxy Migration & Universal Access Routes
+
+### 7.1 Next.js 16 Edge Proxy Convention
+- **File:** [proxy.ts](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/proxy.ts)
+- **Change:** Migrated from `middleware.ts` to `proxy.ts` to match the official Next.js 16 Edge Proxy specification. Renamed the exported function from `middleware` to `proxy`.
+- **Reasoning:** In Next.js 16.2+, the `proxy.ts` Edge convention manages route guarding, inspecting cookies before dispatching to routes, avoiding build-time dynamic redirects.
+
+### 7.2 Universal White-Listed Access Paths
+- **File:** [roles.ts](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/lib/auth/roles.ts)
+- **Change:** Introduced `UNIVERSAL_PATHS` and `isUniversalPath()` validator. Whitelisted common account/personal modules:
+  - `/admin/profile`
+  - `/admin/settings`
+  - `/admin/notifications`
+  - `/admin/security`
+  - `/admin/messages`
+- **Behavior:** These routes bypass portal role enforcement. A Finance or HR head can access Settings or Profile directly under `/admin/*` without getting bounced back to their respective portal roots (`/fin` or `/admin/hr`).
+
+---
+
+## 8. Standalone Workspace Settings & Profile CRUD
+
+### 8.1 Standalone Account Settings Portal
+- **File:** [page.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/app/(app)/(ceo)/admin/settings/page.tsx)
+- **Change:** Built out a rich workspace management system backed by client-side local persistence (rehydrates state synchronously during mount to prevent SSR mismatch).
+- **Features:**
+  - **Workspace:** Custom timezone selection, fiscal calendar start, regional country controls, and currency tags.
+  - **Display:** Active theme switcher (Light / Dark / System), padding density selector, sidebar auto-collapse toggle, and accent hex-color picker.
+  - **Notifications:** Segmented switches for digests, push notifications, cheques, lease alerts, and custom frequency periods.
+  - **Data Actions:** Export user configurations as JSON files, trigger database cache purges, and reset system profiles.
+
+### 8.2 Live Self-Service Profile CRUD
+- **File:** [page.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/app/(app)/(ceo)/admin/profile/page.tsx)
+- **Change:** Created a client-side database interface for staff profile edits.
+- **Features:**
+  - **Photo Upload:** Integrated drag-and-drop FileReader upload previewing image attachments instantly.
+  - **Inline Editing:** Full interactive field inputs for contact numbers, emails, and departments displaying animated status spinners during mock network updates.
+  - **Security Tab:** Password updates matching complex policy criteria (length, casing, special symbols) with visual strength indicators.
+  - **Session Management:** Displays active access sessions (device, location, browser). Supports revoking single external logins or clearing inactive logins in bulk.
+
+---
+
+## 9. banker's Cheque Capture & Cryptographic QR Proofs
+
+### 9.1 Verification QR Proof Upgrades
+- **File:** [finance-qr-proof.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/finance/finance-qr-proof.tsx)
+- **Change:** Upgraded static placeholder codes to functional QR generation using `qrcode.react`.
+- **Payload:** Embeds JSON datasets containing standard tracking attributes (amount, date, payer, registry verify link).
+- **Features:** Includes PNG downloads for storage and native sharing via the Web Share API.
+
+### 9.2 Banker's Cheque Logging Wizard
+- **File:** [cheques-clearance-board.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/components/finance/cheques-clearance-board.tsx)
+- **Change:** Created a 3-step wizard in the Cheque Board for logging physical deposits:
+  1. **Form Entry:** Captures check values, banks, clearing categories, and references.
+  2. **Camera Capture:** Fires user webcam capture fields (`navigator.mediaDevices.getUserMedia`) with alternate file upload fallbacks to attach physical cheque images.
+  3. **Verification Receipt:** Generates the secure scannable QR receipt displaying check assets side-by-side.
+- **Impurity Safeguard:** Enforces React purity rules by calculating hashes at event-time, preserving stable states during page layouts.
+

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -36,24 +36,27 @@ import Image from "next/image";
 export const TEAM_MEMBERS = [
   {
     id: 1,
-    name: "Esther Howard",
+    name: "Amina Hassan",
     role: "Property Manager",
     status: "online" as const,
-    avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face",
+    avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=faces",
+    dmId: "dm1",
   },
   {
     id: 2,
-    name: "Jacob Jones",
-    role: "Sales Agent",
-    status: "away" as const,
-    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face",
+    name: "James Mutua",
+    role: "Head of BD",
+    status: "online" as const,
+    avatarUrl: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=80&h=80&fit=crop&crop=faces",
+    dmId: "dm2",
   },
   {
     id: 3,
-    name: "Cody Fisher",
-    role: "Accounts Officer",
-    status: "online" as const,
-    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=face",
+    name: "Grace Omondi",
+    role: "Finance Officer",
+    status: "away" as const,
+    avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&h=80&fit=crop&crop=faces",
+    dmId: "dm3",
   },
 ];
 
@@ -735,12 +738,45 @@ export function SunlandNav() {
 
               {/* Actions */}
               <div className="p-1">
-                <ProfileMenuItem icon={IconUserCircle} label="My Profile" />
-                <ProfileMenuItem icon={IconSettings} label="Preferences" />
-                <ProfileMenuItem icon={IconUsersGroup} label="Team Members" />
-                <ProfileMenuItem icon={IconShield} label="Security & Access" />
-                <ProfileMenuItem icon={IconKeyboard} label="Keyboard Shortcuts" />
-                <ProfileMenuItem icon={IconHelp} label="Help & Support" />
+                <Link
+                  href="/admin/profile"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                >
+                  <IconUserCircle size={14} aria-hidden className="shrink-0 opacity-65" />
+                  My Profile
+                </Link>
+                <Link
+                  href="/admin/settings"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                >
+                  <IconSettings size={14} aria-hidden className="shrink-0 opacity-65" />
+                  Settings & Preferences
+                </Link>
+                <Link
+                  href="/admin/messages"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                >
+                  <IconUsersGroup size={14} aria-hidden className="shrink-0 opacity-65" />
+                  Team Messages
+                </Link>
+                <Link
+                  href="/admin/security"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                >
+                  <IconShield size={14} aria-hidden className="shrink-0 opacity-65" />
+                  Security & Access
+                </Link>
+                <a
+                  href="mailto:support@sunland.co.ke"
+                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                >
+                  <IconHelp size={14} aria-hidden className="shrink-0 opacity-65" />
+                  Help & Support
+                </a>
               </div>
 
               {/* Log out */}
@@ -827,9 +863,20 @@ export function SunlandNav() {
   );
 }
 
-// ─── Profile menu item helper ─────────────────────────────────────────────────
+// ─── Profile menu item helper (kept for backward compat if reused) ─────────────
 
-function ProfileMenuItem({ icon: ItemIcon, label }: { icon: Icon; label: string }) {
+function ProfileMenuItem({ icon: ItemIcon, label, href }: { icon: Icon; label: string; href?: string }) {
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+      >
+        <ItemIcon size={14} aria-hidden className="shrink-0 opacity-65" />
+        {label}
+      </Link>
+    );
+  }
   return (
     <button
       type="button"

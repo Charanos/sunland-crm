@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   IconSearch,
   IconCoins,
@@ -8,11 +9,16 @@ import {
   IconBuildingBank,
   IconAlertTriangle,
   IconShieldCheck,
-  IconTimeline,
   IconBan,
   IconTransfer,
   IconScale,
-  IconClock
+  IconClock,
+  IconPlus,
+  IconCamera,
+  IconUpload,
+  IconQrcode,
+  IconX,
+  IconArrowRight,
 } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast-provider";
@@ -197,6 +203,28 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
   const [retReason, setRetReason] = useState<NonNullable<ChequeRecord["returnReason"]>>("Insufficient Funds");
   const [retAction, setRetAction] = useState<NonNullable<ChequeRecord["followUpAction"]>>("Tenant Notified");
 
+  // ── Log New Cheque modal state ──────────────────────────────────────────────
+  const [logOpen, setLogOpen] = useState(false);
+  const [logStep, setLogStep] = useState<"form" | "photo" | "qr">("form");
+  const [logSubmitting, setLogSubmitting] = useState(false);
+  const [logPhotoUrl, setLogPhotoUrl] = useState<string | null>(null);
+  const [logGenerated, setLogGenerated] = useState<ChequeRecord | null>(null);
+  const [logQrToken, setLogQrToken] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [usingCamera, setUsingCamera] = useState(false);
+  const [logForm, setLogForm] = useState({
+    chequeNumber: "",
+    payerName: "",
+    bankName: "",
+    amount: "",
+    description: "",
+    source: "Front Office" as ChequeRecord["source"],
+    depositedDate: new Date().toISOString().split("T")[0],
+  });
+
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 0);
     return () => clearTimeout(t);
@@ -209,6 +237,87 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
 
   const openReturnModalFor = (c: ChequeRecord) => {
     setReturnCheque(c);
+  };
+
+  // ── Log New Cheque handlers ─────────────────────────────────────────────────
+
+  const stopCamera = useCallback(() => {
+    cameraStream?.getTracks().forEach(t => t.stop());
+    setCameraStream(null);
+    setUsingCamera(false);
+  }, [cameraStream]);
+
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      setCameraStream(stream);
+      setUsingCamera(true);
+      if (videoRef.current) { videoRef.current.srcObject = stream; }
+    } catch {
+      pushToast({ tone: "warning", title: "Camera unavailable", body: "Could not access camera. Please upload a photo instead." });
+    }
+  }, [pushToast]);
+
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d")?.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
+    setLogPhotoUrl(dataUrl);
+    stopCamera();
+  }, [stopCamera]);
+
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setLogPhotoUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleLogSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!logForm.chequeNumber || !logForm.payerName || !logForm.bankName || !logForm.amount) return;
+    setLogStep("photo");
+  };
+
+  const handleLogFinalize = async () => {
+    setLogSubmitting(true);
+    await new Promise(r => setTimeout(r, 800));
+    // Generate a stable token at event-time (not during render)
+    const stableToken = `CHQ-${Date.now()}`;
+    const newRecord: ChequeRecord = {
+      id: `c${Date.now()}`,
+      chequeNumber: logForm.chequeNumber,
+      payerName: logForm.payerName,
+      bankName: logForm.bankName,
+      amount: parseFloat(logForm.amount.replace(/,/g, "")),
+      depositedDate: logForm.depositedDate,
+      status: "Pending",
+      description: logForm.description || `Cheque received from ${logForm.payerName}`,
+      source: logForm.source,
+      holder: "Finance Officer",
+      auditLog: ["Logged via Sunland ERP Cheque Board", logPhotoUrl ? "Cheque photo captured and attached" : "No photo attached"],
+    };
+    setCheques(prev => [newRecord, ...prev]);
+    setLogGenerated(newRecord);
+    setLogQrToken(stableToken); // store for render-time use
+    setLogStep("qr");
+    setLogSubmitting(false);
+    pushToast({ tone: "success", title: "Cheque Logged", body: `${newRecord.chequeNumber} added to the deposited queue.` });
+  };
+
+  const resetLogModal = () => {
+    stopCamera();
+    setLogOpen(false);
+    setLogStep("form");
+    setLogPhotoUrl(null);
+    setLogGenerated(null);
+    setLogQrToken("");
+    setLogForm({ chequeNumber: "", payerName: "", bankName: "", amount: "", description: "", source: "Front Office", depositedDate: new Date().toISOString().split("T")[0] });
   };
 
   // --- Handlers ---
@@ -387,6 +496,16 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
       <BoardHeader
         title="Banker's Cheques Clearance Board"
         description="Verify deposited checks in clearing, confirm bank credits to post double-entries, and track returned checks."
+        actions={
+          <button
+            type="button"
+            onClick={() => setLogOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-[var(--sidebar)] px-4 py-2 text-caption text-white shadow-sm hover:opacity-90 transition-all"
+          >
+            <IconPlus size={14} />
+            Log New Cheque
+          </button>
+        }
       />
 
       <FinanceModuleNav />
@@ -1206,6 +1325,266 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
           </div>
         )}
       </Drawer>
+      {/* ── Log New Cheque Modal (3-step: Form → Photo Capture → QR) ── */}
+      {logOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={resetLogModal} />
+
+          <div className="relative z-10 w-full max-w-lg animate-scale-in">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-2xl overflow-hidden">
+
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  {/* Breadcrumb steps */}
+                  {(["Form", "Photo", "QR"] as const).map((s, i) => (
+                    <div key={s} className="flex items-center gap-1.5">
+                      <div className={cn(
+                        "size-5 rounded-full flex items-center justify-center text-[10px] transition-all",
+                        (logStep === "form" && i === 0) || (logStep === "photo" && i === 1) || (logStep === "qr" && i === 2)
+                          ? "bg-[var(--sidebar)] text-white"
+                          : (i === 0 && logStep !== "form") || (i === 1 && logStep === "qr")
+                          ? "bg-emerald-500 text-white"
+                          : "bg-slate-100 text-slate-400"
+                      )}>
+                        {((i === 0 && logStep !== "form") || (i === 1 && logStep === "qr")) ? <IconCheck size={10} stroke={3} /> : i + 1}
+                      </div>
+                      <span className="text-tiny text-slate-500 hidden sm:inline">{s}</span>
+                      {i < 2 && <IconArrowRight size={11} className="text-slate-300" />}
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={resetLogModal} className="text-slate-400 hover:text-slate-600 transition-colors">
+                  <IconX size={18} />
+                </button>
+              </div>
+
+              {/* Step 1: Form */}
+              {logStep === "form" && (
+                <form onSubmit={handleLogSubmit} className="p-6 space-y-4">
+                  <h2 className="headline-md text-slate-900 mb-1">Log New Cheque</h2>
+                  <p className="text-tiny text-slate-500 mb-4">Enter cheque details then attach a photo.</p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label-caps text-slate-400 mb-1.5 block">Cheque Number</label>
+                      <input required value={logForm.chequeNumber}
+                        onChange={e => setLogForm(p => ({ ...p, chequeNumber: e.target.value }))}
+                        placeholder="CHQ-XXXX"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-caption text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="label-caps text-slate-400 mb-1.5 block">Amount (KES)</label>
+                      <input required value={logForm.amount}
+                        onChange={e => setLogForm(p => ({ ...p, amount: e.target.value }))}
+                        placeholder="e.g. 250,000"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-caption font-mono text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Payer / Drawer Name</label>
+                    <input required value={logForm.payerName}
+                      onChange={e => setLogForm(p => ({ ...p, payerName: e.target.value }))}
+                      placeholder="Company or individual name"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-caption text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label-caps text-slate-400 mb-1.5 block">Clearing Bank</label>
+                      <input required value={logForm.bankName}
+                        onChange={e => setLogForm(p => ({ ...p, bankName: e.target.value }))}
+                        placeholder="NCBA, Equity…"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-caption text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="label-caps text-slate-400 mb-1.5 block">Deposit Date</label>
+                      <input type="date" value={logForm.depositedDate}
+                        onChange={e => setLogForm(p => ({ ...p, depositedDate: e.target.value }))}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-caption text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Source</label>
+                    <select value={logForm.source}
+                      onChange={e => setLogForm(p => ({ ...p, source: e.target.value as ChequeRecord["source"] }))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-caption text-slate-800 focus:outline-none transition-all">
+                      <option>Front Office</option>
+                      <option>Finance</option>
+                      <option>Rentals</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Description (optional)</label>
+                    <input value={logForm.description}
+                      onChange={e => setLogForm(p => ({ ...p, description: e.target.value }))}
+                      placeholder="e.g. Rent settlement for Unit 4B"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-caption text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all" />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onClick={resetLogModal}
+                      className="px-4 py-2 rounded-xl border border-slate-200 text-caption text-slate-600 hover:bg-slate-50 transition-colors">
+                      Cancel
+                    </button>
+                    <button type="submit"
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--sidebar)] text-caption text-white hover:opacity-90 transition-all">
+                      Next: Attach Photo <IconArrowRight size={13} />
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Step 2: Photo Capture */}
+              {logStep === "photo" && (
+                <div className="p-6 space-y-4">
+                  <h2 className="headline-md text-slate-900">Attach Cheque Photo</h2>
+                  <p className="text-tiny text-slate-500">Capture or upload a photo of the physical cheque for audit trail.</p>
+
+                  {/* Camera/Photo area */}
+                  <div className="relative rounded-2xl border-2 border-dashed border-slate-200 overflow-hidden bg-slate-50 min-h-[220px] flex items-center justify-center">
+                    {usingCamera ? (
+                      <div className="relative w-full">
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-xl" />
+                        <canvas ref={canvasRef} className="hidden" />
+                        <button type="button" onClick={capturePhoto}
+                          className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-white px-5 py-2 text-caption text-slate-800 shadow-lg hover:bg-slate-50 transition-colors">
+                          <IconCamera size={14} />
+                          Capture Photo
+                        </button>
+                      </div>
+                    ) : logPhotoUrl ? (
+                      <div className="relative w-full">
+                        <img src={logPhotoUrl} alt="Cheque" className="w-full rounded-xl object-contain max-h-[250px]" />
+                        <button type="button" onClick={() => setLogPhotoUrl(null)}
+                          className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors">
+                          <IconX size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-4 p-8 text-center">
+                        <div className="size-14 rounded-2xl bg-slate-100 flex items-center justify-center">
+                          <IconCamera size={24} className="text-slate-400" />
+                        </div>
+                        <div>
+                          <p className="text-caption text-slate-700">Capture or upload a cheque photo</p>
+                          <p className="text-tiny text-slate-400 mt-0.5">JPEG or PNG · Recommended: full cheque visible</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button type="button" onClick={startCamera}
+                            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-caption text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                            <IconCamera size={14} />
+                            Use Camera
+                          </button>
+                          <button type="button" onClick={() => fileInputRef.current?.click()}
+                            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-caption text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                            <IconUpload size={14} />
+                            Upload Photo
+                          </button>
+                        </div>
+                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <button type="button" onClick={() => setLogStep("form")}
+                      className="px-4 py-2 rounded-xl border border-slate-200 text-caption text-slate-600 hover:bg-slate-50 transition-colors">
+                      Back
+                    </button>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={handleLogFinalize}
+                        disabled={logSubmitting}
+                        className="px-4 py-2 rounded-xl border border-slate-200 text-caption text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50">
+                        Skip Photo
+                      </button>
+                      <button type="button" onClick={handleLogFinalize}
+                        disabled={!logPhotoUrl || logSubmitting}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--sidebar)] text-caption text-white hover:opacity-90 transition-all disabled:opacity-40">
+                        {logSubmitting ? <span className="size-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : <IconQrcode size={14} />}
+                        Generate QR
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: QR Code Proof */}
+              {logStep === "qr" && logGenerated && (
+                <div className="p-6 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h2 className="headline-md text-slate-900">Cheque QR Generated</h2>
+                      <p className="text-tiny text-slate-500 mt-0.5">{logGenerated.chequeNumber} · {logGenerated.bankName}</p>
+                    </div>
+                    <span className="badge-pill badge-tone-success">Logged</span>
+                  </div>
+
+                  {/* Cheque photo thumbnail + QR side by side */}
+                  <div className="flex items-start gap-4">
+                    {logPhotoUrl && (
+                      <div className="shrink-0">
+                        <p className="label-caps text-slate-400 mb-1.5">Cheque Photo</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={logPhotoUrl} alt="Cheque" className="w-32 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <p className="label-caps text-slate-400 mb-1.5">Verification QR Code</p>
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm inline-block">
+                        <QRCodeSVG
+                          value={JSON.stringify({
+                            ref: logGenerated.chequeNumber,
+                            type: "Banker's Cheque — Clearance Record",
+                            entity: logGenerated.payerName,
+                            bank: logGenerated.bankName,
+                            amount: logGenerated.amount,
+                            deposited: logGenerated.depositedDate,
+                            token: logQrToken,
+                            verify: `${typeof window !== "undefined" ? window.location.origin : "https://sunland.co.ke"}/fin/reports/verify/${logQrToken}`,
+                          })}
+                          size={120}
+                          bgColor="#ffffff"
+                          fgColor="#151936"
+                          level="H"
+                          marginSize={1}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cheque meta */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Cheque", value: logGenerated.chequeNumber, mono: true },
+                      { label: "Amount", value: formatMoney(logGenerated.amount), mono: true },
+                      { label: "Bank", value: logGenerated.bankName },
+                      { label: "Source", value: logGenerated.source },
+                    ].map(item => (
+                      <div key={item.label} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                        <p className="label-caps text-slate-400">{item.label}</p>
+                        <p className={cn("text-caption text-slate-800 mt-0.5", item.mono && "font-mono")}>{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onClick={resetLogModal}
+                      className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[var(--sidebar)] text-caption text-white hover:opacity-90 transition-all">
+                      <IconCheck size={14} />
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

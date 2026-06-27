@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import type { FinancePeriod } from "@/components/finance/finance-overview-charts";
 import {
   IconBuildingBank,
   IconReceipt2,
@@ -207,7 +208,15 @@ export function FinanceOverviewScaffold() {
   const [mounted, setMounted] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [activePeriod, setActivePeriod] = useState<FinancePeriod>("6M");
   const { pushToast } = useToast();
+
+  const PERIODS: { label: string; value: FinancePeriod }[] = [
+    { label: "1M", value: "1M" },
+    { label: "3M", value: "3M" },
+    { label: "6M", value: "6M" },
+    { label: "1Y", value: "1Y" },
+  ];
 
   const context = activeEntityId === "commercial" ? "commercial" : activeEntityId === "residential" ? "residential" : "group";
   const metricsContext = context === "commercial" ? "commercial" : "group";
@@ -650,7 +659,26 @@ export function FinanceOverviewScaffold() {
   };
 
   // Render Skeleton before hydration to match ERP spec
-  if (!mounted) return <div className="h-screen w-full skeleton-shimmer bg-slate-50" />;
+  if (!mounted) {
+    return (
+      <div className="mx-auto flex max-w-[98rem] flex-col gap-4 pb-12">
+        {/* Header skeleton */}
+        <div className="h-12 w-72 rounded-xl skeleton-shimmer bg-slate-100 mt-2" />
+        {/* KPI cards skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="h-[145px] rounded-2xl skeleton-shimmer bg-slate-100"
+              style={{ animationDelay: `${i * 0.08}s` }} />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-6 h-[380px] rounded-2xl skeleton-shimmer bg-slate-100" />
+          <div className="lg:col-span-3 h-[380px] rounded-2xl skeleton-shimmer bg-slate-100" />
+          <div className="lg:col-span-3 h-[380px] rounded-2xl skeleton-shimmer bg-slate-100" />
+        </div>
+      </div>
+    );
+  }
 
   const activeMandateImage = context === "commercial" ? MANDATE_IMAGES.commercial : MANDATE_IMAGES.group;
   const activeMandate = context === "commercial" ? ACTIVE_MANDATES[1] : ACTIVE_MANDATES[0];
@@ -661,17 +689,35 @@ export function FinanceOverviewScaffold() {
     <div className="mx-auto flex max-w-[98rem] flex-col gap-4 pb-12 animate-fade-in">
 
       {/* ── Dynamic Command Center Header ── */}
-      <section className="flex flex-col gap-4 pb-2 pt-2 animate-fade-in-up">
+      <section className="flex flex-col gap-4 pb-2 pt-2 animate-fade-in">
         {/* Header & Sync */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <h1 className="title-serif text-slate-900 text-3xl font-normal tracking-tight">
+            <h1 className="title-serif text-slate-900" style={{ fontSize: "28px", fontWeight: 400 }}>
               Finance Command Center
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-slate-400 font-mono text-sm tracking-wide">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* ── Global Period Filter ── */}
+            <div className="flex items-center gap-1 rounded-xl border border-slate-200/80 bg-white p-1 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+              {PERIODS.map(p => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setActivePeriod(p.value)}
+                  className={`rounded-lg px-3 py-1.5 text-caption transition-all ${
+                    activePeriod === p.value
+                      ? "bg-[var(--sidebar)] text-white shadow-sm"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <span className="text-slate-400 font-mono text-tiny tracking-wide hidden sm:inline">
               Synced {lastRefreshed.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </span>
             <button
@@ -681,7 +727,7 @@ export function FinanceOverviewScaffold() {
               title="Sync Ledger"
             >
               <IconRefresh size={14} className={cn(isRefreshing && "animate-spin")} />
-              <span>Sync Network</span>
+              <span>Sync</span>
             </button>
           </div>
         </div>
@@ -766,7 +812,7 @@ export function FinanceOverviewScaffold() {
       </section>
 
       {/* ── Data Visualization Tier ── */}
-      <FinanceOverviewCharts />
+      <FinanceOverviewCharts period={activePeriod} />
 
       {/* ── Finance Operations & Closing Scheduler ── */}
       <FinanceOperationsScheduler

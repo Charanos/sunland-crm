@@ -1,5 +1,17 @@
 import type { UserRole } from "@/types";
 
+// ─── Universal paths accessible by ALL authenticated users regardless of role ─
+
+export const UNIVERSAL_PATHS = [
+  "/admin/profile",
+  "/admin/settings",
+  "/admin/notifications",
+  "/admin/security",
+  "/admin/messages",
+];
+
+// ─── Role → allowed path prefixes ─────────────────────────────────────────────
+
 const roleAccess: Record<UserRole, string[]> = {
   ceo: ["/admin", "/ops", "/fin", "/hr"],
   general_manager: ["/admin", "/ops", "/fin", "/hr"],
@@ -41,7 +53,14 @@ const financeOverviewRoles: UserRole[] = [
   "auditor_compliance",
 ];
 
-export function canAccess(role: UserRole, pathname: string) {
+export function isUniversalPath(pathname: string): boolean {
+  return UNIVERSAL_PATHS.some((p) => pathname.startsWith(p));
+}
+
+export function canAccess(role: UserRole, pathname: string): boolean {
+  // Universal self-service paths are always accessible to any authenticated user
+  if (isUniversalPath(pathname)) return true;
+
   if (pathname === "/fin") {
     return financeOverviewRoles.includes(role);
   }

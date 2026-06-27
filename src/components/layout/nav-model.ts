@@ -11,6 +11,7 @@ import {
   IconFileAnalytics,
   IconHomeDollar,
   IconHomeStats,
+  IconMessageCircle,
   IconReportAnalytics,
   IconSettings,
   IconShieldLock,
@@ -119,6 +120,7 @@ export const navSections: NavSection[] = [
     label: "Admin",
     icon: IconUserCog,
     items: [
+      { href: "/admin/messages", label: "Messages", icon: IconMessageCircle, badge: "3" },
       { href: "/admin/settings", label: "Settings", icon: IconSettings },
       { href: "/admin/notifications", label: "Notifications", icon: IconBell },
       { href: "/admin/security", label: "Security", icon: IconShieldLock },

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   addDays,
@@ -709,6 +709,7 @@ function Breadcrumb() {
 
 export function TopNav() {
   const { openMobileNav } = useUIStore();
+  const router = useRouter();
 
   const [currentUser, setCurrentUser] = useState({
     name: "Paul Amos",
@@ -912,9 +913,11 @@ export function TopNav() {
           />
         </label>
 
+        {/* Mobile notifications — navigates to notifications page */}
         <button
           type="button"
           aria-label="Notifications"
+          onClick={() => { closeAll(); router.push("/admin/notifications"); }}
           className="relative flex size-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100"
         >
           <IconBell size={18} stroke={1.5} aria-hidden />
@@ -923,12 +926,19 @@ export function TopNav() {
           )}
         </button>
 
-        <Avatar
-          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face"
-          fallback="DM"
-          status="online"
-          className="size-9 shrink-0"
-        />
+        {/* Mobile profile avatar — navigates to profile page */}
+        <Link
+          href="/admin/profile"
+          aria-label="My profile"
+          className="shrink-0"
+        >
+          <Avatar
+            src={currentUser.avatarUrl}
+            fallback={currentUser.name ? currentUser.name.split(" ").map((n) => n[0]).join("") : "ME"}
+            status="online"
+            className="size-9"
+          />
+        </Link>
       </div>
     </header>
   );

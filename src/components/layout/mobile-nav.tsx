@@ -1,15 +1,31 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-import { IconX } from "@tabler/icons-react";
+import { usePathname, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  IconX,
+  IconChevronDown,
+  IconUser,
+  IconShieldLock,
+  IconSettings,
+  IconLogout,
+} from "@tabler/icons-react";
 import { Avatar } from "@/components/ui/avatar";
 import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
-import { mobilePrimaryNav, navSections, getActiveNavItem } from "@/components/layout/nav-model";
+import {
+  mobilePrimaryNav,
+  navSections,
+  getActiveNavItem,
+  findSectionByPath,
+} from "@/components/layout/nav-model";
 import { TEAM_MEMBERS } from "./sunland-nav";
+import { MOCK_DMS } from "@/data/messaging";
+
+// ─── Mobile Bottom Pill Nav ──────────────────────────────────────────────────
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -52,133 +68,327 @@ export function MobileBottomNav() {
   );
 }
 
+// ─── Mobile Navigation Drawer ────────────────────────────────────────────────
+
 export function MobileNavigationDrawer() {
   const pathname = usePathname();
+  const router = useRouter();
   const { closeMobileNav, mobileNavOpen, setSelectedChatDMId } = useUIStore();
   const activeNavItem = getActiveNavItem(pathname);
+  const activeSection = findSectionByPath(pathname);
+  const navRef = useRef<HTMLDivElement>(null);
 
-  if (!mobileNavOpen) {
-    return null;
-  }
+  // Route-aware section filtering (match desktop sidebar logic)
+  const isFinRoute = pathname.startsWith("/fin");
+  const filteredSections = navSections.filter((section) => {
+    const isFinSection = section.id.startsWith("finance");
+    return isFinRoute ? isFinSection : !isFinSection;
+  });
+
+  // Accordion: allow multiple open sections, auto-open active one
+  const [openSections, setOpenSections] = useState<string[]>([activeSection.id]);
+
+  // Re-sync open sections when drawer opens or pathname changes
+  useEffect(() => {
+    if (mobileNavOpen) {
+      setOpenSections((prev) =>
+        prev.includes(activeSection.id) ? prev : [...prev, activeSection.id],
+      );
+    }
+  }, [mobileNavOpen, activeSection.id]);
+
+  // Scroll active item into view on drawer open
+  useEffect(() => {
+    if (mobileNavOpen && navRef.current) {
+      const activeEl = navRef.current.querySelector<HTMLElement>("[data-active='true']");
+      if (activeEl) {
+        setTimeout(() => activeEl.scrollIntoView({ behavior: "smooth", block: "center" }), 200);
+      }
+    }
+  }, [mobileNavOpen]);
+
+  const toggleSection = (sectionId: string) => {
+    setOpenSections((prev) =>
+      prev.includes(sectionId)
+        ? prev.filter((id) => id !== sectionId)
+        : [...prev, sectionId],
+    );
+  };
+
+  const totalUnread = MOCK_DMS.reduce((sum, dm) => sum + dm.unread, 0);
+  const contextLabel = isFinRoute ? "Finance" : "Operations";
+  const contextColor = isFinRoute
+    ? "bg-emerald-400/20 text-emerald-300 border-emerald-400/30"
+    : "bg-[var(--primary)]/20 text-[var(--primary)] border-[var(--primary)]/30";
+
+  if (!mobileNavOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden">
+      {/* Backdrop tap to close */}
       <button
         aria-label="Close navigation backdrop"
         className="absolute inset-0 size-full cursor-default"
         onClick={closeMobileNav}
         type="button"
       />
-      <aside className="absolute inset-y-0 left-0 flex w-[min(22rem,92vw)] flex-col border-r border-white/5 bg-[var(--sidebar)] text-white shadow-2xl">
-        <div className="flex h-16 items-center justify-between border-b border-white/[0.08] px-4">
-          <Link href="/admin" onClick={closeMobileNav}>
+
+      {/* Drawer panel */}
+      <motion.aside
+        initial={{ x: "-100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "-100%" }}
+        transition={{ type: "spring", stiffness: 380, damping: 35 }}
+        className="absolute inset-y-0 left-0 flex w-[min(22rem,92vw)] flex-col border-r border-white/5 bg-[var(--sidebar)] text-white shadow-2xl"
+      >
+        {/* ── Header ─────────────────────────────────────── */}
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/[0.08] px-4">
+          <Link href={isFinRoute ? "/fin" : "/admin"} onClick={closeMobileNav}>
             <img
               src="/logo.png"
               className="h-8 w-auto max-w-[160px] object-contain pl-1"
               alt="Sunland ERP Logo"
             />
           </Link>
-          <IconButton
-            aria-label="Close navigation"
-            className="size-9 border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-            onClick={closeMobileNav}
-          >
-            <IconX aria-hidden size={16} />
-          </IconButton>
+          <div className="flex items-center gap-2">
+            {/* Context pill */}
+            <span className={cn("label-caps rounded-full border px-2.5 py-1", contextColor)}>
+              {contextLabel}
+            </span>
+            <IconButton
+              aria-label="Close navigation"
+              className="size-9 border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+              onClick={closeMobileNav}
+            >
+              <IconX aria-hidden size={16} />
+            </IconButton>
+          </div>
         </div>
-        <nav className="flex-1 overflow-y-auto p-4 [scrollbar-width:thin]">
-          <div className="space-y-6">
-            {navSections.map((section) => (
-              <section key={section.id}>
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="h-px w-5 bg-white/10" />
-                  <p className="label-caps tracking-widest text-white/60">{section.label}</p>
-                </div>
-                <div className="space-y-1 relative">
-                  {section.items.map((item) => {
-                    const IconComponent = item.icon;
-                    const isActive = activeNavItem?.href === item.href;
 
-                    return (
-                      <Link
-                        className={cn(
-                          "focus-ring relative flex h-9.5 items-center gap-3 rounded-xl px-3 text-sm  text-white/80 transition",
-                          "hover:text-white",
-                          isActive && "text-white font-medium",
-                        )}
-                        href={item.href}
-                        key={item.href}
-                        onClick={closeMobileNav}
-                      >
-                        {isActive && (
-                          <motion.div
-                            layoutId="mobile-drawer-active-pill"
-                            className="absolute inset-0 rounded-xl bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] border border-white/[0.05]"
-                            initial={false}
-                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                          />
-                        )}
-                        <span className="relative z-10 flex items-center gap-3 w-full">
-                          <IconComponent aria-hidden size={17} stroke={1.8} />
-                          {item.label}
-                          {item.badge ? (
-                            <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-sm  text-white/70">
-                              {item.badge}
-                            </span>
-                          ) : null}
+        {/* ── Scrollable nav body ─────────────────────────── */}
+        <nav ref={navRef} className="flex-1 overflow-y-auto p-3 [scrollbar-width:thin]">
+          <div className="space-y-1">
+            {filteredSections.map((section) => {
+              const SectionIcon = section.icon;
+              const isOpen = openSections.includes(section.id);
+              const isSingleItem = section.items.length === 1;
+
+              // Single-item sections render as a direct link (no accordion wrapper)
+              if (isSingleItem) {
+                const item = section.items[0];
+                const IconComponent = item.icon;
+                const isActive = activeNavItem?.href === item.href;
+
+                return (
+                  <Link
+                    key={section.id}
+                    href={item.href}
+                    onClick={closeMobileNav}
+                    data-active={isActive}
+                    className={cn(
+                      "focus-ring relative flex h-10 items-center gap-3 rounded-xl px-3 text-white/80 transition",
+                      "hover:bg-white/[0.06] hover:text-white",
+                      isActive && "bg-white/[0.1] text-white",
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="mobile-drawer-active"
+                        className="absolute inset-0 rounded-xl bg-white/[0.08] border border-white/[0.06]"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex w-full items-center gap-3">
+                      <IconComponent aria-hidden size={17} stroke={1.8} />
+                      <span className="text-caption">{item.label}</span>
+                      {item.badge && (
+                        <span className="ml-auto rounded-full bg-[var(--primary)]/20 px-2 py-0.5 text-tiny text-[var(--primary)]">
+                          {item.badge}
                         </span>
-                      </Link>
-                    );
-                  })}
+                      )}
+                    </span>
+                  </Link>
+                );
+              }
+
+              // Multi-item sections: accordion
+              return (
+                <div key={section.id}>
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.id)}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white/[0.04]"
+                  >
+                    <SectionIcon aria-hidden size={16} stroke={1.8} className="shrink-0 text-white/50" />
+                    <span className="label-caps flex-1 text-white/50">{section.label}</span>
+                    <motion.div
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <IconChevronDown size={14} className="text-white/30" aria-hidden />
+                    </motion.div>
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        key="content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        className="overflow-hidden"
+                      >
+                        <div className="ml-2 space-y-0.5 border-l border-white/[0.07] pl-3 pb-2">
+                          {section.items.map((item) => {
+                            const IconComponent = item.icon;
+                            const isActive = activeNavItem?.href === item.href;
+
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={closeMobileNav}
+                                data-active={isActive}
+                                className={cn(
+                                  "focus-ring relative flex h-9 items-center gap-3 rounded-xl px-3 text-white/70 transition",
+                                  "hover:bg-white/[0.06] hover:text-white",
+                                  isActive && "bg-white/[0.1] text-white",
+                                )}
+                              >
+                                {isActive && (
+                                  <motion.div
+                                    layoutId="mobile-drawer-active"
+                                    className="absolute inset-0 rounded-xl bg-white/[0.08] border border-white/[0.06]"
+                                    initial={false}
+                                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                  />
+                                )}
+                                <span className="relative z-10 flex w-full items-center gap-3">
+                                  <IconComponent aria-hidden size={16} stroke={1.8} />
+                                  <span className="text-caption">{item.label}</span>
+                                  {item.badge && (
+                                    <span className="ml-auto rounded-full bg-[var(--primary)]/20 px-2 py-0.5 text-tiny text-[var(--primary)]">
+                                      {item.badge}
+                                    </span>
+                                  )}
+                                </span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </section>
-            ))}
+              );
+            })}
+          </div>
 
-            {/* ── Divider ── */}
-            <div className="my-2">
-              <div className="h-px bg-white/10" />
+          {/* ── Team Section ──────────────────────────────── */}
+          <div className="mt-4 border-t border-white/[0.08] pt-4">
+            <div className="mb-2 flex items-center justify-between px-3">
+              <p className="label-caps text-white/50">Team</p>
+              {totalUnread > 0 && (
+                <span className="rounded-full bg-[var(--primary)]/20 px-2 py-0.5 text-tiny text-[var(--primary)]">
+                  {totalUnread} unread
+                </span>
+              )}
             </div>
+            <div className="space-y-0.5">
+              {TEAM_MEMBERS.map((member) => {
+                const dmId = MOCK_DMS.find(
+                  (dm) => dm.name === member.name,
+                )?.id || "dm1";
+                const dmContact = MOCK_DMS.find((dm) => dm.id === dmId);
+                const unread = dmContact?.unread ?? 0;
 
-            {/* ── Team Section ── */}
-            <div>
-              <div className="flex items-center justify-between mb-2 pl-2 pr-1">
-                <p className="label-caps text-white/60">Team</p>
-              </div>
-              <div className="space-y-0.5">
-                {TEAM_MEMBERS.map((member) => (
+                return (
                   <button
                     key={member.id}
                     type="button"
                     onClick={() => {
-                      const nameMap: Record<string, string> = {
-                        "Esther Howard": "dm1",
-                        "Jacob Jones": "dm2",
-                        "Cody Fisher": "dm3",
-                      };
-                      setSelectedChatDMId(nameMap[member.name] || "dm1");
+                      setSelectedChatDMId(dmId);
                       closeMobileNav();
                     }}
-                    className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-white/[0.04] text-left"
+                    className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-white/[0.04]"
                   >
-                    <Avatar
-                      src={member.avatarUrl}
-                      fallback={member.name.substring(0, 2)}
-                      status={member.status}
-                      className="size-8 shrink-0"
-                    />
-                    <div className="min-w-0 text-left">
-                      <p className="truncate text-base text-white/75 group-hover:text-white/95 transition-colors">
+                    <div className="relative shrink-0">
+                      <Avatar
+                        src={member.avatarUrl}
+                        fallback={member.name.substring(0, 2)}
+                        status={member.status}
+                        className="size-8"
+                      />
+                      {unread > 0 && (
+                        <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] text-[var(--on-primary)]">
+                          {unread}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1 text-left">
+                      <p className="truncate text-caption text-white/75 transition-colors group-hover:text-white/95">
                         {member.name}
                       </p>
-                      <p className="truncate text-sm text-white/40">{member.role}</p>
+                      <p className="truncate text-tiny text-white/40">{member.role}</p>
                     </div>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
         </nav>
-      </aside>
+
+        {/* ── Footer: Profile shortcut ────────────────────── */}
+        <div className="shrink-0 border-t border-white/[0.08] p-3">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/profile"
+              onClick={closeMobileNav}
+              className="flex flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-white/[0.06]"
+            >
+              <div className="size-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center">
+                <IconUser size={15} className="text-white/60" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-caption text-white/75">My Profile</p>
+                <p className="truncate text-tiny text-white/40">Account & preferences</p>
+              </div>
+            </Link>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/admin/settings"
+                onClick={closeMobileNav}
+                aria-label="Settings"
+                className="flex size-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/[0.08] hover:text-white/70"
+              >
+                <IconSettings size={15} aria-hidden />
+              </Link>
+              <Link
+                href="/admin/security"
+                onClick={closeMobileNav}
+                aria-label="Security"
+                className="flex size-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/[0.08] hover:text-white/70"
+              >
+                <IconShieldLock size={15} aria-hidden />
+              </Link>
+              <button
+                type="button"
+                aria-label="Logout"
+                onClick={async () => {
+                  closeMobileNav();
+                  await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+                  router.push("/login");
+                }}
+                className="flex size-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-rose-500/10 hover:text-rose-400"
+              >
+                <IconLogout size={15} aria-hidden />
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.aside>
     </div>
   );
 }
