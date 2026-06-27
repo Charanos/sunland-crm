@@ -181,7 +181,7 @@ function PanelCard({ title, desc, children, onSave }: { title: string; desc?: st
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="headline-md text-slate-900">{title}</h2>
+        <h2 className="headline-md font-serif text-slate-900">{title}</h2>
         {onSave && (
           <button type="button" onClick={onSave}
             className="flex items-center gap-1.5 rounded-xl bg-[var(--sidebar)] px-4 py-1.5 text-tiny text-white shadow-sm hover:opacity-90 transition-opacity">
@@ -251,29 +251,28 @@ export function SettingsPageContent() {
       <section className="rounded-2xl bg-tertiary-gradient p-6 md:p-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(white 1px, transparent 0)", backgroundSize: "28px 28px" }} />
         <div className="relative z-10">
-          <h1 className="headline-lg text-white">Settings & Preferences</h1>
+          <h1 className="headline-lg font-serif text-white">Settings & Preferences</h1>
           <p className="text-white/60 mt-1 text-caption">Manage workspace configuration, display, notifications and data.</p>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-5">
+      {/* ── Tabs ─── */}
+      <div className="px-2 pt-2 flex flex-wrap gap-1.5 bg-transparent border-b border-slate-100">
+        {SETTINGS_TABS.map(tab => (
+          <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "inline-flex px-3.5 py-1.5 text-base font-medium rounded-lg transition-all flex items-center gap-1.5",
+              activeTab === tab.id
+                ? "bg-[#151936] text-white shadow-sm"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+            )}>
+            <tab.icon size={16} className="shrink-0" />
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
 
-        {/* ── Sidebar ─── */}
-        <nav className="flex flex-col gap-1">
-          {SETTINGS_TABS.map(tab => (
-            <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all",
-                activeTab === tab.id
-                  ? "bg-[var(--sidebar)] text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-              )}>
-              <tab.icon size={16} className="shrink-0" />
-              <span className="text-caption">{tab.label}</span>
-              {activeTab !== tab.id && <IconChevronRight size={13} className="ml-auto text-slate-300" />}
-            </button>
-          ))}
-        </nav>
+      <div className="flex flex-col gap-5">
 
         {/* ── Content ─── */}
         <div className="space-y-5 min-w-0">

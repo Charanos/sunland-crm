@@ -96,6 +96,17 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    id: "finance-account",
+    label: "Account & System",
+    icon: IconUserCog,
+    items: [
+      { href: "/admin/messages", label: "Messages", icon: IconMessageCircle, badge: "3" },
+      { href: "/admin/settings", label: "Settings", icon: IconSettings },
+      { href: "/admin/notifications", label: "Notifications", icon: IconBell },
+      { href: "/admin/security", label: "Security", icon: IconShieldLock },
+    ],
+  },
+  {
     id: "operations",
     label: "Operations",
     icon: IconClipboardList,

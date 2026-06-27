@@ -268,17 +268,17 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={() => setItems((p) => p.map((x) => x.id === n.id ? { ...x, read: true } : x))}
               className={cn(
-                "flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50",
-                !n.read && "bg-slate-50/60",
+                "flex w-[calc(100%-16px)] mx-2 gap-3 px-3 py-2.5 mb-1 rounded-xl text-left transition-all border border-transparent",
+                !n.read ? "bg-slate-50/80 border-slate-100" : "hover:bg-slate-50 hover:border-slate-100",
               )}
             >
               <span className={cn("mt-[6px] size-[6px] shrink-0 rounded-full transition-opacity", toneRing[n.tone], n.read && "opacity-0")} />
               <div className="min-w-0 flex-1">
-                <p className={cn("text-label leading-snug", n.read ? "text-slate-600" : "text-slate-800")}>
+                <p className={cn("text-caption leading-snug", n.read ? "text-slate-600 font-medium" : "text-slate-900 font-medium")}>
                   {n.title}
                 </p>
-                <p className="text-caption mt-0.5 text-slate-500 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">{n.body}</p>
-                <p className="text-tiny mt-1 flex items-center gap-1 text-slate-400">
+                <p className="text-tiny mt-0.5 text-slate-500 line-clamp-2 leading-relaxed">{n.body}</p>
+                <p className="text-[10px] mt-1.5 flex items-center gap-1 text-slate-400 font-mono">
                   <IconClockHour4 size={10} aria-hidden />
                   {n.time}
                 </p>

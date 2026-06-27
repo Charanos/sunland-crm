@@ -119,11 +119,11 @@ const INITIAL_NOTIFICATIONS: SunlandNotification[] = [
 ];
 
 const TYPE_LABELS: Record<NotificationType, string> = {
-  lead: "Leads",
-  payment: "Finance",
-  maintenance: "Maintenance",
-  lease: "Leases",
-  system: "System",
+  lead: "Sales / Leads",
+  payment: "Core / Finance",
+  maintenance: "Ops / Maint.",
+  lease: "Ops / Leases",
+  system: "IT / System",
 };
 
 const TYPE_ICONS: Record<NotificationType, typeof IconBell> = {
@@ -142,8 +142,16 @@ const TYPE_COLORS: Record<NotificationType, string> = {
   system: "bg-slate-50 text-slate-500 border-slate-200",
 };
 
-const FILTER_TABS = ["All", "Unread", "Leads", "Finance", "Maintenance", "Leases", "System"] as const;
-type FilterTab = typeof FILTER_TABS[number];
+const FILTER_TABS = [
+  { id: "All", label: "All" },
+  { id: "Unread", label: "Unread" },
+  { id: "Leads", label: "Sales / Leads" },
+  { id: "Finance", label: "Core / Finance" },
+  { id: "Maintenance", label: "Ops / Maint." },
+  { id: "Leases", label: "Ops / Leases" },
+  { id: "System", label: "IT / System" },
+] as const;
+type FilterTab = typeof FILTER_TABS[number]["id"];
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -231,7 +239,7 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
         }} />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="headline-lg text-white leading-tight flex items-center gap-3">
+            <h1 className="headline-lg font-serif text-white leading-tight flex items-center gap-3">
               Notification Centre
               {unreadCount > 0 && (
                 <span className="inline-flex size-6 items-center justify-center rounded-full bg-amber-400 text-slate-900 text-tiny font-mono font-medium animate-pulse">
@@ -273,33 +281,33 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
       </section>
 
       {/* ── Category Tabs ──────────────────────────────────── */}
-      <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-[0_1px_4px_rgba(0,0,0,0.04)] [scrollbar-width:none]">
+      <div className="px-2 pt-2.5 flex flex-wrap gap-1.5 bg-transparent border-b border-slate-100 mb-2">
         {FILTER_TABS.map(tab => {
-          const count = tab === "Unread" ? unreadCount : tab === "All" ? items.length :
+          const count = tab.id === "Unread" ? unreadCount : tab.id === "All" ? items.length :
             items.filter(n => {
               const typeMap: Record<string, NotificationType> = {
                 "Leads": "lead", "Finance": "payment", "Maintenance": "maintenance", "Leases": "lease", "System": "system"
               };
-              return n.type === typeMap[tab];
+              return n.type === typeMap[tab.id];
             }).length;
 
           return (
             <button
-              key={tab}
+              key={tab.id}
               type="button"
-              onClick={() => setActiveFilter(tab)}
+              onClick={() => setActiveFilter(tab.id)}
               className={cn(
-                "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-caption transition-all font-medium",
-                activeFilter === tab
-                  ? "bg-[var(--sidebar)] text-white shadow-sm"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                "inline-flex px-3.5 py-1.5 text-base font-medium rounded-lg transition-all flex items-center gap-1.5",
+                activeFilter === tab.id
+                  ? "bg-[#151936] text-white shadow-sm"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
               )}
             >
-              {tab}
+              <span>{tab.label}</span>
               {count > 0 && (
                 <span className={cn(
-                  "flex size-4.5 items-center justify-center rounded-full text-[9px] font-mono",
-                  activeFilter === tab ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                  "flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium",
+                  activeFilter === tab.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-200 text-slate-600"
                 )}>
                   {count}
                 </span>
@@ -330,30 +338,32 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
                   key={n.id}
                   onClick={() => setSelectedNotify(n)}
                   className={cn(
-                    "group flex items-start gap-4 px-6 py-4.5 transition-all hover:bg-slate-50/50 cursor-pointer relative",
-                    isUnread ? "bg-emerald-50/10 border-l-[3px] border-emerald-500 pl-[21px]" : "border-l-[3px] border-transparent"
+                    "group flex items-start gap-4 px-5 py-2.5 transition-all hover:bg-slate-50/50 cursor-pointer relative",
+                    isUnread ? "bg-emerald-50/10 border-l-[3px] border-emerald-500 pl-[17px]" : "border-l-[3px] border-transparent"
                   )}
                   style={{ animationDelay: `${idx * 0.03}s` }}
                 >
                   {/* Category circular Badge */}
-                  <div className={cn("size-9.5 shrink-0 rounded-xl border flex items-center justify-center shadow-inner", TYPE_COLORS[n.type])}>
-                    <TypeIcon size={16} />
+                  <div className={cn("size-8 shrink-0 rounded-xl border flex items-center justify-center shadow-inner mt-0.5", TYPE_COLORS[n.type])}>
+                    <TypeIcon size={14} />
                   </div>
 
                   {/* Body text block */}
-                  <div className="flex-1 min-w-0 pr-6">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className={cn("text-label truncate leading-tight", isUnread ? "text-slate-900 font-semibold" : "text-slate-700")}>
-                        {n.title}
-                      </p>
-                      {isUnread && (
-                        <span className="badge-pill badge-tone-success text-[9px] px-1.5 py-0">New</span>
-                      )}
-                    </div>
-                    <p className="text-caption text-slate-400 mt-1 line-clamp-1 leading-relaxed">{n.body}</p>
-                    <div className="flex items-center gap-3 mt-2.5">
-                      <span className="badge-pill badge-tone-neutral">{TYPE_LABELS[n.type]}</span>
+                  <div className="flex-1 min-w-0 pr-6 flex flex-col justify-center">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <p className={cn("text-caption truncate leading-tight", isUnread ? "text-slate-900 font-medium" : "text-slate-700")}>
+                          {n.title}
+                        </p>
+                        {isUnread && (
+                          <span className="badge-pill badge-tone-success text-tiny px-1.5 py-0">New</span>
+                        )}
+                      </div>
                       <span className="text-tiny font-mono text-slate-400">{relativeTime(n.createdAt)}</span>
+                    </div>
+                    <p className="text-tiny text-slate-500 mt-0.5 line-clamp-1 leading-snug">{n.body}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="badge-pill badge-tone-neutral text-tiny px-1.5 py-0 border-slate-100">{TYPE_LABELS[n.type]}</span>
                       {resolvePortalPath(n.href) && (
                         <Link
                           href={resolvePortalPath(n.href)!}
@@ -406,7 +416,7 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
                 })()}
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 leading-snug body-md">{selectedNotify.title}</h4>
+                <h4 className="font-medium text-slate-900 leading-snug body-md">{selectedNotify.title}</h4>
                 <p className="text-tiny text-slate-400 mt-0.5 font-mono">{relativeTime(selectedNotify.createdAt)} · {new Date(selectedNotify.createdAt).toLocaleString()}</p>
               </div>
             </div>

@@ -300,15 +300,15 @@ export function MessagesPageContent() {
           {/* Header */}
           <div className="px-5 pt-5 pb-3 border-b border-slate-100">
             <div className="flex items-center justify-between mb-3.5">
-              <h1 className="headline-md text-slate-900 flex items-center gap-2">
+              <h1 className="headline-md font-serif text-slate-900 flex items-center gap-2">
                 Messages
                 {totalUnread > 0 && (
-                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-[var(--sidebar)] text-[9px] font-mono font-medium text-white">
+                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-[var(--sidebar)] text-[9px] font-mono font-medium text-white shadow-sm">
                     {totalUnread}
                   </span>
                 )}
               </h1>
-              <button type="button" className="flex size-8 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors shadow-sm" aria-label="New message">
+              <button type="button" className="flex size-8 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm" aria-label="New message">
                 <IconPlus size={15} />
               </button>
             </div>
@@ -326,16 +326,16 @@ export function MessagesPageContent() {
           </div>
 
           {/* Mode tabs */}
-          <div className="flex border-b border-slate-100 px-3 bg-white/40">
+          <div className="px-2 py-2 flex flex-wrap gap-1.5 bg-transparent border-b border-slate-100">
             {(["dm", "channel"] as const).map(m => (
               <button key={m} type="button" onClick={() => setMode(m)}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-3 text-tiny transition-all border-b-2 font-medium",
+                  "flex-1 inline-flex py-1.5 text-caption font-medium rounded-lg transition-all flex items-center justify-center gap-1.5",
                   mode === m
-                    ? "border-[var(--sidebar)] text-[var(--sidebar)]"
-                    : "border-transparent text-slate-400 hover:text-slate-600"
+                    ? "bg-[#151936] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                 )}>
-                {m === "dm" ? <IconAt size={13} /> : <IconHash size={13} />}
+                {m === "dm" ? <IconAt size={14} /> : <IconHash size={14} />}
                 {m === "dm" ? "Direct" : "Channels"}
               </button>
             ))}

@@ -693,7 +693,7 @@ export function FinanceOverviewScaffold() {
         {/* Header & Sync */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <h1 className="title-serif text-slate-900" style={{ fontSize: "28px", fontWeight: 400 }}>
+            <h1 className="title-serif text-slate-900">
               Finance Command Center
             </h1>
           </div>
@@ -706,11 +706,10 @@ export function FinanceOverviewScaffold() {
                   key={p.value}
                   type="button"
                   onClick={() => setActivePeriod(p.value)}
-                  className={`rounded-lg px-3 py-1.5 text-caption transition-all ${
-                    activePeriod === p.value
-                      ? "bg-[var(--sidebar)] text-white shadow-sm"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                  }`}
+                  className={`rounded-lg px-3 py-1.5 text-caption transition-all ${activePeriod === p.value
+                    ? "bg-[var(--sidebar)] text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                    }`}
                 >
                   {p.label}
                 </button>

@@ -17,20 +17,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { useUIStore } from "@/store/ui";
 import { cn } from "@/lib/utils/cn";
 
+import { MOCK_DMS, MOCK_CHANNELS } from "@/data/messaging";
+
 // Mock Data
 const TABS = ["Direct", "Channels", "Alerts"];
-
-const MOCK_DMS = [
-  { id: "dm1", name: "Amina Hassan", role: "Property Manager", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces", lastMessage: "I've assigned the contractor for ticket #421.", unread: 2, online: true },
-  { id: "dm2", name: "James Mutua", role: "Head of BD", avatar: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=100&h=100&fit=crop&crop=faces", lastMessage: "Can we review the Muthaiga lease?", unread: 0, online: true },
-  { id: "dm3", name: "Grace Omondi", role: "Finance Officer", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&crop=faces", lastMessage: "Payment for KES 150k received.", unread: 0, online: false },
-];
-
-const MOCK_CHANNELS = [
-  { id: "c1", name: "operations-team", unread: 5 },
-  { id: "c2", name: "sales-pipeline", unread: 0 },
-  { id: "c3", name: "executive-board", unread: 1 },
-];
 
 const MOCK_MESSAGES = [
   { id: "m1", sender: "Amina Hassan", text: "Hey! Did you check the new maintenance log for Westlands Tower?", time: "10:24 AM", isMe: false },
@@ -99,19 +89,19 @@ export function GlobalChatWidget() {
                   </button>
                   <div className="flex items-center gap-2">
                     <div className="relative">
-                      <Avatar src={MOCK_DMS.find(d => d.id === activeChatId)?.avatar} fallback="A" className="size-8 border border-white/20" />
+                      <Avatar src={MOCK_DMS.find(d => d.id === activeChatId)?.avatarUrl} fallback="A" className="size-8 border border-white/20" />
                       <div className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-400 border-2 border-[#151936]"></div>
                     </div>
                     <div>
-                      <h4 className="font-medium leading-none mb-1 body-md">{MOCK_DMS.find(d => d.id === activeChatId)?.name}</h4>
-                      <p className="text-sm  text-white/60 leading-none">Online</p>
+                      <h4 className="font-medium leading-none mb-1 text-caption">{MOCK_DMS.find(d => d.id === activeChatId)?.name}</h4>
+                      <p className="text-tiny text-white/60 leading-none">Online</p>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <h3 className="font-medium tracking-tight text-lg">Internal Comms</h3>
-                  <p className="text-base text-white/60">3 unread messages</p>
+                  <h3 className="font-medium tracking-tight text-caption">Internal Comms</h3>
+                  <p className="text-tiny text-white/60">3 unread messages</p>
                 </div>
               )}
 
@@ -144,21 +134,21 @@ export function GlobalChatWidget() {
                   {MOCK_MESSAGES.map((msg) => (
                     <div key={msg.id} className={cn("flex max-w-[85%]", msg.isMe ? "self-end" : "self-start")}>
                       {!msg.isMe && (
-                        <Avatar src={MOCK_DMS[0].avatar} fallback="A" className="size-6 mr-2 mt-auto shrink-0" />
+                        <Avatar src={MOCK_DMS[0].avatarUrl} fallback="A" className="size-6 mr-2 mt-auto shrink-0" />
                       )}
                       <div className={cn(
-                        "p-3 rounded-2xl text-base shadow-sm leading-relaxed",
+                        "p-2.5 rounded-2xl text-caption shadow-sm leading-relaxed",
                         msg.isMe
                           ? "bg-[#151936] text-white rounded-br-sm"
                           : "bg-white border border-slate-100 text-slate-800 rounded-bl-sm"
                       )}>
                         {msg.text}
                         <div className={cn(
-                          "flex items-center justify-end gap-1 mt-1 text-sm ",
+                          "flex items-center justify-end gap-1 mt-1 text-[10px] font-mono",
                           msg.isMe ? "text-white/50" : "text-slate-400"
                         )}>
                           {msg.time}
-                          {msg.isMe && <IconChecks size={14} className="text-[#f3df27]" />}
+                          {msg.isMe && <IconChecks size={12} className="text-[#f3df27]" />}
                         </div>
                       </div>
                     </div>
@@ -203,7 +193,7 @@ export function GlobalChatWidget() {
                       key={tab}
                       onClick={() => setActiveTab(tab)}
                       className={cn(
-                        "px-4 py-2 text-base font-medium border-b-2 transition-colors",
+                        "px-4 py-2 text-caption font-medium border-b-2 transition-colors",
                         activeTab === tab
                           ? "border-[#151936] text-[#151936]"
                           : "border-transparent text-slate-500 hover:text-slate-800"
@@ -220,23 +210,23 @@ export function GlobalChatWidget() {
                     <button
                       key={dm.id}
                       onClick={() => setActiveChatId(dm.id)}
-                      className="w-full p-3 flex items-center gap-3 hover:bg-slate-50 rounded-xl transition-colors text-left group"
+                      className="w-full p-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-xl transition-all hover:shadow-sm border border-transparent hover:border-slate-100 text-left group"
                     >
                       <div className="relative shrink-0">
-                        <Avatar src={dm.avatar} fallback={dm.name[0]} className="size-10 border border-slate-100 shadow-sm" />
+                        <Avatar src={dm.avatarUrl} fallback={dm.name[0]} className="size-10 border border-slate-100 shadow-sm" />
                         {dm.online && (
                           <div className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-500 border-2 border-white"></div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-0.5">
-                          <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] body-md">{dm.name}</h4>
-                          <span className="text-sm text-slate-400">10:28 AM</span>
+                          <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] text-caption">{dm.name}</h4>
+                          <span className="text-[10px] font-mono text-slate-400">{dm.lastMessageTime}</span>
                         </div>
-                        <p className="text-base text-slate-500 truncate pr-4">{dm.lastMessage}</p>
+                        <p className="text-tiny text-slate-500 truncate pr-4">{dm.lastMessage}</p>
                       </div>
                       {dm.unread > 0 && (
-                        <div className="shrink-0 size-5 rounded-full bg-[#f3df27] flex items-center justify-center text-sm  font-medium text-[#151936]">
+                        <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
                           {dm.unread}
                         </div>
                       )}
@@ -246,17 +236,17 @@ export function GlobalChatWidget() {
                   {activeTab === "Channels" && MOCK_CHANNELS.map((ch) => (
                     <button
                       key={ch.id}
-                      className="w-full p-3 flex items-center gap-3 hover:bg-slate-50 rounded-xl transition-colors text-left group"
+                      className="w-full p-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-xl transition-all hover:shadow-sm border border-transparent hover:border-slate-100 text-left group"
                     >
                       <div className="size-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200">
-                        <IconHash size={20} stroke={2} />
+                        <IconHash size={18} stroke={2} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] body-md">{ch.name}</h4>
-                        <p className="text-base text-slate-500 truncate">Latest update in channel...</p>
+                        <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] text-caption">{ch.name}</h4>
+                        <p className="text-tiny text-slate-500 truncate">Latest update in channel...</p>
                       </div>
                       {ch.unread > 0 && (
-                        <div className="shrink-0 size-5 rounded-full bg-[#f3df27] flex items-center justify-center text-sm  font-medium text-[#151936]">
+                        <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
                           {ch.unread}
                         </div>
                       )}

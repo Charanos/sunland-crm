@@ -284,7 +284,7 @@ function PasswordTab({ onSave }: { onSave: (msg: string) => void }) {
   return (
     <form onSubmit={submit} className="max-w-md space-y-5">
       <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-        <h2 className="headline-md text-slate-900 mb-5">Change Password</h2>
+        <h2 className="headline-md font-serif text-slate-900 mb-5">Change Password</h2>
 
         {/* Current */}
         <div className="space-y-4">
@@ -419,14 +419,10 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
           backgroundImage: "radial-gradient(circle at 25% 25%, white 1px, transparent 0), radial-gradient(circle at 75% 75%, white 1px, transparent 0)",
           backgroundSize: "40px 40px"
         }} />
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
-          <div className="relative shrink-0">
-            <AvatarUploader current={profile.avatarUrl} onChange={handleAvatarChange} />
-          </div>
-
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="headline-lg text-white leading-tight">{profile.name}</h1>
+              <h1 className="headline-lg font-serif text-white leading-tight">{profile.name}</h1>
               <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 label-caps text-emerald-300">
                 {formatRole(profile.role)}
               </span>
@@ -441,16 +437,22 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
               <span className="text-tiny text-white/60">Member since {profile.joinDate}</span>
             </div>
           </div>
+          
+          <div className="relative shrink-0">
+            <AvatarUploader current={profile.avatarUrl} onChange={handleAvatarChange} />
+          </div>
         </div>
       </section>
 
       {/* ── Tabs ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+      <div className="px-2 pt-2.5 flex flex-wrap gap-1.5 bg-transparent border-b border-slate-100">
         {PROFILE_TABS.map(tab => (
           <button key={tab} type="button" onClick={() => setActiveTab(tab)}
             className={cn(
-              "flex-1 rounded-xl px-4 py-2 text-caption transition-all",
-              activeTab === tab ? "bg-[var(--sidebar)] text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              "inline-flex px-3.5 py-1.5 text-base font-medium rounded-lg transition-all flex items-center gap-1.5",
+              activeTab === tab
+                ? "bg-[#151936] text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
             )}>
             {tab}
           </button>
@@ -463,7 +465,7 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
           {/* Account info (editable) */}
           <div className="lg:col-span-7 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="headline-md text-slate-900">Account Information</h2>
+              <h2 className="headline-md font-serif text-slate-900">Account Information</h2>
               <span className="label-caps text-slate-400">Hover to edit</span>
             </div>
             <EditableField label="Full Name" value={profile.name} onSave={v => handleSaveField("name", v)} />
@@ -503,7 +505,7 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
           {/* Role & modules */}
           <div className="lg:col-span-5 flex flex-col gap-5">
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-              <h2 className="headline-md text-slate-900 mb-4">Role & Permissions</h2>
+              <h2 className="headline-md font-serif text-slate-900 mb-4">Role & Permissions</h2>
               <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-slate-50">
                 <div className="size-10 rounded-full bg-[var(--sidebar)] flex items-center justify-center shrink-0">
                   <IconShieldLock size={18} className="text-white" />
@@ -523,7 +525,7 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
 
             {/* Quick actions */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-              <h2 className="headline-md text-slate-900 mb-3">Quick Actions</h2>
+              <h2 className="headline-md font-serif text-slate-900 mb-3">Quick Actions</h2>
               <div className="space-y-1">
                 {[
                   { label: "Change Password", icon: IconShieldLock, tab: "Password" as ProfileTab, desc: "Update your login credentials" },
@@ -570,7 +572,7 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
       {activeTab === "Activity" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="headline-md text-slate-900">Recent Activity</h2>
+            <h2 className="headline-md font-serif text-slate-900">Recent Activity</h2>
             <span className="label-caps text-slate-400">Last 30 days</span>
           </div>
           <div className="space-y-1">
@@ -599,7 +601,7 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
       {activeTab === "Sessions" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="headline-md text-slate-900">Active Sessions</h2>
+            <h2 className="headline-md font-serif text-slate-900">Active Sessions</h2>
             <button type="button" onClick={revokeAllOthers}
               className="text-caption text-rose-500 hover:text-rose-700 transition-colors">
               Revoke all others
