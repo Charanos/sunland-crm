@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { BoardHeader } from "@/components/ui/erp-primitives";
 import {
   IconBuilding,
   IconClock,
@@ -247,26 +248,22 @@ export function SettingsPageContent() {
   return (
     <div className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 animate-fade-in px-4 md:px-6">
 
-      {/* ── Header ─── */}
-      <section className="rounded-2xl bg-tertiary-gradient p-6 md:p-8 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(white 1px, transparent 0)", backgroundSize: "28px 28px" }} />
-        <div className="relative z-10">
-          <h1 className="headline-lg font-serif text-white">Settings & Preferences</h1>
-          <p className="text-white/60 mt-1 text-caption">Manage workspace configuration, display, notifications and data.</p>
-        </div>
-      </section>
+      <BoardHeader
+        title="Settings & Preferences"
+        description="Manage workspace configuration, display, notifications, and data."
+      />
 
       {/* ── Tabs ─── */}
-      <div className="px-2 pt-2 flex flex-wrap gap-1.5 bg-transparent border-b border-slate-100">
+      <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 border border-slate-200/60 p-1 w-fit">
         {SETTINGS_TABS.map(tab => (
           <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "inline-flex px-3.5 py-1.5 text-base font-medium rounded-lg transition-all flex items-center gap-1.5",
+              "inline-flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-caption font-medium transition-all",
               activeTab === tab.id
                 ? "bg-[#151936] text-white shadow-sm"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                : "text-slate-655 hover:bg-slate-50 hover:text-slate-900"
             )}>
-            <tab.icon size={16} className="shrink-0" />
+            <tab.icon size={14} className="shrink-0" />
             <span>{tab.label}</span>
           </button>
         ))}

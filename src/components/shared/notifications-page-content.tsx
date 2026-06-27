@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { BoardHeader } from "@/components/ui/erp-primitives";
 import {
   IconBell,
   IconUserPlus,
@@ -231,34 +232,29 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
   return (
     <div className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 animate-fade-in px-4 md:px-6">
 
-      {/* ── Satin Hero Section ─────────────────────────────── */}
-      <section className="relative rounded-2xl overflow-hidden bg-tertiary-gradient p-6 md:p-8">
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: "radial-gradient(circle at 20% 20%, white 1px, transparent 0), radial-gradient(circle at 80% 80%, white 1px, transparent 0)",
-          backgroundSize: "32px 32px"
-        }} />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="headline-lg font-serif text-white leading-tight flex items-center gap-3">
-              Notification Centre
-              {unreadCount > 0 && (
-                <span className="inline-flex size-6 items-center justify-center rounded-full bg-amber-400 text-slate-900 text-tiny font-mono font-medium animate-pulse">
-                  {unreadCount}
-                </span>
-              )}
-            </h1>
-            <p className="body-sm text-white/60 mt-1">Track transactions, lead allocations, and system maintenance triggers.</p>
-          </div>
+      <BoardHeader
+        title={
+          <span className="flex items-center gap-3">
+            Notification Centre
+            {unreadCount > 0 && (
+              <span className="inline-flex size-6 items-center justify-center rounded-full bg-amber-500 text-white text-tiny font-mono font-medium animate-pulse shadow-sm">
+                {unreadCount}
+              </span>
+            )}
+          </span>
+        }
+        description="Track transactions, lead allocations, and system maintenance triggers."
+        actions={
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
               <button
                 type="button"
                 disabled={isBulkProcessing}
                 onClick={markAllRead}
-                className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-caption text-white hover:bg-white/15 transition-all shadow-sm disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-caption text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm disabled:opacity-50"
               >
                 {isBulkProcessing ? (
-                  <span className="size-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                  <span className="size-3.5 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
                 ) : (
                   <IconCheck size={14} />
                 )}
@@ -270,18 +266,18 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
                 type="button"
                 disabled={isBulkProcessing}
                 onClick={clearAllArchived}
-                className="flex items-center gap-1.5 rounded-xl border border-white/5 bg-slate-950/40 px-4 py-2 text-caption text-white/80 hover:bg-slate-950/60 hover:text-white transition-all shadow-inner disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-xl border border-red-150 bg-red-50 px-4 py-2 text-caption text-red-600 hover:bg-red-100 transition-all shadow-sm disabled:opacity-50"
               >
-                <IconArchive size={14} />
+                <IconTrash size={14} />
                 Clear Read
               </button>
             )}
           </div>
-        </div>
-      </section>
+        }
+      />
 
       {/* ── Category Tabs ──────────────────────────────────── */}
-      <div className="px-2 pt-2.5 flex flex-wrap gap-1.5 bg-transparent border-b border-slate-100 mb-2">
+      <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 border border-slate-200/60 p-1 w-fit mb-2">
         {FILTER_TABS.map(tab => {
           const count = tab.id === "Unread" ? unreadCount : tab.id === "All" ? items.length :
             items.filter(n => {
@@ -297,16 +293,16 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
               type="button"
               onClick={() => setActiveFilter(tab.id)}
               className={cn(
-                "inline-flex px-3.5 py-1.5 text-base font-medium rounded-lg transition-all flex items-center gap-1.5",
+                "inline-flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-caption font-medium transition-all",
                 activeFilter === tab.id
                   ? "bg-[#151936] text-white shadow-sm"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                  : "text-slate-655 hover:bg-slate-50 hover:text-slate-900"
               )}
             >
               <span>{tab.label}</span>
               {count > 0 && (
                 <span className={cn(
-                  "flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium",
+                  "flex items-center justify-center rounded-full px-1.5 py-0.5 text-tiny font-medium",
                   activeFilter === tab.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-200 text-slate-600"
                 )}>
                   {count}

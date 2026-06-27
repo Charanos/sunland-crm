@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BoardHeader } from "@/components/ui/erp-primitives";
 import {
   IconShieldLock,
   IconDeviceLaptop,
@@ -83,6 +84,36 @@ export function SecurityPageContent() {
 
   const { pushToast } = useToast();
 
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then(res => res.json())
+      .then(data => {
+        if (data?.user) {
+          const user = data.user;
+          setUsers(prev => {
+            const hasUser = prev.some(u => u.email === user.email);
+            if (hasUser) {
+              return prev.map(u => u.email === user.email ? { ...u, name: `${user.name} (You)`, mfa: mfaEnabled } : u);
+            } else {
+              return [
+                {
+                  id: "current-user",
+                  name: `${user.name} (You)`,
+                  email: user.email,
+                  role: user.role,
+                  status: "active",
+                  lastLogin: "Active now",
+                  mfa: mfaEnabled
+                },
+                ...prev.filter(u => u.role !== user.role)
+              ];
+            }
+          });
+        }
+      })
+      .catch(() => {});
+  }, [mfaEnabled]);
+
   const mfaSecret = "K5SG E4TN J5SG UZ3M O53G K=== ";
 
   const handleCopySecret = async () => {
@@ -138,17 +169,10 @@ export function SecurityPageContent() {
   return (
     <div className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 animate-fade-in px-4 md:px-6">
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="relative rounded-2xl overflow-hidden bg-tertiary-gradient p-6 md:p-8">
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: "radial-gradient(circle at 10% 10%, white 1px, transparent 0), radial-gradient(circle at 90% 90%, white 1px, transparent 0)",
-          backgroundSize: "36px 36px"
-        }} />
-        <div className="relative z-10">
-          <h1 className="headline-lg text-white">Security & Audit Center</h1>
-          <p className="body-sm text-white/60 mt-1">Monitor account login history, manage two-factor authentication, and review platform threat metrics.</p>
-        </div>
-      </section>
+      <BoardHeader
+        title="Security & Audit Center"
+        description="Monitor account login history, manage two-factor authentication, and review platform threat metrics."
+      />
 
       {/* ── Main Layout Grid ─────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

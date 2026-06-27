@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
+import { BoardHeader } from "@/components/ui/erp-primitives";
 import {
   IconShieldLock,
   IconBell,
@@ -384,6 +385,65 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
   const [sessions, setSessions] = useState(SESSIONS);
   const { pushToast } = useToast();
 
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user) {
+          const user = data.user;
+          let department = "Executive Management";
+          let accessLevel = "Full Access — All modules";
+          let modules = ["Finance Command", "Operations", "HR Portal", "Properties & Portfolio", "Reports & Audit", "Security & Admin"];
+          
+          if (user.role === "ceo" || user.role === "general_manager") {
+            department = "Executive Management";
+            accessLevel = "Full Access — All modules";
+          } else if (user.role.startsWith("finance") || user.role.startsWith("accounts") || user.role.startsWith("payroll")) {
+            department = "Finance & Accounts";
+            accessLevel = "Ledgers, Approvals & Cash flows";
+            modules = ["Finance Command", "Reports & Audit"];
+          } else if (user.role.startsWith("hr")) {
+            department = "Human Resources";
+            accessLevel = "Employee Profiles & Payroll Head";
+            modules = ["HR Portal", "Reports & Audit"];
+          } else if (user.role.startsWith("rentals")) {
+            department = "Rentals & Portfolios";
+            accessLevel = "Properties, Leases & Mandates";
+            modules = ["Properties & Portfolio", "Operations"];
+          } else if (user.role.startsWith("operations") || user.role.startsWith("property")) {
+            department = "Operations & Maintenance";
+            accessLevel = "Properties & Maintenance Tickets";
+            modules = ["Operations", "Properties & Portfolio"];
+          }
+
+          let avatarUrl = user.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face";
+          if (user.role === "ceo") {
+            avatarUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face";
+          } else if (user.role === "general_manager") {
+            avatarUrl = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face";
+          } else if (user.role === "finance_head") {
+            avatarUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face";
+          } else if (user.role === "finance_officer") {
+            avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face";
+          }
+
+          setProfile({
+            name: user.name || "Paul Amos",
+            email: user.email || "paul.amos@sunland.co.ke",
+            phone: "+254 712 345 678",
+            department,
+            joinDate: "March 2021",
+            role: user.role,
+            avatarUrl,
+            status: "online",
+            accessLevel,
+            modules,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleSaveField = async (field: keyof UserProfile, value: string) => {
     // Simulate PATCH /api/users/me
     await new Promise(r => setTimeout(r, 600));
@@ -413,46 +473,40 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
   return (
     <div className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 animate-fade-in px-4 md:px-6">
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="relative rounded-2xl overflow-hidden bg-tertiary-gradient p-6 md:p-8">
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: "radial-gradient(circle at 25% 25%, white 1px, transparent 0), radial-gradient(circle at 75% 75%, white 1px, transparent 0)",
-          backgroundSize: "40px 40px"
-        }} />
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="headline-lg font-serif text-white leading-tight">{profile.name}</h1>
-              <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 label-caps text-emerald-300">
-                {formatRole(profile.role)}
-              </span>
+      <BoardHeader
+        title={profile.name}
+        eyebrow={
+          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-0.5 label-caps text-emerald-700 font-medium">
+            {formatRole(profile.role)}
+          </span>
+        }
+        description={`${profile.department} · ${profile.email}`}
+        meta={
+          <div className="flex items-center gap-4 text-tiny text-slate-500 mt-1">
+            <div className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Active now</span>
             </div>
-            <p className="body-sm text-white/60 mt-1">{profile.department} · {profile.email}</p>
-            <div className="flex items-center gap-4 mt-3">
-              <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-tiny text-white/60">Active now</span>
-              </div>
-              <span className="text-white/20">·</span>
-              <span className="text-tiny text-white/60">Member since {profile.joinDate}</span>
-            </div>
+            <span>·</span>
+            <span>Member since {profile.joinDate}</span>
           </div>
-          
+        }
+        actions={
           <div className="relative shrink-0">
             <AvatarUploader current={profile.avatarUrl} onChange={handleAvatarChange} />
           </div>
-        </div>
-      </section>
+        }
+      />
 
       {/* ── Tabs ─────────────────────────────────────────────── */}
-      <div className="px-2 pt-2.5 flex flex-wrap gap-1.5 bg-transparent border-b border-slate-100">
+      <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 border border-slate-200/60 p-1 w-fit">
         {PROFILE_TABS.map(tab => (
           <button key={tab} type="button" onClick={() => setActiveTab(tab)}
             className={cn(
-              "inline-flex px-3.5 py-1.5 text-base font-medium rounded-lg transition-all flex items-center gap-1.5",
+              "inline-flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-caption font-medium transition-all",
               activeTab === tab
                 ? "bg-[#151936] text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                : "text-slate-650 hover:bg-slate-50 hover:text-slate-900"
             )}>
             {tab}
           </button>
