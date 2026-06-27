@@ -254,14 +254,14 @@ export function SettingsPageContent() {
       />
 
       {/* ── Tabs ─── */}
-      <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 border border-slate-200/60 p-1 w-fit">
+      <div className="flex flex-wrap gap-2 border-b border-slate-100 pb-2 mb-2">
         {SETTINGS_TABS.map(tab => (
           <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-caption font-medium transition-all",
+              "inline-flex px-4 py-2 text-caption font-medium rounded-xl transition-all flex items-center gap-1.5",
               activeTab === tab.id
                 ? "bg-[#151936] text-white shadow-sm"
-                : "text-slate-655 hover:bg-slate-50 hover:text-slate-900"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
             )}>
             <tab.icon size={14} className="shrink-0" />
             <span>{tab.label}</span>

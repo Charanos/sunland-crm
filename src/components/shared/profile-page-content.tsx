@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { BoardHeader } from "@/components/ui/erp-primitives";
 import {
   IconShieldLock,
   IconBell,
@@ -14,11 +13,26 @@ import {
   IconEye,
   IconEyeOff,
   IconCircleCheckFilled,
-  IconUpload,
-  IconTrash,
   IconShieldCheck,
   IconLogout,
   IconChevronRight,
+  IconKey,
+  IconMapPin,
+  IconClock,
+  IconDeviceMobile,
+  IconActivity,
+  IconLock,
+  IconUser,
+  IconAlertCircle,
+  IconBrandChrome,
+  IconBrandSafari,
+  IconBrandEdge,
+  IconChartPie,
+  IconCalendar,
+  IconCircleDashed,
+  IconMail,
+  IconPhone,
+  IconBuilding,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
@@ -38,7 +52,26 @@ interface UserProfile {
   modules: string[];
 }
 
-// ── Initial state (would be loaded from /api/auth/me in production) ─────────
+interface ActivityItem {
+  id: string;
+  action: string;
+  module: string;
+  time: string;
+  tone: "success" | "neutral";
+  ref: string | null;
+}
+
+interface Session {
+  id: string;
+  device: string;
+  location: string;
+  lastActive: string;
+  browser: string;
+  current: boolean;
+  ip: string;
+}
+
+// ── Static Data ───────────────────────────────────────────────────────────────
 
 const INITIAL_PROFILE: UserProfile = {
   name: "Paul Amos",
@@ -47,37 +80,66 @@ const INITIAL_PROFILE: UserProfile = {
   department: "Executive Management",
   joinDate: "March 2021",
   role: "ceo",
-  avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
+  avatarUrl:
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
   status: "online",
   accessLevel: "Full Access — All modules",
-  modules: ["Finance Command", "Operations", "HR Portal", "Properties & Portfolio", "Reports & Audit", "Security & Admin"],
+  modules: [
+    "Finance Command",
+    "Operations",
+    "HR Portal",
+    "Properties & Portfolio",
+    "Reports & Audit",
+    "Security & Admin",
+  ],
 };
 
-const ACTIVITY_LOG = [
-  { id: "1", action: "Approved payroll run PR-2026-06", module: "Finance", time: "10 min ago", tone: "success" },
-  { id: "2", action: "Reviewed Kilimani Heights mandate MDT-005", module: "Properties", time: "1 hour ago", tone: "neutral" },
-  { id: "3", action: "Signed off on cheque CHQ-0098 clearance", module: "Finance", time: "3 hours ago", tone: "success" },
-  { id: "4", action: "Updated user preferences", module: "Settings", time: "Yesterday", tone: "neutral" },
-  { id: "5", action: "Generated Monthly Report RPT-208", module: "Reports", time: "2 days ago", tone: "neutral" },
+const ACTIVITY_LOG: ActivityItem[] = [
+  { id: "1", action: "Approved payroll run PR-2026-06", module: "Finance", time: "10 min ago", tone: "success", ref: "PR-2026-06" },
+  { id: "2", action: "Reviewed Kilimani Heights mandate MDT-005", module: "Properties", time: "1 hour ago", tone: "neutral", ref: "MDT-005" },
+  { id: "3", action: "Signed off on cheque CHQ-0098 clearance", module: "Finance", time: "3 hours ago", tone: "success", ref: "CHQ-0098" },
+  { id: "4", action: "Updated user preferences", module: "Settings", time: "Yesterday", tone: "neutral", ref: null },
+  { id: "5", action: "Generated Monthly Report RPT-208", module: "Reports", time: "2 days ago", tone: "neutral", ref: "RPT-208" },
 ];
 
-const SESSIONS = [
-  { id: "1", device: "MacBook Pro 14\"", location: "Nairobi, KE", lastActive: "Active now", browser: "Chrome 126", current: true },
-  { id: "2", device: "iPhone 15 Pro", location: "Nairobi, KE", lastActive: "2 hours ago", browser: "Safari Mobile", current: false },
-  { id: "3", device: "Windows PC", location: "Westlands, Nairobi", lastActive: "Yesterday 4:32 PM", browser: "Edge 125", current: false },
+const SESSIONS: Session[] = [
+  { id: "1", device: 'MacBook Pro 14"', location: "Nairobi, KE", lastActive: "Active now", browser: "Chrome 126", current: true, ip: "102.213.xx.xx" },
+  { id: "2", device: "iPhone 15 Pro", location: "Nairobi, KE", lastActive: "2 hours ago", browser: "Safari Mobile", current: false, ip: "102.213.xx.xx" },
+  { id: "3", device: "Windows PC", location: "Westlands, Nairobi", lastActive: "Yesterday 4:32 PM", browser: "Edge 125", current: false, ip: "41.90.xx.xx" },
 ];
 
-const PROFILE_TABS = ["Overview", "Password", "Activity", "Sessions"] as const;
-type ProfileTab = typeof PROFILE_TABS[number];
+const PROFILE_TABS = [
+  { id: "Overview" as const, label: "Overview", icon: IconUser },
+  { id: "Password" as const, label: "Password", icon: IconShieldLock },
+  { id: "Activity" as const, label: "Activity", icon: IconActivity },
+  { id: "Sessions" as const, label: "Sessions", icon: IconDeviceLaptop },
+];
+type ProfileTab = "Overview" | "Password" | "Activity" | "Sessions";
+
+const MODULE_TONES: Record<string, string> = {
+  Finance: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  Properties: "bg-blue-50 text-blue-700 border-blue-100",
+  Settings: "bg-slate-100 text-slate-600 border-slate-200",
+  Reports: "bg-purple-50 text-purple-700 border-purple-100",
+  HR: "bg-amber-50 text-amber-700 border-amber-100",
+};
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function formatRole(role: string) {
-  return role.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
-    .replace("Ceo", "CEO").replace("Gm", "GM");
+  return role
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
+    .replace("Ceo", "CEO")
+    .replace("Gm", "GM");
 }
 
-function getPasswordStrength(pwd: string): { score: number; label: string; color: string } {
+function getPasswordStrength(pwd: string): {
+  score: number;
+  label: string;
+  color: string;
+} {
   if (!pwd) return { score: 0, label: "", color: "" };
   let score = 0;
   if (pwd.length >= 8) score++;
@@ -87,7 +149,7 @@ function getPasswordStrength(pwd: string): { score: number; label: string; color
   if (/[^A-Za-z0-9]/.test(pwd)) score++;
   const map = [
     { score: 0, label: "", color: "" },
-    { score: 1, label: "Very Weak", color: "bg-red-500" },
+    { score: 1, label: "Very Weak", color: "bg-rose-500" },
     { score: 2, label: "Weak", color: "bg-orange-400" },
     { score: 3, label: "Fair", color: "bg-amber-400" },
     { score: 4, label: "Strong", color: "bg-emerald-400" },
@@ -96,39 +158,111 @@ function getPasswordStrength(pwd: string): { score: number; label: string; color
   return map[Math.min(score, 5)];
 }
 
-// ── Password visibility toggle (module-level to avoid recreating in render) ────
+function getProfileCompletion(profile: UserProfile) {
+  const checks = [
+    { key: "name", label: "Full name", done: !!profile.name },
+    { key: "email", label: "Email address", done: !!profile.email },
+    { key: "phone", label: "Phone number", done: !!profile.phone },
+    { key: "department", label: "Department", done: !!profile.department },
+    { key: "avatar", label: "Profile photo", done: !!profile.avatarUrl },
+  ];
+  const done = checks.filter((c) => c.done).length;
+  return {
+    checks,
+    done,
+    total: checks.length,
+    pct: Math.round((done / checks.length) * 100),
+  };
+}
 
-function PasswordToggleBtn({ show, toggle }: { show: boolean; toggle: () => void }) {
+function getBrowserIcon(browser: string) {
+  if (browser.includes("Chrome")) return IconBrandChrome;
+  if (browser.includes("Safari")) return IconBrandSafari;
+  if (browser.includes("Edge")) return IconBrandEdge;
+  return IconDeviceLaptop;
+}
+
+function getDeviceIcon(device: string) {
+  if (
+    device.includes("iPhone") ||
+    device.includes("Android") ||
+    device.includes("Mobile")
+  )
+    return IconDeviceMobile;
+  return IconDeviceLaptop;
+}
+
+function groupActivityByDay(log: ActivityItem[]) {
+  const today: ActivityItem[] = [];
+  const yesterday: ActivityItem[] = [];
+  const earlier: ActivityItem[] = [];
+  log.forEach((item) => {
+    if (item.time.includes("min") || item.time.includes("hour"))
+      today.push(item);
+    else if (item.time === "Yesterday") yesterday.push(item);
+    else earlier.push(item);
+  });
+  const groups: { label: string; items: ActivityItem[] }[] = [];
+  if (today.length) groups.push({ label: "Today", items: today });
+  if (yesterday.length) groups.push({ label: "Yesterday", items: yesterday });
+  if (earlier.length) groups.push({ label: "Earlier", items: earlier });
+  return groups;
+}
+
+// ── Password Toggle ────────────────────────────────────────────────────────────
+
+function PasswordToggleBtn({
+  show,
+  toggle,
+}: {
+  show: boolean;
+  toggle: () => void;
+}) {
   return (
-    <button type="button" onClick={toggle} className="text-slate-400 hover:text-slate-600 transition-colors">
+    <button
+      type="button"
+      onClick={toggle}
+      className="text-slate-400 hover:text-slate-600 transition-colors"
+    >
       {show ? <IconEyeOff size={15} /> : <IconEye size={15} />}
     </button>
   );
 }
 
-// ── Editable field ─────────────────────────────────────────────────────────────
+// ── Editable Field ─────────────────────────────────────────────────────────────
 
 function EditableField({
-  label, value, type = "text", onSave
+  label,
+  value,
+  type = "text",
+  icon: Icon,
+  onSave,
 }: {
-  label: string; value: string; type?: string; onSave: (v: string) => Promise<void> | void;
+  label: string;
+  value: string;
+  type?: string;
+  icon?: React.ComponentType<{ size?: number; className?: string }>;
+  onSave: (v: string) => Promise<void> | void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input when entering edit mode — intentionally targeting DOM (valid side effect)
-  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
 
-  // Sync draft from parent when entering edit mode (not via effect)
   const startEditing = () => {
-    setDraft(value); // reset to latest parent value on every edit start
+    setDraft(value);
     setEditing(true);
   };
 
   const save = async () => {
-    if (draft === value) { setEditing(false); return; }
+    if (draft === value) {
+      setEditing(false);
+      return;
+    }
     setIsSaving(true);
     await onSave(draft);
     setIsSaving(false);
@@ -136,8 +270,18 @@ function EditableField({
   };
 
   return (
-    <div className="group flex items-start justify-between py-3.5 border-b border-slate-100 last:border-0">
-      <div className="flex-1 min-w-0 pr-4">
+    <div
+      className={cn(
+        "group relative flex items-start gap-4 py-3.5 px-4 rounded-xl transition-all duration-200",
+        editing ? "bg-slate-50" : "hover:bg-slate-50/80"
+      )}
+    >
+      {Icon && (
+        <div className="mt-0.5 size-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 transition-colors group-hover:bg-white group-hover:border group-hover:border-slate-200">
+          <Icon size={14} className="text-slate-400" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
         <p className="label-caps text-slate-400 mb-1">{label}</p>
         {editing ? (
           <div className="flex items-center gap-2 mt-1.5">
@@ -145,114 +289,318 @@ function EditableField({
               ref={inputRef}
               type={type}
               value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") { setEditing(false); } }}
-              className="text-caption flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-800 focus:border-[var(--sidebar)] focus:outline-none focus:ring-2 focus:ring-[var(--sidebar)]/10 transition-all"
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") save();
+                if (e.key === "Escape") setEditing(false);
+              }}
+              className="text-sm flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-slate-800 focus:border-[#151936] focus:outline-none focus:ring-2 focus:ring-[#151936]/10 transition-all"
             />
-            <button type="button" disabled={isSaving} onClick={save}
-              className="flex size-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors disabled:opacity-50">
-              {isSaving ? <span className="size-3 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" /> : <IconCheck size={14} />}
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={save}
+              className="flex size-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+            >
+              {isSaving ? (
+                <span className="size-3 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+              ) : (
+                <IconCheck size={13} />
+              )}
             </button>
-            <button type="button" onClick={() => setEditing(false)}
-              className="flex size-8 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors">
-              <IconX size={14} />
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="flex size-7 items-center justify-center rounded-lg bg-slate-100 text-slate-400 hover:bg-slate-200 transition-colors"
+            >
+              <IconX size={13} />
             </button>
           </div>
         ) : (
-          <p className="text-caption text-slate-800 mt-1">{value || <span className="text-slate-300 italic">Not set</span>}</p>
+          <p className="text-sm text-slate-800 leading-snug mt-0.5">
+            {value || (
+              <span className="text-slate-300 italic text-xs">Not set</span>
+            )}
+          </p>
         )}
       </div>
       {!editing && (
-        <button type="button" onClick={startEditing}
-          className="opacity-0 group-hover:opacity-100 flex size-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all">
-          <IconEdit size={14} />
+        <button
+          type="button"
+          onClick={startEditing}
+          className="opacity-0 group-hover:opacity-100 mt-0.5 flex size-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all shrink-0"
+        >
+          <IconEdit size={13} />
         </button>
       )}
     </div>
   );
 }
 
-// ── Avatar Uploader ────────────────────────────────────────────────────────────
+// ── Avatar Uploader (hero context) ────────────────────────────────────────────
 
-function AvatarUploader({ current, onChange }: { current: string | null; onChange: (url: string) => void }) {
+function AvatarUploader({
+  current,
+  name,
+  onChange,
+}: {
+  current: string | null;
+  name: string;
+  onChange: (url: string) => void;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(current);
   const [dragging, setDragging] = useState(false);
 
-  const handleFile = useCallback((file: File) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const url = e.target?.result as string;
-      setPreview(url);
-      onChange(url);
-    };
-    reader.readAsDataURL(file);
-  }, [onChange]);
+  const handleFile = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const url = e.target?.result as string;
+        setPreview(url);
+        onChange(url);
+      };
+      reader.readAsDataURL(file);
+    },
+    [onChange]
+  );
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
-  }, [handleFile]);
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    },
+    [handleFile]
+  );
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
-  };
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      {/* Avatar with camera overlay */}
-      <div className="relative group">
+    <div
+      className="relative group shrink-0"
+      onDrop={onDrop}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+    >
+      <div
+        className={cn(
+          "size-[88px] rounded-full overflow-hidden cursor-pointer transition-all duration-300 shadow-2xl",
+          "ring-2 ring-[#f3df27] ring-offset-[3px] ring-offset-[#0f172a]",
+          dragging && "ring-4 ring-[#f3df27] scale-105"
+        )}
+        onClick={() => fileRef.current?.click()}
+      >
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={preview}
+            alt="Avatar"
+            className="size-full object-cover"
+          />
+        ) : (
+          <div className="size-full bg-[#151936] flex items-center justify-center title-serif text-xl text-[#f3df27]">
+            {initials}
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+          <IconCamera size={22} className="text-white" />
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-[#f3df27] text-[#151936] shadow-md hover:bg-[#e6d220] transition-all"
+      >
+        <IconEdit size={11} />
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Profile Completion Bar ─────────────────────────────────────────────────────
+
+function ProfileCompletionBar({ profile }: { profile: UserProfile }) {
+  const { checks, done, total, pct } = useMemo(
+    () => getProfileCompletion(profile),
+    [profile]
+  );
+  if (pct === 100) return null;
+
+  return (
+    <div className="rounded-2xl border border-amber-100 bg-gradient-to-r from-amber-50/60 to-white p-4 flex flex-col gap-2.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="size-6 rounded-md bg-amber-100 flex items-center justify-center">
+            <IconCircleDashed size={13} className="text-amber-600" />
+          </div>
+          <p className="text-xs text-amber-800">
+            Profile{" "}
+            <span className="font-mono">{pct}%</span> complete
+          </p>
+        </div>
+        <span className="font-mono text-xs text-amber-500">
+          {done}/{total} fields
+        </span>
+      </div>
+      <div className="w-full h-1 rounded-full bg-amber-100 overflow-hidden">
         <div
-          className={cn(
-            "size-24 rounded-full overflow-hidden ring-4 ring-white shadow-lg cursor-pointer transition-all",
-            dragging && "ring-[var(--sidebar)] ring-offset-2"
-          )}
-          onDrop={onDrop}
-          onDragOver={e => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onClick={() => fileRef.current?.click()}
-        >
-          {preview ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="Avatar preview" className="size-full object-cover" />
-          ) : (
-            <div className="size-full bg-[var(--sidebar)] flex items-center justify-center text-white text-2xl">
-              {INITIAL_PROFILE.name.split(" ").map(n => n[0]).join("")}
-            </div>
-          )}
-          {/* Camera overlay on hover */}
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-            <IconCamera size={24} className="text-white" />
+          className="h-full bg-amber-400 rounded-full transition-all duration-700"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {checks
+          .filter((c) => !c.done)
+          .map((c) => (
+            <span
+              key={c.key}
+              className="px-2 py-0.5 rounded-md text-tiny label-caps bg-white border border-amber-200 text-amber-700"
+            >
+              + {c.label}
+            </span>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Security Health Card ───────────────────────────────────────────────────────
+
+function SecurityHealthCard({
+  onChangeTab,
+}: {
+  onChangeTab: (tab: ProfileTab) => void;
+}) {
+  const score = 55;
+
+  const items = [
+    {
+      icon: IconKey,
+      label: "Two-factor authentication",
+      value: "Not configured",
+      tone: "risk" as const,
+      action: "Set up" as string | null,
+      onAction: () => onChangeTab("Password"),
+    },
+    {
+      icon: IconLock,
+      label: "Password strength",
+      value: "Last changed: Unknown",
+      tone: "warning" as const,
+      action: "Update" as string | null,
+      onAction: () => onChangeTab("Password"),
+    },
+    {
+      icon: IconDeviceLaptop,
+      label: "Active sessions",
+      value: "3 devices signed in",
+      tone: "neutral" as const,
+      action: "Manage" as string | null,
+      onAction: () => onChangeTab("Sessions"),
+    },
+    {
+      icon: IconAlertCircle,
+      label: "Suspicious activity",
+      value: "None detected",
+      tone: "success" as const,
+      action: null,
+      onAction: null,
+    },
+  ];
+
+  const scoreTone =
+    score >= 80
+      ? "bg-emerald-400"
+      : score >= 50
+        ? "bg-amber-400"
+        : "bg-rose-400";
+
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="title-serif text-slate-900">Security Health</h2>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-slate-500">{score}/100</span>
+          <div className="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+            <div
+              className={cn("h-full rounded-full transition-all", scoreTone)}
+              style={{ width: `${score}%` }}
+            />
           </div>
         </div>
-        {/* Upload badge */}
-        <button type="button" onClick={() => fileRef.current?.click()}
-          className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-[var(--sidebar)] text-white shadow-md hover:brightness-90 transition-all">
-          <IconEdit size={12} />
-        </button>
       </div>
-
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
-
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-tiny text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-          <IconUpload size={12} />
-          Upload photo
-        </button>
-        {preview && preview !== INITIAL_PROFILE.avatarUrl && (
-          <button type="button" onClick={() => { setPreview(INITIAL_PROFILE.avatarUrl); onChange(INITIAL_PROFILE.avatarUrl || ""); }}
-            className="flex items-center gap-1.5 rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-tiny text-red-500 hover:bg-red-100 transition-colors">
-            <IconTrash size={12} />
-            Remove
-          </button>
-        )}
+      <div className="space-y-0.5">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-slate-50 transition-colors"
+          >
+            <div
+              className={cn(
+                "size-7 rounded-lg flex items-center justify-center shrink-0",
+                item.tone === "risk"
+                  ? "bg-rose-50 text-rose-500"
+                  : item.tone === "warning"
+                    ? "bg-amber-50 text-amber-500"
+                    : item.tone === "success"
+                      ? "bg-emerald-50 text-emerald-600"
+                      : "bg-slate-100 text-slate-500"
+              )}
+            >
+              <item.icon size={13} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-slate-500 leading-none mb-0.5">
+                {item.label}
+              </p>
+              <p
+                className={cn(
+                  "text-xs",
+                  item.tone === "risk"
+                    ? "text-rose-600"
+                    : item.tone === "warning"
+                      ? "text-amber-600"
+                      : item.tone === "success"
+                        ? "text-emerald-700"
+                        : "text-slate-700"
+                )}
+              >
+                {item.value}
+              </p>
+            </div>
+            {item.action && item.onAction && (
+              <button
+                type="button"
+                onClick={item.onAction}
+                className="text-tiny label-caps text-[#151936] hover:underline shrink-0 transition-colors px-1.5 py-0.5 rounded hover:bg-slate-100"
+              >
+                {item.action} →
+              </button>
+            )}
+          </div>
+        ))}
       </div>
-      <p className="text-tiny text-slate-400">JPG, PNG or GIF · Max 4MB · Drag & drop supported</p>
     </div>
   );
 }
@@ -272,119 +620,332 @@ function PasswordTab({ onSave }: { onSave: (msg: string) => void }) {
   const mismatch = confirm.length > 0 && next !== confirm;
   const canSubmit = current.length > 0 && next.length >= 8 && next === confirm;
 
+  const requirements = [
+    { rule: "At least 8 characters", ok: next.length >= 8 },
+    { rule: "One uppercase letter (A–Z)", ok: /[A-Z]/.test(next) },
+    { rule: "One number (0–9)", ok: /[0-9]/.test(next) },
+    { rule: "One special character", ok: /[^A-Za-z0-9]/.test(next) },
+  ];
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    onSave("Password updated successfully. You'll need to log in again on other devices.");
-    setCurrent(""); setNext(""); setConfirm("");
+    await new Promise((r) => setTimeout(r, 1200));
+    onSave("Password updated. You'll need to re-authenticate on other devices.");
+    setCurrent("");
+    setNext("");
+    setConfirm("");
     setLoading(false);
   };
 
   return (
-    <form onSubmit={submit} className="max-w-md space-y-5">
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-        <h2 className="headline-md font-serif text-slate-900 mb-5">Change Password</h2>
-
-        {/* Current */}
-        <div className="space-y-4">
+    <div className="max-w-xl flex flex-col gap-4">
+      {/* Form card */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+        {/* Dark header */}
+        <div className="bg-gradient-to-r from-[#070b19] to-[#0f172a] px-6 py-5 flex items-center gap-4">
+          <div className="size-10 rounded-xl bg-[#f3df27]/10 border border-[#f3df27]/20 flex items-center justify-center shrink-0">
+            <IconShieldLock size={18} className="text-[#f3df27]" />
+          </div>
           <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Current Password</label>
+            <h2 className="title-serif text-white">Change Password</h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Use a strong, unique password you don&apos;t use elsewhere
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={submit} className="p-6 space-y-4">
+          {/* Current */}
+          <div>
+            <label className="label-caps text-slate-400 mb-2 block">
+              Current Password
+            </label>
             <div className="relative">
-              <input type={showCurrent ? "text" : "password"} value={current} onChange={e => setCurrent(e.target.value)}
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
+                <IconLock size={14} />
+              </div>
+              <input
+                type={showCurrent ? "text" : "password"}
+                value={current}
+                onChange={(e) => setCurrent(e.target.value)}
                 placeholder="Enter current password"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-caption text-slate-800 focus:border-[var(--sidebar)] focus:outline-none focus:ring-2 focus:ring-[var(--sidebar)]/10 transition-all" />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2"><PasswordToggleBtn show={showCurrent} toggle={() => setShowCurrent(p => !p)} /></div>
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-10 py-2.5 text-sm text-slate-800 focus:border-[#151936] focus:outline-none focus:ring-2 focus:ring-[#151936]/10 transition-all"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <PasswordToggleBtn
+                  show={showCurrent}
+                  toggle={() => setShowCurrent((p) => !p)}
+                />
+              </div>
             </div>
           </div>
 
+          <div className="h-px bg-slate-100" />
+
           {/* New */}
           <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">New Password</label>
+            <label className="label-caps text-slate-400 mb-2 block">
+              New Password
+            </label>
             <div className="relative">
-              <input type={showNext ? "text" : "password"} value={next} onChange={e => setNext(e.target.value)}
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
+                <IconKey size={14} />
+              </div>
+              <input
+                type={showNext ? "text" : "password"}
+                value={next}
+                onChange={(e) => setNext(e.target.value)}
                 placeholder="At least 8 characters"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-caption text-slate-800 focus:border-[var(--sidebar)] focus:outline-none focus:ring-2 focus:ring-[var(--sidebar)]/10 transition-all" />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2"><PasswordToggleBtn show={showNext} toggle={() => setShowNext(p => !p)} /></div>
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-10 py-2.5 text-sm text-slate-800 focus:border-[#151936] focus:outline-none focus:ring-2 focus:ring-[#151936]/10 transition-all"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <PasswordToggleBtn
+                  show={showNext}
+                  toggle={() => setShowNext((p) => !p)}
+                />
+              </div>
             </div>
-            {/* Strength meter */}
             {next.length > 0 && (
-              <div className="mt-2">
-                <div className="flex gap-1 mb-1">
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className={cn("h-1 flex-1 rounded-full transition-all duration-300",
-                      i <= strength.score ? strength.color : "bg-slate-200")} />
+              <div className="mt-2.5">
+                <div className="flex gap-1 mb-1.5">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "h-1 flex-1 rounded-full transition-all duration-300",
+                        i <= strength.score ? strength.color : "bg-slate-200"
+                      )}
+                    />
                   ))}
                 </div>
-                <p className={cn("text-tiny", strength.score >= 4 ? "text-emerald-600" : strength.score >= 3 ? "text-amber-600" : "text-red-500")}>
-                  {strength.label}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p
+                    className={cn(
+                      "text-xs",
+                      strength.score >= 4
+                        ? "text-emerald-600"
+                        : strength.score >= 3
+                          ? "text-amber-600"
+                          : "text-rose-500"
+                    )}
+                  >
+                    {strength.label}
+                  </p>
+                  <span className="font-mono text-tiny text-slate-400">
+                    {strength.score}/5
+                  </span>
+                </div>
               </div>
             )}
           </div>
 
           {/* Confirm */}
           <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Confirm New Password</label>
+            <label className="label-caps text-slate-400 mb-2 block">
+              Confirm New Password
+            </label>
             <div className="relative">
-              <input type={showConfirm ? "text" : "password"} value={confirm} onChange={e => setConfirm(e.target.value)}
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
+                <IconKey size={14} />
+              </div>
+              <input
+                type={showConfirm ? "text" : "password"}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Repeat new password"
                 className={cn(
-                  "w-full rounded-xl border bg-slate-50 px-3 py-2.5 pr-10 text-caption text-slate-800 focus:outline-none focus:ring-2 transition-all",
-                  mismatch ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200 focus:border-[var(--sidebar)] focus:ring-[var(--sidebar)]/10"
-                )} />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2"><PasswordToggleBtn show={showConfirm} toggle={() => setShowConfirm(p => !p)} /></div>
+                  "w-full rounded-xl border bg-slate-50 pl-9 pr-10 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 transition-all",
+                  mismatch
+                    ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
+                    : "border-slate-200 focus:border-[#151936] focus:ring-[#151936]/10"
+                )}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <PasswordToggleBtn
+                  show={showConfirm}
+                  toggle={() => setShowConfirm((p) => !p)}
+                />
+              </div>
             </div>
-            {mismatch && <p className="text-tiny text-red-500 mt-1">Passwords do not match</p>}
+            {mismatch && (
+              <p className="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
+                <IconX size={11} />
+                Passwords do not match
+              </p>
+            )}
             {!mismatch && confirm.length > 0 && next === confirm && (
-              <p className="text-tiny text-emerald-600 mt-1 flex items-center gap-1"><IconCheck size={11} />Passwords match</p>
+              <p className="text-xs text-emerald-600 mt-1.5 flex items-center gap-1">
+                <IconCheck size={11} />
+                Passwords match
+              </p>
             )}
           </div>
-        </div>
 
-        <button type="submit" disabled={!canSubmit || loading}
-          className={cn(
-            "mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-caption text-white shadow-sm transition-all",
-            canSubmit && !loading ? "bg-[var(--sidebar)] hover:opacity-90" : "bg-slate-300 cursor-not-allowed"
-          )}>
-          {loading ? (
-            <><span className="size-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />Updating…</>
-          ) : (
-            <><IconShieldLock size={14} />Update Password</>
-          )}
-        </button>
+          <button
+            type="submit"
+            disabled={!canSubmit || loading}
+            className={cn(
+              "mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm transition-all",
+              canSubmit && !loading
+                ? "bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] shadow-sm"
+                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+            )}
+          >
+            {loading ? (
+              <>
+                <span className="size-4 rounded-full border-2 border-[#151936]/30 border-t-[#151936] animate-spin" />
+                Updating…
+              </>
+            ) : (
+              <>
+                <IconShieldLock size={14} />
+                Update Password
+              </>
+            )}
+          </button>
+        </form>
       </div>
 
-      {/* Password tips */}
-      <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-        <p className="label-caps text-slate-400 mb-2.5">Requirements</p>
-        {[
-          { rule: "At least 8 characters", ok: next.length >= 8 },
-          { rule: "At least one uppercase letter (A–Z)", ok: /[A-Z]/.test(next) },
-          { rule: "At least one number (0–9)", ok: /[0-9]/.test(next) },
-          { rule: "At least one special character", ok: /[^A-Za-z0-9]/.test(next) },
-        ].map(item => (
-          <div key={item.rule} className="flex items-center gap-2 py-1">
-            <div className={cn("size-4 rounded-full flex items-center justify-center", item.ok ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-300")}>
-              <IconCheck size={10} />
+      {/* Requirements */}
+      <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
+        <p className="label-caps text-slate-400 mb-3">Password Requirements</p>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
+          {requirements.map((item) => (
+            <div key={item.rule} className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "size-5 rounded-md flex items-center justify-center transition-all",
+                  item.ok
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-slate-100 text-slate-300"
+                )}
+              >
+                <IconCheck size={11} />
+              </div>
+              <p
+                className={cn(
+                  "text-xs transition-colors",
+                  item.ok ? "text-emerald-700" : "text-slate-400"
+                )}
+              >
+                {item.rule}
+              </p>
             </div>
-            <p className={cn("text-tiny", item.ok ? "text-emerald-700" : "text-slate-400")}>{item.rule}</p>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </form>
+    </div>
   );
 }
 
-// ── Main Content Component ──────────────────────────────────────────────────────
+// ── Activity Timeline ──────────────────────────────────────────────────────────
 
-export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?: string }) {
+function ActivityTimeline() {
+  const groups = useMemo(() => groupActivityByDay(ACTIVITY_LOG), []);
+
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+      <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h2 className="title-serif text-slate-900">Activity Log</h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            All actions performed in the last 30 days
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200">
+          <IconCalendar size={12} className="text-slate-400" />
+          <span className="text-xs text-slate-500">Last 30 days</span>
+        </div>
+      </div>
+
+      <div className="px-6 py-4">
+        {groups.map((group, gi) => (
+          <div
+            key={group.label}
+            className={cn("pb-4", gi < groups.length - 1 && "mb-2")}
+          >
+            {/* Day divider */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-px flex-1 bg-slate-100" />
+              <span className="label-caps text-tiny text-slate-400 px-2">
+                {group.label}
+              </span>
+              <div className="h-px flex-1 bg-slate-100" />
+            </div>
+
+            {/* Timeline items */}
+            <div className="relative pl-7">
+              <div className="absolute left-2.5 top-1.5 bottom-1 w-px bg-slate-100" />
+              {group.items.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "relative flex items-start gap-4 mb-5 last:mb-0 animate-fade-in-up"
+                  )}
+                  style={{ animationDelay: `${idx * 0.05}s` }}
+                >
+                  {/* Timeline dot */}
+                  <div
+                    className={cn(
+                      "absolute -left-[0.875rem] top-1.5 size-3 rounded-full border-2 border-white ring-2 shrink-0 transition-colors",
+                      item.tone === "success"
+                        ? "bg-emerald-400 ring-emerald-100"
+                        : "bg-slate-300 ring-slate-100"
+                    )}
+                  />
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm text-slate-800 leading-snug">
+                        {item.action}
+                      </p>
+                      <span className="font-mono text-tiny text-slate-400 whitespace-nowrap mt-0.5 shrink-0">
+                        {item.time}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 rounded-md text-tiny label-caps border",
+                          MODULE_TONES[item.module] ||
+                          "bg-slate-100 text-slate-600 border-slate-200"
+                        )}
+                      >
+                        {item.module}
+                      </span>
+                      {item.ref && (
+                        <span className="font-mono text-tiny text-slate-400">
+                          {item.ref}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────────
+
+export function ProfilePageContent({
+  portalPrefix = "/admin",
+}: {
+  portalPrefix?: string;
+}) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
-  const [sessions, setSessions] = useState(SESSIONS);
+  const [sessions, setSessions] = useState<Session[]>(SESSIONS);
   const { pushToast } = useToast();
 
+  // Fetch real user on mount
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => res.json())
@@ -393,12 +954,26 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
           const user = data.user;
           let department = "Executive Management";
           let accessLevel = "Full Access — All modules";
-          let modules = ["Finance Command", "Operations", "HR Portal", "Properties & Portfolio", "Reports & Audit", "Security & Admin"];
-          
-          if (user.role === "ceo" || user.role === "general_manager") {
+          let modules = [
+            "Finance Command",
+            "Operations",
+            "HR Portal",
+            "Properties & Portfolio",
+            "Reports & Audit",
+            "Security & Admin",
+          ];
+
+          if (
+            user.role === "ceo" ||
+            user.role === "general_manager"
+          ) {
             department = "Executive Management";
             accessLevel = "Full Access — All modules";
-          } else if (user.role.startsWith("finance") || user.role.startsWith("accounts") || user.role.startsWith("payroll")) {
+          } else if (
+            user.role.startsWith("finance") ||
+            user.role.startsWith("accounts") ||
+            user.role.startsWith("payroll")
+          ) {
             department = "Finance & Accounts";
             accessLevel = "Ledgers, Approvals & Cash flows";
             modules = ["Finance Command", "Reports & Audit"];
@@ -410,21 +985,24 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
             department = "Rentals & Portfolios";
             accessLevel = "Properties, Leases & Mandates";
             modules = ["Properties & Portfolio", "Operations"];
-          } else if (user.role.startsWith("operations") || user.role.startsWith("property")) {
+          } else if (
+            user.role.startsWith("operations") ||
+            user.role.startsWith("property")
+          ) {
             department = "Operations & Maintenance";
             accessLevel = "Properties & Maintenance Tickets";
             modules = ["Operations", "Properties & Portfolio"];
           }
 
-          let avatarUrl = user.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face";
+          let avatarUrl =
+            user.avatarUrl ||
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face";
           if (user.role === "ceo") {
-            avatarUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face";
+            avatarUrl =
+              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face";
           } else if (user.role === "general_manager") {
-            avatarUrl = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face";
-          } else if (user.role === "finance_head") {
-            avatarUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face";
-          } else if (user.role === "finance_officer") {
-            avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face";
+            avatarUrl =
+              "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face";
           }
 
           setProfile({
@@ -441,178 +1019,445 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
           });
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleSaveField = async (field: keyof UserProfile, value: string) => {
-    // Simulate PATCH /api/users/me
-    await new Promise(r => setTimeout(r, 600));
-    setProfile(p => ({ ...p, [field]: value }));
-    pushToast({ tone: "success", title: "Saved", body: `${field.charAt(0).toUpperCase() + field.slice(1)} updated.` });
+    await new Promise((r) => setTimeout(r, 600));
+    setProfile((p) => ({ ...p, [field]: value }));
+    pushToast({
+      tone: "success",
+      title: "Saved",
+      body: `${field.charAt(0).toUpperCase() + field.slice(1)} updated.`,
+    });
   };
 
   const handleAvatarChange = (url: string) => {
-    setProfile(p => ({ ...p, avatarUrl: url }));
-    pushToast({ tone: "success", title: "Photo updated", body: "Your profile photo has been changed." });
+    setProfile((p) => ({ ...p, avatarUrl: url }));
+    pushToast({
+      tone: "success",
+      title: "Photo updated",
+      body: "Your profile photo has been changed.",
+    });
   };
 
   const revokeSession = (id: string) => {
-    setSessions(prev => prev.filter(s => s.id !== id));
-    pushToast({ tone: "warning", title: "Session revoked", body: "That device has been signed out." });
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+    pushToast({
+      tone: "warning",
+      title: "Session revoked",
+      body: "That device has been signed out.",
+    });
   };
 
   const revokeAllOthers = () => {
-    setSessions(prev => prev.filter(s => s.current));
-    pushToast({ tone: "warning", title: "All sessions revoked", body: "All other devices have been signed out." });
+    setSessions((prev) => prev.filter((s) => s.current));
+    pushToast({
+      tone: "warning",
+      title: "All sessions revoked",
+      body: "All other devices have been signed out.",
+    });
   };
 
-  const handlePasswordSave = (msg: string) => {
-    pushToast({ tone: "success", title: "Password updated", body: msg });
-  };
+  const completion = useMemo(() => getProfileCompletion(profile), [profile]);
 
   return (
-    <div className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 animate-fade-in px-4 md:px-6">
+    <div className="mx-auto max-w-[98rem] flex flex-col gap-5 pb-12 px-4 md:px-6 animate-fade-in">
 
-      <BoardHeader
-        title={profile.name}
-        eyebrow={
-          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-0.5 label-caps text-emerald-700 font-medium">
-            {formatRole(profile.role)}
-          </span>
-        }
-        description={`${profile.department} · ${profile.email}`}
-        meta={
-          <div className="flex items-center gap-4 text-tiny text-slate-500 mt-1">
-            <div className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Active now</span>
+      {/* ── Profile Hero ─────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] shadow-xl">
+        {/* Satin gradient background */}
+        <div className="absolute inset-0 bg-tertiary-gradient" />
+
+        {/* Dot grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.035]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(243,223,39,0.7) 1px, transparent 1px)",
+            backgroundSize: "30px 30px",
+          }}
+        />
+
+        {/* Ambient glow */}
+        <div className="absolute -top-20 -right-20 size-64 rounded-full bg-[#f3df27]/5 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-[#151936]/80 blur-2xl pointer-events-none" />
+
+        <div className="relative px-6 md:px-10 py-8 flex flex-col md:flex-row items-start md:items-center gap-7">
+          {/* Avatar */}
+          <AvatarUploader
+            current={profile.avatarUrl}
+            name={profile.name}
+            onChange={handleAvatarChange}
+          />
+
+          {/* Identity block */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+              <h1 className="title-serif text-[1.75rem] text-white leading-tight">
+                {profile.name}
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-tiny label-caps bg-[#f3df27]/12 text-[#f3df27] border border-[#f3df27]/20">
+                {formatRole(profile.role)}
+              </span>
             </div>
-            <span>·</span>
-            <span>Member since {profile.joinDate}</span>
-          </div>
-        }
-        actions={
-          <div className="relative shrink-0">
-            <AvatarUploader current={profile.avatarUrl} onChange={handleAvatarChange} />
-          </div>
-        }
-      />
+            <p className="text-sm text-slate-400 mb-5">
+              {profile.department} · {profile.email}
+            </p>
 
-      {/* ── Tabs ─────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 border border-slate-200/60 p-1 w-fit">
-        {PROFILE_TABS.map(tab => (
-          <button key={tab} type="button" onClick={() => setActiveTab(tab)}
-            className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-caption font-medium transition-all",
-              activeTab === tab
-                ? "bg-[#151936] text-white shadow-sm"
-                : "text-slate-650 hover:bg-slate-50 hover:text-slate-900"
-            )}>
-            {tab}
-          </button>
-        ))}
+            {/* Stat pills */}
+            <div className="flex flex-wrap items-center gap-5">
+              <div className="flex items-center gap-2">
+                <div className="size-6 rounded-md bg-white/5 border border-white/8 flex items-center justify-center">
+                  <IconChartPie size={11} className="text-slate-400" />
+                </div>
+                <span className="font-mono text-white text-sm">
+                  {profile.modules.length}
+                </span>
+                <span className="text-slate-500 text-xs">modules</span>
+              </div>
+
+              <div className="h-3 w-px bg-white/10" />
+
+              <div className="flex items-center gap-2">
+                <div className="size-6 rounded-md bg-white/5 border border-white/8 flex items-center justify-center">
+                  <IconDeviceLaptop size={11} className="text-slate-400" />
+                </div>
+                <span className="font-mono text-white text-sm">
+                  {sessions.length}
+                </span>
+                <span className="text-slate-500 text-xs">sessions</span>
+              </div>
+
+              <div className="h-3 w-px bg-white/10" />
+
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={cn(
+                    "size-2 rounded-full",
+                    profile.status === "online"
+                      ? "bg-emerald-400 animate-pulse"
+                      : profile.status === "busy"
+                        ? "bg-rose-400"
+                        : "bg-amber-400"
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-xs capitalize",
+                    profile.status === "online"
+                      ? "text-emerald-400"
+                      : profile.status === "busy"
+                        ? "text-rose-400"
+                        : "text-amber-400"
+                  )}
+                >
+                  {profile.status}
+                </span>
+              </div>
+
+              <div className="h-3 w-px bg-white/10" />
+
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <IconCalendar size={11} />
+                <span>Since {profile.joinDate}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: access badge + completion */}
+          <div className="hidden lg:flex flex-col items-end gap-2.5 shrink-0">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+              <IconShieldCheck size={14} className="text-[#f3df27]" />
+              <span className="text-xs text-slate-300">{profile.accessLevel}</span>
+            </div>
+            {completion.pct < 100 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/15">
+                <IconCircleDashed size={12} className="text-amber-400" />
+                <span className="text-xs text-amber-400 font-mono">
+                  {completion.pct}%
+                </span>
+                <span className="text-xs text-amber-500">complete</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Tab Navigation ───────────────────────────────────── */}
+        <div className="relative border-t border-white/[0.08] px-6 md:px-10 py-3 flex flex-wrap gap-1.5 bg-white/[0.02]">
+          {PROFILE_TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            let count: number | null = null;
+            if (tab.id === "Sessions") count = sessions.length;
+            if (tab.id === "Activity") count = ACTIVITY_LOG.length;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "inline-flex px-3.5 py-1.5 text-base font-medium rounded-lg transition-all flex items-center gap-1.5",
+                  isActive
+                    ? "bg-[#f3df27] text-[#151936] shadow-sm font-medium"
+                    : "text-white/90 hover:text-white hover:bg-white/10"
+                )}
+              >
+                <tab.icon size={16} className="shrink-0" />
+                <span>{tab.label}</span>
+                {count !== null && (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.5 text-xs font-medium font-mono",
+                      isActive
+                        ? "bg-[#151936] text-white"
+                        : "bg-white/10 text-white/55"
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Overview Tab ─────────────────────────────────────── */}
       {activeTab === "Overview" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Account info (editable) */}
-          <div className="lg:col-span-7 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="headline-md font-serif text-slate-900">Account Information</h2>
-              <span className="label-caps text-slate-400">Hover to edit</span>
-            </div>
-            <EditableField label="Full Name" value={profile.name} onSave={v => handleSaveField("name", v)} />
-            <EditableField label="Email Address" value={profile.email} type="email" onSave={v => handleSaveField("email", v)} />
-            <EditableField label="Phone Number" value={profile.phone} type="tel" onSave={v => handleSaveField("phone", v)} />
-            <EditableField label="Department" value={profile.department} onSave={v => handleSaveField("department", v)} />
-            <div className="py-3.5 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <p className="label-caps text-slate-400 mb-1">Member Since</p>
-                <p className="text-caption text-slate-800">{profile.joinDate}</p>
+          {/* Left column */}
+          <div className="lg:col-span-7 flex flex-col gap-4">
+            {/* Profile completion (conditionally shown) */}
+            <ProfileCompletionBar profile={profile} />
+
+            {/* Account information */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h2 className="title-serif text-slate-900">
+                    Account Information
+                  </h2>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Hover any field to edit
+                  </p>
+                </div>
+                <div className="size-8 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+                  <IconUser size={14} className="text-slate-400" />
+                </div>
               </div>
-            </div>
-            <div className="py-3.5 flex items-center justify-between">
-              <div>
-                <p className="label-caps text-slate-400 mb-1">Status</p>
-                <div className="flex items-center gap-2 mt-1">
-                  {(["online", "busy", "away"] as const).map(s => (
-                    <button key={s} type="button" onClick={() => {
-                      setProfile(p => ({ ...p, status: s }));
-                      pushToast({ tone: "success", title: "Status updated", body: `You are now ${s}.` });
-                    }}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-full px-3 py-1 text-tiny transition-all border",
-                        profile.status === s
-                          ? s === "online" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : s === "busy" ? "bg-red-50 border-red-200 text-red-600" : "bg-amber-50 border-amber-200 text-amber-700"
-                          : "border-slate-200 text-slate-400 hover:border-slate-300"
-                      )}>
-                      <span className={cn("size-1.5 rounded-full", s === "online" ? "bg-emerald-400" : s === "busy" ? "bg-red-400" : "bg-amber-400")} />
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </button>
-                  ))}
+
+              <div className="py-2 px-2">
+                <EditableField
+                  label="Full Name"
+                  value={profile.name}
+                  icon={IconUser}
+                  onSave={(v) => handleSaveField("name", v)}
+                />
+                <EditableField
+                  label="Email Address"
+                  value={profile.email}
+                  type="email"
+                  icon={IconMail}
+                  onSave={(v) => handleSaveField("email", v)}
+                />
+                <EditableField
+                  label="Phone Number"
+                  value={profile.phone}
+                  type="tel"
+                  icon={IconPhone}
+                  onSave={(v) => handleSaveField("phone", v)}
+                />
+                <EditableField
+                  label="Department"
+                  value={profile.department}
+                  icon={IconBuilding}
+                  onSave={(v) => handleSaveField("department", v)}
+                />
+
+                {/* Status picker */}
+                <div className="flex items-start gap-4 py-3.5 px-4 rounded-xl hover:bg-slate-50/80 transition-all">
+                  <div className="mt-0.5 size-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                    <IconClock size={14} className="text-slate-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="label-caps text-slate-400 mb-2">
+                      Presence Status
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {(["online", "busy", "away"] as const).map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => {
+                            setProfile((p) => ({ ...p, status: s }));
+                            pushToast({
+                              tone: "success",
+                              title: "Status updated",
+                              body: `You are now ${s}.`,
+                            });
+                          }}
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition-all border",
+                            profile.status === s
+                              ? s === "online"
+                                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                : s === "busy"
+                                  ? "bg-rose-50 border-rose-200 text-rose-600"
+                                  : "bg-amber-50 border-amber-200 text-amber-700"
+                              : "border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-600"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "size-1.5 rounded-full",
+                              s === "online"
+                                ? "bg-emerald-400"
+                                : s === "busy"
+                                  ? "bg-rose-400"
+                                  : "bg-amber-400"
+                            )}
+                          />
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Member since (read-only) */}
+                <div className="flex items-center gap-4 py-3.5 px-4">
+                  <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                    <IconCalendar size={14} className="text-slate-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="label-caps text-slate-400 mb-1">
+                      Member Since
+                    </p>
+                    <p className="font-mono text-sm text-slate-700">
+                      {profile.joinDate}
+                    </p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] label-caps bg-slate-100 text-slate-400">
+                    Read-only
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Role & modules */}
-          <div className="lg:col-span-5 flex flex-col gap-5">
+          {/* Right column */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            {/* Role & Permissions */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-              <h2 className="headline-md font-serif text-slate-900 mb-4">Role & Permissions</h2>
-              <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-slate-50">
-                <div className="size-10 rounded-full bg-[var(--sidebar)] flex items-center justify-center shrink-0">
-                  <IconShieldLock size={18} className="text-white" />
+              <h2 className="title-serif text-slate-900 mb-4">
+                Role & Permissions
+              </h2>
+
+              {/* Role badge */}
+              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#151936] mb-4">
+                <div className="size-9 rounded-full bg-[#f3df27]/12 border border-[#f3df27]/18 flex items-center justify-center shrink-0">
+                  <IconShieldLock size={16} className="text-[#f3df27]" />
                 </div>
                 <div>
-                  <p className="text-label text-slate-800">{formatRole(profile.role)}</p>
-                  <p className="text-tiny text-slate-500">{profile.accessLevel}</p>
+                  <p className="text-sm text-white">
+                    {formatRole(profile.role)}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {profile.accessLevel}
+                  </p>
                 </div>
               </div>
-              <p className="label-caps text-slate-400 mb-2.5">Authorized Modules</p>
+
+              <p className="label-caps text-slate-400 mb-2.5">
+                Authorized Modules
+              </p>
               <div className="flex flex-wrap gap-1.5">
-                {profile.modules.map(mod => (
-                  <span key={mod} className="badge-pill badge-tone-brand">{mod}</span>
+                {profile.modules.map((mod) => (
+                  <span
+                    key={mod}
+                    className="px-2.5 py-1 rounded-lg text-xs bg-slate-50 border border-slate-200 text-slate-600"
+                  >
+                    {mod}
+                  </span>
                 ))}
               </div>
             </div>
 
-            {/* Quick actions */}
+            {/* Security Health */}
+            <SecurityHealthCard onChangeTab={setActiveTab} />
+
+            {/* Quick Actions */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-              <h2 className="headline-md font-serif text-slate-900 mb-3">Quick Actions</h2>
-              <div className="space-y-1">
+              <h2 className="title-serif text-slate-900 mb-3">
+                Quick Actions
+              </h2>
+              <div className="space-y-0.5">
                 {[
-                  { label: "Change Password", icon: IconShieldLock, tab: "Password" as ProfileTab, desc: "Update your login credentials" },
-                  { label: "Manage Sessions", icon: IconDeviceLaptop, tab: "Sessions" as ProfileTab, desc: "View & revoke active sessions" },
-                  { label: "Security Centre", icon: IconShieldCheck, href: `${portalPrefix}/security`, desc: "2FA, audit log, access control" },
-                  { label: "Notification Prefs", icon: IconBell, href: `${portalPrefix}/settings`, desc: "Manage alert preferences" },
-                ].map(item => (
-                  item.href ? (
-                    <Link key={item.label} href={item.href}
-                      className="group flex items-center gap-3 rounded-xl p-3 hover:bg-slate-50 transition-colors">
-                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[var(--sidebar)] group-hover:text-white transition-all">
-                        <item.icon size={15} />
+                  {
+                    label: "Change Password",
+                    icon: IconShieldLock,
+                    tab: "Password" as ProfileTab,
+                    desc: "Update your login credentials",
+                  },
+                  {
+                    label: "Manage Sessions",
+                    icon: IconDeviceLaptop,
+                    tab: "Sessions" as ProfileTab,
+                    desc: "View and revoke active devices",
+                  },
+                  {
+                    label: "Security Centre",
+                    icon: IconShieldCheck,
+                    href: `${portalPrefix}/security`,
+                    desc: "2FA, audit log, access control",
+                  },
+                  {
+                    label: "Notification Preferences",
+                    icon: IconBell,
+                    href: `${portalPrefix}/settings`,
+                    desc: "Manage alert preferences",
+                  },
+                ].map((item) =>
+                  "href" in item ? (
+                    <Link
+                      key={item.label}
+                      href={item.href || ""}
+                      className="group flex items-center gap-3 rounded-xl p-3 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[#151936] group-hover:text-white transition-all">
+                        <item.icon size={14} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-caption text-slate-800">{item.label}</p>
-                        <p className="text-tiny text-slate-400">{item.desc}</p>
+                        <p className="text-sm text-slate-800">{item.label}</p>
+                        <p className="text-xs text-slate-400">{item.desc}</p>
                       </div>
-                      <IconChevronRight size={13} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                      <IconChevronRight
+                        size={12}
+                        className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0"
+                      />
                     </Link>
                   ) : (
-                    <button key={item.label} type="button" onClick={() => setActiveTab(item.tab!)}
-                      className="group flex w-full items-center gap-3 rounded-xl p-3 hover:bg-slate-50 transition-colors text-left">
-                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[var(--sidebar)] group-hover:text-white transition-all">
-                        <item.icon size={15} />
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => setActiveTab(item.tab!)}
+                      className="group flex w-full items-center gap-3 rounded-xl p-3 hover:bg-slate-50 transition-colors text-left"
+                    >
+                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[#151936] group-hover:text-white transition-all">
+                        <item.icon size={14} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-caption text-slate-800">{item.label}</p>
-                        <p className="text-tiny text-slate-400">{item.desc}</p>
+                        <p className="text-sm text-slate-800">{item.label}</p>
+                        <p className="text-xs text-slate-400">{item.desc}</p>
                       </div>
-                      <IconChevronRight size={13} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                      <IconChevronRight
+                        size={12}
+                        className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0"
+                      />
                     </button>
                   )
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -620,79 +1465,127 @@ export function ProfilePageContent({ portalPrefix = "/admin" }: { portalPrefix?:
       )}
 
       {/* ── Password Tab ─────────────────────────────────────── */}
-      {activeTab === "Password" && <PasswordTab onSave={handlePasswordSave} />}
+      {activeTab === "Password" && (
+        <PasswordTab
+          onSave={(msg) =>
+            pushToast({ tone: "success", title: "Password updated", body: msg })
+          }
+        />
+      )}
 
       {/* ── Activity Tab ─────────────────────────────────────── */}
-      {activeTab === "Activity" && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="headline-md font-serif text-slate-900">Recent Activity</h2>
-            <span className="label-caps text-slate-400">Last 30 days</span>
-          </div>
-          <div className="space-y-1">
-            {ACTIVITY_LOG.map((item, idx) => (
-              <div key={item.id} className="flex items-start gap-4 py-3 border-b border-slate-100 last:border-0 animate-fade-in-up" style={{ animationDelay: `${idx * 0.04}s` }}>
-                <div className={cn(
-                  "size-8 shrink-0 rounded-full flex items-center justify-center mt-0.5",
-                  item.tone === "success" ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-500"
-                )}>
-                  <IconCircleCheckFilled size={15} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-caption text-slate-800">{item.action}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="badge-pill badge-tone-neutral">{item.module}</span>
-                    <span className="text-tiny text-slate-400">{item.time}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {activeTab === "Activity" && <ActivityTimeline />}
 
       {/* ── Sessions Tab ─────────────────────────────────────── */}
       {activeTab === "Sessions" && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="headline-md font-serif text-slate-900">Active Sessions</h2>
-            <button type="button" onClick={revokeAllOthers}
-              className="text-caption text-rose-500 hover:text-rose-700 transition-colors">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h2 className="title-serif text-slate-900">Active Sessions</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {sessions.length} device{sessions.length !== 1 ? "s" : ""}{" "}
+                currently signed in
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={revokeAllOthers}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-rose-500 border border-rose-100 bg-rose-50 hover:bg-rose-100 transition-colors"
+            >
+              <IconLogout size={12} />
               Revoke all others
             </button>
           </div>
-          <div className="space-y-3">
-            {sessions.map((session, idx) => (
-              <div key={session.id} className={cn(
-                "flex items-center gap-4 rounded-xl border p-4 transition-all animate-fade-in-up",
-                session.current ? "border-emerald-200 bg-emerald-50/50" : "border-slate-100 bg-white hover:bg-slate-50/50"
-              )} style={{ animationDelay: `${idx * 0.05}s` }}>
-                <div className={cn(
-                  "size-10 shrink-0 rounded-full flex items-center justify-center",
-                  session.current ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500"
-                )}>
-                  <IconDeviceLaptop size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-caption text-slate-800">{session.device}</p>
-                    {session.current && <span className="badge-pill badge-tone-success">Current</span>}
+
+          <div className="p-5 space-y-3">
+            {sessions.map((session, idx) => {
+              const DevIcon = getDeviceIcon(session.device);
+              const BrowserIcon = getBrowserIcon(session.browser);
+              return (
+                <div
+                  key={session.id}
+                  className={cn(
+                    "flex items-center gap-4 rounded-xl border p-4 transition-all duration-200 animate-fade-in-up",
+                    session.current
+                      ? "border-emerald-200 bg-gradient-to-r from-emerald-50/40 to-white"
+                      : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50/50"
+                  )}
+                  style={{ animationDelay: `${idx * 0.06}s` }}
+                >
+                  {/* Device icon */}
+                  <div
+                    className={cn(
+                      "size-11 shrink-0 rounded-xl flex items-center justify-center",
+                      session.current
+                        ? "bg-emerald-100 text-emerald-600"
+                        : "bg-slate-100 text-slate-500"
+                    )}
+                  >
+                    <DevIcon size={20} />
                   </div>
-                  <p className="text-tiny text-slate-500 mt-0.5">{session.browser} · {session.location} · {session.lastActive}</p>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm text-slate-800">{session.device}</p>
+                      {session.current && (
+                        <span className="px-2 py-0.5 rounded-full text-tiny label-caps bg-emerald-100 text-emerald-700 border border-emerald-200">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <BrowserIcon size={11} />
+                        {session.browser}
+                      </span>
+                      <span className="text-slate-200">·</span>
+                      <span className="flex items-center gap-1">
+                        <IconMapPin size={11} />
+                        {session.location}
+                      </span>
+                      <span className="text-slate-200">·</span>
+                      <span className="flex items-center gap-1 font-mono text-tiny">
+                        <IconClock size={11} />
+                        {session.lastActive}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* IP + revoke */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="hidden md:block font-mono text-tiny text-slate-400 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100">
+                      {session.ip}
+                    </span>
+                    {!session.current && (
+                      <button
+                        type="button"
+                        onClick={() => revokeSession(session.id)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-rose-500 border border-rose-100 hover:bg-rose-50 transition-colors"
+                      >
+                        <IconLogout size={12} />
+                        Revoke
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {!session.current && (
-                  <button type="button" onClick={() => revokeSession(session.id)}
-                    className="flex items-center gap-1 text-tiny text-rose-500 hover:text-rose-700 transition-colors shrink-0">
-                    <IconLogout size={12} />
-                    Revoke
-                  </button>
-                )}
-              </div>
-            ))}
-            {sessions.filter(s => !s.current).length === 0 && (
-              <div className="text-center py-6">
-                <IconCircleCheckFilled size={28} className="text-emerald-400 mx-auto mb-2" />
-                <p className="text-caption text-slate-500">No other active sessions</p>
+              );
+            })}
+
+            {sessions.filter((s) => !s.current).length === 0 && (
+              <div className="text-center py-10">
+                <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                  <IconCircleCheckFilled
+                    size={26}
+                    className="text-emerald-500"
+                  />
+                </div>
+                <p className="text-sm text-slate-600">
+                  No other active sessions
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Only this device is currently signed in
+                </p>
               </div>
             )}
           </div>

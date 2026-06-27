@@ -277,7 +277,7 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
       />
 
       {/* ── Category Tabs ──────────────────────────────────── */}
-      <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 border border-slate-200/60 p-1 w-fit mb-2">
+      <div className="flex flex-wrap gap-2 border-b border-slate-150 pb-3 mb-2">
         {FILTER_TABS.map(tab => {
           const count = tab.id === "Unread" ? unreadCount : tab.id === "All" ? items.length :
             items.filter(n => {
@@ -293,17 +293,17 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
               type="button"
               onClick={() => setActiveFilter(tab.id)}
               className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-caption font-medium transition-all",
+                "inline-flex px-4 py-2 text-caption font-medium rounded-xl transition-all items-center gap-2",
                 activeFilter === tab.id
                   ? "bg-[#151936] text-white shadow-sm"
-                  : "text-slate-655 hover:bg-slate-50 hover:text-slate-900"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               )}
             >
               <span>{tab.label}</span>
               {count > 0 && (
                 <span className={cn(
-                  "flex items-center justify-center rounded-full px-1.5 py-0.5 text-tiny font-medium",
-                  activeFilter === tab.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-200 text-slate-600"
+                  "flex items-center justify-center rounded-full px-1.5 py-0.5 text-tiny font-medium font-mono",
+                  activeFilter === tab.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-100 text-slate-500"
                 )}>
                   {count}
                 </span>
@@ -314,9 +314,9 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
       </div>
 
       {/* ── Notification Feed ─────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden animate-fade-in-up">
+      <div className="space-y-3 animate-fade-in-up">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col items-center justify-center py-20 text-center">
             <div className="size-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4 border border-slate-100 shadow-inner">
               <IconBellOff size={28} className="text-slate-350" />
             </div>
@@ -324,79 +324,82 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
             <p className="text-caption text-slate-400 mt-1.5">No alerts exist under the {activeFilter.toLowerCase()} criteria filter.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {filtered.map((n, idx) => {
-              const TypeIcon = TYPE_ICONS[n.type];
-              const isUnread = !n.readAt;
+          filtered.map((n, idx) => {
+            const TypeIcon = TYPE_ICONS[n.type];
+            const isUnread = !n.readAt;
 
-              return (
-                <div
-                  key={n.id}
-                  onClick={() => setSelectedNotify(n)}
-                  className={cn(
-                    "group flex items-start gap-4 px-5 py-2.5 transition-all hover:bg-slate-50/50 cursor-pointer relative",
-                    isUnread ? "bg-emerald-50/10 border-l-[3px] border-emerald-500 pl-[17px]" : "border-l-[3px] border-transparent"
-                  )}
-                  style={{ animationDelay: `${idx * 0.03}s` }}
-                >
-                  {/* Category circular Badge */}
-                  <div className={cn("size-8 shrink-0 rounded-xl border flex items-center justify-center shadow-inner mt-0.5", TYPE_COLORS[n.type])}>
-                    <TypeIcon size={14} />
-                  </div>
+            return (
+              <div
+                key={n.id}
+                onClick={() => setSelectedNotify(n)}
+                className={cn(
+                  "group relative flex items-start gap-4 rounded-xl border p-4 bg-white shadow-sm transition-all duration-350 hover:shadow-md cursor-pointer",
+                  isUnread ? "border-emerald-250/90 pl-[21px]" : "border-slate-200/70"
+                )}
+                style={{ animationDelay: `${idx * 0.03}s` }}
+              >
+                {/* Unread vertical bar indicator */}
+                {isUnread && (
+                  <div className="absolute left-0 top-0 bottom-0 w-[4px] rounded-l-xl bg-emerald-500" />
+                )}
 
-                  {/* Body text block */}
-                  <div className="flex-1 min-w-0 pr-6 flex flex-col justify-center">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <p className={cn("text-caption truncate leading-tight", isUnread ? "text-slate-900 font-medium" : "text-slate-700")}>
-                          {n.title}
-                        </p>
-                        {isUnread && (
-                          <span className="badge-pill badge-tone-success text-tiny px-1.5 py-0">New</span>
-                        )}
-                      </div>
-                      <span className="text-tiny font-mono text-slate-400">{relativeTime(n.createdAt)}</span>
-                    </div>
-                    <p className="text-tiny text-slate-500 mt-0.5 line-clamp-1 leading-snug">{n.body}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="badge-pill badge-tone-neutral text-tiny px-1.5 py-0 border-slate-100">{TYPE_LABELS[n.type]}</span>
-                      {resolvePortalPath(n.href) && (
-                        <Link
-                          href={resolvePortalPath(n.href)!}
-                          onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
-                          className="text-tiny text-[var(--sidebar)] font-medium flex items-center gap-0.5 hover:opacity-85 transition-opacity"
-                        >
-                          Access <IconChevronRight size={11} />
-                        </Link>
+                {/* Circular Category Badge */}
+                <div className={cn("size-8 shrink-0 rounded-full flex items-center justify-center text-sm shadow-sm mt-0.5", TYPE_COLORS[n.type])}>
+                  <TypeIcon size={14} />
+                </div>
+
+                {/* Body text block */}
+                <div className="flex-1 min-w-0 pr-6 flex flex-col justify-center">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <p className={cn("text-caption truncate leading-tight", isUnread ? "text-slate-900 font-semibold" : "text-slate-700")}>
+                        {n.title}
+                      </p>
+                      {isUnread && (
+                        <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[9px] font-semibold px-1.5 py-0.5 uppercase tracking-wide">New</span>
                       )}
                     </div>
+                    <span className="text-tiny font-mono text-slate-400">{relativeTime(n.createdAt)}</span>
                   </div>
-
-                  {/* Actions overlay panel */}
-                  <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {isUnread && (
-                      <button
-                        type="button"
+                  <p className="text-tiny text-slate-500 mt-1.5 leading-relaxed">{n.body}</p>
+                  <div className="flex items-center gap-2 mt-2.5">
+                    <span className="rounded bg-slate-100 text-slate-600 text-[9px] font-mono font-semibold px-2 py-0.5 uppercase tracking-wider">{TYPE_LABELS[n.type]}</span>
+                    {resolvePortalPath(n.href) && (
+                      <Link
+                        href={resolvePortalPath(n.href)!}
                         onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
-                        className="flex size-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm"
-                        title="Mark read"
+                        className="text-tiny text-slate-500 hover:text-slate-900 font-semibold flex items-center gap-0.5 transition-colors ml-1"
                       >
-                        <IconCheck size={14} />
-                      </button>
+                        Access <IconChevronRight size={10} className="mt-0.5" />
+                      </Link>
                     )}
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); deleteItem(n.id); }}
-                      className="flex size-8 items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                      title="Delete alert"
-                    >
-                      <IconTrash size={14} />
-                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Actions overlay panel */}
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  {isUnread && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
+                      className="flex size-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm"
+                      title="Mark read"
+                    >
+                      <IconCheck size={14} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); deleteItem(n.id); }}
+                    className="flex size-8 items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                    title="Delete alert"
+                  >
+                    <IconTrash size={14} />
+                  </button>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 

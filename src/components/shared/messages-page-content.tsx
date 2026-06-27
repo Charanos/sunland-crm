@@ -326,21 +326,19 @@ export function MessagesPageContent() {
           </div>
 
           {/* Mode tabs */}
-          <div className="px-3 pt-3 pb-1">
-            <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 border border-slate-200/60 p-1 w-full">
-              {(["dm", "channel"] as const).map(m => (
-                <button key={m} type="button" onClick={() => setMode(m)}
-                  className={cn(
-                    "flex-1 inline-flex h-8 items-center justify-center gap-1.5 rounded-lg text-caption font-medium transition-all",
-                    mode === m
-                      ? "bg-[#151936] text-white shadow-sm"
-                      : "text-slate-650 hover:bg-slate-50 hover:text-slate-900"
-                  )}>
-                  {m === "dm" ? <IconAt size={14} /> : <IconHash size={14} />}
-                  <span>{m === "dm" ? "Direct" : "Channels"}</span>
-                </button>
-              ))}
-            </div>
+          <div className="flex border-b border-slate-100 px-3 bg-white/40 mb-1">
+            {(["dm", "channel"] as const).map(m => (
+              <button key={m} type="button" onClick={() => setMode(m)}
+                className={cn(
+                  "flex-1 inline-flex py-2.5 text-caption font-medium transition-all flex items-center justify-center gap-1.5 border-b-2",
+                  mode === m
+                    ? "border-[#151936] text-[#151936] font-semibold"
+                    : "border-transparent text-slate-500 hover:text-slate-900"
+                )}>
+                {m === "dm" ? <IconAt size={14} /> : <IconHash size={14} />}
+                <span>{m === "dm" ? "Direct" : "Channels"}</span>
+              </button>
+            ))}
           </div>
 
           {/* List */}

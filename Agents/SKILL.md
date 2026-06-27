@@ -48,10 +48,11 @@ If a task seems to require changing one of these, stop and flag it instead of pr
 | Drawer Backdrop | `z-drawer` | `999` | Global portal-rendered drawer wrappers |
 | Status Notification | `z-toast` | `1000` | Global auto-dismissing toast notifications |
 
-**Layout Stacking Rules**:
+**Layout Stacking & Navigation Rules**:
 - Sibling panels with transform animations (like `animate-fade-in-up` which applies translation) create local stacking contexts.
 - To prevent lower row elements from overlaying preceding dropdown menus, the command header row hosting the action dropdown MUST be explicitly elevated with `relative z-10`.
-- Hard rules: never `#15464e`. Never `font-semibold` or `font-bold` anywhere. Never invent a new semantic color when one of the four colors above already fits. Currency always goes through `formatCompactKES()`, never a local `toLocaleString()` or hand-rolled formatter.
+- **Card-Nested Tab Navigation:** If a page or module has sub-tab navigation, it must be nested inside the bottom of the header card container itself (separated by a thin horizontal divider line like `border-t border-slate-100` or `border-white/[0.08]`). The active button uses solid highlight styling (`bg-[#151936] text-white` or `bg-[#f3df27] text-[#151936]`), and inactive buttons use transparent backdrops (`hover:bg-slate-50` or `hover:bg-white/10` with high contrast text). Dynamic counts/badges should be appended inside the buttons.
+- Hard rules: never `#15464e`. Never `font-semibold` or `font-bold` anywhere. Never invent a new semantic color when one of the four colors above already fits. Never use inline pixel-based text sizing (like `text-[10px]` or `text-[11px]`)—rely strictly on global CSS utility classes like `text-tiny` (12px), `text-caption` (13.5px), and `label-caps` (10.5px uppercase). Currency always goes through `formatCompactKES()`, never a local `toLocaleString()` or hand-rolled formatter.
 
 ## 3. Build order
 
