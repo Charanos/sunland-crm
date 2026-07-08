@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const entityId = searchParams.get("entityId") ?? null;
     const ownerContactId = searchParams.get("ownerContactId") ?? undefined;
-    const type = searchParams.get("type") as any ?? undefined;
+    const type = (searchParams.get("type") as "mandate_letter" | "lease_agreement" | "rent_receipt" | "statement" | null) ?? undefined;
 
     const ctx = await requireCallerContext(entityId, request);
     const documentsList = await listDocuments(ctx, { ownerContactId, type });

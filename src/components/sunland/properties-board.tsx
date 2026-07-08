@@ -23,6 +23,7 @@ import { PropertyFormModal } from "./property-form-modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTransition } from "@/components/shared/page-transition";
 import { formatCompactKES } from "@/lib/utils/format";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 type Property = {
   id: string;
@@ -62,8 +63,15 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
   }, [entityId]);
 
   useEffect(() => {
+    let active = true;
     if (entityId) {
-      loadProperties();
+      const timer = setTimeout(() => {
+        if (active) loadProperties();
+      }, 0);
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
     }
   }, [entityId, loadProperties]);
 
@@ -157,7 +165,11 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
           </Button>
         </div>
 
-        {properties.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : properties.length === 0 ? (
           <EmptyState
             icon={IconBuildingCommunity}
             title="No properties registered"

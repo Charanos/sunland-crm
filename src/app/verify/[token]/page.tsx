@@ -14,12 +14,21 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { formatCompactKES } from "@/lib/utils/format";
 
+interface VerifyResult {
+  authentic: boolean;
+  reportType: string;
+  generatedAt: string;
+  generatedByName: string;
+  snapshot: Record<string, unknown>;
+  error?: string;
+}
+
 export default function PublicVerifyPage() {
   const params = useParams();
   const token = params?.token as string;
   
   const [loading, setLoading] = useState(true);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<VerifyResult | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -110,11 +119,11 @@ export default function PublicVerifyPage() {
               <div className="space-y-2">
                 <h3 className="label-caps text-slate-400 text-xs">Frozen Data Snapshot</h3>
                 <div className="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 space-y-1.5 overflow-x-auto">
-                  {Object.entries(result.snapshot || {}).map(([key, val]: any) => (
+                  {Object.entries(result.snapshot || {}).map(([key, val]) => (
                     <div key={key} className="flex justify-between gap-4">
                       <span className="text-slate-400">{key}:</span>
                       <span className="text-right">
-                        {typeof val === "number" || (typeof val === "string" && !isNaN(val as any) && val.length > 3)
+                        {typeof val === "number" || (typeof val === "string" && !isNaN(Number(val)) && val.length > 3)
                           ? formatCompactKES(typeof val === "number" ? val : parseFloat(String(val)))
                           : String(val)}
                       </span>

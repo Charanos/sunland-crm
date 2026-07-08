@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const entityId = searchParams.get("entityId") ?? null;
-    const type = searchParams.get("type") as any ?? undefined;
+    const type = (searchParams.get("type") as "landlord" | "tenant" | "contractor" | null) ?? undefined;
     const search = searchParams.get("search") ?? undefined;
 
     const ctx = await requireCallerContext(entityId, request);

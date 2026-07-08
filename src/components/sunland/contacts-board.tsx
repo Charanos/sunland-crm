@@ -162,188 +162,7 @@ export const SOURCE_COLORS: Record<ContactSource, string> = {
   exhibition: "bg-amber-50/50 text-amber-600 border border-amber-100/50",
 };
 
-// ─── Initial Mock Data ─────────────────────────────────────────────────────────
 
-const INITIAL_CONTACTS: Contact[] = [
-  {
-    id: "c1",
-    name: "David Kimani",
-    type: "landlord",
-    source: "referral",
-    status: "active",
-    email: "david.k@example.com",
-    phone: "+254 712 345 678",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-04-12",
-    associatedProperties: [
-      { id: "p1", name: "Runda Grove Villa" },
-      { id: "p2", name: "Karen Ridge House" }
-    ],
-    financials: { paid: 8400000, arrears: 0, balance: -8400000, portfolioValue: 83300000 },
-    timeline: [
-      { id: "l1", date: "2026-06-15", type: "call", summary: "Portfolio Review Call", details: "Reviewed Q2 lease revenues." }
-    ]
-  },
-  {
-    id: "c2",
-    name: "Sarah Wanjiku",
-    type: "tenant",
-    source: "website",
-    status: "active",
-    email: "sarah.w@example.com",
-    phone: "+254 723 456 789",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-05-01",
-    associatedProperties: [
-      { id: "p3", name: "Westlands Tower 4B" }
-    ],
-    financials: { paid: 720000, arrears: 0, balance: -720000, portfolioValue: 0 },
-    timeline: [
-      { id: "l2", date: "2026-06-18", type: "message", summary: "Lease Signed", details: "Signed digital renewal agreement." }
-    ]
-  },
-  {
-    id: "c3",
-    name: "BuildTech Contractors Ltd",
-    type: "contractor",
-    source: "partner",
-    status: "active",
-    email: "info@buildtech.co.ke",
-    phone: "+254 734 567 890",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-02-18",
-    associatedProperties: [
-      { id: "p4", name: "Upper Hill Plaza" }
-    ],
-    financials: { paid: 15400000, arrears: 0, balance: -15400000, portfolioValue: 0 },
-    timeline: [
-      { id: "l3", date: "2026-06-10", type: "meeting", summary: "Elevator Service Review", details: "Discussed elevator overhaul completion." }
-    ]
-  },
-  {
-    id: "c4",
-    name: "John Omondi",
-    type: "buyer",
-    source: "walk_in",
-    status: "active",
-    email: "john.o@example.com",
-    phone: "+254 745 678 901",
-    assignedAgent: "John Mwangi",
-    createdDate: "2026-06-01",
-    associatedProperties: [],
-    financials: { paid: 0, arrears: 0, balance: 0, portfolioValue: 0 },
-    timeline: [
-      { id: "l4", date: "2026-06-17", type: "call", summary: "Inquired about Karen Villa", details: "Interested in 4BR Karen residences." }
-    ]
-  },
-  {
-    id: "c5",
-    name: "Alice Njoroge",
-    type: "investor",
-    source: "existing_client",
-    status: "active",
-    email: "alice.n@example.com",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&crop=faces",
-    phone: "+254 756 789 012",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-01-15",
-    associatedProperties: [
-      { id: "p5", name: "Lavington Gardens" },
-      { id: "p6", name: "Muthaiga Grand" }
-    ],
-    financials: { paid: 48000000, arrears: 0, balance: -48000000, portfolioValue: 198000000 },
-    timeline: [
-      { id: "l5", date: "2026-05-20", type: "meeting", summary: "Disbursement Review", details: "Reviewed monthly fund distributions." }
-    ]
-  },
-  {
-    id: "c6",
-    name: "Prime Properties Ltd",
-    type: "property_owner",
-    source: "referral",
-    status: "active",
-    email: "management@primeprops.co.ke",
-    phone: "+254 767 890 123",
-    assignedAgent: "John Mwangi",
-    createdDate: "2026-03-30",
-    associatedProperties: [
-      { id: "p7", name: "Riverside Haven" }
-    ],
-    financials: { paid: 8500000, arrears: 0, balance: -8500000, portfolioValue: 8500000 },
-    timeline: [
-      { id: "l6", date: "2026-06-01", type: "email", summary: "Statement Sent", details: "Emailed Q1 yield calculations." }
-    ]
-  },
-  {
-    id: "c7",
-    name: "KCB Bank Kenya",
-    type: "financial_institution",
-    source: "website",
-    status: "active",
-    email: "corporate@kcbgroup.com",
-    phone: "+254 708 111 222",
-    assignedAgent: "CEO",
-    createdDate: "2026-02-10",
-    associatedProperties: [],
-    financials: { paid: 0, arrears: 0, balance: 0, portfolioValue: 0 },
-    timeline: [
-      { id: "l7", date: "2026-06-05", type: "meeting", summary: "Escrow Integration Audit", details: "Met regarding commercial escrows." }
-    ]
-  },
-  {
-    id: "c8",
-    name: "Charles Ndegwa Advocate",
-    type: "advocate",
-    source: "cold_call",
-    status: "active",
-    email: "charles@ndegwa-law.co.ke",
-    phone: "+254 722 987 654",
-    assignedAgent: "CEO",
-    createdDate: "2026-05-15",
-    associatedProperties: [],
-    financials: { paid: 350000, arrears: 0, balance: -350000, portfolioValue: 0 },
-    timeline: [
-      { id: "l8", date: "2026-06-12", type: "email", summary: "Lease Templates Sent", details: "Advocate drafted new commercial structures." }
-    ]
-  },
-  {
-    id: "c9",
-    name: "Benson Musyoka",
-    type: "tenant",
-    source: "website",
-    status: "blacklisted",
-    email: "benson.m@outlook.com",
-    phone: "+254 733 444 555",
-    assignedAgent: "John Mwangi",
-    createdDate: "2025-11-20",
-    associatedProperties: [
-      { id: "p8", name: "Kilimani Heights" }
-    ],
-    financials: { paid: 416000, arrears: 120000, balance: -296000, portfolioValue: 0 },
-    timeline: [
-      { id: "l9", date: "2026-06-14", type: "call", summary: "Arrears Demand", details: "Demanded payment on 2-month rental arrears." }
-    ]
-  },
-  {
-    id: "c10",
-    name: "Diplomatic Estates Ltd",
-    type: "developer",
-    source: "exhibition",
-    status: "active",
-    email: "dev@diploestates.com",
-    phone: "+254 788 333 444",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-06-03",
-    associatedProperties: [
-      { id: "p9", name: "Gigiri Diplomatic" }
-    ],
-    financials: { paid: 0, arrears: 0, balance: 0, portfolioValue: 35000000 },
-    timeline: [
-      { id: "l10", date: "2026-06-04", type: "meeting", summary: "Pre-sales Briefing", details: "Attended Gigiri apartments pre-sale launch." }
-    ]
-  }
-];
 
 const ROWS_PER_PAGE = 5;
 
@@ -383,12 +202,21 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
 
   const fetchContacts = useCallback(async () => {
-    setIsLoading(true);
+    Promise.resolve().then(() => setIsLoading(true));
     try {
       const res = await fetch(`/api/contacts?entityId=${_entityId}`);
       const data = await res.json();
       if (data.contacts) {
-        const mapped = data.contacts.map((c: any) => ({
+        const mapped = data.contacts.map((c: {
+          id: string;
+          displayName: string;
+          type: ContactType;
+          source?: ContactSource | null;
+          status?: ContactStatus | null;
+          email?: string | null;
+          phone?: string | null;
+          createdAt?: string | null;
+        }) => ({
           id: c.id,
           name: c.displayName,
           type: c.type,
@@ -615,8 +443,9 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
         pushToast({ tone: "success", title: "Record Created", body: `Successfully enrolled "${payload.name}".` });
         fetchContacts();
       }
-    } catch (err: any) {
-      pushToast({ tone: "warning", title: "Failed to Save", body: err.message });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred";
+      pushToast({ tone: "warning", title: "Failed to Save", body: message });
     } finally {
       setIsLoading(false);
       setIsModalOpen(false);

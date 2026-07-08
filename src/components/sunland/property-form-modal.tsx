@@ -26,6 +26,24 @@ const PROPERTY_TYPES = [
   "Apartment", "Commercial", "House", "Land", "Villa",
 ];
 
+
+export interface PropertySubmitData {
+  name: string;
+  location: string;
+  type: string;
+  status: "Available" | "Sold" | "Under Offer" | "Occupied";
+  price: string;
+  roi?: string;
+  imageUrl?: string;
+  propertyCode?: string;
+  ownerContactId?: string | null;
+  monthlyRentKes?: string | null;
+  askingPriceKes?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  sizeSqft?: number | null;
+}
+
 export function PropertyFormModal({
   open,
   onClose,
@@ -35,8 +53,8 @@ export function PropertyFormModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
-  initialData?: any;
+  onSubmit: (data: PropertySubmitData) => void;
+  initialData?: Record<string, unknown> | null;
   mode?: "create" | "edit";
 }) {
   const { pushToast } = useToast();
@@ -46,17 +64,17 @@ export function PropertyFormModal({
   const [landlords, setLandlords] = useState<{ id: string; name: string }[]>([]);
 
   const [form, setForm] = useState<PropertyFormData>({
-    propertyCode: initialData?.propertyCode ?? "",
-    name: initialData?.name ?? "",
-    propertyType: initialData?.propertyType ?? initialData?.type ?? "Apartment",
-    listingType: initialData?.listingType ?? "Rent",
-    location: initialData?.location ?? "",
-    ownerContactId: initialData?.ownerContactId ?? "",
-    monthlyRentKes: initialData?.monthlyRentKes ?? (initialData?.listingType === "Rent" || !initialData?.listingType ? initialData?.price : ""),
-    askingPriceKes: initialData?.askingPriceKes ?? (initialData?.listingType === "Sale" ? initialData?.price : ""),
-    bedrooms: initialData?.bedrooms ?? null,
-    bathrooms: initialData?.bathrooms ?? null,
-    sizeSqft: initialData?.sizeSqft ?? null,
+    propertyCode: (initialData?.propertyCode as string | undefined) ?? "",
+    name: (initialData?.name as string | undefined) ?? "",
+    propertyType: (initialData?.propertyType as string | undefined) ?? (initialData?.type as string | undefined) ?? "Apartment",
+    listingType: (initialData?.listingType as "Rent" | "Sale" | undefined) ?? "Rent",
+    location: (initialData?.location as string | undefined) ?? "",
+    ownerContactId: (initialData?.ownerContactId as string | undefined) ?? "",
+    monthlyRentKes: (initialData?.monthlyRentKes as string | undefined) ?? (initialData?.listingType === "Rent" || !initialData?.listingType ? (initialData?.price as string | undefined) : "") ?? "",
+    askingPriceKes: (initialData?.askingPriceKes as string | undefined) ?? (initialData?.listingType === "Sale" ? (initialData?.price as string | undefined) : "") ?? "",
+    bedrooms: (initialData?.bedrooms as number | undefined) ?? null,
+    bathrooms: (initialData?.bathrooms as number | undefined) ?? null,
+    sizeSqft: (initialData?.sizeSqft as number | undefined) ?? null,
   });
 
   // Load landlords list for dropdown
@@ -67,7 +85,7 @@ export function PropertyFormModal({
         const res = await fetch(`/api/contacts?entityId=${activeEntityId}&type=landlord`);
         const data = await res.json();
         if (data.contacts) {
-          setLandlords(data.contacts.map((c: any) => ({ id: c.id, name: c.displayName })));
+          setLandlords(data.contacts.map((c: { id: string; displayName: string }) => ({ id: c.id, name: c.displayName })));
         }
       } catch (err) {
         console.error("Failed to load landlords:", err);
@@ -128,18 +146,35 @@ export function PropertyFormModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save property");
 
-      onSubmit(data.property);
+      const ret = data.property;
+      onSubmit({
+        name: ret.name,
+        location: ret.location,
+        type: ret.propertyType,
+        status: ret.status === "occupied" ? "Occupied" : "Available",
+        price: ret.monthlyRentKes || ret.askingPriceKes || "0",
+        roi: "",
+        imageUrl: "",
+        propertyCode: ret.propertyCode,
+        ownerContactId: ret.ownerContactId,
+        monthlyRentKes: ret.monthlyRentKes,
+        askingPriceKes: ret.askingPriceKes,
+        bedrooms: ret.bedrooms,
+        bathrooms: ret.bathrooms,
+        sizeSqft: ret.sizeSqft,
+      });
       pushToast({
         tone: "success",
         title: mode === "create" ? "Property Created" : "Property Updated",
         body: `${form.name} has been enrolled successfully in the database.`,
       });
       onClose();
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred";
       pushToast({
         tone: "warning",
         title: "Failed to save",
-        body: err.message,
+        body: message,
       });
     } finally {
       setIsSubmitting(false);
@@ -236,7 +271,7 @@ export function PropertyFormModal({
             <select
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.listingType}
-              onChange={(e) => updateField("listingType", e.target.value as any)}
+              onChange={(e) => updateField("listingType", e.target.value as "Rent" | "Sale")}
             >
               <option value="Rent">Rent</option>
               <option value="Sale">Sale</option>

@@ -1,4 +1,4 @@
-import { eq, and, or, ilike } from "drizzle-orm";
+import { eq, and, or, ilike, SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts } from "@/db/schema/crm";
 import { authorize } from "@/lib/authz/can";
@@ -14,10 +14,10 @@ export async function listContacts(
   if (!entityId) throw new DomainValidationError("entityId is required");
   await authorize(ctx, "crm.contact.read", entityId);
 
-  let conditions = eq(contacts.entityId, entityId);
+  let conditions: SQL | undefined = eq(contacts.entityId, entityId);
 
   if (filters.type) {
-    conditions = and(conditions, eq(contacts.type, filters.type)) as any;
+    conditions = and(conditions, eq(contacts.type, filters.type));
   }
 
   if (filters.search) {
@@ -29,7 +29,7 @@ export async function listContacts(
         ilike(contacts.email, q),
         ilike(contacts.phone, q)
       )
-    ) as any;
+    );
   }
 
   return db.select().from(contacts).where(conditions);

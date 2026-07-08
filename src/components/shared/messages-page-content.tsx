@@ -343,7 +343,7 @@ export function MessagesPageContent() {
   const { pushToast } = useToast();
 
   // Local Lists for extensibility
-  const [dmsList, setDmsList] = useState<DmContact[]>(MOCK_DMS);
+  const [dmsList] = useState<DmContact[]>(MOCK_DMS);
   const [channelsList, setChannelsList] = useState<Channel[]>(MOCK_CHANNELS);
 
   const [mode, setMode] = useState<"dm" | "channel">("dm");
@@ -478,7 +478,7 @@ export function MessagesPageContent() {
       clearTimeout(callTimer);
       clearInterval(callTimer);
     };
-  }, [activeCall?.status]);
+  }, [activeCall]);
 
   // Handle local file uploads preview
   const handleFileClick = () => {
@@ -639,13 +639,6 @@ export function MessagesPageContent() {
       return { msg, showAvatar, showTimestamp, showDayLabel };
     });
   }, [currentMessages]);
-
-  const totalUnread = useMemo(
-    () =>
-      dmsList.reduce((sum, dm) => sum + dm.unread, 0) +
-      channelsList.reduce((sum, ch) => sum + ch.unread, 0),
-    [dmsList, channelsList]
-  );
 
   const dmUnread = useMemo(() => dmsList.reduce((sum, dm) => sum + dm.unread, 0), [dmsList]);
   const channelUnread = useMemo(() => channelsList.reduce((sum, ch) => sum + ch.unread, 0), [channelsList]);
@@ -1041,6 +1034,7 @@ export function MessagesPageContent() {
             <div className="px-5 py-2 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 animate-fade-in shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 {attachedFile.type.startsWith("image/") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={attachedFile.url}
                     alt="Upload preview"

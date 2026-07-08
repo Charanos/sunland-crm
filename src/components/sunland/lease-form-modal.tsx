@@ -57,12 +57,12 @@ export function LeaseFormModal({
         if (propData.properties) {
           // Filter down to available property units in the frontend
           const available = propData.properties
-            .filter((p: any) => p.status === "available")
-            .map((p: any) => ({ id: p.id, name: p.name, monthlyRentKes: p.monthlyRentKes }));
+            .filter((p: { id: string; name: string; status: string; monthlyRentKes: string | null }) => p.status === "available")
+            .map((p: { id: string; name: string; monthlyRentKes: string | null }) => ({ id: p.id, name: p.name, monthlyRentKes: p.monthlyRentKes }));
           setProperties(available);
         }
         if (tenantData.contacts) {
-          setTenants(tenantData.contacts.map((c: any) => ({ id: c.id, name: c.displayName })));
+          setTenants(tenantData.contacts.map((c: { id: string; displayName: string }) => ({ id: c.id, name: c.displayName })));
         }
       } catch (err) {
         console.error("Failed to load options:", err);
@@ -133,11 +133,12 @@ export function LeaseFormModal({
       });
       onSubmit();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred";
       pushToast({
         tone: "warning",
         title: "Execution failed",
-        body: err.message,
+        body: message,
       });
     } finally {
       setIsSubmitting(false);

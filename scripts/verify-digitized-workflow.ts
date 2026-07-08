@@ -31,7 +31,7 @@ async function run() {
 
   const { eq } = await import("drizzle-orm");
   const { db } = await import("../src/db");
-  const { contacts, properties, leases, documents, entities, users } = await import("../src/db/schema");
+  const { properties, entities, users } = await import("../src/db/schema");
   const { createContact } = await import("../src/lib/services/crm");
   const { createProperty, createLease, createDocument } = await import("../src/lib/services/properties");
   const { buildCallerContext } = await import("../src/lib/services/types");

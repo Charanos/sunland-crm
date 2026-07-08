@@ -1,6 +1,6 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { properties, leases, documents, reportExports } from "@/db/schema";
+import { properties, leases, documents } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -16,9 +16,9 @@ export async function listProperties(
   if (!entityId) throw new DomainValidationError("entityId is required");
   await authorize(ctx, "properties.property.read", entityId);
 
-  let conditions = eq(properties.entityId, entityId);
+  let conditions: SQL | undefined = eq(properties.entityId, entityId);
   if (filters.ownerContactId) {
-    conditions = and(conditions, eq(properties.ownerContactId, filters.ownerContactId)) as any;
+    conditions = and(conditions, eq(properties.ownerContactId, filters.ownerContactId));
   }
 
   return db.select().from(properties).where(conditions);
@@ -168,12 +168,12 @@ export async function listDocuments(
   // Require broad crm.contact.read to view digitized files
   await authorize(ctx, "crm.contact.read", entityId);
 
-  let conditions = eq(documents.entityId, entityId);
+  let conditions: SQL | undefined = eq(documents.entityId, entityId);
   if (filters.ownerContactId) {
-    conditions = and(conditions, eq(documents.ownerContactId, filters.ownerContactId)) as any;
+    conditions = and(conditions, eq(documents.ownerContactId, filters.ownerContactId));
   }
   if (filters.type) {
-    conditions = and(conditions, eq(documents.type, filters.type)) as any;
+    conditions = and(conditions, eq(documents.type, filters.type));
   }
 
   return db.select().from(documents).where(conditions).orderBy(desc(documents.createdAt));

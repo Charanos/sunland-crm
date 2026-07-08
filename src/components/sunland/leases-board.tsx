@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   IconCalendar,
   IconCheck,
-  IconClock,
   IconFilter,
   IconPlus,
   IconRefresh,
@@ -23,6 +22,7 @@ import { LeaseFormModal } from "./lease-form-modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTransition } from "@/components/shared/page-transition";
 import { formatCompactKES } from "@/lib/utils/format";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 type Lease = {
   id: string;
@@ -57,8 +57,15 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   }, [entityId]);
 
   useEffect(() => {
+    let active = true;
     if (entityId) {
-      loadLeases();
+      const timer = setTimeout(() => {
+        if (active) loadLeases();
+      }, 0);
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
     }
   }, [entityId, loadLeases]);
 
@@ -148,7 +155,11 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
           </Button>
         </div>
 
-        {leases.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : leases.length === 0 ? (
           <EmptyState
             icon={IconCalendar}
             title="No leases on record"

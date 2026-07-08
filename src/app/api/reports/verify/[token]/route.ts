@@ -49,8 +49,9 @@ export async function GET(
       generatedByName: report.generatedByName,
       snapshot: report.snapshot,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Verification API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "An unexpected error occurred";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
