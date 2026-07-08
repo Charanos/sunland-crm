@@ -111,8 +111,9 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({ accounts, journals });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Ledger API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

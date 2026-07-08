@@ -4,7 +4,9 @@ import {
   IconFileAnalytics,
   IconFolderOpen,
   IconReportAnalytics,
+  IconClipboardCheck,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import {
   Badge,
   BoardHeader,
@@ -73,26 +75,65 @@ export function ReportsCenterBoard() {
         }
       />
 
-      {/* Tab strip */}
-      <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-slate-100/70 p-1 [scrollbar-width:none]">
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-base transition-all duration-200",
-                isActive
-                  ? "bg-[#151936] text-white shadow-sm"
-                  : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
-              )}
+      {/* ── Oversight Control Hub Navigator & Tabs ── */}
+      <div className="bg-white border border-slate-100 rounded-[20px] shadow-sm overflow-hidden">
+        {/* Top Navigator */}
+        <div className="flex items-center justify-between flex-wrap gap-4 p-4">
+          <div className="flex items-center gap-2">
+            <div className="size-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+              <IconClipboardCheck size={16} />
+            </div>
+            <div>
+              <h3 className="text-base font-medium text-slate-800 leading-none">Oversight Control Hub</h3>
+              <p className="text-sm text-slate-400 mt-1">Cross-department audits and system management.</p>
+            </div>
+          </div>
+
+          <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
+            <Link
+              href="/admin/approvals"
+              className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
-              {tab.label}
-            </button>
-          );
-        })}
+              <span>Approvals</span>
+              <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">Queue</span>
+            </Link>
+            <Link
+              href="/admin/reports"
+              className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
+            >
+              <span>Reports Center</span>
+            </Link>
+            <Link
+              href="/admin/system"
+              className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            >
+              <span>System & Roles</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Bottom Tab Strip */}
+        <div className="border-t border-slate-100 bg-slate-50/50 p-2 px-4 flex items-center gap-1 overflow-x-auto [scrollbar-width:none]">
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider mr-2">View:</span>
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm transition-all duration-200 font-medium",
+                  isActive
+                    ? "bg-[#151936] text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-800",
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* All Reports */}

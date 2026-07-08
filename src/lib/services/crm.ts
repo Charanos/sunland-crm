@@ -4,14 +4,15 @@ import { contacts } from "@/db/schema/crm";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";
+import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
 
 export async function listContacts(
   ctx: CallerContext,
   filters: { type?: typeof contacts.type.enumValues[number]; search?: string } = {}
 ) {
-  const entityId = ctx.entityId;
-  if (!entityId) throw new DomainValidationError("entityId is required");
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
   await authorize(ctx, "crm.contact.read", entityId);
 
   let conditions: SQL | undefined = eq(contacts.entityId, entityId);
@@ -47,8 +48,8 @@ export async function createContact(
     metadata?: Record<string, unknown>;
   }
 ) {
-  const entityId = ctx.entityId;
-  if (!entityId) throw new DomainValidationError("entityId is required");
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
   await authorize(ctx, "crm.contact.write", entityId);
 
   if (!input.displayName) {
@@ -85,8 +86,8 @@ export async function createContact(
 }
 
 export async function getContact(ctx: CallerContext, contactId: string) {
-  const entityId = ctx.entityId;
-  if (!entityId) throw new DomainValidationError("entityId is required");
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
   await authorize(ctx, "crm.contact.read", entityId);
 
   const [target] = await db

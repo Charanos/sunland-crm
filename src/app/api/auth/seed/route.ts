@@ -12,6 +12,9 @@ import {
   approvalRequests,
   notifications,
   activityLogs,
+  documents,
+  reportExports,
+  settings,
 } from "@/db/schema";
 import { hashPassword } from "@/lib/auth/password";
 import { grantUserRole, seedPermissionCatalog } from "@/lib/authz/seed";
@@ -26,6 +29,9 @@ export async function POST() {
     // 1. Clean existing records in reverse dependency order
     await db.delete(activityLogs);
     await db.delete(notifications);
+    await db.delete(reportExports);
+    await db.delete(documents);
+    await db.delete(settings);
     await db.delete(approvalRequests);
     await db.delete(transactions);
     await db.delete(leases);
@@ -37,7 +43,7 @@ export async function POST() {
     await db.delete(entities);
 
     // 2. Insert Entities (Divisions)
-    const [groupEntity, commEntity, resEntity, valEntity] = await db
+    const [groupEntity, commEntity, resEntity] = await db
       .insert(entities)
       .values([
         {
@@ -134,7 +140,7 @@ export async function POST() {
           email: "line.manager@sunlandre.co.ke",
           passwordHash: hashedPass,
           name: "Jared Omondi",
-          role: "line_manager",
+          role: "property_manager",
           title: "Line Manager",
           primaryEntityId: resEntity.id,
         },
@@ -159,7 +165,7 @@ export async function POST() {
       { userId: financeOfficerUser.id, roleSlug: "finance_officer", entityId: commEntity.id },
       { userId: pmUser.id, roleSlug: "operations_lead", entityId: resEntity.id },
       { userId: hrHeadUser.id, roleSlug: "hr_head", entityId: null },
-      { userId: lineManagerUser.id, roleSlug: "line_manager", entityId: resEntity.id },
+      { userId: lineManagerUser.id, roleSlug: "property_manager", entityId: resEntity.id },
       { userId: frontOfficeUser.id, roleSlug: "front_office_head", entityId: null },
     ];
     for (const grant of roleGrants) {
@@ -172,7 +178,7 @@ export async function POST() {
       .insert(contacts)
       .values([
         {
-          entityId: commEntity.id,
+          entityId: groupEntity.id,
           type: "landlord",
           displayName: "Kariuki Holdings",
           companyName: "Kariuki Real Estate Investments Ltd",
@@ -182,7 +188,7 @@ export async function POST() {
           assignedToId: ceoUser.id,
         },
         {
-          entityId: resEntity.id,
+          entityId: groupEntity.id,
           type: "landlord",
           displayName: "Margaret Wambui",
           email: "margaret@wambui.me",
@@ -191,7 +197,7 @@ export async function POST() {
           assignedToId: pmUser.id,
         },
         {
-          entityId: commEntity.id,
+          entityId: groupEntity.id,
           type: "tenant",
           displayName: "Nexus Tech Solutions",
           companyName: "Nexus Technology Solutions Ltd",
@@ -201,7 +207,7 @@ export async function POST() {
           assignedToId: financeOfficerUser.id,
         },
         {
-          entityId: resEntity.id,
+          entityId: groupEntity.id,
           type: "tenant",
           displayName: "Alice Odhiambo",
           email: "alice@odhiambo.co.ke",
@@ -217,7 +223,7 @@ export async function POST() {
       .insert(properties)
       .values([
         {
-          entityId: commEntity.id,
+          entityId: groupEntity.id,
           propertyCode: "PROP-COMM-001",
           name: "Nexus Office Plaza",
           propertyType: "Commercial Office",
@@ -229,7 +235,7 @@ export async function POST() {
           sizeSqft: 2400,
         },
         {
-          entityId: resEntity.id,
+          entityId: groupEntity.id,
           propertyCode: "PROP-RES-001",
           name: "Lavington Heights Unit 4B",
           propertyType: "Apartment",
@@ -243,6 +249,90 @@ export async function POST() {
       ])
       .returning();
 
+    // 5b. Create pipeline leads — mirrors src/db/seed.ts (see comment there).
+    const daysAgo = (n: number) => new Date(Date.now() - n * 86400000);
+    await db.insert(leads).values([
+      {
+        entityId: groupEntity.id,
+        title: "3BR Apartment Inquiry — Kilimani",
+        stage: "inquiry",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "14000000.00",
+        probability: 10,
+        createdAt: daysAgo(2),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Office Space Lease — Westlands",
+        stage: "qualification",
+        propertyId: propComm.id,
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "4200000.00",
+        probability: 25,
+        createdAt: daysAgo(5),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Villa Purchase — Karen",
+        stage: "viewing",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "62000000.00",
+        probability: 40,
+        createdAt: daysAgo(12),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Retail Unit — CBD",
+        stage: "offer",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "9500000.00",
+        probability: 60,
+        createdAt: daysAgo(18),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Land Sale — Ruiru",
+        stage: "negotiation",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "18000000.00",
+        probability: 75,
+        createdAt: daysAgo(20),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Nexus Tech Office Lease",
+        stage: "closed_won",
+        contactId: tenantA.id,
+        propertyId: propComm.id,
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "4200000.00",
+        probability: 100,
+        createdAt: daysAgo(25),
+        closedAt: daysAgo(10),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Riverside Apartment Sale",
+        stage: "closed_won",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "8500000.00",
+        probability: 100,
+        createdAt: daysAgo(50),
+        closedAt: daysAgo(35),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Industrial Warehouse Deal",
+        stage: "closed_lost",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "16000000.00",
+        probability: 0,
+        lostReason: "Budget constraints on buyer side",
+        createdAt: daysAgo(28),
+        closedAt: daysAgo(8),
+      },
+    ]);
+
     // 6. Create Leases
     const startsAt = new Date();
     startsAt.setMonth(startsAt.getMonth() - 2);
@@ -253,7 +343,7 @@ export async function POST() {
       .insert(leases)
       .values([
         {
-          entityId: commEntity.id,
+          entityId: groupEntity.id,
           propertyId: propComm.id,
           tenantContactId: tenantA.id,
           startsAt,
@@ -263,7 +353,7 @@ export async function POST() {
           isActive: true,
         },
         {
-          entityId: resEntity.id,
+          entityId: groupEntity.id,
           propertyId: propRes.id,
           tenantContactId: tenantB.id,
           startsAt,
@@ -278,7 +368,7 @@ export async function POST() {
     // 7. Create Transactions
     await db.insert(transactions).values([
       {
-        entityId: commEntity.id,
+        entityId: groupEntity.id,
         type: "rent",
         contactId: tenantA.id,
         propertyId: propComm.id,
@@ -289,7 +379,7 @@ export async function POST() {
         notes: "Rent payment for Nexus Tech Solutions - Month of June",
       },
       {
-        entityId: resEntity.id,
+        entityId: groupEntity.id,
         type: "rent",
         contactId: tenantB.id,
         propertyId: propRes.id,
@@ -300,7 +390,7 @@ export async function POST() {
         notes: "Rent payment for Alice Odhiambo - Month of June",
       },
       {
-        entityId: commEntity.id,
+        entityId: groupEntity.id,
         type: "expense",
         contactId: landlordA.id,
         propertyId: propComm.id,
@@ -314,7 +404,7 @@ export async function POST() {
     // 8. Create Approval Requests
     await db.insert(approvalRequests).values([
       {
-        entityId: commEntity.id,
+        entityId: groupEntity.id,
         requestType: "petty_cash",
         relatedTable: "transactions",
         relatedId: leaseA.id,
@@ -325,7 +415,7 @@ export async function POST() {
         decisionNotes: "Needs GM verification for office stationaries above threshold.",
       },
       {
-        entityId: resEntity.id,
+        entityId: groupEntity.id,
         requestType: "mandate_activation",
         relatedTable: "leases",
         relatedId: leaseB.id,

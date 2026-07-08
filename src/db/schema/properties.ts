@@ -54,7 +54,16 @@ export const properties = pgTable(
     bedrooms: integer("bedrooms"),
     bathrooms: integer("bathrooms"),
     sizeSqft: integer("size_sqft"),
-    media: jsonb("media").$type<Array<{ url: string; alt?: string }>>().default([]),
+    media: jsonb("media").$type<Array<{ url: string; alt?: string; isPrimary?: boolean }>>().default([]),
+    // For multi-unit properties (apartment blocks, hostels): the mix of unit
+    // types making up the property — e.g. 10 bedsitters + 6 one-bedrooms.
+    // A jsonb array rather than a relational `units` table: the master doc
+    // flags a real `units` table as a future item once per-unit tracking
+    // (individual occupancy/lease-per-unit) is needed; a flat breakdown is
+    // sufficient and correct for "what does this property consist of" today.
+    unitBreakdown: jsonb("unit_breakdown")
+      .$type<Array<{ unitType: string; count: number; monthlyRentKes?: string }>>()
+      .default([]),
     ...timestamps,
   },
   (table) => ({

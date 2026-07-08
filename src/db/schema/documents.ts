@@ -15,6 +15,8 @@ export const documentType = pgEnum("document_type", [
   "lease_agreement",
   "rent_receipt",
   "statement",
+  "title_deed",
+  "identification",
 ]);
 
 export const documents = pgTable(

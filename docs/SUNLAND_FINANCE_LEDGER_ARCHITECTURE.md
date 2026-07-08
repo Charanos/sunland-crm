@@ -371,6 +371,27 @@ These checks live in the service functions, not the UI. The UI's amber "Pending 
 
 Every statement is a pure read over `journal_lines` + `accounts`. Cache with Upstash keyed by `(entity, period, as-of)` and invalidate on any post into that period.
 
+### 8.1 Downstream reconciliation — how one write shows up on every dashboard (added 2026-07-08, per client question)
+
+The question was: if the CEO adds a property, do the finances "match up downstream" across every dashboard — Finance, Property Manager, the CEO's own Overview? **Yes, automatically, because there is nowhere else for the number to come from.** There is no per-dashboard finance table, no cached snapshot copied into each portal, no batch job that "syncs" one dashboard to another. Every dashboard — CEO, GM, Finance, a Property Manager's scoped view, a landlord's remittance statement — runs the **same query** against the **same tables**, filtered only by `entityId` and the caller's permission scope. This is ADR 003 (entity scope is mandatory) and this doc's own §8 principle ("derived statements, never stored balances") applied at the cross-dashboard level, not just within Finance.
+
+**Worked example, traced through the code that actually runs today** (the flat `transactions` table described in §9's migration path — this section will read identically once that migration to real `journal_lines` lands, only the SQL underneath changes):
+
+1. **A property is created.** `POST /api/properties` → `createProperty()` (`src/lib/services/properties.ts`) inserts one row into `properties`, scoped to an `entityId`. Nothing else happens yet — no income exists until someone actually rents it.
+2. **A lease is signed against it.** `createLease()` inserts into `leases`, referencing the property. Still no income — a lease is an agreement, not a receipt.
+3. **Rent is collected.** A `transactions` row is inserted with `type: "rent"`, an `amountKes`, and the same `entityId`. This is the single event that creates real income.
+4. **Every dashboard that asks "what's our income" runs the same computation over that same row.** `getDashboardOverview()` (`src/lib/services/dashboard.ts`) — the function behind the CEO Overview, and the same function any other scoped dashboard would call — does:
+   ```ts
+   // computeIncome(): management fee = collected × MANAGEMENT_FEE_RATE (10%), never gross rent.
+   // Confirmed §6.1 of this doc — the exact mistake this architecture exists to prevent.
+   if (t.type === "rent") return sum + amt * MANAGEMENT_FEE_RATE;
+   ```
+   `incomeKes`, `rentPool`, `departmentStats.legal` (active lease count), and every trend figure on the Overview are computed **live, on read**, from `properties` + `leases` + `transactions` filtered by `entityId`. There is no `dashboard_snapshot` table, no cron that pre-computes these numbers — the query runs when the page loads.
+5. **A Property Manager's scoped view runs the identical query, narrowed further.** Once PM-scoped dashboards exist (tenant/landlord portal doc, ADR 013 §13.2), "my properties' income" is the same `computeIncome()` logic with an additional `WHERE property.assignedTo = :pmId` (or equivalent), not a different calculation living in different code. If Finance's number and a PM's number ever disagree, that is a **bug** (a second source of truth leaking in), never an expected "each dashboard has its own view of the truth."
+6. **The landlord portal is the external-facing proof of the same principle** — see `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md` §6: a tenant payment posts once, and `rental_ledger`, the landlord's remittance statement, the Finance rentals board, and the Executive collection KPI all move together because they're all reading the same underlying rows, not four copies of a number.
+
+**What this means for anyone building a new dashboard section:** never introduce a second place that stores or re-derives a financial figure already computable from `properties`/`leases`/`transactions` (or, post-migration, `journal_lines`). If a new view needs "total income for X," it calls the same computation (or a service function that wraps it) scoped to X — it does not duplicate the arithmetic. This is the concrete mechanism behind ADR 002 ("no department owns an independent money balance") and is already how every dashboard shipped this build works — see `src/lib/services/dashboard.ts` and `src/lib/services/agent-performance.ts` for two independently-scoped consumers of the exact same underlying rows.
+
 ---
 
 ## 9. Migration path from today's code

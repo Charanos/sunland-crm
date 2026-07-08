@@ -1,9 +1,3 @@
-const kesFormatter = new Intl.NumberFormat("en-KE", {
-  style: "currency",
-  currency: "KES",
-  maximumFractionDigits: 0,
-});
-
 export function formatKES(value: number) {
   const isNegative = value < 0;
   const absValue = Math.abs(value);

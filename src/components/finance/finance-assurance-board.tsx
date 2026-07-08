@@ -2,39 +2,22 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  IconSearch,
-  IconCoins,
-  IconClock,
-  IconBuilding,
-  IconCheck,
-  IconArrowUpRight,
-  IconTimeline,
-  IconTransfer,
-  IconPlus,
-  IconDotsVertical,
-  IconEye,
-  IconFileExport,
-  IconFilter,
   IconQrcode,
   IconShieldCheck,
   IconTerminal2,
   IconFolder,
   IconDownload,
-  IconTrash,
   IconAlertTriangle,
   IconCircleX
 } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast-provider";
-import { Modal } from "@/components/ui/modal";
 import { Drawer } from "@/components/ui/drawer";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FinanceModuleNav } from "@/components/finance/finance-module-nav";
 import { FinanceQrProof } from "@/components/finance/finance-qr-proof";
 import { BoardHeader, BoardPanel, Button, PaginationControls } from "@/components/ui/erp-primitives";
 import { cn } from "@/lib/utils/cn";
 import { formatCompactKES } from "@/lib/utils/format";
-import { useUIStore } from "@/store/ui";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -128,9 +111,7 @@ const ROWS_PER_PAGE = 5;
 
 export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string }) {
   const { pushToast } = useToast();
-  const activeEntityId = useUIStore((state) => state.activeEntityId);
   const [mounted, setMounted] = useState(false);
-  const [currentRole, setCurrentRole] = useState<string>("ceo");
 
   // State: Database
   const [reports, setReports] = useState<GeneratedReport[]>(INITIAL_REPORTS);
@@ -148,7 +129,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
   const [compiledToken, setCompiledToken] = useState("");
 
   // Search & Pagination: Library
-  const [libraryQuery, setLibraryQuery] = useState("");
+  const [libraryQuery, ] = useState("");
   const [page, setPage] = useState(1);
 
   // Verification tab state
@@ -160,15 +141,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
   const [selectedReport, setSelectedReport] = useState<GeneratedReport | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.user?.role) {
-          setCurrentRole(data.user.role);
-        }
-      })
-      .catch(() => {});
+    Promise.resolve().then(() => setMounted(true));
   }, []);
 
   const formatMoney = (val: number) => formatCompactKES(val);
@@ -215,17 +188,17 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
       metrics:
         reportType === "Balance Sheet"
           ? [
-              { label: "Assets", value: 14200000 },
-              { label: "Liabilities", value: 6800000 },
-              { label: "Equity", value: 7400000 }
-            ]
+            { label: "Assets", value: 14200000 },
+            { label: "Liabilities", value: 6800000 },
+            { label: "Equity", value: 7400000 }
+          ]
           : reportType === "Payroll Outlay Summary"
-          ? [
+            ? [
               { label: "Total Gross Pay", value: 2800000 },
               { label: "Deductions Accrued", value: 820000 },
               { label: "Net Disbursed", value: 1980000 }
             ]
-          : [
+            : [
               { label: "Debit Balances", value: 18400000 },
               { label: "Credit Balances", value: 18400000 },
               { label: "Variance", value: 0 }

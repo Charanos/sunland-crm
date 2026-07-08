@@ -105,9 +105,9 @@ export function MobileNavigationDrawer() {
   // Re-sync open sections when drawer opens or pathname changes
   useEffect(() => {
     if (mobileNavOpen) {
-      setOpenSections((prev) =>
+      Promise.resolve().then(() => setOpenSections((prev) =>
         prev.includes(activeSection.id) ? prev : [...prev, activeSection.id],
-      );
+      ));
     }
   }, [mobileNavOpen, activeSection.id]);
 
@@ -335,7 +335,7 @@ export function MobileNavigationDrawer() {
                         className="size-8"
                       />
                       {unread > 0 && (
-                        <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] text-[var(--on-primary)]">
+                        <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-[var(--primary)] text-xs text-[var(--on-primary)]">
                           {unread}
                         </span>
                       )}
@@ -391,7 +391,7 @@ export function MobileNavigationDrawer() {
                 aria-label="Logout"
                 onClick={async () => {
                   closeMobileNav();
-                  await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+                  await fetch("/api/auth/logout", { method: "POST" }).catch(() => { });
                   router.push("/login");
                 }}
                 className="flex size-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-rose-500/10 hover:text-rose-400"

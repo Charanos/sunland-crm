@@ -3,23 +3,14 @@
 import { useState, useEffect } from "react";
 import { BoardHeader } from "@/components/ui/erp-primitives";
 import {
-  IconShieldLock,
-  IconDeviceLaptop,
-  IconEye,
-  IconEyeOff,
-  IconKey,
   IconAlertTriangle,
   IconCircleCheckFilled,
   IconCheck,
-  IconUsers,
-  IconActivity,
   IconLock,
   IconShieldCheck,
   IconChevronDown,
   IconRefresh,
-  IconQrcode,
   IconCopy,
-  IconDownload,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
@@ -60,7 +51,7 @@ const INITIAL_AUDIT_LOGS: SecurityAuditLog[] = [
 const INITIAL_USERS: PlatformUser[] = [
   { id: "u1", name: "Paul Amos", email: "paul.amos@sunland.co.ke", role: "ceo", status: "active", lastLogin: "Active now", mfa: true },
   { id: "u2", name: "Grace Omondi", email: "grace.omondi@sunland.co.ke", role: "finance_officer", status: "active", lastLogin: "2h ago", mfa: false },
-  { id: "u3", name: "James Mutua", email: "james.mutua@sunland.co.ke", role: "bd_head", status: "active", lastLogin: "Yesterday", mfa: true },
+  { id: "u3", name: "James Mutua", email: "james.mutua@sunland.co.ke", role: "property_manager", status: "active", lastLogin: "Yesterday", mfa: true },
   { id: "u4", name: "Amina Hassan", email: "amina.hassan@sunland.co.ke", role: "property_manager", status: "active", lastLogin: "3h ago", mfa: false },
 ];
 
@@ -80,7 +71,6 @@ export function SecurityPageContent() {
   const [mfaStep, setMfaStep] = useState<"intro" | "scan" | "verify">("intro");
   const [mfaCode, setMfaCode] = useState("");
   const [isVerifyingMfa, setIsVerifyingMfa] = useState(false);
-  const [copiedKey, setCopiedKey] = useState(false);
 
   const { pushToast } = useToast();
 
@@ -111,15 +101,13 @@ export function SecurityPageContent() {
           });
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [mfaEnabled]);
 
   const mfaSecret = "K5SG E4TN J5SG UZ3M O53G K=== ";
 
   const handleCopySecret = async () => {
     await navigator.clipboard?.writeText(mfaSecret.replace(/\s/g, ""));
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 1500);
     pushToast({ tone: "success", title: "Copied", body: "Secret key copied to clipboard." });
   };
 
@@ -198,7 +186,7 @@ export function SecurityPageContent() {
 
             {mfaEnabled ? (
               <div className="rounded-xl border border-emerald-150 bg-emerald-50/40 p-4 mb-4">
-                <div className="flex items-center gap-2 text-emerald-800 font-semibold mb-1">
+                <div className="flex items-center gap-2 text-emerald-800 font-normal mb-1">
                   <IconCircleCheckFilled size={16} className="text-emerald-500" />
                   MFA Protection Active
                 </div>
@@ -215,7 +203,7 @@ export function SecurityPageContent() {
               </div>
             ) : (
               <div className="rounded-xl border border-amber-150 bg-amber-50/40 p-4 mb-4">
-                <div className="flex items-center gap-2 text-amber-800 font-semibold mb-1">
+                <div className="flex items-center gap-2 text-amber-800 font-normal mb-1">
                   <IconAlertTriangle size={16} className="text-amber-500 animate-bounce" />
                   Protection Inactive
                 </div>
@@ -304,7 +292,7 @@ export function SecurityPageContent() {
               {users.map(u => (
                 <div key={u.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
                   <div>
-                    <p className="text-caption font-semibold text-slate-800">{u.name}</p>
+                    <p className="text-caption font-normal text-slate-800">{u.name}</p>
                     <p className="text-tiny text-slate-400 mt-0.5">{u.email} · {u.role.toUpperCase()}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -334,7 +322,7 @@ export function SecurityPageContent() {
                 <IconShieldCheck size={24} />
               </div>
               <div className="text-center">
-                <h3 className="font-semibold text-slate-900 leading-snug body-md">Setup Authenticator App</h3>
+                <h3 className="font-normal text-slate-900 leading-snug body-md">Setup Authenticator App</h3>
                 <p className="text-tiny text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
                   Use standard TOTP apps (Google Authenticator, Microsoft Authenticator, 1Password) to protect transactions.
                 </p>
@@ -431,7 +419,7 @@ export function SecurityPageContent() {
           {mfaStep === "verify" && (
             <form onSubmit={handleVerifyMfa} className="space-y-4">
               <div className="text-center">
-                <h3 className="font-semibold text-slate-900 leading-snug body-md">Enter 2FA Code</h3>
+                <h3 className="font-normal text-slate-900 leading-snug body-md">Enter 2FA Code</h3>
                 <p className="text-tiny text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
                   Enter the 6-digit verification code showing inside your authenticator program right now.
                 </p>

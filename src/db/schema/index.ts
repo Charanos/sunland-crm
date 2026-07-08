@@ -6,4 +6,9 @@ export * from "@/db/schema/crm";
 export * from "@/db/schema/properties";
 export * from "@/db/schema/finance";
 export * from "@/db/schema/documents";
+export * from "@/db/schema/operations";
+export * from "@/db/schema/scheduling";
+export * from "@/db/schema/support";
+export * from "@/db/schema/hr";
+export * from "@/db/schema/messaging";
 

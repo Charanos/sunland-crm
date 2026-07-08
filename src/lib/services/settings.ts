@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
@@ -23,7 +23,7 @@ export async function upsertSetting(ctx: CallerContext, rawInput: unknown) {
     const [before] = await tx
       .select()
       .from(settings)
-      .where(eq(settings.entityId, input.entityId))
+      .where(and(eq(settings.entityId, input.entityId), eq(settings.key, input.key)))
       .limit(1);
 
     const [after] = await tx
@@ -80,6 +80,99 @@ export const DEFAULT_SETTINGS: Array<{ key: string; value: unknown; description:
     key: "mandate_default_rate",
     value: 0.1,
     description: "Default management-fee rate for a new mandate; a different rate requires justification",
+  },
+
+  // ── Executive Dashboard Spec §6.2 — Consolidated Approval Authority Table.
+  // Additive to the four keys above (kept untouched for compatibility with
+  // existing readers); each row below maps 1:1 to a table row. GM/CEO figures
+  // are the only ones ever edited from System Administration (spec §8.3, CEO
+  // only) — the two existing generic petty-cash keys above stay as the
+  // legacy single-threshold reading some code may still use, while these
+  // split property vs. office as the table actually specifies.
+  {
+    key: "property_petty_cash_auto_approve_kes",
+    value: 5000,
+    description: "Property petty-cash expense auto-approved below this amount, no approval routing needed",
+  },
+  {
+    key: "property_petty_cash_gm_threshold_kes",
+    value: 5000,
+    description: "Property petty-cash expense requires GM approval from this amount up to the CEO threshold",
+  },
+  {
+    key: "property_petty_cash_ceo_threshold_kes",
+    value: 50000,
+    description: "Property petty-cash expense above this amount requires CEO approval",
+  },
+  {
+    key: "office_petty_cash_auto_approve_kes",
+    value: 10000,
+    description: "Office petty-cash expense auto-approved below this amount, no approval routing needed",
+  },
+  {
+    key: "office_petty_cash_gm_threshold_kes",
+    value: 10000,
+    description: "Office petty-cash expense requires GM approval from this amount up to the CEO threshold",
+  },
+  {
+    key: "office_petty_cash_ceo_threshold_kes",
+    value: 50000,
+    description: "Office petty-cash expense above this amount requires CEO approval",
+  },
+  {
+    key: "petty_cash_topup_gm_threshold_kes",
+    value: 5000,
+    description: "Petty-cash top-up requests above this amount require GM approval (spec §8.3 proposed default)",
+  },
+  {
+    key: "petty_cash_topup_ceo_threshold_kes",
+    value: 50000,
+    description: "Petty-cash top-up requests above this amount require CEO approval (spec §8.3 proposed default)",
+  },
+  {
+    key: "vehicle_request_external_hire_requires_gm",
+    value: true,
+    description: "External vehicle hire (outside the in-fleet pool) always requires GM approval",
+  },
+  {
+    key: "mandate_activation_ceo_unit_threshold",
+    value: 10,
+    description: "Mandate activation requires CEO approval above this many units (GM approval is always required)",
+  },
+  {
+    key: "mandate_activation_ceo_annual_value_kes",
+    value: 5000000,
+    description: "Mandate activation requires CEO approval above this annualized collectible value",
+  },
+  {
+    key: "mandate_letter_ceo_policy_exceeds",
+    value: true,
+    description: "Mandate letter requires CEO approval whenever its value or term exceeds standing policy",
+  },
+  {
+    key: "payroll_disbursement_requires_gm",
+    value: true,
+    description: "Payroll disbursement always requires GM approval; CEO visibility is informational only",
+  },
+  {
+    key: "promotion_demotion_head_level_requires_ceo",
+    value: true,
+    description: "Promotions/demotions into or out of a Head-level role require CEO approval; other roles require GM",
+  },
+  {
+    key: "bankers_cheque_dual_signoff_threshold_kes",
+    value: 500000,
+    description: "Banker's cheques above this amount require dual sign-off with the Finance Head before crediting",
+  },
+  {
+    key: "agent_commission_payout_requires_ceo",
+    value: true,
+    description: "Agent commission payouts and deal approvals always require CEO sign-off, never auto-approved",
+  },
+  {
+    key: "offboarding_head_level_notifies_ceo",
+    value: true,
+    description: "Offboarding a Head-level role notifies the CEO; treated as effectively required sign-off",
   },
 ];
 

@@ -580,7 +580,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
               <h2 className="title-serif text-4xl font-normal leading-tight tracking-tight text-white mb-2">
                 Agent Commissions Ledger
               </h2>
-              <p className="text-base leading-relaxed text-slate-300/85 font-light max-w-lg">
+              <p className="text-base leading-relaxed text-slate-300/85 font-normal max-w-lg">
                 Track agent commission payouts from closed sales and letting agreements, log KRA withholding tax (10% WHT) filings, and audit statutory Affordable Housing Levy compliance.
               </p>
             </div>

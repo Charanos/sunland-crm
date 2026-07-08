@@ -57,6 +57,27 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
   perm("finance.approval.read", "View approval requests"),
   perm("finance.approval.create", "Raise an approval request"),
   perm("finance.approval.decide", "Approve or reject an approval request"),
+
+  // Scheduling — self-scoped "my calendar" (organizer or attendee) never
+  // needs a permission at all; these gate org-wide visibility/creation only.
+  perm("scheduling.event.read", "View every calendar event across the org, not just your own"),
+  perm("scheduling.event.write", "Create/edit/delete calendar events on behalf of the org"),
+
+  // Support — anyone can file their own ticket with no grant at all (same
+  // self-scoped pattern as scheduling); this is the literal "admin is the
+  // main support endpoint" permission, restricted to CEO/GM only.
+  perm("support.ticket.manage", "View and manage every support ticket across the org, not just your own"),
+
+  // HR Complaints — HR Head's working-queue grant. GM/CEO visibility into
+  // escalated complaints is role-tier-based (see src/lib/services/complaints.ts),
+  // not a granted permission, since that authority is positional, exactly
+  // like the approvals-tier system in dashboard.ts.
+  perm("hr.complaint.manage", "View and act on complaints currently owned by HR Head's queue"),
+
+  // Operations — cross-department Projects. A shared artifact, not personal
+  // data, so no self-scoped "mine" split like scheduling/support have.
+  perm("operations.project.read", "View cross-department projects"),
+  perm("operations.project.write", "Create/edit/delete cross-department projects"),
 ];
 
 const permissionKeys = PERMISSION_CATALOG.map((p) => p.key);
@@ -78,11 +99,13 @@ export type SystemRoleDefinition = {
   permissions: string[];
 };
 
-// Only the 16 real roles get seeded permission sets. The 7 prototype aliases
-// (bd_head, agent, property_manager, accounts_manager, accounts_officer,
-// hr_manager, auditor) stay in the user_role enum for migration compatibility
-// but are deliberately granted nothing here — retiring them is a later cleanup,
-// not a P0 concern.
+// Only the 14 real roles below get seeded permission sets. The retired
+// aliases (line_manager, bd_head, bd_agent, agent, accounts_manager,
+// accounts_officer, hr_manager, auditor — superseded by property_manager for
+// the old BD/line-manager family, or by their non-alias counterparts) stay in
+// the user_role enum for migration compatibility but are deliberately granted
+// nothing here — retiring them from the enum itself is a later cleanup, not a
+// P0 concern.
 export const SYSTEM_ROLES: SystemRoleDefinition[] = [
   {
     slug: "ceo",
@@ -113,6 +136,8 @@ export const SYSTEM_ROLES: SystemRoleDefinition[] = [
       "properties.maintenance.read",
       "settings.entity.read",
       "audit.log.read",
+      ...keysFor("scheduling"),
+      ...keysFor("operations"),
     ],
   },
   {
@@ -149,7 +174,13 @@ export const SYSTEM_ROLES: SystemRoleDefinition[] = [
     slug: "hr_head",
     name: "Head of HR",
     scopeType: "global",
-    permissions: ["identity.user.read", "settings.entity.read"],
+    permissions: [
+      "identity.user.read",
+      "settings.entity.read",
+      "hr.complaint.manage",
+      ...keysFor("scheduling"),
+      ...keysFor("operations"),
+    ],
   },
   {
     slug: "hr_officer",
@@ -158,20 +189,17 @@ export const SYSTEM_ROLES: SystemRoleDefinition[] = [
     permissions: ["identity.user.read"],
   },
   {
-    slug: "line_manager",
-    name: "Line Manager",
+    slug: "property_manager",
+    name: "Property Manager",
     scopeType: "entity",
     permissions: [
       ...keysFor("crm"),
-      "properties.property.read",
-      "properties.lease.read",
+      ...keysFor("properties"),
+      ...keysFor("scheduling"),
+      ...keysFor("operations"),
+      // Assigning a colleague to a project requires knowing who exists.
+      "identity.user.read",
     ],
-  },
-  {
-    slug: "bd_agent",
-    name: "Business Development Agent",
-    scopeType: "entity",
-    permissions: [...keysFor("crm"), "properties.property.read"],
   },
   {
     slug: "front_office_head",
@@ -182,6 +210,9 @@ export const SYSTEM_ROLES: SystemRoleDefinition[] = [
       "properties.property.read",
       "properties.maintenance.read",
       "properties.maintenance.write",
+      ...keysFor("scheduling"),
+      ...keysFor("operations"),
+      "identity.user.read",
     ],
   },
   {
@@ -206,6 +237,9 @@ export const SYSTEM_ROLES: SystemRoleDefinition[] = [
       "properties.lease.read",
       "properties.maintenance.read",
       "properties.maintenance.write",
+      ...keysFor("scheduling"),
+      ...keysFor("operations"),
+      "identity.user.read",
     ],
   },
   {

@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { activityLogs } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
@@ -10,6 +10,9 @@ export type AuditLogFilters = {
   actorId?: string;
   action?: string;
   associatedType?: string;
+  associatedId?: string;
+  dateFrom?: string;
+  dateTo?: string;
   limit?: number;
   offset?: number;
 };
@@ -29,6 +32,9 @@ export async function listAuditLog(ctx: CallerContext, filters: AuditLogFilters 
   if (filters.actorId) conditions.push(eq(activityLogs.actorId, filters.actorId));
   if (filters.action) conditions.push(eq(activityLogs.action, filters.action));
   if (filters.associatedType) conditions.push(eq(activityLogs.associatedType, filters.associatedType));
+  if (filters.associatedId) conditions.push(eq(activityLogs.associatedId, filters.associatedId));
+  if (filters.dateFrom) conditions.push(gte(activityLogs.createdAt, new Date(filters.dateFrom)));
+  if (filters.dateTo) conditions.push(lte(activityLogs.createdAt, new Date(filters.dateTo)));
 
   return db
     .select()

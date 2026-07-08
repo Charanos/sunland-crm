@@ -51,7 +51,7 @@ In Next.js 16.2+, the standard `middleware.ts` convention is deprecated in favor
 
 The ERP spec names Pusher Channels as the target realtime layer. The current codebase contains an Ably adapter from the earlier prototype. Until transport migration is scheduled, realtime access stays isolated behind `src/lib/realtime/*` so department code does not depend directly on a vendor SDK.
 
-## ADR 007: Landing Page Redirection and Access Emulation Profiles
+## ADR 007: Landing Page Redirection and Access Emulation Profiles — ⚠️ role list SUPERSEDED by ADR 013
 
 To make local development, QA, and client review streamlined, the main landing page (`/`) redirects automatically to the secure `/login` route.
 The login page contains an "Authorized Workspace Portals" switcher that emulates the six core client roles we are building out dashboards for:
@@ -63,6 +63,8 @@ The login page contains an "Authorized Workspace Portals" switcher that emulates
 6. Front Office Lead (`front_office_head` - Sharon Koech)
 
 All emulated profiles are backed by real database users seeded in both `src/db/seed.ts` (CLI) and `src/app/api/auth/seed/route.ts` (API route) using the default password `sunland-demo` to preserve compatibility.
+
+> **Superseded:** the six-role list above predates the client's finalized org structure. "Line Manager" no longer exists (folded into Property Manager mid-build); Head of Strategy, Admin (CEO's Assistant), Senior Accountant, and Internal Auditor are new. The mechanism this ADR describes (emulated login profiles backed by real seeded users) still stands — only the roster is stale. See ADR 013 for the current roster.
 
 ## ADR 008: Universal Self-Service Access Paths — ⚠️ SUPERSEDED by ADR 010
 Common account modules (Profile, Settings, Security, Messages, Notifications) are hosted under the `/admin` path group but are whitelisted under `UNIVERSAL_PATHS` in [roles.ts](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/lib/auth/roles.ts). This ensures that any authenticated employee (e.g. Finance Officer, HR Head) can manage their personal profiles, preferences, and communications without triggering role-based redirects to their department's dashboard roots.
@@ -107,5 +109,117 @@ Common account modules (Profile, Settings, Security, Messages, Notifications) ar
 4. **No email service exists**, so `createUser` returns a one-time plaintext temporary password in its response rather than building a speculative invite/reset-token flow nothing else needs yet.
 
 **Rationale & build detail:** `docs/SUNLAND_BACKEND_ARCHITECTURE_MASTER.md` §3.4, `docs/SUNLAND_DASHBOARD_PORTAL_ARCHITECTURE.md` §6.
+
+---
+
+## ADR 013: Client-Directed Role Model Update (2026 Q3) — extends ADR 011, updates ADR 007
+
+**Decision:** The client supplied a finalized organizational role roster, replacing the six-role emulation set in ADR 007 and resolving the two placeholders `.agents/skills/workflow-fixes/SKILL.md` had left open ("Admin (CEO's Assistant)" and "Head of Strategy," previously deferred to "a future sprint"). That sprint is this ADR.
+
+**The roster, in full:**
+
+| Role | Slug | Scope | Reports to | Status |
+|---|---|---|---|---|
+| Chief Executive Officer | `ceo` | global | — | Unchanged |
+| General Manager | `general_manager` | global | CEO | Unchanged |
+| **Head of Strategy** | `head_of_strategy` | global | GM | **New** |
+| Property Manager | `property_manager` | entity | Head of Strategy | Unchanged role, new reporting line |
+| Head of Finance | `finance_head` | global | GM | Unchanged |
+| **Senior Accountant** | `finance_officer` (relabeled) | entity | Finance Head | **Renamed**, same permission scope |
+| **Internal Auditor** | `auditor_compliance` (relabeled) | global | GM (dotted line to CEO) | **Renamed** + **new time-gated access rule** |
+| **Admin (CEO's Assistant)** | `admin_assistant` | global | CEO | **New** |
+| Head of HR | `hr_head` | global | GM | Unchanged |
+| Front Office Head | `front_office_head` | global | GM | Unchanged |
+| Landlord | `landlord` | self | — | Unchanged (spec exists, not yet built — see tenant/landlord portal doc) |
+| Tenant | `tenant` | self | — | Unchanged (spec exists, not yet built), **complaint routing changed** |
+
+### 13.1 Head of Strategy — the BD/property-management department head
+
+**Decision:** `head_of_strategy` is a new global-scope role sitting above everything the BD dashboard spec (`SUNLAND_BD_DASHBOARD_SPEC.md`) describes as "Line Manager" territory. Per the client: Head of Strategy owns **Property Managers, Line Managers, Sales, and Marketers** — i.e., every commercial/BD-facing function reports through this one department head, the same way Finance reports through Finance Head and HR through HR Head.
+
+This is additive to, not a replacement for, the `property_manager` consolidation already in the codebase (`line_manager`/`bd_agent`/`bd_head`/`agent` were folded into `property_manager` earlier this build — see `src/lib/authz/catalog.ts`'s retired-alias comment). `head_of_strategy` sits *above* `property_manager` in the reporting chain; it does not merge into it.
+
+**Permissions (proposed, mirrors `finance_head`'s oversight shape):**
+```
+...keysFor("crm")            // full pipeline/contact oversight, not just their own leads
+...keysFor("properties")     // full property/lease/maintenance oversight
+...keysFor("scheduling")
+...keysFor("operations")     // Projects — Head of Strategy is exactly who runs cross-dept initiatives
+identity.user.read           // sees their own reports (property managers, sales, marketers)
+settings.entity.read
+audit.log.read
+```
+Global scope (`scopeType: "global"`), matching the established rule that department heads are global while officers are entity-scoped (ADR 012 point 3) — a Head of Strategy overseeing property managers across Commercial *and* Residential cannot be scoped to one entity any more than Finance Head can.
+
+### 13.2 Property Managers — explicit dual landlord + tenant scope
+
+**Decision:** Property Managers are confirmed as the single point of contact for **both** landlords and tenants on any property under Sunland's management — not just the landlord-facing mandate relationship the role already had. Per the client: *landlords defer all responsibility for managing their properties to Sunland*, which makes the assigned Property Manager the de facto tenant-relationship owner too, by extension of that mandate.
+
+**Concretely, this means:**
+- Tenant complaints/maintenance requests route to the property's assigned Property Manager, not a generic Front Office/Ops queue (supersedes the routing described in `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md` §3.2/§6 — see that doc's updated version).
+- Rent arrears visibility for a Property Manager's assigned properties is a first-class view, not something they have to cross into Finance to see.
+- Miscellaneous tenant charges (new — see §13.5 below) are also a Property Manager concern.
+
+The client's own framing was that Property Managers should be able to **"handle this all dynamically"** — one working surface per property/tenant, not three separate siloed pages for complaints, arrears, and misc charges. This is a UI/aggregation requirement for whenever the Property Manager portal is built (tenant/landlord portal doc §7 build sequence), not a new table — all three data sources (`maintenance_requests`, `rental_ledger`/lease arrears, and the new misc-charges table) already carry `propertyId`, so a "my properties, everything outstanding" view is a query, not a schema change.
+
+No new permissions needed — `property_manager` already holds `...keysFor("properties")` (covers `properties.maintenance.*`) from the existing catalog; the change is in routing/visibility logic (who gets notified, whose queue it lands in), documented in the tenant/landlord portal spec update.
+
+### 13.3 Finance: Senior Accountant + Internal Auditor
+
+**Decision:** The client named two Finance-department staff roles: **Senior Accountant** and **Internal Auditor**. Mapped onto the existing schema rather than inventing parallel roles that duplicate what's already seeded:
+
+- **Senior Accountant = `finance_officer`, relabeled.** The existing `finance_officer` role (entity-scoped, day-to-day transaction/ledger work) already matches the job description implied by "Senior Accountant" — general ledger entries, transaction recording, rentals/mandates support. No permission change; this is a display-name/title clarification (`name: "Finance Officer"` → `"Senior Accountant"` in `SYSTEM_ROLES`), flagged here as a proposed mapping for the client to confirm rather than assumed silently.
+- **Internal Auditor = `auditor_compliance`, relabeled, plus a genuinely new access rule** (§13.4).
+
+### 13.4 Internal Auditor's 90-day delayed finance access — a new authz primitive
+
+**Decision:** An Internal Auditor **requires access to the finance dashboard only after 3 months** in the role. Read literally, this is a probation/trust period: the auditor role is granted immediately (they can start working — org-wide read access per `auditor_compliance`'s existing `allReadKeys()` grant), but the specific slice of that grant covering `finance.*` permissions activates only once 90 days have elapsed since the role was assigned.
+
+**This is the first time-conditional permission in the system.** Nothing in the current `authorize()`/`can()`/`resolveActorPermissions()` chain (`src/lib/authz/{can,resolve}.ts`) has any concept of "granted, but not yet active." Two ways to build it, and the recommended one:
+
+- **(Rejected) Delay the `user_roles` insert itself** — don't grant `auditor_compliance` until day 90. Simpler, but wrong: the client's intent is that the person *is* the Internal Auditor from day one (title, non-finance read access, presumably other duties) — only the finance slice is gated, not the whole role.
+- **(Recommended) A `roleGrantedAt` timestamp on `user_roles`, checked inside `authorize()` for finance-module keys only.** Concretely: `user_roles` gains a `grantedAt` column (defaults to `now()`, already implicit via `createdAt` if `...timestamps` is already spread there — confirm and reuse rather than add a duplicate column). `authorize(ctx, key, entityId)` gets a narrow addition: if `key.startsWith("finance.")` and the resolved grant coming from an `auditor_compliance` role assignment is less than 90 days old, treat it as not-yet-granted (throw `ForbiddenError`) even though `can()` would otherwise return `true`. This keeps the general permission model untouched for every other role/module and scopes the new time-gate narrowly to the one case that needs it, rather than generalizing a "probation period" concept the rest of the system doesn't ask for yet.
+
+**Not yet implemented** — this ADR records the decision and the mechanism; the `authorize()` change and the `user_roles.grantedAt` column are next-sprint work, tracked against this ADR.
+
+### 13.5 Admin (CEO's Assistant) — proposed permission design
+
+**Decision:** The client explicitly left this open — *"we'll figure how to auth this based on all other roles, this will be curated to aiding CEO activities"* — so what follows is a **proposed design**, not a client-dictated spec, flagged as such for confirmation before it's built.
+
+Admin is framed as two things at once: partial HR function, and direct CEO support (scheduling, executive requests, triage). The proposed permission set reflects both halves without granting either full HR authority or financial approval authority — an assistant amplifies the CEO's reach, it doesn't inherit the CEO's sign-off power:
+
+```
+identity.user.read            // HR-adjacent: can see the org, not edit roles/access (that stays CEO-only)
+settings.entity.read          // visibility into thresholds, no write
+audit.log.read                // same oversight-adjacent read CEO/GM/Finance Head already get
+...keysFor("scheduling")      // runs the CEO's calendar — this is the core "assistant" function
+support.ticket.manage         // triages the "admin is the main support endpoint" queue on the CEO's behalf
+crm.contact.read, crm.lead.read   // read-only visibility to brief the CEO, no pipeline editing
+properties.property.read, properties.lease.read, properties.maintenance.read   // same, read-only briefing visibility
+```
+
+**Explicitly excluded:**
+- `finance.*` (any) — no approval or transaction authority.
+- `hr.complaint.manage` — complaints are confidentiality-gated to HR Head/GM/CEO by hardcoded routing (HR spec §6.4); Admin assisting the CEO does not extend to reading complaint content, including complaints escalated *to* the CEO.
+- `operations.project.write` — Admin can see projects (read-only, via a future `operations.project.read` grant if the client wants visibility) but doesn't run them.
+- `identity.role.write`, System Administration — CEO-exclusive per ADR 012, unchanged.
+
+Scope: `global` (an assistant to the CEO isn't tied to one operating entity, matching every other department-head-tier role in this system).
+
+### 13.6 Tenant/Landlord portal: complaint routing + miscellaneous charges
+
+Covered in full in the updated `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md`:
+- Tenant complaints/maintenance requests now route to the property's assigned **Property Manager**, not a generic Front Office/Ops queue.
+- A new **Miscellaneous Charges** category (water, garbage — **explicitly not electricity**, which runs on a prepaid token system entirely outside Sunland's ledger) joins rent as a tenant-payable charge type, handled by Property Managers.
+
+### 13.7 What this ADR does *not* change
+
+- The permission catalog's module structure (`<module>.<resource>.<action>`, ADR 011) — new roles are new grants of existing or narrowly-added keys, not a new authz model.
+- `property_manager`'s existing entity-scoped permission set — Head of Strategy is a new role *above* it, not a rename of it.
+- The tenant/landlord identity model (`users.contactId`, `isExternal`, `external_invitations`) — still not built; this ADR only changes who a tenant's complaint routes to once that portal exists.
+
+**Supersedes:** ADR 007's six-role emulation list (CEO, GM, Finance Head, HR Head, Line Manager, Front Office Head) is stale — "Line Manager" no longer exists as a role (folded into Property Manager earlier this build), and the roster above is now the canonical set. ADR 007 is kept for history with a superseded marker rather than deleted, per this file's own convention.
+
+**Rationale & build detail:** `.agents/skills/workflow-fixes/SKILL.md` (design notes, non-canonical scratch space), `docs/SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md` (complaint routing + misc charges), `docs/SUNLAND_FINANCE_LEDGER_ARCHITECTURE.md` §8 (downstream data-flow model, added alongside this ADR).
 
 

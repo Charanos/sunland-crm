@@ -77,7 +77,7 @@ export const useUIStore = create<UIStore>((set) => ({
   openChat: () => set({ chatOpen: true }),
   closeChat: () => set({ chatOpen: false }),
   setSelectedChatDMId: (id, openChat) =>
-    set((state) => ({
+    set(() => ({
       selectedChatDMId: id,
       chatOpen: openChat !== undefined ? openChat : (id !== null),
     })),

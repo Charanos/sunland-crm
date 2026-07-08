@@ -22,8 +22,8 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
           <IconTrendingUp size={20} stroke={2} />
         </div>
         <div>
-          <h3 className="text-slate-800 font-medium tracking-wide text-lg">Growth Metrics</h3>
-          <p className="text-base text-slate-500 font-medium mt-0.5">Quarterly Objectives</p>
+          <h3 className="text-lg font-medium text-slate-900">Growth Metrics</h3>
+          <p className="body-sm text-slate-500 mt-1">Quarterly Objectives</p>
         </div>
       </div>
 
@@ -31,9 +31,9 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
         {data.map((item, idx) => (
           <div key={item.label} className="animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-slate-700 text-base">{item.label}</span>
+              <span className="text-sm font-medium text-slate-800">{item.label}</span>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 border border-slate-100 px-1.5 rounded bg-slate-50 label-caps">{item.target}</span>
+                <span className="text-slate-500 border border-slate-100 px-2 py-0.5 rounded bg-slate-50 label-caps text-xs">{item.target}</span>
                 <span className="text-slate-900 mono-data">{item.value}</span>
               </div>
             </div>
@@ -50,7 +50,7 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
       <div className="mt-8 pt-4 border-t border-slate-100">
         <Link href="/admin/reports" className="block w-full">
           <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-[#151936] hover:text-white text-slate-700 border border-slate-200 hover:border-[#151936] transition-all group">
-            <span className="text-base font-medium flex items-center gap-2">
+            <span className="text-sm font-medium flex items-center gap-2">
               <IconChartLine size={16} className="text-slate-400 group-hover:text-white/70" />
               View Detailed Growth Report
             </span>

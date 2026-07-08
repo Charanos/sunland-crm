@@ -1,28 +1,28 @@
 import fs from "fs";
 import path from "path";
 
-// Manually load env variables from .env.local in development environment
+// Manually load env variables from .env and .env.local in development environment
 try {
-  const envPath = path.resolve(process.cwd(), ".env.local");
-  if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, "utf-8");
-    for (const line of envConfig.split("\n")) {
-      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
-      if (match) {
-        const key = match[1];
-        let value = match[2] || "";
-        if (value.endsWith("\r")) {
-          value = value.substring(0, value.length - 1);
+  const loadEnv = (fileName: string) => {
+    const envPath = path.resolve(process.cwd(), fileName);
+    if (fs.existsSync(envPath)) {
+      const envConfig = fs.readFileSync(envPath, "utf-8");
+      for (const line of envConfig.split("\n")) {
+        const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+        if (match) {
+          const key = match[1];
+          let value = match[2] || "";
+          if (value.endsWith("\r")) value = value.substring(0, value.length - 1);
+          if (value.startsWith('"') && value.endsWith('"')) value = value.substring(1, value.length - 1);
+          process.env[key] = value;
         }
-        if (value.startsWith('"') && value.endsWith('"')) {
-          value = value.substring(1, value.length - 1);
-        }
-        process.env[key] = value;
       }
     }
-  }
+  };
+  loadEnv(".env");
+  loadEnv(".env.local");
 } catch (e) {
-  console.warn("Failed to load .env.local", e);
+  console.warn("Failed to load local env files:", e);
 }
 
 import { db } from "@/db";
@@ -38,6 +38,16 @@ import {
   approvalRequests,
   notifications,
   activityLogs,
+  documents,
+  reportExports,
+  settings,
+  projects,
+  calendarEvents,
+  complaints,
+  supportTickets,
+  conversations,
+  conversationParticipants,
+  messages,
 } from "@/db/schema";
 import { hashPassword } from "@/lib/auth/password";
 import { grantUserRole, seedPermissionCatalog } from "@/lib/authz/seed";
@@ -53,6 +63,19 @@ async function runSeed() {
     console.log("Step 1: Clearing existing records...");
     await db.delete(activityLogs);
     await db.delete(notifications);
+    await db.delete(reportExports);
+    await db.delete(documents);
+    await db.delete(settings);
+    // FK-ordered: messages/participants before conversations; complaints and
+    // support_tickets before users; calendar_events before projects (its
+    // projectId FK) and both before users.
+    await db.delete(messages);
+    await db.delete(conversationParticipants);
+    await db.delete(conversations);
+    await db.delete(complaints);
+    await db.delete(supportTickets);
+    await db.delete(calendarEvents);
+    await db.delete(projects);
     await db.delete(approvalRequests);
     await db.delete(transactions);
     await db.delete(leases);
@@ -111,32 +134,22 @@ async function runSeed() {
       hrHeadUser,
       lineManagerUser,
       frontOfficeUser,
+      propertyManager1User,
+      propertyManager2User,
+      salesAgent1User,
+      salesAgent2User,
+      legalOfficerUser,
     ] = await db
       .insert(users)
       .values([
         {
-          email: "ceo@sunlandre.co.ke",
-          passwordHash: hashedPass,
-          name: "Paul Amos",
-          role: "ceo",
-          title: "Chief Executive Officer",
-          primaryEntityId: groupEntity.id,
+          email: "ceo@sunlandre.co.ke", passwordHash: hashedPass, name: "Paul Amos", role: "ceo", title: "Chief Executive Officer", avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80", primaryEntityId: groupEntity.id,
         },
         {
-          email: "gm@sunlandre.co.ke",
-          passwordHash: hashedPass,
-          name: "Grace Mutua",
-          role: "general_manager",
-          title: "General Manager",
-          primaryEntityId: groupEntity.id,
+          email: "gm@sunlandre.co.ke", passwordHash: hashedPass, name: "Grace Mutua", role: "general_manager", title: "General Manager", avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80", primaryEntityId: groupEntity.id,
         },
         {
-          email: "finance.head@sunlandre.co.ke",
-          passwordHash: hashedPass,
-          name: "Dennis Munge",
-          role: "finance_head",
-          title: "Head of Finance",
-          primaryEntityId: groupEntity.id,
+          email: "finance.head@sunlandre.co.ke", passwordHash: hashedPass, name: "Dennis Munge", role: "finance_head", title: "Head of Finance", avatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80", primaryEntityId: groupEntity.id,
         },
         {
           email: "finance.officer@sunlandre.co.ke",
@@ -165,23 +178,56 @@ async function runSeed() {
         {
           email: "line.manager@sunlandre.co.ke",
           passwordHash: hashedPass,
-          name: "Jared Omondi",
-          role: "line_manager",
-          title: "Line Manager",
-          primaryEntityId: resEntity.id,
+          name: "James Kiptoo",
+          role: "property_manager",
+          title: "Operations Manager",
+          primaryEntityId: commEntity.id,
         },
         {
           email: "front.office@sunlandre.co.ke",
           passwordHash: hashedPass,
-          name: "Sharon Koech",
+          name: "Alice Wanjiku",
           role: "front_office_head",
-          title: "Front Office Lead",
+          title: "Front Office Manager",
+          primaryEntityId: groupEntity.id,
+        },
+        // Seeded Ops / Property Managers
+        {
+          email: "pm1@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "David Omondi",
+          role: "property_manager",
+          title: "Senior Property Manager",
+          primaryEntityId: commEntity.id,
+        },
+        {
+          email: "pm2@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Jane Wanjiru",
+          role: "property_manager",
+          title: "Property Manager",
+          primaryEntityId: resEntity.id,
+        },
+        // Seeded Sales / BD Agents
+        {
+          email: "sales1@sunlandre.co.ke", passwordHash: hashedPass, name: "Kevin Mbugua", role: "property_manager", title: "Senior Broker", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80", primaryEntityId: commEntity.id,
+        },
+        {
+          email: "sales2@sunlandre.co.ke", passwordHash: hashedPass, name: "Lucy Kariuki", role: "property_manager", title: "Sales Agent", avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80", primaryEntityId: resEntity.id,
+        },
+        // Seeded Legal / Escrow Officers
+        {
+          email: "legal1@sunlandre.co.ke",
+          passwordHash: hashedPass,
+          name: "Brian Njoroge",
+          role: "rentals_mandates_officer",
+          title: "Escrow Officer",
           primaryEntityId: groupEntity.id,
         },
       ])
       .returning();
 
-    console.log(`Created 8 users. Authenticate with email and password 'sunland-demo'.`);
+    console.log(`Created 14 users. Authenticate with email and password 'sunland-demo'.`);
 
     // 3b. Seed the permission catalog + system roles, then grant each seeded
     // user their role (backend master §3.1). CEO/GM are global scope (no
@@ -195,8 +241,17 @@ async function runSeed() {
       { userId: financeOfficerUser.id, roleSlug: "finance_officer", entityId: commEntity.id },
       { userId: pmUser.id, roleSlug: "operations_lead", entityId: resEntity.id },
       { userId: hrHeadUser.id, roleSlug: "hr_head", entityId: null },
-      { userId: lineManagerUser.id, roleSlug: "line_manager", entityId: resEntity.id },
+      { userId: lineManagerUser.id, roleSlug: "property_manager", entityId: resEntity.id },
       { userId: frontOfficeUser.id, roleSlug: "front_office_head", entityId: null },
+      // These five were seeded for department-stat/headcount variety but
+      // never granted a role — left them able to log in but unable to do
+      // anything (zero permissions), since RBAC checks user_roles, not the
+      // users.role column alone.
+      { userId: propertyManager1User.id, roleSlug: "property_manager", entityId: commEntity.id },
+      { userId: propertyManager2User.id, roleSlug: "property_manager", entityId: resEntity.id },
+      { userId: salesAgent1User.id, roleSlug: "property_manager", entityId: commEntity.id },
+      { userId: salesAgent2User.id, roleSlug: "property_manager", entityId: resEntity.id },
+      { userId: legalOfficerUser.id, roleSlug: "rentals_mandates_officer", entityId: groupEntity.id },
     ];
     for (const grant of roleGrants) {
       await grantUserRole(grant.userId, grant.roleSlug, grant.entityId);
@@ -208,11 +263,9 @@ async function runSeed() {
 
     // 4. Create Contacts (Landlords and Tenants)
     console.log("Step 4: Creating client and partner records...");
-    const [landlordA, landlordB, tenantA, tenantB] = await db
-      .insert(contacts)
-      .values([
+    const contactsToInsert: (typeof contacts.$inferInsert)[] = [
         {
-          entityId: commEntity.id,
+          entityId: groupEntity.id,
           type: "landlord",
           displayName: "Kariuki Holdings",
           companyName: "Kariuki Real Estate Investments Ltd",
@@ -222,7 +275,7 @@ async function runSeed() {
           assignedToId: ceoUser.id,
         },
         {
-          entityId: resEntity.id,
+          entityId: groupEntity.id,
           type: "landlord",
           displayName: "Margaret Wambui",
           email: "margaret@wambui.me",
@@ -231,7 +284,7 @@ async function runSeed() {
           assignedToId: pmUser.id,
         },
         {
-          entityId: commEntity.id,
+          entityId: groupEntity.id,
           type: "tenant",
           displayName: "Nexus Tech Solutions",
           companyName: "Nexus Technology Solutions Ltd",
@@ -241,7 +294,7 @@ async function runSeed() {
           assignedToId: financeOfficerUser.id,
         },
         {
-          entityId: resEntity.id,
+          entityId: groupEntity.id,
           type: "tenant",
           displayName: "Alice Odhiambo",
           email: "alice@odhiambo.co.ke",
@@ -249,30 +302,49 @@ async function runSeed() {
           source: "Walk-in Client",
           assignedToId: pmUser.id,
         },
-      ])
+    ];
+
+    for (let i = 5; i <= 20; i++) {
+        contactsToInsert.push({
+          entityId: groupEntity.id,
+          type: i % 2 === 0 ? "landlord" : "tenant",
+          displayName: i % 2 === 0 ? `Landlord Corp ${i}` : `Tenant Client ${i}`,
+          companyName: i % 3 === 0 ? `Company ${i} Ltd` : null as unknown as string,
+          email: `contact${i}@example.co.ke`,
+          phone: `+2547000000${i.toString().padStart(2, '0')}`,
+          source: i % 4 === 0 ? "Listing Portal" : "Direct Referral",
+          assignedToId: i % 2 === 0 ? pmUser.id : financeOfficerUser.id,
+        });
+    }
+
+    const [landlordA, landlordB, tenantA, tenantB] = await db
+      .insert(contacts)
+      .values(contactsToInsert)
       .returning();
 
-    console.log("Created 4 contacts.");
+    console.log("Created 20 contacts.");
 
     // 5. Create Properties
     console.log("Step 5: Logging managed properties...");
-    const [propComm, propRes] = await db
-      .insert(properties)
-      .values([
+    const propsToInsert: (typeof properties.$inferInsert)[] = [
         {
-          entityId: commEntity.id,
+          entityId: groupEntity.id,
           propertyCode: "PROP-COMM-001",
           name: "Nexus Office Plaza",
-          propertyType: "Commercial Office",
+          propertyType: "Commercial",
           listingType: "Rental",
           status: "occupied",
           location: "Westlands, Nairobi",
           ownerContactId: landlordA.id,
           monthlyRentKes: "350000.00",
           sizeSqft: 2400,
+          media: [
+            { url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", alt: "Office exterior", isPrimary: true },
+            { url: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80", alt: "Lobby" },
+          ]
         },
         {
-          entityId: resEntity.id,
+          entityId: groupEntity.id,
           propertyCode: "PROP-RES-001",
           name: "Lavington Heights Unit 4B",
           propertyType: "Apartment",
@@ -282,11 +354,168 @@ async function runSeed() {
           ownerContactId: landlordB.id,
           monthlyRentKes: "95000.00",
           sizeSqft: 1500,
+          media: [
+            { url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80", alt: "Living room", isPrimary: true },
+            { url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80", alt: "Bedroom" },
+          ]
         },
-      ])
+    ];
+
+    const propertyTypes = ["Apartment", "Commercial", "House", "Villa", "Land"];
+    const typeImages: Record<string, string[]> = {
+      "Apartment": [
+        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+        "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
+        "https://images.unsplash.com/photo-1502672260266-1c1de2d9d0d9?w=800&q=80"
+      ],
+      "Commercial": [
+        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80",
+        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=80",
+        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80"
+      ],
+      "House": [
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+        "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80"
+      ],
+      "Villa": [
+        "https://images.unsplash.com/photo-1613490900233-08ba5d54a7ee?w=800&q=80",
+        "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
+        "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80"
+      ],
+      "Land": [
+        "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80",
+        "https://images.unsplash.com/photo-1629016943072-0bf0eeefbb36?w=800&q=80"
+      ]
+    };
+    const secondaryImages = [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80"
+    ];
+
+    for (let i = 2; i <= 20; i++) {
+        const type = propertyTypes[i % propertyTypes.length];
+        const primaryImg = typeImages[type][i % typeImages[type].length];
+        const secImg = secondaryImages[i % secondaryImages.length];
+
+        propsToInsert.push({
+          entityId: groupEntity.id,
+          propertyCode: `PROP-AUTO-${i.toString().padStart(3, '0')}`,
+          name: `Premium ${type} ${i}`,
+          propertyType: type,
+          listingType: i % 3 === 0 ? "Sale" : "Rental",
+          status: i % 4 === 0 ? "occupied" : "available",
+          location: i % 2 === 0 ? "Kilimani, Nairobi" : "Nairobi CBD",
+          ownerContactId: i % 2 === 0 ? landlordB.id : landlordA.id,
+          monthlyRentKes: (Math.floor(Math.random() * 20) * 10000 + 50000).toString() + ".00",
+          sizeSqft: Math.floor(Math.random() * 2000) + 1000,
+          media: [
+            { url: primaryImg, alt: `${type} exterior view`, isPrimary: true },
+            { url: secImg, alt: "Interior view" }
+          ]
+        });
+    }
+
+    const insertedProps = await db
+      .insert(properties)
+      .values(propsToInsert)
       .returning();
+      
+    const propComm = insertedProps[0];
+    const propRes = insertedProps[1];
 
     console.log("Created 2 properties.");
+
+    // 5b. Create pipeline leads — spans this-week/this-month/last-month so the
+    // executive overview's CRM metrics (closed deals, active pipeline, new
+    // leads, conversion) have real, non-zero data to compute from instead of
+    // showing an all-zero dashboard on a fresh seed.
+    console.log("Step 5b: Populating sales pipeline...");
+    const daysAgo = (n: number) => new Date(Date.now() - n * 86400000);
+    await db.insert(leads).values([
+      {
+        entityId: groupEntity.id,
+        title: "3BR Apartment Inquiry — Kilimani",
+        stage: "inquiry",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "14000000.00",
+        probability: 10,
+        createdAt: daysAgo(2),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Office Space Lease — Westlands",
+        stage: "qualification",
+        propertyId: propComm.id,
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "4200000.00",
+        probability: 25,
+        createdAt: daysAgo(5),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Villa Purchase — Karen",
+        stage: "viewing",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "62000000.00",
+        probability: 40,
+        createdAt: daysAgo(12),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Retail Unit — CBD",
+        stage: "offer",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "9500000.00",
+        probability: 60,
+        createdAt: daysAgo(18),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Land Sale — Ruiru",
+        stage: "negotiation",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "18000000.00",
+        probability: 75,
+        createdAt: daysAgo(20),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Nexus Tech Office Lease",
+        stage: "closed_won",
+        contactId: tenantA.id,
+        propertyId: propComm.id,
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "4200000.00",
+        probability: 100,
+        createdAt: daysAgo(25),
+        closedAt: daysAgo(10),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Riverside Apartment Sale",
+        stage: "closed_won",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "8500000.00",
+        probability: 100,
+        createdAt: daysAgo(50),
+        closedAt: daysAgo(35),
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Industrial Warehouse Deal",
+        stage: "closed_lost",
+        assignedToId: lineManagerUser.id,
+        expectedValueKes: "16000000.00",
+        probability: 0,
+        lostReason: "Budget constraints on buyer side",
+        createdAt: daysAgo(28),
+        closedAt: daysAgo(8),
+      },
+    ]);
+    console.log("Created 8 pipeline leads across the funnel.");
 
     // 6. Create Leases
     console.log("Step 6: Executing lease agreements...");
@@ -299,7 +528,7 @@ async function runSeed() {
       .insert(leases)
       .values([
         {
-          entityId: commEntity.id,
+          entityId: groupEntity.id,
           propertyId: propComm.id,
           tenantContactId: tenantA.id,
           startsAt,
@@ -309,7 +538,7 @@ async function runSeed() {
           isActive: true,
         },
         {
-          entityId: resEntity.id,
+          entityId: groupEntity.id,
           propertyId: propRes.id,
           tenantContactId: tenantB.id,
           startsAt,
@@ -325,9 +554,9 @@ async function runSeed() {
 
     // 7. Create Transactions
     console.log("Step 7: Generating ledger transactions...");
-    await db.insert(transactions).values([
+    const txs: (typeof transactions.$inferInsert)[] = [
       {
-        entityId: commEntity.id,
+        entityId: groupEntity.id,
         type: "rent",
         contactId: tenantA.id,
         propertyId: propComm.id,
@@ -338,7 +567,7 @@ async function runSeed() {
         notes: "Rent payment for Nexus Tech Solutions - Month of June",
       },
       {
-        entityId: resEntity.id,
+        entityId: groupEntity.id,
         type: "rent",
         contactId: tenantB.id,
         propertyId: propRes.id,
@@ -349,7 +578,7 @@ async function runSeed() {
         notes: "Rent payment for Alice Odhiambo - Month of June",
       },
       {
-        entityId: commEntity.id,
+        entityId: groupEntity.id,
         type: "expense",
         contactId: landlordA.id,
         propertyId: propComm.id,
@@ -358,7 +587,23 @@ async function runSeed() {
         recordedById: financeOfficerUser.id,
         notes: "Elevator repair maintenance cost - Westlands Plaza",
       },
-    ]);
+    ];
+
+    for (let i = 0; i < 30; i++) {
+      const dt = new Date();
+      dt.setDate(dt.getDate() - Math.floor(Math.random() * 120)); // Last 4 months
+      txs.push({
+        entityId: groupEntity.id,
+        type: Math.random() > 0.3 ? "rent" : "expense",
+        contactId: Math.random() > 0.5 ? tenantA.id : tenantB.id,
+        propertyId: Math.random() > 0.5 ? propComm.id : propRes.id,
+        amountKes: (Math.floor(Math.random() * 50) * 10000 + 50000).toString() + ".00",
+        occurredAt: dt,
+        recordedById: financeOfficerUser.id,
+        notes: "Auto-generated transaction " + i,
+      });
+    }
+    await db.insert(transactions).values(txs);
 
     console.log("Created 3 initial transactions.");
 
@@ -366,7 +611,7 @@ async function runSeed() {
     console.log("Step 8: Populating dynamic approvals queue...");
     await db.insert(approvalRequests).values([
       {
-        entityId: commEntity.id,
+        entityId: groupEntity.id,
         requestType: "petty_cash",
         relatedTable: "transactions",
         relatedId: leaseA.id, // using lease id for demonstration
@@ -377,7 +622,7 @@ async function runSeed() {
         decisionNotes: "Needs GM verification for office stationaries above threshold.",
       },
       {
-        entityId: resEntity.id,
+        entityId: groupEntity.id,
         requestType: "mandate_activation",
         relatedTable: "leases",
         relatedId: leaseB.id,
@@ -403,6 +648,172 @@ async function runSeed() {
         summary: "Demo Workspace has been successfully initialized and configured.",
       },
     ]);
+
+    // 10. Cross-Department Projects — real rows behind the Overview's
+    // "Cross-Department Operations" panel and the /admin/projects page,
+    // replacing what used to be hardcoded example JSX.
+    console.log("Step 10: Populating cross-department projects...");
+    const now = new Date();
+    const daysFromNow = (n: number) => new Date(now.getTime() + n * 86_400_000).toISOString().split("T")[0];
+    const eventDaysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000);
+
+    const [recruitmentProject, escrowProject, safetyAuditProject, payrollMigrationProject, onboardingProject] =
+      await db
+        .insert(projects)
+        .values([
+          {
+            entityId: groupEntity.id,
+            title: "Q3 Broker Recruitment Drive",
+            description: "Interviewing 12 candidates for the commercial sector.",
+            department: "sales",
+            status: "in_progress",
+            progressPercent: 60,
+            assigneeIds: [salesAgent1User.id, salesAgent2User.id],
+            createdById: gmUser.id,
+          },
+          {
+            entityId: groupEntity.id,
+            title: "Escrow Clearance: Muthaiga Estate",
+            description: "Finalizing deed transfers and tax documentation.",
+            department: "legal",
+            status: "awaiting_review",
+            assigneeIds: [legalOfficerUser.id, financeHeadUser.id],
+            createdById: financeHeadUser.id,
+          },
+          {
+            entityId: groupEntity.id,
+            title: "Routine Safety Audits",
+            description: "Inspecting 4 multi-family complexes in Westlands.",
+            department: "ops",
+            status: "planning",
+            assigneeIds: [propertyManager1User.id],
+            dueDate: daysFromNow(14),
+            createdById: pmUser.id,
+          },
+          {
+            entityId: groupEntity.id,
+            title: "Payroll System Migration",
+            description: "Moving statutory calculations onto the new ledger module.",
+            department: "finance",
+            status: "in_progress",
+            progressPercent: 35,
+            assigneeIds: [financeHeadUser.id],
+            createdById: financeHeadUser.id,
+          },
+          {
+            entityId: groupEntity.id,
+            title: "New Hire Onboarding Playbook",
+            description: "Standardizing the first-week checklist across departments.",
+            department: "hr",
+            status: "on_hold",
+            assigneeIds: [hrHeadUser.id],
+            dueDate: daysFromNow(30),
+            createdById: hrHeadUser.id,
+          },
+        ])
+        .returning();
+
+    console.log("Created 5 cross-department projects.");
+
+    // 11. Calendar Events — real cross-department schedules, some linked to
+    // the projects above, spanning every event type, plus one already-past
+    // event left at outcome="pending" so the disposition flow has something
+    // real to surface on first load.
+    console.log("Step 11: Populating cross-department calendar events...");
+    await db.insert(calendarEvents).values([
+      {
+        entityId: groupEntity.id,
+        title: "Executive Team Sync",
+        description: "Weekly leadership standup.",
+        type: "internal",
+        startsAt: new Date(now.getTime() + 3_600_000),
+        endsAt: new Date(now.getTime() + 5_400_000),
+        location: "HQ Boardroom",
+        organizerId: ceoUser.id,
+        attendees: [
+          { name: gmUser.name, userId: gmUser.id },
+          { name: financeHeadUser.name, userId: financeHeadUser.id },
+        ],
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Client Viewing — Muthaiga Estate",
+        description: "Walkthrough with the incoming buyer's counsel.",
+        type: "external",
+        startsAt: new Date(now.getTime() + 2 * 86_400_000),
+        endsAt: new Date(now.getTime() + 2 * 86_400_000 + 3_600_000),
+        location: "Muthaiga Estate",
+        organizerId: salesAgent1User.id,
+        attendees: [{ name: "External Buyer Counsel" }],
+        projectId: escrowProject.id,
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Escrow Signing — Muthaiga Estate",
+        description: "Deed transfer signature and tax documentation handoff.",
+        type: "legal",
+        startsAt: new Date(now.getTime() + 5 * 86_400_000),
+        endsAt: new Date(now.getTime() + 5 * 86_400_000 + 5_400_000),
+        location: "Legal Office",
+        organizerId: legalOfficerUser.id,
+        attendees: [{ name: financeHeadUser.name, userId: financeHeadUser.id }],
+        projectId: escrowProject.id,
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Site Inspection — Westlands Plaza",
+        description: "Routine safety audit walkthrough.",
+        type: "maintenance",
+        startsAt: new Date(now.getTime() + 3 * 86_400_000),
+        endsAt: new Date(now.getTime() + 3 * 86_400_000 + 7_200_000),
+        location: "Westlands Plaza",
+        organizerId: propertyManager1User.id,
+        attendees: [{ name: propertyManager2User.name, userId: propertyManager2User.id }],
+        projectId: safetyAuditProject.id,
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Recruitment Panel — Commercial Sector",
+        description: "Second-round interviews for the Q3 broker drive.",
+        type: "internal",
+        startsAt: new Date(now.getTime() + 4 * 86_400_000),
+        endsAt: new Date(now.getTime() + 4 * 86_400_000 + 7_200_000),
+        location: "HQ — Interview Room 2",
+        organizerId: gmUser.id,
+        attendees: [{ name: salesAgent2User.name, userId: salesAgent2User.id }],
+        projectId: recruitmentProject.id,
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Payroll Migration Checkpoint",
+        description: "Review statutory calculation parity before cutover.",
+        type: "internal",
+        startsAt: eventDaysAgo(3),
+        endsAt: new Date(eventDaysAgo(3).getTime() + 3_600_000),
+        location: "Finance Office",
+        organizerId: financeHeadUser.id,
+        attendees: [],
+        projectId: payrollMigrationProject.id,
+        outcome: "completed",
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Onboarding Playbook Kickoff",
+        description: "Initial scoping session — since deferred pending Q3 headcount plan.",
+        type: "internal",
+        startsAt: eventDaysAgo(2),
+        endsAt: new Date(eventDaysAgo(2).getTime() + 3_600_000),
+        location: "HR Office",
+        organizerId: hrHeadUser.id,
+        attendees: [],
+        projectId: onboardingProject.id,
+        // Deliberately left at the default "pending" outcome — this is the
+        // seeded example of an event whose day has passed without a
+        // resolution, so needsDisposition renders true on first load.
+      },
+    ]);
+
+    console.log("Created 7 calendar events.");
 
     console.log("--------------------------------------------------");
     console.log("Database Seed Finished Successfully!");

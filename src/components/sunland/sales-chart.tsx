@@ -1,51 +1,51 @@
 "use client";
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, TooltipContentProps } from "recharts";
 import { formatCompactKES } from "@/lib/utils/format";
 
 interface ChartDataPoint {
   day: string;
   Revenue: number;
-  Sales: number;
-  Visitors: number;
+  Transactions: number;
+  Leads: number;
 }
+
+const CustomTooltip = ({ active, payload, label }: Partial<TooltipContentProps<number, string>>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
+        <p className="text-base font-medium text-slate-400 uppercase tracking-wider mb-2">{label}</p>
+        <div className="space-y-1.5 text-sm font-medium">
+          {payload.map((entry, i) => (
+            <p key={i} className="flex items-center justify-between gap-4" style={{ color: entry.color ?? "#151936" }}>
+              <span>{entry.name}:</span>
+              <span className="font-mono text-slate-800">
+                {entry.name === "Revenue"
+                  ? formatCompactKES(entry.value as number)
+                  : entry.name === "Transactions"
+                    ? `${entry.value} transaction${entry.value === 1 ? "" : "s"}`
+                    : `${entry.value} lead${entry.value === 1 ? "" : "s"}`}
+              </span>
+            </p>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function SalesChart({
   data,
   activeFilter = "all",
 }: {
   data: ChartDataPoint[];
-  activeFilter?: "all" | "Revenue" | "Sales" | "Visitors";
+  activeFilter?: "all" | "Revenue" | "Transactions" | "Leads";
 }) {
-  // Custom tooltip component matching glassmorphism light aesthetics
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
-          <p className="text-base font-medium text-slate-400 uppercase tracking-wider mb-2">{label}</p>
-          <div className="space-y-1.5 text-sm  font-medium">
-            {payload.map((entry: any, i: number) => (
-              <p key={i} className="flex items-center justify-between gap-4" style={{ color: entry.color }}>
-                <span>{entry.name}:</span>
-                <span className="font-mono text-slate-800">
-                  {entry.name === "Revenue"
-                    ? formatCompactKES(entry.value)
-                    : entry.name === "Sales"
-                      ? `${entry.value} units`
-                      : `${entry.value} clients`}
-                </span>
-              </p>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const showRevenue = activeFilter === "all" || activeFilter === "Revenue";
-  const showSales = activeFilter === "all" || activeFilter === "Sales";
-  const showVisitors = activeFilter === "all" || activeFilter === "Visitors";
+  const showTransactions = activeFilter === "all" || activeFilter === "Transactions";
+  const showLeads = activeFilter === "all" || activeFilter === "Leads";
 
   return (
     <div className="h-72 w-full body-sm">
@@ -90,9 +90,9 @@ export default function SalesChart({
               animationEasing="ease-out"
             />
           )}
-          {showSales && (
+          {showTransactions && (
             <Bar
-              dataKey="Sales"
+              dataKey="Transactions"
               fill="#a78bfa"
               radius={[4, 4, 0, 0]}
               maxBarSize={16}
@@ -100,9 +100,9 @@ export default function SalesChart({
               animationEasing="ease-out"
             />
           )}
-          {showVisitors && (
+          {showLeads && (
             <Bar
-              dataKey="Visitors"
+              dataKey="Leads"
               fill="#338f70"
               radius={[4, 4, 0, 0]}
               maxBarSize={16}

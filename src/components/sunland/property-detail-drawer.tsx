@@ -15,12 +15,13 @@ import {
   IconClock,
   IconPhone,
   IconMail,
+  IconBuildingSkyscraper,
 } from "@tabler/icons-react";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 
-interface PropertyDetailData {
+export interface PropertyDetailData {
   id: string;
   name: string;
   location: string;
@@ -28,7 +29,7 @@ interface PropertyDetailData {
   status: "Available" | "Sold" | "Under Offer" | "Occupied";
   roi: string;
   price: string;
-  imageUrl: string;
+  imageUrl: string | null;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -111,14 +112,20 @@ export function PropertyDetailDrawer({
     >
       <div className="space-y-6 animate-fade-in-up">
         {/* Hero Image */}
-        <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden shadow-sm border border-slate-100">
-          <Image
-            src={property.imageUrl.replace("w=120&h=80", "w=600&h=400")}
-            alt={property.name}
-            fill
-            sizes="500px"
-            className="object-cover"
-          />
+        <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden shadow-sm border border-slate-100 bg-slate-100">
+          {property.imageUrl ? (
+            <Image
+              src={property.imageUrl.replace("w=120&h=80", "w=600&h=400")}
+              alt={property.name}
+              fill
+              sizes="500px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="size-full flex items-center justify-center">
+              <IconBuildingSkyscraper size={40} className="text-slate-300" stroke={1.5} />
+            </div>
+          )}
           <div className="absolute top-3 right-3">
             <span
               className={cn(

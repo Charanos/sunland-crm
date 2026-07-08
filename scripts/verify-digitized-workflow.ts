@@ -1,5 +1,8 @@
 import fs from "fs";
 import path from "path";
+// Type-only import — erased at compile time, doesn't participate in the
+// dynamic-import-to-bypass-ES-hoisting concern below (there's no runtime code).
+import type { UserRole } from "../src/types";
 
 // Manually load env variables from .env.local before importing database
 try {
@@ -50,7 +53,10 @@ async function run() {
       id: testUser.id,
       name: testUser.name,
       email: testUser.email,
-      role: testUser.role,
+      // DB enum retains retired legacy role values (e.g. "line_manager") for
+      // migration compat; the app-level UserRole type doesn't. This script
+      // just needs *a* seeded user to exercise the workflow, not role-specific behavior.
+      role: testUser.role as UserRole,
     },
     testEntity.id
   );

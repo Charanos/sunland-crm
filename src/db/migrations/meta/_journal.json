@@ -22,6 +22,41 @@
       "when": 1783509645708,
       "tag": "0002_thin_blazing_skull",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783519033294,
+      "tag": "0003_melted_ares",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783519656323,
+      "tag": "0004_redundant_wolfpack",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783521041995,
+      "tag": "0005_messy_magdalene",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783535913565,
+      "tag": "0006_true_cassandra_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783547522284,
+      "tag": "0007_tearful_senator_kelly",
+      "breakpoints": true
     }
   ]
 }

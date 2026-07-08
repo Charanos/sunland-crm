@@ -82,6 +82,8 @@ user_roles         user_id, role_id, entity_id?     (a user can hold a role scop
 
 Internal roles resolve to independent portals: CEO/GM → `/exec` (or keep `/admin` but as its own group), Finance family → `/fin`, HR → `/hr`, BD/Line-Manager → `/bd`, Front-Office → `/front`, Ops → `/ops`. External: Landlord → `/landlord`, Tenant → `/tenant`. Each is a self-contained route group.
 
+> **Updated 2026-07-08:** "BD/Line-Manager" above is stale terminology. The client finalized the org structure — see **ADR 013** (`docs/ARCHITECTURE_DECISIONS.md`) for the full roster. Everything this section calls "BD" now sits under **Head of Strategy** (new department-head role, oversees Property Managers, Line Managers, Sales, Marketers), and "Line Manager" itself no longer exists as a role (folded into `property_manager` earlier this build). Finance also gains client-facing titles — Senior Accountant (`finance_officer`, relabeled) and Internal Auditor (`auditor_compliance`, relabeled, plus a new 90-day delayed finance-access rule) — and a new Admin (CEO's Assistant) role is proposed pending client confirmation. None of `head_of_strategy`/`admin_assistant` exist as real catalog roles yet — ADR 013 is the design record for when that build happens.
+
 ### 3.4 System Administration surface — **IMPLEMENTED (2026-07-08)**
 
 The CEO-oversight capabilities the portal doc §6 describes ("real dominion over role/permission escalation") are now real API surface, not just a data model:

@@ -14,3 +14,14 @@ export const decideApprovalRequestSchema = z.object({
   status: z.enum(["approved", "rejected"]),
   decisionNotes: z.string().optional(),
 });
+
+export const recordTransactionSchema = z.object({
+  entityId: z.string().min(1),
+  type: z.enum(["rent", "commission", "valuation_fee", "expense", "deposit", "other"]),
+  contactId: z.string().uuid().optional(),
+  propertyId: z.string().uuid().optional(),
+  leaseId: z.string().uuid().optional(),
+  amountKes: z.number().positive(),
+  occurredAt: z.string().optional(),
+  notes: z.string().optional(),
+});

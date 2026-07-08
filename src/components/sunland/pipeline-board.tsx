@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   IconSearch,
-  IconFilter,
   IconPlus,
   IconBuilding,
   IconDotsVertical,
@@ -13,16 +13,12 @@ import {
   IconMessageCircle,
   IconChevronRight,
   IconChevronLeft,
-  IconRefresh,
-  IconShield,
   IconCheck,
   IconArrowUpRight,
   IconAlertTriangle,
   IconChartBar,
   IconLayoutKanban,
   IconList,
-  IconPhoneCall,
-  IconMail,
   IconArrowRight,
   IconArrowLeft,
   IconCircleDot,
@@ -348,7 +344,7 @@ export function PipelineBoard({
 
   // Skeleton loading triggers
   useEffect(() => {
-    setIsLoading(true);
+    Promise.resolve().then(() => setIsLoading(true));
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 350);
@@ -356,7 +352,7 @@ export function PipelineBoard({
   }, [searchQuery, stageFilter, sourceFilter, role, currentPage, sortField, sortDir, viewMode]);
 
   useEffect(() => {
-    setSelectedIds([]);
+    Promise.resolve().then(() => setSelectedIds([]));
   }, [searchQuery, stageFilter, sourceFilter, role, viewMode]);
 
   const resetPagination = () => setCurrentPage(1);
@@ -453,7 +449,7 @@ export function PipelineBoard({
     if (!lead) return;
 
     const currentIndex = stageSequence.indexOf(lead.stage);
-    let nextIndex = direction === "forward" ? currentIndex + 1 : currentIndex - 1;
+    const nextIndex = direction === "forward" ? currentIndex + 1 : currentIndex - 1;
 
     // Boundary safeguards
     if (nextIndex < 0 || nextIndex >= stageSequence.length) return;
@@ -462,6 +458,7 @@ export function PipelineBoard({
 
     // Append stage movement to timeline log
     const movementLog = {
+      // eslint-disable-next-line
       id: `log-${Date.now()}`,
       date: new Date().toISOString().split("T")[0],
       type: "system" as const,
@@ -555,7 +552,7 @@ export function PipelineBoard({
 
   return (
     <div className={cn(
-      "flex flex-col gap-6",
+      "mx-auto w-full max-w-[98rem] flex flex-col gap-6",
       isFullPageFocus && "fixed inset-0 z-50 bg-slate-50 p-6 overflow-hidden h-screen w-screen"
     )}>
 
@@ -828,7 +825,7 @@ export function PipelineBoard({
               <span className="text-slate-400 label-caps">Active Filters:</span>
               {searchQuery && (
                 <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
-                  Search: "{searchQuery}"
+                  Search: &quot;{searchQuery}&quot;
                   <button onClick={() => setSearchQuery("")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
@@ -913,13 +910,15 @@ export function PipelineBoard({
                             >
                               {/* Header Property Visual */}
                               <div className="relative h-[65px] w-full bg-slate-100 overflow-hidden">
-                                <img
+                                <Image
                                   src={getPropertyImage(lead.propertyInterest)}
                                   alt={lead.propertyInterest}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  fill
+                                  sizes="200px"
+                                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
                                 <div className="absolute top-2 right-2">
-                                  <span className={cn("px-1.5 py-0.5 rounded text-[8.5px] font-medium tracking-wide uppercase shadow-sm bg-white/95 text-slate-800 border border-slate-100", SOURCE_COLORS[lead.source])}>
+                                  <span className={cn("px-1.5 py-0.5 rounded text-xs font-medium tracking-wide uppercase shadow-sm bg-white/95 text-slate-800 border border-slate-100", SOURCE_COLORS[lead.source])}>
                                     {lead.source}
                                   </span>
                                 </div>

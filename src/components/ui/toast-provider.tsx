@@ -96,7 +96,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-24 right-4 z-toast flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2.5 lg:bottom-4">
+      <div className="fixed top-4 right-4 z-[9999] flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2.5 lg:top-6 lg:right-6">
         {toasts.map((toast) => {
           const IconComponent = toneIcons[toast.tone];
           const styles = toneStyles[toast.tone];
@@ -110,7 +110,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 styles.bg,
                 isExiting
                   ? "translate-x-[110%] opacity-0"
-                  : "animate-slide-in-up translate-x-0 opacity-100",
+                  : "animate-fade-in translate-x-0 opacity-100",
               )}
               key={toast.id}
             >

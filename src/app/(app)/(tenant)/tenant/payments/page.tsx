@@ -5,7 +5,7 @@ export default function TenantPaymentsPage() {
     <ModulePage
       eyebrow="Rent & Payments"
       title="Payments"
-      description="Pay your rent and view your complete payment receipt history. Payments are processed and confirmed against the Sunland Finance ledger — you will receive a receipt once confirmed."
+      description="Pay your rent and view your complete payment receipt history. Payments are processed and confirmed against the Sunland Finance ledger ï¿½ you will receive a receipt once confirmed."
       emptyTitle="No payments recorded"
       emptyDescription="Your payment history will appear here once your first rent payment is confirmed."
       action="Pay Rent"

@@ -95,6 +95,7 @@ export const users = pgTable(
     name: text("name").notNull(),
     role: userRole("role").notNull(),
     title: text("title"),
+    avatarUrl: text("avatar_url"),
     primaryEntityId: uuid("primary_entity_id").references(() => entities.id),
     isActive: boolean("is_active").default(true).notNull(),
     lastSignedInAt: timestamp("last_signed_in_at", { withTimezone: true }),

@@ -44,7 +44,7 @@ const EMULATION_PROFILES = [
     avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
   },
   {
-    role: "line_manager",
+    role: "property_manager",
     name: "Jared Omondi",
     title: "Line Manager / Business Dev",
     initials: "JO",
@@ -64,7 +64,7 @@ const EMAIL_TO_ROLE: Record<string, string> = {
   "gm@sunlandre.co.ke": "general_manager",
   "finance.head@sunlandre.co.ke": "finance_head",
   "hr.head@sunlandre.co.ke": "hr_head",
-  "line.manager@sunlandre.co.ke": "line_manager",
+  "line.manager@sunlandre.co.ke": "property_manager",
   "front.office@sunlandre.co.ke": "front_office_head",
 };
 

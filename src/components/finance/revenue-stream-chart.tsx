@@ -36,23 +36,25 @@ const BAR_COLORS = [
   "#8b5cf6", // Violet Accent
 ];
 
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartDataPoint }> }) => {
+  if (active && payload && payload.length) {
+    const dataPoint = payload[0].payload as ChartDataPoint;
+    return (
+      <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
+        <p className="text-base font-medium text-slate-400 uppercase tracking-wider mb-1.5">{dataPoint.name}</p>
+        <p className="text-body-primary">
+          {formatCompactKES(dataPoint.Value)} KES
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function RevenueStreamChart({ entityId = "group" }: { entityId?: string }) {
   const data = STREAM_DATA[entityId] || STREAM_DATA.group;
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const dataPoint = payload[0].payload as ChartDataPoint;
-      return (
-        <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
-          <p className="text-base font-medium text-slate-400 uppercase tracking-wider mb-1.5">{dataPoint.name}</p>
-          <p className="text-body-primary">
-            {formatCompactKES(dataPoint.Value)} KES
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+
 
   return (
     <div className="h-80 w-full mt-2 text-base">

@@ -5,14 +5,13 @@ import { cn } from "@/lib/utils/cn";
 
 interface RadialProgressProps {
   percentage: number;
-  valueLabel: string;
+  valueLabel?: string;
   subtitle: string;
   onClick?: () => void;
 }
 
 export default function RadialProgress({
   percentage = 93,
-  valueLabel = "12,430",
   subtitle = "monthly added properties",
   onClick,
 }: RadialProgressProps) {
@@ -50,7 +49,7 @@ export default function RadialProgress({
   return (
     <div 
       className={cn(
-        "flex flex-col items-center justify-center p-1.5 transition-transform",
+        "flex flex-col items-center justify-center p-2 transition-transform",
         onClick && "cursor-pointer hover:scale-105"
       )}
       onClick={onClick}
@@ -64,7 +63,7 @@ export default function RadialProgress({
         }
       }}
     >
-      <div className="relative size-36">
+      <div className="relative size-40 group">
         <svg className="size-full -rotate-90" viewBox="0 0 100 100">
           {/* Base track */}
           <circle
@@ -72,7 +71,7 @@ export default function RadialProgress({
             cy="50"
             r={radius}
             fill="transparent"
-            stroke="rgba(0,0,0,0.04)"
+            stroke="rgba(0,0,0,0.03)"
             strokeWidth={strokeWidth}
           />
           {/* Primary progress arc */}
@@ -89,14 +88,12 @@ export default function RadialProgress({
             className="transition-all duration-1000 ease-out"
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in">
-          <span className="text-slate-800 mono-stat">{displayValue}%</span>
-          <span className="text-tiny text-slate-400 uppercase tracking-widest mt-0.5">achieved</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in group-hover:scale-105 transition-transform duration-300">
+          <span className="text-slate-800 mono-stat">{displayValue}<span className="text-body-primary text-slate-400">%</span></span>
         </div>
       </div>
-      <div className="mt-4 text-center animate-fade-in-up stagger-2">
-        <p className="text-slate-800 leading-none mono-stat">{valueLabel}</p>
-        <p className="text-caption text-slate-400 font-medium uppercase tracking-wider mt-2.5 leading-snug max-w-[140px] mx-auto">{subtitle}</p>
+      <div className="mt-5 text-center animate-fade-in-up stagger-2 w-full px-2">
+        <p className="label-caps mx-auto">{subtitle}</p>
       </div>
     </div>
   );

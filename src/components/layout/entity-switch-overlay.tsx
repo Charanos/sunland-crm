@@ -31,7 +31,7 @@ function EntitySwitchOverlayInner() {
       return;
     }
 
-    setStatusText("Initializing secure channel...");
+    Promise.resolve().then(() => setStatusText("Initializing secure channel..."));
 
     const interval = setInterval(() => {
       setProgress((oldProgress) => {

@@ -5,9 +5,9 @@ export default function LandlordRemittancesPage() {
     <ModulePage
       eyebrow="Financials"
       title="Remittance Statements"
-      description="Per-period statements showing collected rent, management fee deduction, approved expenses, and net remittance. Every figure traces to the Sunland Finance ledger — downloadable with QR verification."
+      description="Per-period statements showing collected rent, management fee deduction, approved expenses, and net remittance. Every figure traces to the Sunland Finance ledger ï¿½ downloadable with QR verification."
       emptyTitle="No remittances yet"
-      emptyDescription="Remittance statements will appear here once your first collection period closes. Each statement is derived from the Finance ledger — not a separate copy."
+      emptyDescription="Remittance statements will appear here once your first collection period closes. Each statement is derived from the Finance ledger ï¿½ not a separate copy."
       action="View Mandate Terms"
       icon={IconCurrencyDollar}
     />

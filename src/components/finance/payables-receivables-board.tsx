@@ -589,7 +589,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                   <h2 className="title-serif font-normal leading-tight tracking-tight text-white mb-3">
                     Treasury Settlement
                   </h2>
-                  <p className="leading-relaxed text-slate-300 font-light max-w-lg body-md">
+                  <p className="leading-relaxed text-slate-300 font-normal max-w-lg body-md">
                     Monitor vendor payables, verify external client receivables, enforce approval thresholds, and manage corporate cash postings on a dedicated, isolated sub-ledger.
                   </p>
                 </div>
@@ -611,7 +611,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 <div className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 hover:border-white/15 group">
                   {/* Subtle Grid overlay */}
                   <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center" />
-                  
+
                   <div className="relative z-10 flex flex-col gap-4">
                     {/* Header */}
                     <div className="flex items-center justify-between">

@@ -93,8 +93,9 @@ export async function GET(request: Request) {
       totalRemittances,
       totalAwaitingSignoff,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Payables API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- standalone CommonJS CLI script, not part of the app bundle */
 const fs = require('fs');
 const path = require('path');
 

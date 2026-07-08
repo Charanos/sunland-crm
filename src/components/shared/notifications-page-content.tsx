@@ -352,23 +352,23 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
                 <div className="flex-1 min-w-0 pr-6 flex flex-col justify-center">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
-                      <p className={cn("text-caption truncate leading-tight", isUnread ? "text-slate-900 font-semibold" : "text-slate-700")}>
+                      <p className={cn("text-caption truncate leading-tight", isUnread ? "text-slate-900 font-normal" : "text-slate-700")}>
                         {n.title}
                       </p>
                       {isUnread && (
-                        <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[9px] font-semibold px-1.5 py-0.5 uppercase tracking-wide">New</span>
+                        <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[9px] font-normal px-1.5 py-0.5 uppercase tracking-wide">New</span>
                       )}
                     </div>
                     <span className="text-tiny font-mono text-slate-400">{relativeTime(n.createdAt)}</span>
                   </div>
                   <p className="text-tiny text-slate-500 mt-1.5 leading-relaxed">{n.body}</p>
                   <div className="flex items-center gap-2 mt-2.5">
-                    <span className="rounded bg-slate-100 text-slate-600 text-[9px] font-mono font-semibold px-2 py-0.5 uppercase tracking-wider">{TYPE_LABELS[n.type]}</span>
+                    <span className="rounded bg-slate-100 text-slate-600 text-[9px] font-mono font-normal px-2 py-0.5 uppercase tracking-wider">{TYPE_LABELS[n.type]}</span>
                     {resolvePortalPath(n.href) && (
                       <Link
                         href={resolvePortalPath(n.href)!}
                         onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
-                        className="text-tiny text-slate-500 hover:text-slate-900 font-semibold flex items-center gap-0.5 transition-colors ml-1"
+                        className="text-tiny text-slate-500 hover:text-slate-900 font-normal flex items-center gap-0.5 transition-colors ml-1"
                       >
                         Access <IconChevronRight size={10} className="mt-0.5" />
                       </Link>

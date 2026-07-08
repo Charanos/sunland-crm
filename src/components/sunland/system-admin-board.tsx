@@ -16,7 +16,9 @@ import {
   IconShieldLock,
   IconUsers,
   IconX,
+  IconClipboardCheck,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import {
   Badge,
   BoardHeader,
@@ -106,17 +108,29 @@ const THRESHOLD_META: Record<string, { label: string; description: string; unit:
   },
 };
 
+function formatKeyToLabel(key: string): string {
+  return key
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    .replace(' Kes', '');
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatThresholdValue(key: string, value: string): string {
-  const meta = THRESHOLD_META[key];
-  if (!meta) return value;
+  const isRate = key.includes("rate") || key.includes("pct") || key.includes("percent");
+  const isKes = key.includes("kes") || key.includes("limit") || key.includes("amount") || key.includes("payout");
+  const meta = THRESHOLD_META[key] ?? { unit: isKes ? "KES" : isRate ? "%" : "" };
+  
   const num = parseFloat(value);
-  if (key === "mandate_default_rate") return `${(num * 100).toFixed(1)}%`;
+  if (isNaN(num)) return value;
+
+  if (isRate) return `${(num * 100).toFixed(1)}%`;
   if (meta.unit === "KES") {
     return `KES ${num.toLocaleString("en-KE")}`;
   }
-  return `${num} ${meta.unit}`;
+  return `${num} ${meta.unit}`.trim();
 }
 
 function roleTone(role: string): "success" | "data" | "warning" | "neutral" {
@@ -458,7 +472,8 @@ function ThresholdsTab() {
     setEditing(t.key);
     // Show as % for rate fields, raw number otherwise
     const num = parseFloat(t.value);
-    setEditValue(t.key === "mandate_default_rate" ? String(num * 100) : t.value);
+    const isRate = t.key.includes("rate") || t.key.includes("pct") || t.key.includes("percent");
+    setEditValue(isRate && !isNaN(num) ? String(num * 100) : t.value);
   };
 
   return (
@@ -481,7 +496,13 @@ function ThresholdsTab() {
         ) : (
           <div className="divide-y divide-slate-100">
             {thresholds.map((t) => {
-              const meta = THRESHOLD_META[t.key] ?? { label: t.key, description: "", unit: "" };
+              const isRate = t.key.includes("rate") || t.key.includes("pct") || t.key.includes("percent");
+              const isKes = t.key.includes("kes") || t.key.includes("limit") || t.key.includes("amount") || t.key.includes("payout");
+              const meta = THRESHOLD_META[t.key] ?? { 
+                label: formatKeyToLabel(t.key), 
+                description: "System configuration parameter.", 
+                unit: isKes ? "KES" : isRate ? "%" : "" 
+              };
               const isEditing = editing === t.key;
               return (
                 <div key={t.key} className="flex flex-wrap items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
@@ -797,28 +818,67 @@ export function SystemAdminBoard() {
         }
       />
 
-      {/* Tab strip */}
-      <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-slate-100/70 p-1 [scrollbar-width:none]">
-        {TABS.map((tab) => {
-          const TabIcon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-base transition-all duration-200",
-                isActive
-                  ? "bg-[#151936] text-white shadow-sm"
-                  : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
-              )}
+      {/* ── Oversight Control Hub Navigator & Tabs ── */}
+      <div className="bg-white border border-slate-100 rounded-[20px] shadow-sm overflow-hidden">
+        {/* Top Navigator */}
+        <div className="flex items-center justify-between flex-wrap gap-4 p-4">
+          <div className="flex items-center gap-2">
+            <div className="size-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+              <IconClipboardCheck size={16} />
+            </div>
+            <div>
+              <h3 className="text-base font-medium text-slate-800 leading-none">Oversight Control Hub</h3>
+              <p className="text-sm text-slate-400 mt-1">Cross-department audits and system management.</p>
+            </div>
+          </div>
+
+          <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
+            <Link
+              href="/admin/approvals"
+              className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
-              <TabIcon size={15} aria-hidden />
-              {tab.label}
-            </button>
-          );
-        })}
+              <span>Approvals</span>
+              <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">Queue</span>
+            </Link>
+            <Link
+              href="/admin/reports"
+              className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            >
+              <span>Reports Center</span>
+            </Link>
+            <Link
+              href="/admin/system"
+              className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
+            >
+              <span>System & Roles</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Bottom Tab Strip */}
+        <div className="border-t border-slate-100 bg-slate-50/50 p-2 px-4 flex items-center gap-1 overflow-x-auto [scrollbar-width:none]">
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider mr-2">View:</span>
+          {TABS.map((tab) => {
+            const TabIcon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm transition-all duration-200 font-medium",
+                  isActive
+                    ? "bg-[#151936] text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-800",
+                )}
+              >
+                <TabIcon size={15} aria-hidden />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tab content */}

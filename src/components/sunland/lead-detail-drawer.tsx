@@ -1,22 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import {
-  IconX,
   IconMessageCircle,
   IconPhoneCall,
   IconMail,
-  IconEdit,
-  IconClock,
   IconBuilding,
-  IconReceipt2,
-  IconLink,
   IconCalendarEvent,
-  IconPlus,
   IconActivity,
-  IconTrendingUp,
-  IconAlertTriangle,
-  IconCurrencyDollar,
   IconTag
 } from "@tabler/icons-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -24,7 +16,7 @@ import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
 import { Drawer } from "@/components/ui/drawer";
 import { formatKES } from "@/lib/utils/format";
-import { Lead, PipelineStage, STAGE_LABELS, STAGE_COLORS, getPropertyImage } from "./pipeline-board";
+import { Lead, STAGE_LABELS, STAGE_COLORS, getPropertyImage } from "./pipeline-board";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface LeadDetailDrawerProps {
@@ -42,11 +34,11 @@ export function LeadDetailDrawer({
 }: LeadDetailDrawerProps) {
   const { openChat } = useUIStore();
   const [newNote, setNewNote] = useState("");
-  const [timeline, setTimeline] = useState<any[]>([]);
+  const [timeline, setTimeline] = useState<Lead["timeline"]>([]);
 
   useEffect(() => {
     if (leadData) {
-      setTimeline(leadData.timeline || []);
+      Promise.resolve().then(() => setTimeline(leadData.timeline || []));
     }
   }, [leadData]);
 
@@ -56,7 +48,7 @@ export function LeadDetailDrawer({
     e.preventDefault();
     if (!newNote.trim()) return;
 
-    const newLog = {
+    const newLog: Lead["timeline"][number] = {
       id: `log-${Date.now()}`,
       date: new Date().toISOString().split("T")[0] + " " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: "message",
@@ -115,10 +107,12 @@ export function LeadDetailDrawer({
 
         {/* Property Visual Cover */}
         <div className="relative h-36 w-full rounded-2xl overflow-hidden border border-slate-150 shadow-sm bg-slate-100 shrink-0">
-          <img
+          <Image
             src={getPropertyImage(leadData.propertyInterest)}
             alt={leadData.propertyInterest}
-            className="w-full h-full object-cover"
+            fill
+            sizes="400px"
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end p-4">
             <div>

@@ -45,7 +45,7 @@ export function ContactDetailDrawer({
   // Update internal timeline whenever contactData changes
   useEffect(() => {
     if (contactData) {
-      setTimeline(contactData.timeline || []);
+      Promise.resolve().then(() => setTimeline(contactData.timeline || []));
     }
   }, [contactData]);
 

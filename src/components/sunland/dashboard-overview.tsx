@@ -29,6 +29,9 @@ import {
   IconCalendarEvent,
   IconActivity,
   IconReceipt,
+  IconInbox,
+  IconFileText,
+  IconCheck,
 } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -36,9 +39,11 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils/cn";
 import { formatCompactKES } from "@/lib/utils/format";
 import { useToast } from "@/components/ui/toast-provider";
+import { PageTransition } from "@/components/shared/page-transition";
 import { PropertyFormModal } from "./property-form-modal";
 import { PropertyDetailDrawer } from "./property-detail-drawer";
 import { ApprovalQueue } from "./approval-queue";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Dynamically import client-side chart and helper components with SSR disabled
 const SalesChart = dynamic(() => import("./sales-chart"), { ssr: false });
@@ -57,7 +62,50 @@ interface PropertyListing {
   status: "Available" | "Sold" | "Under Offer" | "Occupied";
   roi: string;
   price: string;
-  imageUrl: string;
+  imageUrl: string | null;
+}
+
+interface DashboardStats {
+  totalProperties: number;
+  totalPropertiesTrend: number;
+  occupancyRate: number;
+  occupiedProperties: number;
+  rentPool: number;
+  incomeKes: number;
+  incomeTrend: number;
+  expensesKes: number;
+  expensesTrend: number;
+  profitKes: number;
+  profitTrend: number;
+  closedDealsCount: number;
+  closedDealsTrend: number;
+  activePipelineCount: number;
+  newLeadsCount: number;
+  newLeadsTrend: number;
+  propertyInquiriesCount: number;
+  conversionRate: number;
+  chartSeries: Array<{ day: string; Revenue: number; Transactions: number; Leads: number }>;
+  recentListings: PropertyListing[];
+  activityLogs: ActivityLogItem[];
+  awaitingMyDecision: {
+    count: number;
+    items: Array<{
+      id: string;
+      requestType: string;
+      amountKes: number | null;
+      requestedAt: string;
+      relatedTable: string;
+    }>;
+  };
+  systemHealth: {
+    activeUserCount: number;
+    lastThresholdChangeAt: string | null;
+  } | null;
+  departmentStats: {
+    sales: number;
+    ops: number;
+    legal: number;
+  };
 }
 
 interface ActivityLogItem {
@@ -69,75 +117,6 @@ interface ActivityLogItem {
 }
 
 // ─── Data Registry ────────────────────────────────────────────────────────────
-
-const FEATURED_PROPERTIES = {
-  group: { name: "Runda Grove Villa", location: "Runda, Nairobi", price: "KES 21,300,000", roi: "12.0% ROI", imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80", status: "Available" as const },
-  commercial: { name: "Westlands Tower 4B", location: "Westlands, Nairobi", price: "KES 720,000 / mo", roi: "9.6% Yield", imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80", status: "Occupied" as const },
-  residential: { name: "Karen Ridge House", location: "Karen, Nairobi", price: "KES 62,000,000", roi: "8.4% ROI", imageUrl: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80", status: "Under Offer" as const },
-};
-
-const CHART_DATA = {
-  group: [
-    { day: "Mon", Revenue: 1400000, Sales: 45, Visitors: 1200 },
-    { day: "Tue", Revenue: 900000, Sales: 28, Visitors: 850 },
-    { day: "Wed", Revenue: 1100000, Sales: 34, Visitors: 920 },
-    { day: "Thu", Revenue: 800000, Sales: 22, Visitors: 710 },
-    { day: "Fri", Revenue: 1050000, Sales: 31, Visitors: 890 },
-  ],
-  commercial: [
-    { day: "Mon", Revenue: 550000, Sales: 18, Visitors: 470 },
-    { day: "Tue", Revenue: 350000, Sales: 11, Visitors: 330 },
-    { day: "Wed", Revenue: 430000, Sales: 13, Visitors: 360 },
-    { day: "Thu", Revenue: 310000, Sales: 9, Visitors: 280 },
-    { day: "Fri", Revenue: 410000, Sales: 12, Visitors: 350 },
-  ],
-  residential: [
-    { day: "Mon", Revenue: 850000, Sales: 27, Visitors: 730 },
-    { day: "Tue", Revenue: 550000, Sales: 17, Visitors: 520 },
-    { day: "Wed", Revenue: 670000, Sales: 21, Visitors: 560 },
-    { day: "Thu", Revenue: 490000, Sales: 13, Visitors: 430 },
-    { day: "Fri", Revenue: 640000, Sales: 19, Visitors: 540 },
-  ],
-};
-
-const INITIAL_LISTINGS: Record<string, PropertyListing[]> = {
-  group: [
-    { id: "p1", name: "Runda Grove Villa", location: "Runda, Nairobi", type: "Premium Estate", status: "Available", roi: "12.0%", price: "KES 21.3M", imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "p2", name: "Westlands Tower 4B", location: "Westlands, Nairobi", type: "Office Suite", status: "Occupied", roi: "9.6%", price: "KES 720K/mo", imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "p3", name: "Karen Ridge House", location: "Karen, Nairobi", type: "Luxury Villa", status: "Under Offer", roi: "8.4%", price: "KES 62M", imageUrl: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "p4", name: "Upper Hill Plaza", location: "Upper Hill, Nairobi", type: "Office Floor", status: "Available", roi: "11.2%", price: "KES 120M", imageUrl: "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "p5", name: "Kilimani Heights", location: "Kilimani, Nairobi", type: "Apartment", status: "Available", roi: "6.8%", price: "KES 14M", imageUrl: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "p6", name: "Lavington Gardens", location: "Lavington, Nairobi", type: "Townhouse", status: "Sold", roi: "5.0%", price: "KES 48M", imageUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "p7", name: "Riverside Haven", location: "Riverside, Nairobi", type: "Executive Studio", status: "Available", roi: "4.0%", price: "KES 8.5M", imageUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "p8", name: "Muthaiga Grand", location: "Muthaiga, Nairobi", type: "Premium Estate", status: "Occupied", roi: "7.2%", price: "KES 150M", imageUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "p9", name: "Gigiri Diplomatic", location: "Gigiri, Nairobi", type: "Apartment", status: "Under Offer", roi: "8.1%", price: "KES 35M", imageUrl: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=120&h=80&q=80" },
-  ],
-  commercial: [
-    { id: "c1", name: "Westlands Tower 4B", location: "Westlands, Nairobi", type: "Office Suite", status: "Occupied", roi: "9.6%", price: "KES 720K/mo", imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "c2", name: "Upper Hill Plaza", location: "Upper Hill, Nairobi", type: "Office Floor", status: "Available", roi: "11.2%", price: "KES 120M", imageUrl: "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "c3", name: "Kilimani Office Suite", location: "Kilimani, Nairobi", type: "Office Space", status: "Available", roi: "8.8%", price: "KES 45M", imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "c4", name: "Westlands Retail Ground", location: "Westlands, Nairobi", type: "Showroom", status: "Under Offer", roi: "7.5%", price: "KES 95M", imageUrl: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "c5", name: "Industrial Area Depot", location: "Industrial Area", type: "Warehouse", status: "Available", roi: "10.4%", price: "KES 160M", imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=120&h=80&q=80" },
-  ],
-  residential: [
-    { id: "r1", name: "Runda Grove Villa", location: "Runda, Nairobi", type: "Premium Estate", status: "Available", roi: "12.0%", price: "KES 21.3M", imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "r2", name: "Karen Ridge House", location: "Karen, Nairobi", type: "Luxury Villa", status: "Under Offer", roi: "8.4%", price: "KES 62M", imageUrl: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "r3", name: "Kilimani Heights", location: "Kilimani, Nairobi", type: "Apartment", status: "Available", roi: "6.8%", price: "KES 14M", imageUrl: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "r4", name: "Lavington Gardens", location: "Lavington, Nairobi", type: "Townhouse", status: "Sold", roi: "5.0%", price: "KES 48M", imageUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=120&h=80&q=80" },
-    { id: "r5", name: "Riverside Haven", location: "Riverside, Nairobi", type: "Executive Studio", status: "Available", roi: "4.0%", price: "KES 8.5M", imageUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=120&h=80&q=80" },
-  ],
-};
-
-const ACTIVITY_LOGS: ActivityLogItem[] = [
-  { id: "al1", time: "10 min ago", text: "Amina completed viewing at Karen Ridge House with James M.", type: "viewing", icon: "eye" },
-  { id: "al2", time: "25 min ago", text: "KES 720,000 rent payment received — Westlands Tower 4B", type: "payment", icon: "receipt" },
-  { id: "al3", time: "1 hour ago", text: "New lead inquiry: 3BR apartment in Kilimani", type: "call", icon: "phone" },
-  { id: "al4", time: "2 hours ago", text: "Upper Hill Plaza status changed to Available", type: "update", icon: "edit" },
-  { id: "al5", time: "3 hours ago", text: "Monthly portfolio report generated", type: "system", icon: "activity" },
-  { id: "al6", time: "5 hours ago", text: "Escrow signing completed — Muthaiga Grand Estate", type: "system", icon: "activity" },
-  { id: "al7", time: "Yesterday", text: "Client follow-up call with Ruth Wanjiku — lease renewal", type: "call", icon: "phone" },
-  { id: "al8", time: "Yesterday", text: "KES 208,000 rent payment received — Kilimani Heights", type: "payment", icon: "receipt" },
-];
 
 const LOG_ICONS = {
   phone: IconPhone,
@@ -173,7 +152,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
   const context = (entityId === "commercial" || entityId === "residential") ? entityId : "group";
 
   // Listing Board state
-  const [listings, setListings] = useState<PropertyListing[]>(INITIAL_LISTINGS[context] ?? INITIAL_LISTINGS.group);
+  const [listings, setListings] = useState<PropertyListing[]>([]);
   const [activeTab, setActiveTab] = useState<"listings" | "activity" | "transactions">("listings");
   const [listingSearch, setListingSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -190,20 +169,41 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Revenue chart state
-  const [chartFilter, setChartFilter] = useState<"all" | "Revenue" | "Sales" | "Visitors">("all");
+  const [chartFilter, setChartFilter] = useState<"all" | "Revenue" | "Transactions" | "Leads">("all");
   const [chartPeriod, setChartPeriod] = useState<"week" | "month" | "quarter">("week");
 
   // Last refreshed
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const [prevContext, setPrevContext] = useState(context);
-
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 0);
+  // Backend stats state
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  const loadDashboardData = useCallback(async () => {
+    Promise.resolve().then(() => setIsRefreshing(true));
+    try {
+      const params = new URLSearchParams({ period: chartPeriod });
+      if (context !== "group") params.append("entityId", context);
+      const res = await fetch(`/api/dashboard/overview?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load dashboard stats");
+      setStats(data);
+      if (data.recentListings) {
+        setListings(data.recentListings);
+      }
+      setLastRefreshed(new Date());
+    } catch (err) {
+      console.error("Failed to load dashboard overview:", err);
+    } finally {
+      setIsRefreshing(false);
+      setIsLoading(false);
+    }
+  }, [context, chartPeriod]);
+
+  useEffect(() => {
+    Promise.resolve().then(() => setMounted(true));
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
@@ -212,48 +212,64 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
         }
       })
       .catch(() => { });
-
-    return () => clearTimeout(t);
   }, []);
 
-  // Reset listings when entity changes (adjusted during render to avoid cascading updates)
-  if (context !== prevContext) {
-    setPrevContext(context);
-    setListings(INITIAL_LISTINGS[context] ?? INITIAL_LISTINGS.group);
-    setCurrentPage(1);
-    setListingSearch("");
-  }
+  useEffect(() => {
+    let active = true;
+    const timer = setTimeout(() => {
+      if (active) loadDashboardData();
+    }, 0);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [loadDashboardData]);
 
   // Context metrics (KES standardized)
   const isComm = context === "commercial";
   const isRes = context === "residential";
 
+  const formatTrend = (value: number) => `${value > 0 ? "+" : ""}${value}%`;
+
   const metrics = {
-    activeListings: isComm ? "96" : isRes ? "152" : "248",
-    activeTrend: isComm ? "+12%" : isRes ? "+22%" : "+18%",
-    revenueMtd: isComm ? "KES 16.7M" : isRes ? "KES 26.1M" : "KES 42.8M",
-    revenueTrend: isComm ? "+8.2%" : isRes ? "+14.8%" : "+12.4%",
-    closedDeals: isComm ? "37" : isRes ? "59" : "96",
-    closedTrend: isComm ? "+12%" : isRes ? "+16%" : "+12%",
-    newDeals: isComm ? "483" : isRes ? "757" : "1,240",
-    newDealsTrend: isComm ? "18%" : isRes ? "25%" : "22%",
-    radialVal: isComm ? "4,847" : isRes ? "7,583" : "12,430",
-    radialPct: isComm ? 86 : isRes ? 95 : 93,
-    radialSub: isComm ? "commercial leases added" : isRes ? "residential leases added" : "monthly added units",
-    income: isComm ? 16700000 : isRes ? 26100000 : 42800000,
-    expenses: isComm ? 11200000 : isRes ? 17400000 : 28600000,
-    profit: isComm ? 5500000 : isRes ? 8700000 : 14200000,
-    incomeGrowth: isComm ? 8.2 : isRes ? 14.8 : 12.4,
-    expenseGrowth: isComm ? -3.1 : isRes ? -5.2 : -4.1,
-    profitGrowth: isComm ? 11.3 : isRes ? 9.6 : 8.3,
-    newLeads: isComm ? "142" : isRes ? "318" : "460",
-    newLeadsGrowth: "+28",
-    siteInquiries: isComm ? "892" : isRes ? "1,647" : "2,539",
-    inquiryRate: isComm ? "24.8%" : isRes ? "38.2%" : "32.4%",
+    activeListings: stats ? stats.totalProperties.toString() : "0",
+    activeTrend: stats ? formatTrend(stats.totalPropertiesTrend) : "+0%",
+    revenueMtd: stats ? `${formatCompactKES(stats.incomeKes)} / mo` : "KES 0 / mo",
+    revenueTrend: stats ? formatTrend(stats.incomeTrend) : "+0%",
+    closedDeals: stats ? stats.closedDealsCount.toString() : "0",
+    closedTrend: stats ? formatTrend(stats.closedDealsTrend) : "+0%",
+    activePipeline: stats ? stats.activePipelineCount.toString() : "0",
+    radialVal: stats ? (stats.occupancyRate + "%") : "0%",
+    radialPct: stats ? stats.occupancyRate : 0,
+    radialSub: stats ? `${stats.occupiedProperties} of ${stats.totalProperties} occupied` : "current occupancy rate",
+    rentPool: stats ? stats.rentPool : 0,
+    income: stats ? stats.incomeKes : 0,
+    expenses: stats ? stats.expensesKes : 0,
+    profit: stats ? stats.profitKes : 0,
+    incomeGrowth: stats ? stats.incomeTrend : 0,
+    expenseGrowth: stats ? stats.expensesTrend : 0,
+    profitGrowth: stats ? stats.profitTrend : 0,
+    newLeads: stats ? stats.newLeadsCount.toString() : "0",
+    newLeadsGrowth: stats ? formatTrend(stats.newLeadsTrend) : "+0%",
+    siteInquiries: stats ? stats.propertyInquiriesCount.toString() : "0",
+    inquiryRate: stats ? `${stats.conversionRate}%` : "0%",
   };
 
-  const featured = FEATURED_PROPERTIES[context];
-  const chartData = CHART_DATA[context];
+  const profitMargin = stats && stats.incomeKes > 0 ? Math.round((stats.profitKes / stats.incomeKes) * 100) : 0;
+
+  const hasListings = listings.length > 0;
+  const featured = hasListings
+    ? {
+      name: listings[0].name,
+      location: listings[0].location,
+      price: listings[0].price,
+      roi: listings[0].roi,
+      imageUrl: listings[0].imageUrl,
+      status: listings[0].status,
+    }
+    : null;
+
+  const chartData = stats?.chartSeries ?? [];
 
   // ─── Listing Board Logic ─────────────────────────────
 
@@ -267,6 +283,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
       result = [...result].sort((a, b) => {
         const aVal = a[sortField];
         const bVal = b[sortField];
+        if (aVal === undefined || bVal === undefined || aVal === null || bVal === null) return 0;
         const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
         return sortDir === "asc" ? cmp : -cmp;
       });
@@ -290,48 +307,43 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
     setCurrentPage(1);
   };
 
-  const handleCreateProperty = (data: { name: string; location: string; type: string; status: PropertyListing["status"]; roi?: string; price: string; imageUrl?: string }) => {
-    const newProp: PropertyListing = {
-      id: `p${Date.now()}`,
-      name: data.name,
-      location: data.location,
-      type: data.type,
-      status: data.status,
-      roi: data.roi || "—",
-      price: data.price,
-      imageUrl: data.imageUrl || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=120&h=80&q=80",
-    };
-    setListings((prev) => [newProp, ...prev]);
+  // PropertyFormModal now owns its own POST/PATCH call for both create and
+  // edit (previously this component made a *second*, redundant PATCH on
+  // every edit — the modal itself always POSTed regardless of mode, so
+  // editing a property silently created a duplicate via POST while this
+  // handler separately PATCHed the original). This is just the post-success
+  // refresh now.
+  const handlePropertySaved = useCallback(() => {
+    loadDashboardData();
     setCurrentPage(1);
-  };
-
-  const handleEditProperty = (data: { name: string; location: string; type: string; status: PropertyListing["status"]; roi?: string; price: string; imageUrl?: string }) => {
-    setListings((prev) =>
-      prev.map((p) =>
-        p.id === editingProperty?.id
-          ? { ...p, name: data.name, location: data.location, type: data.type, status: data.status, roi: data.roi || p.roi, price: data.price }
-          : p
-      )
-    );
-  };
+  }, [loadDashboardData]);
 
   const handleDeleteProperty = useCallback(async () => {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const name = listings.find((l) => l.id === deleteConfirmId)?.name;
-    setListings((prev) => prev.filter((p) => p.id !== deleteConfirmId));
-    pushToast({ tone: "success", title: "Property Removed", body: `${name} has been removed from the portfolio.` });
-    setIsDeleting(false);
-    setDeleteConfirmId(null);
-    setRowMenuOpen(null);
-  }, [deleteConfirmId, listings, pushToast]);
+    try {
+      const res = await fetch(`/api/properties?id=${deleteConfirmId}&entityId=${context}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to delete property");
+      }
+      const name = listings.find((l) => l.id === deleteConfirmId)?.name;
+      loadDashboardData();
+      pushToast({ tone: "success", title: "Property Removed", body: `${name} has been removed from the portfolio.` });
+    } catch (err) {
+      console.error(err);
+      pushToast({ tone: "warning", title: "Failed to delete", body: err instanceof Error ? err.message : "Could not delete property." });
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmId(null);
+      setRowMenuOpen(null);
+    }
+  }, [deleteConfirmId, listings, loadDashboardData, pushToast, context]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setLastRefreshed(new Date());
-    setIsRefreshing(false);
+    loadDashboardData();
     pushToast({ tone: "info", title: "Dashboard Refreshed", body: "All metrics updated to latest data." });
   };
 
@@ -343,18 +355,18 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
   );
 
   return (
-    <div className="mx-auto flex max-w-[98rem] flex-col gap-3 transition-opacity duration-300">
+    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-3 transition-opacity duration-300">
       {/* ── Hero Command Title ──────────────────────────────── */}
       <section className="relative z-10 flex flex-col gap-1 border-b border-slate-200/60 pb-3 animate-fade-in-up" aria-label="Dashboard header">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2.5">
+          {/* <div className="flex items-center gap-2.5">
             <Badge tone="primary" className="font-medium tracking-wide">
               {isComm ? "Commercial Operations" : isRes ? "Residential Operations" : "Consolidated Group"}
             </Badge>
             <span className="text-slate-400 hidden sm:inline mono-data">
               Updated {mounted ? lastRefreshed.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }) : "--:--"}
             </span>
-          </div>
+          </div> */}
           <div className="flex items-center gap-2">
             <button
               onClick={handleRefresh}
@@ -369,7 +381,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               Refresh
             </button>
             <div className="relative group">
-              <button className="flex items-center gap-1.5 text-base font-medium text-[#151936] bg-[#f3df27] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#e6d220] transition-colors">
+              <button className="flex items-center gap-1.5 text-base font-medium text-white bg-tertiary-gradient px-3 py-1.5 rounded-lg shadow-sm hover:opacity-95 transition-all">
                 <IconPlus size={13} stroke={2.5} />
                 Quick Action
               </button>
@@ -400,133 +412,232 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
       </section>
 
       {/* Dynamic Approvals Queue for CEO and GM */}
-      {(currentUserRole === "ceo" || currentUserRole === "general_manager") && (
+      {(currentUserRole === "ceo" || currentUserRole === "general_manager") && stats?.awaitingMyDecision?.count && stats.awaitingMyDecision.count > 0 ? (
         <section className="w-full mt-2" aria-label="Approvals Queue">
-          <ApprovalQueue />
+          <ApprovalQueue onActionComplete={loadDashboardData} />
         </section>
-      )}
+      ) : null}
+
+
 
       {/* ── Grid Row 1: Key Performance Metrics ── */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 my-10" aria-label="Key performance indicators">
+      <section className="gsap-stagger grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 my-8" aria-label="Key performance indicators">
         {/* Col 1: Active Listings + Revenue (Stacked) */}
         <div className="flex flex-col gap-3">
-          <Link href="/admin/properties" className="animate-fade-in-up stagger-1">
-            <div className="relative p-5 rounded-[20px] bg-[#e1f3f6] h-[155px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
-              <div className="flex items-center gap-2">
-                <div className="size-[22px] rounded-full bg-[#151936] flex items-center justify-center text-white">
-                  <IconBuildingSkyscraper size={12} stroke={2.5} />
+          <Link href="/admin/properties" className="animate-fade-in-up stagger-1 block h-[155px]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#e1f3f6]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#e1f3f6]/60 transition-all duration-300 group">
+              <IconBuildingSkyscraper size={140} stroke={1} className="absolute -right-6 -bottom-6 text-[#2e626a] opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none" />
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
+                  <span className="text-desc-secondary">Active Listings</span>
+                  <span className="font-mono font-medium text-slate-900 mt-1 text-4xl">{metrics.activeListings}</span>
                 </div>
-                <span className="text-base font-normal text-[#2e626a] tracking-wide">Active Listings</span>
-                <IconArrowUpRight size={12} className="ml-auto text-[#2e626a] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[#151936] tracking-tight leading-none mono-stat">{metrics.activeListings}</span>
-                <span className="text-sm font-medium text-[#2e626a] mb-0.5">{metrics.activeTrend}</span>
-              </div>
-              <div className="h-[4px] bg-[#c3e3e8] rounded-full overflow-hidden w-full">
-                <div className="h-full bg-[#3f919d] rounded-full w-[75%] transition-all duration-1000" />
+              <div className="flex items-center justify-between mt-auto relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className={cn("mono-data text-xs flex font-medium items-center px-1.5 py-0.5 rounded-md", metrics.activeTrend.includes("+") ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700")}>
+                    {metrics.activeTrend.includes("+") ? <IconTrendingUp size={12} className="mr-1" /> : <IconTrendingDown size={12} className="mr-1" />}
+                    {metrics.activeTrend.replace("+", "")}
+                  </span>
+                  <span className="text-meta-muted">vs last month</span>
+                </div>
+                <IconArrowUpRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </div>
           </Link>
 
-          <Link href="/fin" className="animate-fade-in-up stagger-2">
-            <div className="relative p-5 rounded-[20px] bg-[#e6f4ea] h-[155px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
-              <div className="flex items-center gap-2">
-                <div className="size-[22px] rounded-full bg-[#1b431e] flex items-center justify-center text-white">
-                  <IconCoin size={13} stroke={2.5} />
+          <Link href="/fin" className="animate-fade-in-up stagger-2 block h-[155px]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#e6f4ea]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#e6f4ea]/60 transition-all duration-300 group">
+              <IconCoin size={140} stroke={1} className="absolute -right-6 -bottom-6 text-[#1b431e] opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none" />
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
+                  <span className="text-desc-secondary">Total Revenue</span>
+                  <span className="font-mono font-medium text-slate-900 mt-1 text-3xl flex items-baseline gap-1 truncate">
+                    {formatCompactKES(metrics.income)}
+                    <span className="text-meta-muted">/mo</span>
+                  </span>
                 </div>
-                <span className="text-base font-normal text-[#336336] tracking-wide">Total Revenue</span>
-                <IconArrowUpRight size={12} className="ml-auto text-[#336336] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[#1b431e] tracking-tight leading-none mono-stat">{metrics.revenueMtd}</span>
-                <span className="text-sm font-medium text-[#336336] mb-0.5">{metrics.revenueTrend}</span>
-              </div>
-              <div className="h-[4px] bg-[#c6e0c7] rounded-full overflow-hidden w-full">
-                <div className="h-full bg-[#48954b] rounded-full w-[82%] transition-all duration-1000" />
+              <div className="flex items-center justify-between mt-auto relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className={cn("mono-data text-xs flex font-medium items-center px-1.5 py-0.5 rounded-md", metrics.revenueTrend.includes("+") ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700")}>
+                    {metrics.revenueTrend.includes("+") ? <IconTrendingUp size={12} className="mr-1" /> : <IconTrendingDown size={12} className="mr-1" />}
+                    {metrics.revenueTrend.replace("+", "")}
+                  </span>
+                  <span className="text-meta-muted">vs last month</span>
+                </div>
+                <IconArrowUpRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </div>
           </Link>
         </div>
 
         {/* Col 2-3: Featured Property */}
-        <Card className="xl:col-span-2 h-[326px] bg-slate-900 border-none hover:shadow-md transition-all overflow-hidden relative group flex flex-col justify-between animate-fade-in-up stagger-3">
-          <div className="absolute inset-0 z-0">
-            <Image src={featured.imageUrl} alt={featured.name} fill sizes="(max-width: 1024px) 100vw, 600px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-950/30" />
-          </div>
-          <div className="absolute top-0 inset-x-0 p-4 flex items-center justify-between z-10">
-            <span className="backdrop-blur-md bg-white/10 text-white border border-white/20 px-2.5 py-1 rounded-md label-caps">Featured Property</span>
-            <Link href="/admin/properties" className="backdrop-blur-md bg-white/10 text-white hover:bg-white/20 border border-white/20 text-sm px-2.5 py-1 rounded-md font-medium flex items-center gap-1 transition-all">
-              View All <IconArrowUpRight size={13} />
-            </Link>
-          </div>
-          <div className="absolute bottom-0 inset-x-0 p-5 flex flex-col justify-end text-white z-10">
-            <div>
-              <p className="text-[var(--primary)] sm:text-[26px] tracking-tight leading-none mono-stat">{featured.price}</p>
-              <h3 className="text-lg font-medium text-white mt-1.5 leading-snug">{featured.name}</h3>
-              <p className="text-sm  text-slate-300 font-medium mt-0.5 uppercase tracking-wide">{featured.location}</p>
-            </div>
-            <div className="flex items-center gap-3 mt-4 pt-3 border-t border-white/10">
-              <span className={cn("text-sm  px-2.5 py-0.5 rounded-full border font-medium uppercase tracking-wider", STATUS_DARK_TONES[featured.status])}>{featured.status}</span>
-              <span className="text-sm  font-mono text-slate-300 font-medium">{featured.roi}</span>
+        <Card className="xl:col-span-2 h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all overflow-hidden relative group flex flex-col justify-between animate-fade-in-up stagger-3 rounded-2xl">
+          {featured ? (
+            <>
+              <div className="absolute inset-0 z-0">
+                {featured.imageUrl ? (
+                  <Image src={featured.imageUrl} alt={featured.name} fill sizes="(max-width: 1024px) 100vw, 600px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                ) : (
+                  <div className="size-full bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center">
+                    <IconBuildingSkyscraper size={48} className="text-slate-700" stroke={1} />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-950/20" />
+              </div>
+              <div className="absolute top-0 inset-x-0 p-4 flex items-center justify-between z-10">
+                <span className="backdrop-blur-md bg-white/10 text-white border border-white/20 px-2.5 py-1 rounded-md label-caps">Featured</span>
+                <Link href="/admin/properties" className="backdrop-blur-md bg-white/10 text-white hover:bg-white/20 border border-white/20 body-sm px-2.5 py-1 rounded-md flex items-center gap-1 transition-all">
+                  View All <IconArrowUpRight size={13} />
+                </Link>
+              </div>
+              <div className="absolute bottom-0 inset-x-0 p-5 flex flex-col justify-end text-white z-10">
+                <div>
+                  <p className="text-[#f3df27] mono-stat">{featured.price}</p>
+                  <h3 className="text-lg text-white mt-1 leading-snug">{featured.name}</h3>
+                  <p className="text-sm text-slate-300 mt-1">{featured.location}</p>
+                </div>
+                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/15">
+                  <span className={cn("label-caps px-2 py-0.5 rounded-full border", STATUS_DARK_TONES[featured.status])}>{featured.status}</span>
+                  <span className="body-sm text-slate-300">{featured.roi}</span>
+                  <button
+                    onClick={() => setDrawerProperty({ id: "featured", ...featured, type: "Premium Estate" })}
+                    className="ml-auto inline-flex h-8 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 body-sm transition"
+                  >
+                    More Details
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="size-full flex flex-col items-center justify-center gap-4 text-center px-6 bg-slate-50/50">
+              <div className="size-14 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center">
+                <IconBuildingSkyscraper size={24} className="text-slate-400" stroke={1.5} />
+              </div>
+              <div>
+                <p className="text-title-primary">No properties registered</p>
+                <p className="text-body-regular mt-1 max-w-[200px] mx-auto">Add your first property to feature it here.</p>
+              </div>
               <button
-                onClick={() => setDrawerProperty({ id: "featured", ...featured, roi: featured.roi.replace(" ROI", "").replace(" Yield", ""), type: "Premium Estate" })}
-                className="focus-ring ml-auto inline-flex h-8.5 items-center justify-center rounded-lg bg-white text-slate-900 px-4 text-sm  font-medium transition hover:bg-slate-100"
+                onClick={() => { setPropertyModalMode("create"); setEditingProperty(null); setPropertyModalOpen(true); }}
+                className="mt-2 inline-flex items-center gap-2 text-white font-medium bg-slate-900 px-4 py-2 rounded-xl shadow-sm hover:bg-slate-800 transition-colors"
               >
-                More Details
+                <IconPlus size={16} stroke={2.5} /> Add Property
               </button>
             </div>
-          </div>
+          )}
         </Card>
 
-        {/* Col 4: Closed Deals + New Deals */}
+        {/* Col 4: Profit / Loss (Stacked) */}
         <div className="flex flex-col gap-3">
-          <Link href="/admin/pipeline?stage=closed_won" className="animate-fade-in-up stagger-4">
-            <div className="relative p-5 rounded-[20px] bg-[#fcf0e4] h-[155px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
-              <div className="flex items-center gap-2">
-                <div className="size-[22px] rounded-full bg-[#5e2b17] flex items-center justify-center text-white"><IconFileCheck size={13} stroke={2.5} /></div>
-                <span className="text-base font-normal text-[#824429] tracking-wide">Closed Deals</span>
-                <IconArrowUpRight size={12} className="ml-auto text-[#824429] opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Link href="/fin" className="animate-fade-in-up stagger-4 block h-[155px]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#f0f9ff]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#f0f9ff]/60 transition-all duration-300 group">
+              <IconChartLine size={140} stroke={1} className="absolute -right-6 -bottom-6 text-[#0369a1] opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none" />
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
+                  <span className="text-desc-secondary">Net Profit</span>
+                  <span className="font-mono font-medium text-slate-900 mt-1 text-3xl truncate">{formatCompactKES(metrics.profit)}</span>
+                </div>
               </div>
-              <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[#5e2b17] tracking-tight leading-none mono-stat">{metrics.closedDeals}</span>
-                <span className="text-sm font-medium text-[#824429] mb-0.5">{metrics.closedTrend}</span>
+              <div className="flex items-center justify-between mt-auto relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className={cn("mono-data text-xs flex font-medium items-center px-1.5 py-0.5 rounded-md", metrics.profitGrowth >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700")}>
+                    {metrics.profitGrowth >= 0 ? <IconTrendingUp size={12} className="mr-1" /> : <IconTrendingDown size={12} className="mr-1" />}
+                    {Math.abs(metrics.profitGrowth)}%
+                  </span>
+                  <span className="text-meta-muted">vs last month</span>
+                </div>
+                <IconArrowUpRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="h-[4px] bg-[#f2d8c9] rounded-full overflow-hidden w-full"><div className="h-full bg-[#c96f45] rounded-full w-[60%]" /></div>
             </div>
           </Link>
 
-          <Link href="/admin/pipeline" className="animate-fade-in-up stagger-5">
-            <div className="relative p-5 rounded-[20px] bg-[#eef2f6] h-[155px] flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
-              <div className="flex items-center gap-2">
-                <div className="size-[22px] rounded-full bg-[#24354a] flex items-center justify-center text-white"><IconHomePlus size={13} stroke={2.5} /></div>
-                <span className="text-base font-normal text-[#415671] tracking-wide">New Deals</span>
-                <IconArrowUpRight size={12} className="ml-auto text-[#415671] opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Link href="/fin" className="animate-fade-in-up stagger-5 block h-[155px]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#fff1f2]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#fff1f2]/60 transition-all duration-300 group">
+              <IconWallet size={140} stroke={1} className="absolute -right-6 -bottom-6 text-[#be123c] opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none" />
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
+                  <span className="text-desc-secondary">Total Expenses</span>
+                  <span className="font-mono font-medium text-slate-900 mt-1 text-3xl truncate">{formatCompactKES(metrics.expenses)}</span>
+                </div>
               </div>
-              <div className="flex items-end justify-between mt-auto mb-3">
-                <span className="text-[#24354a] tracking-tight leading-none mono-stat">{metrics.newDeals}</span>
-                <span className="text-sm font-medium text-[#415671] mb-0.5">{metrics.newDealsTrend}</span>
+              <div className="flex items-center justify-between mt-auto relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className={cn("mono-data text-xs flex font-medium items-center px-1.5 py-0.5 rounded-md", metrics.expenseGrowth <= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700")}>
+                    {metrics.expenseGrowth > 0 ? <IconTrendingUp size={12} className="mr-1" /> : <IconTrendingDown size={12} className="mr-1" />}
+                    {Math.abs(metrics.expenseGrowth)}%
+                  </span>
+                  <span className="text-meta-muted">vs last month</span>
+                </div>
+                <IconArrowUpRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="h-[4px] bg-[#d2dde8] rounded-full overflow-hidden w-full"><div className="h-full bg-[#5a7c9f] rounded-full w-[45%]" /></div>
             </div>
           </Link>
         </div>
 
-        {/* Col 5: Radial */}
-        <Card className="p-5 flex flex-col justify-between items-center h-[326px] bg-white border border-slate-100 hover:shadow-md transition-all animate-fade-in-up stagger-6">
-          <p className="text-base font-medium text-slate-500 uppercase tracking-wider">New Units Added</p>
+        {/* Col 5: Closed Deals + New Deals */}
+        <div className="flex flex-col gap-3">
+          <Link href="/admin/pipeline?stage=closed_won" className="animate-fade-in-up stagger-6 block h-[155px]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#fcf0e4]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#fcf0e4]/60 transition-all duration-300 group">
+              <IconFileCheck size={140} stroke={1} className="absolute -right-6 -bottom-6 text-[#824429] opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none" />
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
+                  <span className="text-desc-secondary">Closed Deals</span>
+                  <span className="font-mono font-medium text-slate-900 mt-1 text-3xl">{metrics.closedDeals}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-auto relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className={cn("mono-data text-xs flex items-center px-1.5 py-0.5 rounded-md", metrics.closedTrend.includes("+") ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700")}>
+                    {metrics.closedTrend.includes("+") ? <IconTrendingUp size={12} className="mr-1" /> : <IconTrendingDown size={12} className="mr-1" />}
+                    {metrics.closedTrend.replace("+", "")}
+                  </span>
+                  <span className="text-meta-muted">vs last month</span>
+                </div>
+                <IconArrowUpRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/admin/pipeline" className="animate-fade-in-up stagger-7 block h-[155px]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#eef2f6]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#eef2f6]/60 transition-all duration-300 group">
+              <IconHomePlus size={140} stroke={1} className="absolute -right-6 -bottom-6 text-[#415671] opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none" />
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
+                  <span className="text-desc-secondary">Active Pipeline</span>
+                  <span className="font-mono font-medium text-slate-900 mt-1 text-3xl flex items-baseline gap-1">
+                    {metrics.activePipeline}
+                    <span className="text-meta-muted">deals</span>
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-auto relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className="text-meta-muted">Currently open</span>
+                </div>
+                <IconArrowUpRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Col 6: Radial */}
+        <Card className="p-0 flex flex-col items-center justify-center h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all animate-fade-in-up stagger-8 rounded-2xl overflow-hidden">
           {mounted ? (
-            <RadialProgress percentage={metrics.radialPct} valueLabel={metrics.radialVal} subtitle={metrics.radialSub} />
+            <RadialProgress percentage={metrics.radialPct} subtitle={metrics.radialSub} />
           ) : (
-            <div className="flex-1 flex items-center justify-center"><div className="skeleton-shimmer h-36 w-36 rounded-full" /></div>
+            <div className="flex-1 flex flex-col gap-4 items-center justify-center w-full">
+              <div className="skeleton-shimmer h-32 w-32 rounded-full" />
+              <div className="skeleton-shimmer h-4 w-16 rounded-full" />
+            </div>
           )}
         </Card>
       </section>
 
       {/* ── Internal Structure & Scheduler ─────────── */}
       <section className="w-full" aria-label="Internal operations">
-        <InternalOperationsBoard />
+        <InternalOperationsBoard entityId={context} departmentStats={stats?.departmentStats} />
       </section>
 
       {/* ── Revenue Analytics ─ */}
@@ -535,24 +646,29 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
         <p className="text-base text-slate-500 font-medium tracking-wide mt-1">Deep-dive into revenue trends and core performance metrics.</p>
       </div>
 
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch" aria-label="Revenue analytics">
-        <div className="p-6 xl:col-span-8 flex flex-col justify-between bg-white rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-all min-h-[420px]">
-          <div>
-            <div className="flex items-center justify-between mb-8 flex-wrap gap-2">
-              <h2 className="text-slate-800 font-medium tracking-tight text-xl">Revenue</h2>
-              <div className="flex items-center gap-2">
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch" aria-label="Revenue analytics">
+        <div className="p-7 xl:col-span-8 flex flex-col justify-between bg-gradient-to-br from-white to-slate-50/30 rounded-[24px] border border-slate-200/60 shadow-sm hover:shadow-md transition-all min-h-[420px] relative overflow-hidden group">
+          {/* Subtle background icon */}
+          <IconChartLine className="absolute -bottom-8 -right-8 text-slate-100/50 size-64 rotate-12 pointer-events-none transition-transform group-hover:scale-105 duration-700" />
+
+          <div className="relative z-10">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 flex-wrap gap-4">
+              <h2 className="title-primary text-slate-900 flex items-center gap-2">
+                Revenue Trajectory
+              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* Period selector */}
-                <div className="flex items-center gap-1 bg-slate-50/80 p-1 rounded-lg">
+                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl shadow-inner border border-slate-200/50">
                   {(["week", "month", "quarter"] as const).map((p) => (
-                    <button key={p} onClick={() => setChartPeriod(p)} className={cn("text-sm px-2.5 py-1 rounded-md font-medium transition-all capitalize", chartPeriod === p ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700")}>
+                    <button key={p} onClick={() => setChartPeriod(p)} className={cn("text-meta-muted px-3 py-1.5 rounded-lg transition-all capitalize hover:text-slate-800", chartPeriod === p ? "bg-white shadow-sm text-sm text-slate-900 border border-slate-200/50" : "")}>
                       This {p}
                     </button>
                   ))}
                 </div>
                 {/* Data filter */}
-                <div className="flex items-center gap-1 bg-slate-50/80 p-1 rounded-lg">
-                  {(["all", "Revenue", "Sales", "Visitors"] as const).map((f) => (
-                    <button key={f} onClick={() => setChartFilter(f)} className={cn("text-sm  px-3 py-1.5 rounded-md transition-all font-medium tracking-wide", chartFilter === f ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700")}>
+                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl shadow-inner border border-slate-200/50">
+                  {(["all", "Revenue", "Transactions", "Leads"] as const).map((f) => (
+                    <button key={f} onClick={() => setChartFilter(f)} className={cn("text-meta-muted px-4 py-1.5 rounded-lg transition-all tracking-wide hover:text-slate-800", chartFilter === f ? "bg-white text-sm shadow-sm text-slate-900 border border-slate-200/50" : "")}>
                       {f === "all" ? "All" : f}
                     </button>
                   ))}
@@ -560,112 +676,148 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               </div>
             </div>
 
-            <div className="flex items-center gap-10 mb-6 flex-wrap">
-              <div className="flex items-start gap-3">
-                <div className="size-[34px] rounded-[10px] bg-[#e1f3f6] flex items-center justify-center text-[#151936]"><IconCoin size={18} stroke={2} /></div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+              {/* Income */}
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/60 border border-slate-100 hover:bg-white transition-colors group/stat">
+                <div className="size-12 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 flex items-center justify-center text-teal-600 shadow-sm group-hover/stat:scale-110 transition-transform">
+                  <IconCoin size={22} stroke={1.5} />
+                </div>
                 <div>
-                  <p className="text-slate-500 font-medium mb-0.5 text-base">Income</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-800 font-medium font-mono leading-none tracking-tight text-2xl">{formatCompactKES(metrics.income)}</span>
-                    <span className="text-sm font-medium text-emerald-600 flex items-center">{metrics.incomeGrowth}% <IconTrendingUp size={12} className="ml-0.5" /></span>
+                  <p className="text-sm text-slate-500 font-medium mb-1">Income</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="mono-stat text-slate-900">{formatCompactKES(metrics.income)}</span>
+                    <span className={cn("text-xs flex items-center px-1.5 py-0.5 rounded-md font-medium", metrics.incomeGrowth >= 0 ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50")}>
+                      {Math.abs(metrics.incomeGrowth)}% {metrics.incomeGrowth >= 0 ? <IconTrendingUp size={12} className="ml-0.5" /> : <IconTrendingDown size={12} className="ml-0.5" />}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="size-[34px] rounded-[10px] bg-[#fcf0e4] flex items-center justify-center text-[#c96f45]"><IconWallet size={18} stroke={2} /></div>
+              {/* Expenses */}
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/60 border border-slate-100 hover:bg-white transition-colors group/stat">
+                <div className="size-12 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-sm group-hover/stat:scale-110 transition-transform">
+                  <IconWallet size={22} stroke={1.5} />
+                </div>
                 <div>
-                  <p className="text-slate-500 font-medium mb-0.5 text-base">Expenses</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-800 font-medium font-mono leading-none tracking-tight text-2xl">{formatCompactKES(metrics.expenses)}</span>
-                    <span className="text-sm font-medium text-rose-600 flex items-center">{Math.abs(metrics.expenseGrowth)}% <IconTrendingDown size={12} className="ml-0.5" /></span>
+                  <p className="text-sm text-slate-500 font-medium mb-1">Expenses</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="mono-stat text-slate-900">{formatCompactKES(metrics.expenses)}</span>
+                    <span className={cn("text-xs flex items-center px-1.5 py-0.5 rounded-md font-medium", metrics.expenseGrowth <= 0 ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50")}>
+                      {Math.abs(metrics.expenseGrowth)}% {metrics.expenseGrowth > 0 ? <IconTrendingUp size={12} className="ml-0.5" /> : <IconTrendingDown size={12} className="ml-0.5" />}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="size-[34px] rounded-[10px] bg-[#eef2f6] flex items-center justify-center text-[#5a7c9f]"><IconChartLine size={18} stroke={2} /></div>
+              {/* Profit */}
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/60 border border-slate-100 hover:bg-white transition-colors group/stat">
+                <div className="size-12 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm group-hover/stat:scale-110 transition-transform">
+                  <IconChartLine size={22} stroke={1.5} />
+                </div>
                 <div>
-                  <p className="text-slate-500 font-medium mb-0.5 text-base">Profit</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-800 font-medium font-mono leading-none tracking-tight text-2xl">{formatCompactKES(metrics.profit)}</span>
-                    <span className="text-sm font-medium text-emerald-600 flex items-center">{metrics.profitGrowth}% <IconTrendingUp size={12} className="ml-0.5" /></span>
+                  <p className="text-sm text-slate-500 font-medium mb-1">Profit</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="mono-stat text-slate-900">{formatCompactKES(metrics.profit)}</span>
+                    <span className={cn("text-xs flex items-center px-1.5 py-0.5 rounded-md font-medium", metrics.profitGrowth >= 0 ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50")}>
+                      {Math.abs(metrics.profitGrowth)}% {metrics.profitGrowth >= 0 ? <IconTrendingUp size={12} className="ml-0.5" /> : <IconTrendingDown size={12} className="ml-0.5" />}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 min-h-[200px] flex items-end">
+          <div className="flex-1 min-h-[220px] flex items-end relative z-10 bg-white/40 rounded-xl p-2 border border-white/60">
             {mounted ? <SalesChart data={chartData} activeFilter={chartFilter} /> : <div className="h-full w-full skeleton-shimmer rounded-xl" />}
           </div>
         </div>
 
         {/* Stats Column */}
-        <div className="xl:col-span-4 flex flex-col gap-3">
+        <div className="xl:col-span-4 flex flex-col gap-4">
           {/* Sales Statistic — KES */}
-          <Link href="/fin" className="block">
-            <div className="p-6 bg-white rounded-[20px] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all h-[132px] group cursor-pointer">
-              <div className="flex items-center justify-between">
-                <h3 className="text-slate-800 font-medium tracking-wide body-md">Sales Performance</h3>
-                <IconArrowUpRight size={14} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Link href="/fin" className="block flex-1 group/card">
+            <div className="p-6 bg-gradient-to-br from-white to-slate-50/50 rounded-[24px] shadow-sm border border-slate-200/60 flex flex-col justify-between group-hover/card:shadow-md group-hover/card:border-slate-300/60 transition-all h-full relative overflow-hidden min-h-[140px]">
+              <div className="absolute top-0 right-0 p-6 opacity-0 group-hover/card:opacity-100 transition-opacity translate-x-2 group-hover/card:translate-x-0 group-hover/card:-translate-y-1">
+                <IconArrowUpRight size={20} className="text-slate-400" />
               </div>
-              <div className="flex items-end justify-between mt-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500"><IconCoin size={20} stroke={1.5} /></div>
+              <div className="flex items-center justify-between mb-3 relative z-10">
+                <h3 className="title-primary text-slate-800">Sales Performance</h3>
+              </div>
+              <div className="flex items-end justify-between relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="size-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0 shadow-sm group-hover/card:scale-110 transition-transform">
+                    <IconCoin size={22} stroke={1.5} />
+                  </div>
                   <div>
-                    <p className="text-sm  text-slate-400 font-medium mb-0.5">Total Profit</p>
-                    <p className="text-slate-800 font-medium font-mono leading-none tracking-tight text-2xl">{formatCompactKES(metrics.profit)}</p>
+                    <p className="text-sm text-slate-500 font-medium mb-1">Total Profit</p>
+                    <p className="mono-stat text-slate-900">{formatCompactKES(metrics.profit)}</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
                   <div className="flex items-center gap-2 mb-2">
-                    <p className="text-sm  text-slate-400 font-medium">Target</p>
-                    <span className="text-sm font-medium text-emerald-600 flex items-center bg-emerald-50 px-1.5 rounded">{formatCompactKES(metrics.income)} <IconTrendingUp size={10} className="ml-0.5" /></span>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Margin</p>
+                    <span className={cn(
+                      "text-xs flex items-center px-2 py-0.5 rounded border shadow-sm",
+                      profitMargin >= 0 ? "text-emerald-700 bg-emerald-50 border-emerald-100" : "text-rose-700 bg-rose-50 border-rose-100",
+                    )}>
+                      {profitMargin >= 0 ? "+" : ""}{profitMargin}%
+                    </span>
                   </div>
-                  <div className="w-[100px] h-[3px] bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full w-[65%]" /></div>
+                  <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
+                    <div className={cn("h-full rounded-full transition-all duration-1000", profitMargin >= 0 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-rose-400 to-rose-500")} style={{ width: `${Math.min(100, Math.abs(profitMargin))}%` }} />
+                  </div>
                 </div>
               </div>
             </div>
           </Link>
 
           {/* Site Inquiries — CRM Relevant */}
-          <div className="p-6 bg-white rounded-[20px] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all h-[132px]">
-            <h3 className="text-slate-800 font-medium tracking-wide body-md">Site Inquiries</h3>
-            <div className="flex items-end justify-between mt-2">
-              <div className="flex-1">
-                <p className="text-sm text-slate-400 font-medium mb-2">Property inquiries this week</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-800 leading-none tracking-tight mono-stat">{metrics.siteInquiries}</span>
+          <div className="p-6 bg-gradient-to-br from-white to-slate-50/50 rounded-[24px] shadow-sm border border-slate-200/60 flex flex-col justify-between hover:shadow-md hover:border-slate-300/60 transition-all flex-1 min-h-[140px] group/card relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3 relative z-10">
+              <h3 className="title-primary text-slate-800">Site Inquiries</h3>
+              <div className="p-1.5 rounded-lg bg-sky-50 text-sky-600 border border-sky-100 group-hover/card:scale-110 transition-transform">
+                <IconChartLine size={16} />
+              </div>
+            </div>
+            <div className="flex items-end justify-between relative z-10">
+              <div>
+                <p className="text-sm text-slate-500 font-medium mb-1">Property inquiries this week</p>
+                <div className="flex items-center gap-2">
+                  <span className="mono-stat text-slate-900">{metrics.siteInquiries}</span>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm  text-slate-400 font-medium mb-0.5">Conversion</p>
-                <p className="text-[#5a7c9f] leading-none tracking-tight bg-[#eef2f6] px-2 py-1 rounded-md mono-stat">{metrics.inquiryRate}</p>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest mb-2">Conversion</p>
+                <span className="text-sm text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-1 rounded shadow-sm mono-data">{metrics.inquiryRate}</span>
               </div>
             </div>
           </div>
 
           {/* New Leads — CRM Relevant */}
-          <Link href="/admin/pipeline" className="block">
-            <div className="p-6 bg-white rounded-[20px] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-all h-[132px] group cursor-pointer">
-              <div className="flex items-center justify-between">
-                <h3 className="text-slate-800 font-medium tracking-wide body-md">New Leads</h3>
-                <span className="text-sm font-medium text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">{metrics.newLeads}</span>
+          <Link href="/admin/pipeline" className="block flex-1 group/card">
+            <div className="p-6 bg-gradient-to-br from-white to-slate-50/50 rounded-[24px] shadow-sm border border-slate-200/60 flex flex-col justify-between group-hover/card:shadow-md group-hover/card:border-slate-300/60 transition-all h-full relative overflow-hidden min-h-[140px]">
+              <div className="flex items-center justify-between mb-3 relative z-10">
+                <h3 className="title-primary text-slate-800">New Leads</h3>
+                <span className="text-[10px] font-medium text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded shadow-sm uppercase tracking-widest">MTD</span>
               </div>
-              <div className="flex items-end justify-between mt-2">
+              <div className="flex items-end justify-between relative z-10">
                 <div>
-                  <p className="text-sm text-slate-400 font-medium max-w-[120px] leading-snug mb-2">Pipeline conversion this month.</p>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-800 leading-none tracking-tight mono-stat">{metrics.newLeads}</span>
-                    <span className="text-sm font-medium text-emerald-600 flex items-center bg-emerald-50 px-1.5 rounded"><IconTrendingUp size={10} className="mr-0.5" /> {metrics.newLeadsGrowth}</span>
+                  <p className="text-sm text-slate-500 font-medium mb-1">New leads added this month</p>
+                  <div className="flex items-center gap-3">
+                    <span className="mono-stat text-slate-900">{metrics.newLeads}</span>
+                    <span className={cn(
+                      "text-xs flex items-center px-2 py-0.5 rounded border shadow-sm",
+                      stats && stats.newLeadsTrend < 0 ? "text-rose-700 bg-rose-50 border-rose-100" : "text-emerald-700 bg-emerald-50 border-emerald-100",
+                    )}>
+                      {stats && stats.newLeadsTrend < 0 ? <IconTrendingDown size={12} className="mr-0.5" /> : <IconTrendingUp size={12} className="mr-0.5" />} {metrics.newLeadsGrowth}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-end gap-1.5 h-12">
-                  <div className="w-[18px] h-[30%] bg-slate-100 rounded-t-md" />
-                  <div className="w-[18px] h-[50%] bg-slate-200 rounded-t-md" />
-                  <div className="w-[18px] h-[70%] bg-slate-200 rounded-t-md" />
-                  <div className="w-[18px] h-[100%] bg-[#5a7c9f] rounded-t-md" />
+                <div className="flex items-end gap-1.5 h-10 opacity-90 group-hover/card:gap-2 transition-all">
+                  <div className="w-4 h-[30%] bg-slate-200 rounded-sm group-hover/card:bg-slate-300 transition-colors" />
+                  <div className="w-4 h-[50%] bg-slate-200 rounded-sm group-hover/card:bg-slate-300 transition-colors" />
+                  <div className="w-4 h-[70%] bg-indigo-400 rounded-sm shadow-sm group-hover/card:bg-indigo-500 transition-colors" />
+                  <div className="w-4 h-[100%] bg-[#151936] rounded-sm shadow-sm" />
                 </div>
               </div>
             </div>
@@ -677,9 +829,14 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch mt-1" aria-label="Property listing board">
         <div className="p-6 xl:col-span-8 flex flex-col justify-between bg-white rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden min-h-[420px]">
           <div>
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <h2 className="text-slate-800 font-medium tracking-wide text-lg">Listing Board</h2>
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2 border-b border-slate-100/60 pb-4">
+              <div>
+                <h2 className="text-lg font-medium text-slate-900 tracking-tight">Listing Board</h2>
+                {activeTab === "listings" && (
+                  <p className="text-meta-muted mt-0.5">{formatCompactKES(metrics.rentPool)} total rent pool under management</p>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
                 {/* Tab switcher */}
                 <div className="flex items-center gap-1 bg-slate-50/80 p-1 rounded-lg">
                   {(["listings", "activity", "transactions"] as const).map((tab) => (
@@ -687,7 +844,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                       key={tab}
                       onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
                       className={cn(
-                        "text-base px-3 py-1.5 rounded-md transition-all font-medium tracking-wide capitalize",
+                        "text-sm px-3.5 py-1.5 rounded-md transition-all font-medium tracking-wide capitalize",
                         activeTab === tab ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700"
                       )}
                     >
@@ -698,9 +855,9 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 {activeTab === "listings" && (
                   <button
                     onClick={() => { setPropertyModalMode("create"); setEditingProperty(null); setPropertyModalOpen(true); }}
-                    className="flex items-center gap-1.5 text-base font-medium text-[#151936] bg-[#f3df27] px-3 py-1.5 rounded-lg shadow-sm hover:bg-[#e6d220] transition-colors"
+                    className="flex items-center gap-1.5 text-sm font-medium text-white bg-tertiary-gradient px-4 py-1.5 rounded-lg shadow-sm hover:shadow hover:opacity-95 transition-all"
                   >
-                    <IconPlus size={13} stroke={2.5} />
+                    <IconPlus size={14} stroke={2.5} />
                     Add Property
                   </button>
                 )}
@@ -726,97 +883,109 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
           {/* Listings Tab */}
           {activeTab === "listings" && (
             <div className="flex-1 flex flex-col">
-              <div className="flex-1 overflow-x-auto [scrollbar-width:thin] mt-1">
-                <table className="w-full text-left border-collapse min-w-[600px]">
-                  <thead>
-                    <tr className="border-b border-slate-100/60 text-slate-400 label-caps">
-                      {([
-                        ["name", "Property Name"],
-                        ["location", "Location"],
-                        ["type", "Type"],
-                        ["status", "Status"],
-                        ["roi", "ROI"],
-                        ["price", "Price"],
-                      ] as [keyof PropertyListing, string][]).map(([field, label]) => (
-                        <th
-                          key={field}
-                          className={cn("pb-3 px-2 font-medium cursor-pointer hover:text-slate-600 transition-colors select-none", field === "name" && "pr-2 pl-0", field === "price" && "text-right")}
-                          onClick={() => handleSort(field)}
-                        >
-                          {label}<SortIndicator field={field} />
-                        </th>
-                      ))}
-                      <th className="pb-3 pl-2 font-medium w-10" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50/80">
-                    {paginatedListings.length > 0 ? paginatedListings.map((listing, idx) => (
-                      <tr
-                        key={listing.id}
-                        className="text-base text-slate-700 hover:bg-slate-50/40 transition-colors group animate-fade-in-up"
-                        style={{ animationDelay: `${idx * 30}ms` }}
-                      >
-                        <td className="py-3 pr-2 flex items-center gap-3 font-medium text-slate-800">
-                          <div className="size-10 relative rounded-[10px] overflow-hidden shrink-0 shadow-sm border border-slate-100/50">
-                            <Image src={listing.imageUrl} alt={listing.name} fill sizes="40px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                          </div>
-                          <button
-                            onClick={() => setDrawerProperty(listing)}
-                            className="truncate max-w-[150px] tracking-wide text-base hover:text-[#151936] transition-colors text-left"
+              {isLoading ? (
+                <div className="flex-1 flex items-center justify-center py-20">
+                  <LoadingSpinner size="lg" />
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col animate-fade-in">
+                  <div className="flex-1 overflow-x-auto [scrollbar-width:thin] mt-1">
+                    <table className="w-full text-left border-collapse min-w-[600px]">
+                      <thead>
+                        <tr className="border-b border-slate-100/60 text-slate-400 label-caps">
+                          {([
+                            ["name", "Property Name"],
+                            ["location", "Location"],
+                            ["type", "Type"],
+                            ["status", "Status"],
+                            ["roi", "ROI"],
+                            ["price", "Price"],
+                          ] as [keyof PropertyListing, string][]).map(([field, label]) => (
+                            <th
+                              key={field}
+                              className={cn("pb-3 px-2 font-medium cursor-pointer hover:text-slate-600 transition-colors select-none", field === "name" && "pr-2 pl-0", field === "price" && "text-right")}
+                              onClick={() => handleSort(field)}
+                            >
+                              {label}<SortIndicator field={field} />
+                            </th>
+                          ))}
+                          <th className="pb-3 pl-2 font-medium w-10" />
+                        </tr>
+                      </thead>
+                      <tbody className="gsap-stagger divide-y divide-slate-50/80">
+                        {paginatedListings.length > 0 ? paginatedListings.map((listing, idx) => (
+                          <tr
+                            key={listing.id}
+                            className={cn("text-base text-slate-700 hover:bg-slate-50/40 transition-colors group animate-fade-in-up", rowMenuOpen === listing.id ? "relative z-50" : "relative z-0")}
+                            style={{ animationDelay: `${idx * 30}ms` }}
                           >
-                            {listing.name}
-                          </button>
-                        </td>
-                        <td className="py-3 px-2 text-slate-500 font-medium text-base">{listing.location}</td>
-                        <td className="py-3 px-2 text-slate-500 font-medium text-base">{listing.type}</td>
-                        <td className="py-3 px-2">
-                          <span className={cn("text-sm  px-2.5 py-1 rounded-md font-medium tracking-wide whitespace-nowrap", TABLE_STATUS_STYLES[listing.status])}>
-                            {listing.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2 text-slate-600 mono-data">{listing.roi}</td>
-                        <td className="py-3 px-2 text-right text-slate-800 mono-amount">{listing.price}</td>
-                        <td className="py-3 pl-2 relative">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setRowMenuOpen(rowMenuOpen === listing.id ? null : listing.id); }}
-                            className="size-7 flex items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                            aria-label="Row actions"
-                          >
-                            <IconDotsVertical size={15} />
-                          </button>
-                          {rowMenuOpen === listing.id && (
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 animate-scale-in">
-                              <button onClick={() => { setDrawerProperty(listing); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-left text-base">
-                                <IconEye size={14} /> View Details
+                            <td className="py-3 pr-2 flex items-center gap-3 font-medium text-slate-800">
+                              <div className="size-10 relative rounded-[10px] overflow-hidden shrink-0 shadow-sm border border-slate-100/50 bg-slate-100 flex items-center justify-center">
+                                {listing.imageUrl ? (
+                                  <Image src={listing.imageUrl} alt={listing.name} fill sizes="40px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                                ) : (
+                                  <IconBuildingSkyscraper size={16} className="text-slate-400" stroke={1.5} />
+                                )}
+                              </div>
+                              <button
+                                onClick={() => setDrawerProperty(listing)}
+                                className="truncate max-w-[150px] tracking-wide text-base hover:text-[#151936] transition-colors text-left"
+                              >
+                                {listing.name}
                               </button>
-                              <button onClick={() => { setEditingProperty(listing); setPropertyModalMode("edit"); setPropertyModalOpen(true); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-left text-base">
-                                <IconEdit size={14} /> Edit Property
+                            </td>
+                            <td className="py-3 px-2 text-slate-500 font-medium text-base">{listing.location}</td>
+                            <td className="py-3 px-2 text-slate-500 font-medium text-base">{listing.type}</td>
+                            <td className="py-3 px-2">
+                              <span className={cn("text-sm  px-2.5 py-1 rounded-md font-medium tracking-wide whitespace-nowrap", TABLE_STATUS_STYLES[listing.status])}>
+                                {listing.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-2 text-slate-600 mono-data">{listing.roi}</td>
+                            <td className="py-3 px-2 text-right text-slate-800 mono-amount">{listing.price}</td>
+                            <td className="py-3 pl-2 relative">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setRowMenuOpen(rowMenuOpen === listing.id ? null : listing.id); }}
+                                className="size-7 flex items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                                aria-label="Row actions"
+                              >
+                                <IconDotsVertical size={15} />
                               </button>
-                              <button onClick={() => { setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-left text-base">
-                                <IconStatusChange size={14} /> Change Status
-                              </button>
-                              <div className="border-t border-slate-100 my-1" />
-                              <button onClick={() => { setDeleteConfirmId(listing.id); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-red-600 hover:bg-red-50 font-medium transition-colors text-left text-base">
-                                <IconTrash size={14} /> Delete
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )) : (
-                      <tr>
-                        <td colSpan={7} className="py-12 text-center">
-                          <div className="flex flex-col items-center gap-2">
-                            <IconBuildingSkyscraper size={28} className="text-slate-300" />
-                            <p className="text-base text-slate-500 font-medium">No properties match your search.</p>
-                            <button onClick={() => setListingSearch("")} className="text-base text-[#151936] font-medium hover:underline">Clear search</button>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                              {rowMenuOpen === listing.id && (
+                                <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 animate-scale-in">
+                                  <button onClick={() => { setDrawerProperty(listing); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-left text-base">
+                                    <IconEye size={14} /> View Details
+                                  </button>
+                                  <button onClick={() => { setEditingProperty(listing); setPropertyModalMode("edit"); setPropertyModalOpen(true); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-left text-base">
+                                    <IconEdit size={14} /> Edit Property
+                                  </button>
+                                  <button onClick={() => { setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-left text-base">
+                                    <IconStatusChange size={14} /> Change Status
+                                  </button>
+                                  <div className="border-t border-slate-100 my-1" />
+                                  <button onClick={() => { setDeleteConfirmId(listing.id); setRowMenuOpen(null); }} className="flex items-center gap-2 w-full px-3.5 py-2 text-red-600 hover:bg-red-50 font-medium transition-colors text-left text-base">
+                                    <IconTrash size={14} /> Delete
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan={7} className="py-12 text-center">
+                              <div className="flex flex-col items-center gap-2">
+                                <IconBuildingSkyscraper size={28} className="text-slate-300" />
+                                <p className="text-base text-slate-500 font-medium">No properties match your search.</p>
+                                <button onClick={() => setListingSearch("")} className="text-base text-[#151936] font-medium hover:underline">Clear search</button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {/* Pagination */}
               {filteredListings.length > ROWS_PER_PAGE && (
@@ -861,33 +1030,48 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
 
           {/* Activity Logs Tab */}
           {activeTab === "activity" && (
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-0 mt-2">
-              {ACTIVITY_LOGS.map((log, i) => {
-                const LogIcon = LOG_ICONS[log.icon];
-                return (
-                  <div key={log.id} className="flex gap-3.5 relative py-3 animate-fade-in-up" style={{ animationDelay: `${i * 40}ms` }}>
-                    {i < ACTIVITY_LOGS.length - 1 && (
-                      <div className="absolute left-[15px] top-[36px] bottom-0 w-px bg-slate-100" />
-                    )}
-                    <div className="size-[30px] rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 z-10 text-slate-500 shadow-sm">
-                      <LogIcon size={14} stroke={2} />
+            <div className="gsap-stagger flex-1 overflow-y-auto custom-scrollbar space-y-0 mt-2">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner size="md" />
+                </div>
+              ) : (stats?.activityLogs || []).length > 0 ? (
+                (stats?.activityLogs || []).map((log, i) => {
+                  const LogIcon = LOG_ICONS[log.icon] || IconActivity;
+                  return (
+                    <div key={log.id} className="flex gap-3.5 relative py-3 animate-fade-in-up" style={{ animationDelay: `${i * 40}ms` }}>
+                      {i < (stats?.activityLogs || []).length - 1 && (
+                        <div className="absolute left-[15px] top-[36px] bottom-0 w-px bg-slate-100" />
+                      )}
+                      <div className="size-[30px] rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 z-10 text-slate-500 shadow-sm">
+                        <LogIcon size={14} stroke={2} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-700 leading-snug font-medium text-base">{log.text}</p>
+                        <p className="text-sm text-slate-400 mt-0.5">{log.time}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-slate-700 leading-snug font-medium text-base">{log.text}</p>
-                      <p className="text-sm text-slate-400 mt-0.5">{log.time}</p>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <IconActivity size={28} className="text-slate-300 mb-2" />
+                  <p className="text-base text-slate-500 font-medium">No recent logs recorded.</p>
+                </div>
+              )}
             </div>
           )}
 
           {/* Transactions Tab */}
           {activeTab === "transactions" && (
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-0 mt-2">
-              {ACTIVITY_LOGS.filter((l) => l.type === "payment").length > 0 ? (
-                ACTIVITY_LOGS.filter((l) => l.type === "payment").map((log, i) => {
-                  const LogIcon = LOG_ICONS[log.icon];
+            <div className="gsap-stagger flex-1 overflow-y-auto custom-scrollbar space-y-0 mt-2">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner size="md" />
+                </div>
+              ) : (stats?.activityLogs || []).filter((l) => l.type === "payment").length > 0 ? (
+                (stats?.activityLogs || []).filter((l) => l.type === "payment").map((log, i) => {
+                  const LogIcon = LOG_ICONS[log.icon] || IconReceipt;
                   return (
                     <div key={log.id} className="flex gap-3.5 py-3 border-b border-slate-50 animate-fade-in-up" style={{ animationDelay: `${i * 40}ms` }}>
                       <div className="size-[30px] rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600 shadow-sm">
@@ -923,15 +1107,95 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
 
       {/* ── Market Insights ──────────────── */}
       <section className="w-full" aria-label="Market insights">
-        <UnifiedMarketBoard />
+        <UnifiedMarketBoard initialListings={listings} revenueData={stats?.chartSeries || []} />
       </section>
+
+      {/* ── Action & Health Center (Moved) ── */}
+      {(stats && ((stats.awaitingMyDecision && stats.awaitingMyDecision.count > 0) || (stats.systemHealth && currentUserRole === "ceo"))) && (
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-10 animate-fade-in-up">
+          {stats.awaitingMyDecision && stats.awaitingMyDecision.count > 0 && (
+            <div className="bg-white border border-slate-200/60 p-6 rounded-[24px] shadow-sm flex flex-col justify-between hover:shadow-md hover:border-slate-300 transition-all group relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-500 opacity-80" />
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-title-primary">Awaiting Decision</h3>
+                  <p className="text-desc-secondary mt-1">Pending requests requiring your action</p>
+                </div>
+                <div className="size-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0 shadow-sm border border-amber-100 group-hover:scale-105 transition-transform">
+                  <IconInbox size={24} stroke={1.5} />
+                </div>
+              </div>
+              <div className="space-y-4 mb-6">
+                {stats.awaitingMyDecision.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-body-regular border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                        <IconFileText size={14} />
+                      </div>
+                      <div>
+                        <span className="text-body-primary capitalize">{item.requestType.replace(/_/g, ' ')}</span>
+                        <p className="text-meta-muted mt-0.5">{new Date(item.requestedAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    {item.amountKes !== null && (
+                      <span className="mono-data text-slate-900 tracking-tight">
+                        {formatCompactKES(item.amountKes)}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <Link href="/admin/approvals" className="mt-auto w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl body-md transition-colors shadow-sm">
+                Review Queue <IconArrowRight size={16} />
+              </Link>
+            </div>
+          )}
+
+          {stats.systemHealth && currentUserRole === "ceo" && (
+            <div className="bg-[#0b1120] border border-slate-800 p-6 rounded-[24px] shadow-lg flex flex-col justify-between hover:shadow-xl hover:border-slate-700 transition-all relative overflow-hidden group">
+              <div className="absolute -right-12 -top-12 size-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-700" />
+              <div className="flex justify-between items-start mb-6 relative z-10">
+                <div>
+                  <h3 className="text-white headline-md flex items-center gap-2.5">
+                    System Health
+                    <span className="relative flex size-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full size-2.5 bg-emerald-500"></span>
+                    </span>
+                  </h3>
+                  <p className="body-sm text-slate-400 mt-1">Real-time integrity monitoring</p>
+                </div>
+                <div className="size-12 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-400 shrink-0 border border-white/10 group-hover:bg-white/10 transition-colors">
+                  <IconActivity size={24} stroke={1.5} />
+                </div>
+              </div>
+              <div className="space-y-6 relative z-10 mb-2">
+                <div className="flex items-baseline gap-3">
+                  <p className="mono-stat text-white leading-none tracking-tight">{stats.systemHealth.activeUserCount}</p>
+                  <p className="body-md text-slate-400">Active Users</p>
+                </div>
+                <div className="pt-4 border-t border-white/10">
+                  <p className="label-caps text-slate-400 mb-2">Last Threshold Update</p>
+                  <div className="flex items-center gap-2 body-sm text-slate-300 text-xs mono-data bg-white/5 px-3.5 py-2 rounded-xl border border-white/5 w-fit">
+                    <IconCheck size={14} className="text-emerald-500" />
+                    {stats.systemHealth.lastThresholdChangeAt
+                      ? new Date(stats.systemHealth.lastThresholdChangeAt).toLocaleString()
+                      : "No recorded updates"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── Modals & Drawers ────────────── */}
       <PropertyFormModal
         open={propertyModalOpen}
         onClose={() => { setPropertyModalOpen(false); setEditingProperty(null); }}
-        onSubmit={propertyModalMode === "create" ? handleCreateProperty : handleEditProperty}
+        onSubmit={handlePropertySaved}
         initialData={editingProperty ? {
+          id: editingProperty.id,
           name: editingProperty.name,
           location: editingProperty.location,
           type: editingProperty.type,
@@ -977,6 +1241,6 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
       {rowMenuOpen && (
         <div className="fixed inset-0 z-10" onClick={() => setRowMenuOpen(null)} aria-hidden="true" />
       )}
-    </div>
+    </PageTransition>
   );
 }

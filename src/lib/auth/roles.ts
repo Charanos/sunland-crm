@@ -13,6 +13,10 @@ export const UNIVERSAL_PATHS = [
   "/admin/notifications",
   "/admin/security",
   "/admin/messages",
+  // Any authenticated staff member can reach this to file a ticket, regardless
+  // of portal — "admin is the main support endpoint" (the backend naturally
+  // scopes non-CEO/GM callers to their own tickets via scope=mine).
+  "/admin/support",
   "/fin/profile",
   "/fin/settings",
   "/fin/notifications",
@@ -27,6 +31,12 @@ export const UNIVERSAL_PATHS = [
 const CEO_ONLY_PATHS = [
   "/admin/system",
 ];
+
+// ─── HR Complaints — absent, not greyed, for anyone outside this tier ─────────
+// HR spec §6.2/§6.4: HR Head, GM, and CEO only. GM/CEO's actual visibility is
+// further narrowed server-side to items escalated to them (src/lib/services/
+// complaints.ts) — this is only the coarse sidebar/route gate.
+const COMPLAINTS_ACCESS_ROLES: UserRole[] = ["hr_head", "general_manager", "ceo"];
 
 // ─── Role → allowed path prefixes ─────────────────────────────────────────────
 
@@ -43,6 +53,8 @@ const roleAccess: Record<UserRole, string[]> = {
     "/admin/properties",
     "/admin/leases",
     "/admin/maintenance",
+    "/admin/projects",
+    "/admin/events",
   ],
   accounts_manager: [
     "/fin",
@@ -50,6 +62,8 @@ const roleAccess: Record<UserRole, string[]> = {
     "/admin/properties",
     "/admin/leases",
     "/admin/maintenance",
+    "/admin/projects",
+    "/admin/events",
   ],
   finance_officer: [
     "/fin/ledger",
@@ -85,39 +99,37 @@ const roleAccess: Record<UserRole, string[]> = {
   payroll_officer: ["/fin/payroll"],
 
   // ── HR family ───────────────────────────────────────────────────────────────
-  hr_head: ["/admin/hr", "/admin/reports"],
-  hr_manager: ["/admin/hr", "/admin/reports"],
+  hr_head: ["/admin/hr", "/admin/reports", "/admin/projects", "/admin/events"],
   hr_officer: ["/admin/hr"],
 
-  // ── Business Development ────────────────────────────────────────────────────
-  line_manager: [
-    "/admin/pipeline",
-    "/admin/contacts",
-    "/admin/properties",
-    "/admin/leases",
-  ],
-  bd_head: [
-    "/admin/pipeline",
-    "/admin/contacts",
-    "/admin/properties",
-    "/admin/leases",
-  ],
-  agent: ["/admin/pipeline", "/admin/contacts", "/admin/properties"],
-  bd_agent: ["/admin/pipeline", "/admin/contacts", "/admin/properties"],
-
+  // ── Business Development (now Property Managers) ────────────────────────────
   // ── Front Office ─────────────────────────────────────────────────────────────
   front_office_head: [
     "/admin/front-office",
     "/admin/contacts",
     "/admin/properties",
     "/admin/leases",
+    "/admin/projects",
+    "/admin/events",
   ],
   front_office_admin: ["/admin/front-office"],
   driver: ["/admin/front-office/logistics"],
 
   // ── Operations ───────────────────────────────────────────────────────────────
-  operations_lead: ["/admin/properties", "/admin/leases", "/admin/maintenance"],
-  property_manager: ["/admin/properties", "/admin/leases", "/admin/maintenance"],
+  operations_lead: [
+    "/admin/properties",
+    "/admin/leases",
+    "/admin/maintenance",
+    "/admin/projects",
+    "/admin/events",
+  ],
+  property_manager: [
+    "/admin/properties",
+    "/admin/leases",
+    "/admin/maintenance",
+    "/admin/projects",
+    "/admin/events",
+  ],
   valuer: ["/admin/properties", "/admin/valuations"],
 
   // ── Audit / Compliance ───────────────────────────────────────────────────────
@@ -163,6 +175,11 @@ export function canAccess(role: UserRole, pathname: string): boolean {
     return role === "ceo";
   }
 
+  // 2b. HR Complaints — absent for anyone outside HR Head/GM/CEO (HR spec §6.2/§6.4).
+  if (pathname.startsWith("/admin/hr/complaints")) {
+    return COMPLAINTS_ACCESS_ROLES.includes(role);
+  }
+
   // 3. Executive oversight paths (Approvals Queue, Reports Center)
   if (
     pathname.startsWith("/admin/approvals") ||
@@ -195,22 +212,16 @@ export function getDefaultPortal(role: UserRole): string {
     case "payroll_officer":
       return "/fin";
     case "hr_head":
-    case "hr_manager":
     case "hr_officer":
       return "/admin/hr";
-    case "line_manager":
-    case "bd_head":
-    case "agent":
-    case "bd_agent":
-      return "/admin/pipeline";
+    case "operations_lead":
+    case "property_manager":
+      return "/admin/maintenance";
     case "front_office_head":
     case "front_office_admin":
       return "/admin/front-office";
     case "driver":
       return "/admin/front-office/logistics";
-    case "operations_lead":
-    case "property_manager":
-      return "/admin/maintenance";
     case "valuer":
       return "/admin/valuations";
     case "auditor":

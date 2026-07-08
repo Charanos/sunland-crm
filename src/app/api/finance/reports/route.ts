@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       // Seed some realistic data based on the current division expected total
       // June will have the actual transaction data, previous months will scale
       let collected = 0;
-      let expected = monthlyExpectedTotal || 445000; // fallback if no leases
+      const expected = monthlyExpectedTotal || 445000; // fallback if no leases
 
       if (i === 0) {
         // Current month: calculate from database transactions
@@ -80,8 +80,9 @@ export async function GET(request: Request) {
       chartData,
       reports,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Reports API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

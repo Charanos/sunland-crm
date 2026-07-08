@@ -13,6 +13,9 @@ export async function GET(request: Request) {
       actorId: params.get("actorId") ?? undefined,
       action: params.get("action") ?? undefined,
       associatedType: params.get("associatedType") ?? undefined,
+      associatedId: params.get("associatedId") ?? undefined,
+      dateFrom: params.get("dateFrom") ?? undefined,
+      dateTo: params.get("dateTo") ?? undefined,
       limit: params.get("limit") ? Number(params.get("limit")) : undefined,
       offset: params.get("offset") ? Number(params.get("offset")) : undefined,
     });

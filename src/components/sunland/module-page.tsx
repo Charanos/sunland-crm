@@ -20,7 +20,7 @@ export function ModulePage({
   icon: Icon;
 }) {
   return (
-    <div className="mx-auto flex max-w-[88rem] flex-col gap-6">
+    <div className="mx-auto flex max-w-[98rem] flex-col gap-6">
       <BoardHeader
         eyebrow={<p className="label-caps text-[var(--on-surface-dim)]">{eyebrow}</p>}
         title={title}

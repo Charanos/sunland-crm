@@ -240,8 +240,15 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
   }, [_entityId]);
 
   useEffect(() => {
+    let active = true;
     if (_entityId) {
-      fetchContacts();
+      const timer = setTimeout(() => {
+        if (active) fetchContacts();
+      }, 0);
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
     }
   }, [_entityId, fetchContacts]);
 
@@ -490,7 +497,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
   }, [contacts, role]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto w-full max-w-[98rem] flex flex-col gap-6">
 
       {/* ── Operations Control Hub Navigator ── */}
       <BoardPanel className="flex flex-wrap items-center justify-between gap-4 p-4">

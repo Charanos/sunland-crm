@@ -296,7 +296,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
   const { pushToast } = useToast();
   const activeEntityId = useUIStore((state) => state.activeEntityId);
   const mounted = useSyncExternalStore(
-    () => () => {},
+    () => () => { },
     () => true,
     () => false,
   );
@@ -336,7 +336,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
           setCurrentRole(data.user.role);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Helpers
@@ -724,12 +724,12 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         <div className="relative min-h-[220px] xl:min-h-auto overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#0c0f24] via-[#121b36] to-[#1e1b4b] p-6 text-white shadow-xl flex flex-col justify-between">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.15),transparent_60%)]" />
           {/* Subtle background image */}
-          <div 
+          <div
             className="absolute inset-0 opacity-[0.06] mix-blend-overlay bg-cover bg-center"
             style={{ backgroundImage: `url(https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2564&auto=format&fit=crop)` }}
           />
           <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-indigo-500/10 blur-2xl" />
-          
+
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-3">
               <Badge tone="primary" className="bg-indigo-500/20 text-indigo-200 border-indigo-500/30 px-3 py-1 shadow-sm backdrop-blur-md">
@@ -741,12 +741,12 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               <h2 className="title-serif text-4xl font-normal leading-tight tracking-tight text-white mb-2">
                 Disbursement Ledger
               </h2>
-              <p className="text-base leading-relaxed text-slate-300/85 font-light max-w-lg">
+              <p className="text-base leading-relaxed text-slate-300/85 font-normal max-w-lg">
                 Manage payroll schedules, generate individual payslip statements with automated NHIF/SHIF calculations, and route compliance returns securely.
               </p>
             </div>
           </div>
-          
+
           <div className="relative z-10 pt-4 flex items-center justify-between border-t border-white/10 mt-4">
             <div className="flex items-center gap-4">
               <div className="flex -space-x-2.5">
@@ -829,8 +829,8 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               {tabId === "runs"
                 ? "Generate runs and submit for authorization."
                 : tabId === "payslips"
-                ? "Query employee net salary and audit deductions."
-                : "Submit statutory contributions to NSSF, KRA, and Affordable Housing."}
+                  ? "Query employee net salary and audit deductions."
+                  : "Submit statutory contributions to NSSF, KRA, and Affordable Housing."}
             </p>
           </div>
 
@@ -930,8 +930,8 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                                 (row as PayrollRun).status === "Disbursed"
                                   ? "success"
                                   : (row as PayrollRun).status === "Pending"
-                                  ? "warning"
-                                  : "neutral"
+                                    ? "warning"
+                                    : "neutral"
                               }
                             >
                               {(row as PayrollRun).status}
@@ -959,8 +959,8 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                                 (row as EmployeePayslip).status === "Disbursed"
                                   ? "success"
                                   : (row as EmployeePayslip).status === "Approved"
-                                  ? "primary"
-                                  : "neutral"
+                                    ? "primary"
+                                    : "neutral"
                               }
                             >
                               {(row as EmployeePayslip).status}
@@ -985,8 +985,8 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                                 (row as StatutoryRemittance).status === "Remitted"
                                   ? "success"
                                   : (row as StatutoryRemittance).status === "Pending"
-                                  ? "warning"
-                                  : "neutral"
+                                    ? "warning"
+                                    : "neutral"
                               }
                             >
                               {(row as StatutoryRemittance).status}
@@ -1022,7 +1022,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
               </div>
               <h4 className="text-body-primary">No records found</h4>
               <p className="text-slate-450 leading-relaxed text-base">
-                We couldn't find any values matching your active search queries. Try adjusting your query or filter configurations.
+                We couldn&apos;t find any values matching your active search queries. Try adjusting your query or filter configurations.
               </p>
             </div>
           </div>

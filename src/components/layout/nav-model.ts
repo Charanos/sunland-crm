@@ -1,11 +1,14 @@
 import type { Icon } from "@tabler/icons-react";
 import {
+  IconAlertTriangle,
   IconApps,
   IconBell,
   IconBriefcase,
   IconBuildingBank,
   IconBuildingCommunity,
   IconCalendarDollar,
+  IconCalendarEvent,
+  IconCash,
   IconCashBanknote,
   IconChartBar,
   IconChecklist,
@@ -15,6 +18,8 @@ import {
   IconFileAnalytics,
   IconHomeDollar,
   IconHomeStats,
+  IconLayoutKanban,
+  IconLifebuoy,
   IconMessageCircle,
   IconReportAnalytics,
   IconSettings,
@@ -140,6 +145,7 @@ export const navSections: NavSection[] = [
     icon: IconChecklist,
     items: [
       { href: "/admin/approvals", label: "Approvals Queue", icon: IconChecklist, badge: "9" },
+      { href: "/admin/hr/complaints", label: "Complaints", icon: IconAlertTriangle },
       { href: "/admin/reports", label: "Reports Center", icon: IconReportAnalytics },
       { href: "/admin/system", label: "System Administration", icon: IconDatabase },
     ],
@@ -155,6 +161,8 @@ export const navSections: NavSection[] = [
       { href: "/admin/pipeline", label: "Pipeline", icon: IconChartBar },
       { href: "/admin/leases", label: "Leases", icon: IconCalendarDollar },
       { href: "/admin/maintenance", label: "Maintenance", icon: IconTool },
+      { href: "/admin/projects", label: "Projects", icon: IconLayoutKanban },
+      { href: "/admin/events", label: "Events", icon: IconCalendarEvent },
     ],
   },
 
@@ -175,7 +183,7 @@ export const navSections: NavSection[] = [
     label: "Departments",
     icon: IconApps,
     items: [
-      { href: "/fin", label: "Finance", icon: IconWallet, group: "Internal Portals" },
+      { label: "Finance", href: "/admin/finance", icon: IconCash, group: "Internal Portals" },
       { href: "/admin/hr", label: "Human Resources", icon: IconUsers, group: "Internal Portals" },
       { href: "/admin/front-office", label: "Front Office", icon: IconBriefcase, group: "Internal Portals" },
     ],
@@ -190,6 +198,7 @@ export const navSections: NavSection[] = [
     icon: IconUserCog,
     items: [
       { href: "/admin/messages", label: "Messages", icon: IconMessageCircle, badge: "3" },
+      { href: "/admin/support", label: "Support Tickets", icon: IconLifebuoy },
       { href: "/admin/settings", label: "Settings", icon: IconSettings },
       { href: "/admin/notifications", label: "Notifications", icon: IconBell },
       { href: "/admin/security", label: "Security", icon: IconShieldLock },

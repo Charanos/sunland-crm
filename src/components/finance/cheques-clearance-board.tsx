@@ -549,7 +549,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                   <h2 className="title-serif font-normal leading-tight tracking-tight text-white mb-3">
                     Cheque Clearance
                   </h2>
-                  <p className="leading-relaxed text-slate-300 font-light max-w-lg body-md">
+                  <p className="leading-relaxed text-slate-300 font-normal max-w-lg body-md">
                     Track deposited cheques, verify bank credit status, and route transaction amounts exceeding the policy limit to the CEO/GM approval chain before posting ledger records.
                   </p>
                 </div>
@@ -571,7 +571,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 <div className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 p-5 shadow-2xl backdrop-blur-xl transition-all duration-500 hover:border-white/15 group">
                   {/* Subtle Grid overlay */}
                   <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center" />
-                  
+
                   <div className="relative z-10 flex flex-col gap-4">
                     {/* Header */}
                     <div className="flex items-center justify-between">
@@ -600,9 +600,9 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                             <span>Limit: {thresholdPct}%</span>
                           </div>
                           <div className="h-1 w-full rounded-full bg-slate-900/80 overflow-hidden flex border border-white/[0.02]">
-                            <div 
-                              style={{ width: `${thresholdPct}%` }} 
-                              className={cn("h-full transition-all duration-500", clearingVal > CHEQUE_APPROVAL_THRESHOLD ? "bg-rose-500/80 animate-pulse" : "bg-amber-500/70")} 
+                            <div
+                              style={{ width: `${thresholdPct}%` }}
+                              className={cn("h-full transition-all duration-500", clearingVal > CHEQUE_APPROVAL_THRESHOLD ? "bg-rose-500/80 animate-pulse" : "bg-amber-500/70")}
                             />
                           </div>
                         </div>
@@ -1345,8 +1345,8 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                         (logStep === "form" && i === 0) || (logStep === "photo" && i === 1) || (logStep === "qr" && i === 2)
                           ? "bg-[var(--sidebar)] text-white"
                           : (i === 0 && logStep !== "form") || (i === 1 && logStep === "qr")
-                          ? "bg-emerald-500 text-white"
-                          : "bg-slate-100 text-slate-400"
+                            ? "bg-emerald-500 text-white"
+                            : "bg-slate-100 text-slate-400"
                       )}>
                         {((i === 0 && logStep !== "form") || (i === 1 && logStep === "qr")) ? <IconCheck size={10} stroke={3} /> : i + 1}
                       </div>

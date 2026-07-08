@@ -41,7 +41,6 @@ export function GlobalChatWidget() {
   const panelRef = useRef<HTMLDivElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
 
-  if (isMessagesPage) return null;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -73,6 +72,8 @@ export function GlobalChatWidget() {
 
   // Panel Spring
   const panelSpring = { type: "spring", stiffness: 350, damping: 30 } as const;
+
+  if (isMessagesPage) return null;
 
   return (
     <>

@@ -1,9 +1,10 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { approvalRequests, transactions } from "@/db/schema";
+import { approvalRequests, transactions, users } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
-import { ConflictError, NotFoundError } from "@/lib/authz/errors";
+import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
+import { createNotification } from "@/lib/services/notifications";
 import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
 import {
@@ -12,11 +13,95 @@ import {
 } from "@/lib/validation/finance";
 import { parseInput } from "@/lib/validation/parse";
 
+const REAL_STATUS_VALUES = ["pending", "approved", "rejected", "escalated"] as const;
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+// approval_approver_role is a tier (gm/ceo/department_head), not a specific
+// role — a request doesn't record which department it belongs to, so a
+// department_head-tier request notifies every department head at once
+// rather than guessing which one.
+async function notifyRequiredApprovers(
+  tx: Tx,
+  entityId: string,
+  requiredApproverRole: string,
+  request: { id: string; requestType: string; amountKes: string | null },
+) {
+  const targetRoles =
+    requiredApproverRole === "gm"
+      ? (["general_manager"] as const)
+      : requiredApproverRole === "ceo"
+        ? (["ceo"] as const)
+        : (["finance_head", "hr_head", "front_office_head"] as const);
+
+  const recipients = await tx.select().from(users).where(inArray(users.role, targetRoles));
+  for (const recipient of recipients) {
+    await createNotification(tx, {
+      userId: recipient.id,
+      entityId,
+      type: "approval.pending",
+      title: "Approval request awaiting your decision",
+      body: `${request.requestType.replace(/_/g, " ")}${request.amountKes ? ` — KES ${Number(request.amountKes).toLocaleString()}` : ""}`,
+      associatedType: "approval_request",
+      associatedId: request.id,
+      href: "/admin/approvals",
+    });
+  }
+}
+
 /**
  * P0 reference service — the template every future module's service follows:
  * authorize (action-level) → validate (Zod) → transaction → structured audit.
  * No business logic belongs in the route handler after this.
  */
+
+/**
+ * Was previously a raw, unauthenticated inline query in the route handler
+ * (no requireCallerContext, no authorize, no entity scoping, and `status as
+ * any` forcing the UI's virtual "decided" tab straight into a real Postgres
+ * enum column, which errors since "decided" isn't a member of
+ * approval_status) — moved here to close that gap and match every other
+ * service in this codebase.
+ */
+export async function listApprovalRequests(
+  ctx: CallerContext,
+  filters: { entityId?: string; status?: string } = {},
+) {
+  const rawEntityId = filters.entityId ?? ctx.entityId;
+  if (!rawEntityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(rawEntityId);
+  await authorize(ctx, "finance.approval.read", entityId);
+
+  const conditions = [eq(approvalRequests.entityId, entityId)];
+  if (filters.status === "decided") {
+    conditions.push(inArray(approvalRequests.status, ["approved", "rejected"]));
+  } else if (filters.status && (REAL_STATUS_VALUES as readonly string[]).includes(filters.status)) {
+    conditions.push(eq(approvalRequests.status, filters.status as (typeof REAL_STATUS_VALUES)[number]));
+  }
+  // Any other unrecognized status value is silently ignored rather than
+  // forwarded to Postgres — never trust a client-supplied string into an
+  // enum-typed column.
+
+  return db
+    .select({
+      id: approvalRequests.id,
+      entityId: approvalRequests.entityId,
+      requestType: approvalRequests.requestType,
+      relatedTable: approvalRequests.relatedTable,
+      relatedId: approvalRequests.relatedId,
+      requestedById: approvalRequests.requestedById,
+      requestedByName: users.name,
+      requestedAt: approvalRequests.requestedAt,
+      amountKes: approvalRequests.amountKes,
+      requiredApproverRole: approvalRequests.requiredApproverRole,
+      status: approvalRequests.status,
+      decisionNotes: approvalRequests.decisionNotes,
+    })
+    .from(approvalRequests)
+    .innerJoin(users, eq(approvalRequests.requestedById, users.id))
+    .where(and(...conditions))
+    .orderBy(desc(approvalRequests.requestedAt));
+}
+
 export async function createApprovalRequest(ctx: CallerContext, rawInput: unknown) {
   const input = parseInput(createApprovalRequestSchema, rawInput);
   const entityId = await resolveEntityId(input.entityId);
@@ -45,6 +130,8 @@ export async function createApprovalRequest(ctx: CallerContext, rawInput: unknow
       entityId,
       after: request,
     });
+
+    await notifyRequiredApprovers(tx, entityId, input.requiredApproverRole, request);
 
     return request;
   });
@@ -111,6 +198,17 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
       entityId: existing.entityId,
       before: existing,
       after: updated,
+    });
+
+    await createNotification(tx, {
+      userId: existing.requestedById,
+      entityId: existing.entityId,
+      type: "approval.decided",
+      title: `Your request was ${input.status}`,
+      body: `${existing.requestType.replace(/_/g, " ")} — ${updated.decisionNotes ?? input.status}`,
+      associatedType: "approval_request",
+      associatedId: updated.id,
+      href: "/admin/approvals",
     });
 
     return updated;
