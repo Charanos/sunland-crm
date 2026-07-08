@@ -6,7 +6,6 @@ import {
   IconSend,
   IconSearch,
   IconHash,
-  IconAt,
   IconCheck,
   IconCheckFilled,
   IconDotsVertical,

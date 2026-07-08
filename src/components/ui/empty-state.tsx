@@ -6,11 +6,13 @@ export function EmptyState({
   title,
   description,
   action,
+  onClick,
 }: {
   icon: Icon;
   title: string;
   description: string;
   action: string;
+  onClick?: () => void;
 }) {
   return (
     <div className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-dashed border-[var(--outline)] bg-white px-6 py-10 text-center">
@@ -21,7 +23,7 @@ export function EmptyState({
       <p className="body-sm mt-2 max-w-sm text-[var(--on-surface-dim)]">
         {description}
       </p>
-      <Button className="mt-5">{action}</Button>
+      <Button onClick={onClick} className="mt-5">{action}</Button>
     </div>
   );
 }

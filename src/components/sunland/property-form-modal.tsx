@@ -1,37 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/components/ui/toast-provider";
+import { useUIStore } from "@/store/ui";
 import { cn } from "@/lib/utils/cn";
 
-interface PropertyFormData {
+export interface PropertyFormData {
+  propertyCode: string;
   name: string;
+  propertyType: string;
+  listingType: "Rent" | "Sale";
   location: string;
-  type: string;
-  status: "Available" | "Sold" | "Under Offer" | "Occupied";
-  price: string;
-  roi: string;
-  imageUrl: string;
+  ownerContactId: string;
+  monthlyRentKes: string;
+  askingPriceKes: string;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  sizeSqft: number | null;
 }
 
 const PROPERTY_TYPES = [
-  "Premium Estate", "Office Suite", "Luxury Villa", "Apartment",
-  "Townhouse", "Executive Studio", "Office Floor", "Showroom", "Warehouse",
+  "Apartment", "Commercial", "House", "Land", "Villa",
 ];
-
-const STATUSES: PropertyFormData["status"][] = [
-  "Available", "Occupied", "Under Offer", "Sold",
-];
-
-const STATUS_COLORS: Record<string, string> = {
-  Available: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Occupied: "bg-blue-50 text-blue-700 border-blue-200",
-  "Under Offer": "bg-amber-50 text-amber-700 border-amber-200",
-  Sold: "bg-slate-100 text-slate-600 border-slate-200",
-};
 
 export function PropertyFormModal({
   open,
@@ -42,23 +35,46 @@ export function PropertyFormModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: PropertyFormData) => void;
-  initialData?: Partial<PropertyFormData>;
+  onSubmit: (data: any) => void;
+  initialData?: any;
   mode?: "create" | "edit";
 }) {
   const { pushToast } = useToast();
+  const { activeEntityId } = useUIStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof PropertyFormData, string>>>({});
+  const [landlords, setLandlords] = useState<{ id: string; name: string }[]>([]);
 
   const [form, setForm] = useState<PropertyFormData>({
+    propertyCode: initialData?.propertyCode ?? "",
     name: initialData?.name ?? "",
+    propertyType: initialData?.propertyType ?? initialData?.type ?? "Apartment",
+    listingType: initialData?.listingType ?? "Rent",
     location: initialData?.location ?? "",
-    type: initialData?.type ?? PROPERTY_TYPES[0],
-    status: initialData?.status ?? "Available",
-    price: initialData?.price ?? "",
-    roi: initialData?.roi ?? "",
-    imageUrl: initialData?.imageUrl ?? "",
+    ownerContactId: initialData?.ownerContactId ?? "",
+    monthlyRentKes: initialData?.monthlyRentKes ?? (initialData?.listingType === "Rent" || !initialData?.listingType ? initialData?.price : ""),
+    askingPriceKes: initialData?.askingPriceKes ?? (initialData?.listingType === "Sale" ? initialData?.price : ""),
+    bedrooms: initialData?.bedrooms ?? null,
+    bathrooms: initialData?.bathrooms ?? null,
+    sizeSqft: initialData?.sizeSqft ?? null,
   });
+
+  // Load landlords list for dropdown
+  useEffect(() => {
+    if (!open || !activeEntityId) return;
+    const fetchLandlords = async () => {
+      try {
+        const res = await fetch(`/api/contacts?entityId=${activeEntityId}&type=landlord`);
+        const data = await res.json();
+        if (data.contacts) {
+          setLandlords(data.contacts.map((c: any) => ({ id: c.id, name: c.displayName })));
+        }
+      } catch (err) {
+        console.error("Failed to load landlords:", err);
+      }
+    };
+    fetchLandlords();
+  }, [open, activeEntityId]);
 
   const updateField = <K extends keyof PropertyFormData>(
     field: K,
@@ -72,9 +88,15 @@ export function PropertyFormModal({
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof PropertyFormData, string>> = {};
+    if (!form.propertyCode.trim()) newErrors.propertyCode = "Property code is required";
     if (!form.name.trim()) newErrors.name = "Property name is required";
     if (!form.location.trim()) newErrors.location = "Location is required";
-    if (!form.price.trim()) newErrors.price = "Price is required";
+    if (form.listingType === "Rent" && !form.monthlyRentKes.trim()) {
+      newErrors.monthlyRentKes = "Monthly Rent is required";
+    }
+    if (form.listingType === "Sale" && !form.askingPriceKes.trim()) {
+      newErrors.askingPriceKes = "Asking Price is required";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -82,40 +104,85 @@ export function PropertyFormModal({
   const handleSubmit = async () => {
     if (!validate()) return;
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 800));
-    onSubmit(form);
-    pushToast({
-      tone: "success",
-      title: mode === "create" ? "Property Created" : "Property Updated",
-      body: `${form.name} has been ${mode === "create" ? "added to" : "updated in"} the portfolio.`,
-    });
-    setIsSubmitting(false);
-    onClose();
+
+    try {
+      const res = await fetch("/api/properties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityId: activeEntityId,
+          propertyCode: form.propertyCode,
+          name: form.name,
+          propertyType: form.propertyType,
+          listingType: form.listingType,
+          location: form.location,
+          ownerContactId: form.ownerContactId || null,
+          monthlyRentKes: form.listingType === "Rent" ? form.monthlyRentKes : null,
+          askingPriceKes: form.listingType === "Sale" ? form.askingPriceKes : null,
+          bedrooms: form.bedrooms,
+          bathrooms: form.bathrooms,
+          sizeSqft: form.sizeSqft,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save property");
+
+      onSubmit(data.property);
+      pushToast({
+        tone: "success",
+        title: mode === "create" ? "Property Created" : "Property Updated",
+        body: `${form.name} has been enrolled successfully in the database.`,
+      });
+      onClose();
+    } catch (err: any) {
+      pushToast({
+        tone: "warning",
+        title: "Failed to save",
+        body: err.message,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Modal
       open={open}
       onClose={isSubmitting ? () => { } : onClose}
-      title={mode === "create" ? "Add New Property" : "Edit Property"}
-      description={mode === "create" ? "Add a new listing to the portfolio" : "Update property details"}
+      title={mode === "create" ? "Register Property Portfolio" : "Edit Property"}
+      description={mode === "create" ? "Add a new managed property linked to an owner contact" : "Update property details"}
       size="lg"
     >
       <div className="space-y-4">
-        {/* Name */}
-        <div>
-          <label className="label-caps text-slate-500 mb-1.5 block">Property Name</label>
-          <input
-            className={cn(
-              "w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
-              errors.name ? "border-red-300 bg-red-50/30" : "border-slate-200"
-            )}
-            placeholder="e.g. Runda Grove Villa"
-            value={form.name}
-            onChange={(e) => updateField("name", e.target.value)}
-          />
-          {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+        {/* Code + Name */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="label-caps text-slate-500 mb-1.5 block">Property Code</label>
+            <input
+              className={cn(
+                "w-full rounded-lg border bg-white px-3 py-2 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                errors.propertyCode ? "border-red-300 bg-red-50/30" : "border-slate-200"
+              )}
+              placeholder="e.g. PRV-001"
+              value={form.propertyCode}
+              onChange={(e) => updateField("propertyCode", e.target.value)}
+            />
+            {errors.propertyCode && <p className="text-sm text-red-500 mt-1">{errors.propertyCode}</p>}
+          </div>
+          <div className="sm:col-span-2">
+            <label className="label-caps text-slate-500 mb-1.5 block">Property Name</label>
+            <input
+              className={cn(
+                "w-full rounded-lg border bg-white px-3 py-2 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                errors.name ? "border-red-300 bg-red-50/30" : "border-slate-200"
+              )}
+              placeholder="e.g. Park View Apartment 4B"
+              value={form.name}
+              onChange={(e) => updateField("name", e.target.value)}
+            />
+            {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+          </div>
         </div>
 
         {/* Location + Type */}
@@ -124,10 +191,10 @@ export function PropertyFormModal({
             <label className="label-caps text-slate-500 mb-1.5 block">Location</label>
             <input
               className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                "w-full rounded-lg border bg-white px-3 py-2 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
                 errors.location ? "border-red-300 bg-red-50/30" : "border-slate-200"
               )}
-              placeholder="e.g. Runda, Nairobi"
+              placeholder="e.g. Westlands, Nairobi"
               value={form.location}
               onChange={(e) => updateField("location", e.target.value)}
             />
@@ -136,9 +203,9 @@ export function PropertyFormModal({
           <div>
             <label className="label-caps text-slate-500 mb-1.5 block">Property Type</label>
             <select
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
-              value={form.type}
-              onChange={(e) => updateField("type", e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              value={form.propertyType}
+              onChange={(e) => updateField("propertyType", e.target.value)}
             >
               {PROPERTY_TYPES.map((t) => (
                 <option key={t} value={t}>{t}</option>
@@ -147,63 +214,100 @@ export function PropertyFormModal({
           </div>
         </div>
 
-        {/* Price + ROI */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Price (KES)</label>
-            <input
-              className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2.5 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
-                errors.price ? "border-red-300 bg-red-50/30" : "border-slate-200"
-              )}
-              placeholder="e.g. KES 21.3M"
-              value={form.price}
-              onChange={(e) => updateField("price", e.target.value)}
-            />
-            {errors.price && <p className="text-sm text-red-500 mt-1">{errors.price}</p>}
-          </div>
-          <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">ROI / Yield</label>
-            <input
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors mono-data"
-              placeholder="e.g. 12.0%"
-              value={form.roi}
-              onChange={(e) => updateField("roi", e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Status */}
+        {/* Owner Landlord Dropdown */}
         <div>
-          <label className="label-caps text-slate-500 mb-1.5 block">Status</label>
-          <div className="flex flex-wrap gap-2">
-            {STATUSES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => updateField("status", s)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-base font-medium border transition-all",
-                  form.status === s
-                    ? cn(STATUS_COLORS[s], "ring-1 ring-offset-1 ring-slate-300")
-                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
-                )}
-              >
-                {s}
-              </button>
+          <label className="label-caps text-slate-500 mb-1.5 block">Portfolio Owner (Landlord)</label>
+          <select
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
+            value={form.ownerContactId}
+            onChange={(e) => updateField("ownerContactId", e.target.value)}
+          >
+            <option value="">-- No Owner Assigned / Direct Inventory --</option>
+            {landlords.map((l) => (
+              <option key={l.id} value={l.id}>{l.name}</option>
             ))}
+          </select>
+        </div>
+
+        {/* Listing Type + Financials */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="label-caps text-slate-500 mb-1.5 block">Listing Type</label>
+            <select
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              value={form.listingType}
+              onChange={(e) => updateField("listingType", e.target.value as any)}
+            >
+              <option value="Rent">Rent</option>
+              <option value="Sale">Sale</option>
+            </select>
+          </div>
+
+          <div className="sm:col-span-2">
+            {form.listingType === "Rent" ? (
+              <div>
+                <label className="label-caps text-slate-500 mb-1.5 block font-mono">Monthly Rent (KES)</label>
+                <input
+                  className={cn(
+                    "w-full rounded-lg border bg-white px-3 py-2 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                    errors.monthlyRentKes ? "border-red-300 bg-red-50/30" : "border-slate-200"
+                  )}
+                  placeholder="e.g. 85000"
+                  value={form.monthlyRentKes}
+                  onChange={(e) => updateField("monthlyRentKes", e.target.value)}
+                />
+                {errors.monthlyRentKes && <p className="text-sm text-red-500 mt-1">{errors.monthlyRentKes}</p>}
+              </div>
+            ) : (
+              <div>
+                <label className="label-caps text-slate-500 mb-1.5 block font-mono">Asking Price (KES)</label>
+                <input
+                  className={cn(
+                    "w-full rounded-lg border bg-white px-3 py-2 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
+                    errors.askingPriceKes ? "border-red-300 bg-red-50/30" : "border-slate-200"
+                  )}
+                  placeholder="e.g. 15000000"
+                  value={form.askingPriceKes}
+                  onChange={(e) => updateField("askingPriceKes", e.target.value)}
+                />
+                {errors.askingPriceKes && <p className="text-sm text-red-500 mt-1">{errors.askingPriceKes}</p>}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Image URL */}
-        <div>
-          <label className="label-caps text-slate-500 mb-1.5 block">Image URL</label>
-          <input
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
-            placeholder="https://images.unsplash.com/..."
-            value={form.imageUrl}
-            onChange={(e) => updateField("imageUrl", e.target.value)}
-          />
+        {/* Specs: Bed, Bath, Size */}
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="label-caps text-slate-500 mb-1.5 block">Bedrooms</label>
+            <input
+              type="number"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              placeholder="e.g. 3"
+              value={form.bedrooms ?? ""}
+              onChange={(e) => updateField("bedrooms", e.target.value ? parseInt(e.target.value) : null)}
+            />
+          </div>
+          <div>
+            <label className="label-caps text-slate-500 mb-1.5 block">Bathrooms</label>
+            <input
+              type="number"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              placeholder="e.g. 2"
+              value={form.bathrooms ?? ""}
+              onChange={(e) => updateField("bathrooms", e.target.value ? parseInt(e.target.value) : null)}
+            />
+          </div>
+          <div>
+            <label className="label-caps text-slate-500 mb-1.5 block">Size (SqFt)</label>
+            <input
+              type="number"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
+              placeholder="e.g. 1500"
+              value={form.sizeSqft ?? ""}
+              onChange={(e) => updateField("sizeSqft", e.target.value ? parseInt(e.target.value) : null)}
+            />
+          </div>
         </div>
 
         {/* Actions */}
@@ -215,10 +319,10 @@ export function PropertyFormModal({
             {isSubmitting ? (
               <>
                 <LoadingSpinner size="sm" />
-                <span>{mode === "create" ? "Creating…" : "Saving…"}</span>
+                <span>Enrolling…</span>
               </>
             ) : (
-              mode === "create" ? "Create Property" : "Save Changes"
+              mode === "create" ? "Register Property" : "Save Changes"
             )}
           </Button>
         </div>

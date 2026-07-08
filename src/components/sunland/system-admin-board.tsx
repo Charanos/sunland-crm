@@ -280,7 +280,9 @@ function UsersRolesTab() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    Promise.resolve().then(() => loadData());
+  }, [loadData]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -430,7 +432,9 @@ function ThresholdsTab() {
     }
   }, []);
 
-  useEffect(() => { loadThresholds(); }, [loadThresholds]);
+  useEffect(() => {
+    Promise.resolve().then(() => loadThresholds());
+  }, [loadThresholds]);
 
   const handleSave = async (key: string) => {
     setSaving(true);
@@ -583,7 +587,9 @@ function AuditLogTab() {
     }
   }, []);
 
-  useEffect(() => { loadAudit(); }, [loadAudit]);
+  useEffect(() => {
+    Promise.resolve().then(() => loadAudit());
+  }, [loadAudit]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

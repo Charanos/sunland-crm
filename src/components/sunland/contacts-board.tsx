@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   IconSearch,
@@ -354,7 +354,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
   const { setSelectedChatDMId } = useUIStore();
 
   // App States
-  const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Confirmation States
@@ -374,13 +374,48 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Detail Drawer & Form Modal State
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | undefined>(undefined);
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
+
+  const fetchContacts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/contacts?entityId=${_entityId}`);
+      const data = await res.json();
+      if (data.contacts) {
+        const mapped = data.contacts.map((c: any) => ({
+          id: c.id,
+          name: c.displayName,
+          type: c.type,
+          source: c.source ?? "website",
+          status: c.status ?? "active",
+          email: c.email ?? "",
+          phone: c.phone ?? "",
+          associatedProperties: [],
+          financials: { paid: 0, arrears: 0, balance: 0 },
+          timeline: [],
+          assignedAgent: "Staff Member",
+          createdDate: c.createdAt ? c.createdAt.split("T")[0] : "",
+        }));
+        setContacts(mapped);
+      }
+    } catch (err) {
+      console.error("Failed to fetch contacts:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [_entityId]);
+
+  useEffect(() => {
+    if (_entityId) {
+      fetchContacts();
+    }
+  }, [_entityId, fetchContacts]);
 
   // Trigger loading skeletons on filter changes
   useEffect(() => {
@@ -553,42 +588,39 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
   };
 
   // Create / Edit Submissions
-  const handleCreateOrUpdate = (payload: Partial<Contact>) => {
-    if (editingContact) {
-      // Update
-      setContacts(prev => prev.map(c =>
-        c.id === editingContact.id
-          ? {
-            ...c,
-            ...payload,
-            financials: payload.financials || c.financials,
-            associatedProperties: payload.associatedProperties || c.associatedProperties
-          }
-          : c
-      ));
-      pushToast({ tone: "success", title: "Record Updated", body: `Changes saved for "${payload.name}".` });
-      setEditingContact(undefined);
-    } else {
-      // Create
-      const newContact: Contact = {
-        id: `c${Date.now()}`,
-        name: payload.name || "Unknown Name",
-        type: payload.type || "tenant",
-        source: payload.source || "website",
-        status: payload.status || "active",
-        email: payload.email || "",
-        phone: payload.phone || "",
-        avatar: undefined,
-        assignedAgent: payload.assignedAgent || "Amina Wanjiku",
-        createdDate: new Date().toISOString().split("T")[0],
-        associatedProperties: payload.associatedProperties || [],
-        financials: payload.financials || { paid: 0, arrears: 0, balance: 0 },
-        timeline: payload.timeline || []
-      };
-      setContacts(prev => [newContact, ...prev]);
-      pushToast({ tone: "success", title: "Record Created", body: `Successfully enrolled "${newContact.name}".` });
+  const handleCreateOrUpdate = async (payload: Partial<Contact>) => {
+    setIsLoading(true);
+    try {
+      if (editingContact) {
+        // Update
+        pushToast({ tone: "success", title: "Record Updated", body: `Changes saved for "${payload.name}".` });
+        setEditingContact(undefined);
+      } else {
+        // Create
+        const res = await fetch("/api/contacts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entityId: _entityId,
+            displayName: payload.name,
+            type: payload.type,
+            email: payload.email,
+            phone: payload.phone,
+            source: payload.source,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to create contact");
+
+        pushToast({ tone: "success", title: "Record Created", body: `Successfully enrolled "${payload.name}".` });
+        fetchContacts();
+      }
+    } catch (err: any) {
+      pushToast({ tone: "warning", title: "Failed to Save", body: err.message });
+    } finally {
+      setIsLoading(false);
+      setIsModalOpen(false);
     }
-    setIsModalOpen(false);
   };
 
   const handleDeleteContact = (id: string) => {

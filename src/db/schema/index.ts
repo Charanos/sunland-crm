@@ -5,3 +5,5 @@ export * from "@/db/schema/platform";
 export * from "@/db/schema/crm";
 export * from "@/db/schema/properties";
 export * from "@/db/schema/finance";
+export * from "@/db/schema/documents";
+

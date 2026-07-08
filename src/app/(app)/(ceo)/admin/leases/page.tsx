@@ -1,16 +1,10 @@
-import { IconCalendarDollar } from "@tabler/icons-react";
-import { ModulePage } from "@/components/sunland/module-page";
+"use client";
+
+import { useUIStore } from "@/store/ui";
+import { LeasesBoard } from "@/components/sunland/leases-board";
 
 export default function LeasesPage() {
-  return (
-    <ModulePage
-      action="Create lease"
-      description="Manage lease terms, rent schedules, renewals, expiries, tenant placement, and arrears signals."
-      emptyDescription="Active and upcoming leases will appear here once a tenant is linked to a property."
-      emptyTitle="No leases yet"
-      eyebrow="Property management"
-      icon={IconCalendarDollar}
-      title="Leases"
-    />
-  );
+  const { activeEntityId } = useUIStore();
+
+  return <LeasesBoard entityId={activeEntityId} />;
 }
