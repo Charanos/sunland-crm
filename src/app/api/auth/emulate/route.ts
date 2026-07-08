@@ -13,19 +13,25 @@ export async function POST(request: NextRequest) {
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.role, role as any))
+      .where(eq(users.role, role as (typeof users.$inferInsert)["role"]))
       .limit(1);
 
     if (!user) {
       return NextResponse.json({ error: "Profile not configured" }, { status: 404 });
     }
 
-    await setSession({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role as UserRole,
-    });
+    await setSession(
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role as UserRole,
+      },
+      {
+        ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+        userAgent: request.headers.get("user-agent") ?? undefined,
+      },
+    );
 
     const redirectPath = getDefaultPortal(user.role as UserRole);
 

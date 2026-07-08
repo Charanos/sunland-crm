@@ -1,6 +1,11 @@
 import type { UserRole } from "@/types";
 
 // ─── Universal paths accessible by ALL authenticated users regardless of role ─
+// NOTE (ADR 010): Self-service is portal-local. Each portal renders its own
+// profile/settings/security/notifications/messages within its own shell.
+// UNIVERSAL_PATHS is kept minimal — only paths that genuinely need cross-portal
+// reach (the fin portal self-service paths below). Once HR/BD/Front portals
+// get their own route groups, their entries are added here too.
 
 export const UNIVERSAL_PATHS = [
   "/admin/profile",
@@ -15,35 +20,114 @@ export const UNIVERSAL_PATHS = [
   "/fin/messages",
 ];
 
+// ─── CEO-exclusive paths (absent — not greyed — for any other role) ───────────
+// These are enforced in canAccess() with an early return, so nav filtering
+// via canAccess(role, href) will correctly exclude them from the sidebar.
+
+const CEO_ONLY_PATHS = [
+  "/admin/system",
+];
+
 // ─── Role → allowed path prefixes ─────────────────────────────────────────────
 
 const roleAccess: Record<UserRole, string[]> = {
+  // ── Executive tier ──────────────────────────────────────────────────────────
   ceo: ["/admin", "/ops", "/fin", "/hr"],
   general_manager: ["/admin", "/ops", "/fin", "/hr"],
-  finance_head: ["/fin", "/admin/reports", "/admin/properties", "/admin/leases", "/admin/maintenance"],
-  accounts_manager: ["/fin", "/admin/reports", "/admin/properties", "/admin/leases", "/admin/maintenance"],
-  finance_officer: ["/fin/ledger", "/fin/rentals", "/fin/ap-ar", "/fin/cheques", "/fin/reports", "/admin/properties", "/admin/leases"],
-  accounts_officer: ["/fin/ledger", "/fin/ap-ar", "/fin/cheques", "/fin/reports", "/admin/properties", "/admin/leases"],
-  rentals_officer: ["/fin/rentals", "/fin/mandates", "/admin/properties", "/admin/leases"],
-  rentals_mandates_officer: ["/fin/rentals", "/fin/mandates", "/admin/properties", "/admin/leases"],
+
+  // ── Finance family ──────────────────────────────────────────────────────────
+  // finance_head sees the full /fin portal + cross-reads on properties/leases
+  finance_head: [
+    "/fin",
+    "/admin/reports",
+    "/admin/properties",
+    "/admin/leases",
+    "/admin/maintenance",
+  ],
+  accounts_manager: [
+    "/fin",
+    "/admin/reports",
+    "/admin/properties",
+    "/admin/leases",
+    "/admin/maintenance",
+  ],
+  finance_officer: [
+    "/fin/ledger",
+    "/fin/rentals",
+    "/fin/ap-ar",
+    "/fin/cheques",
+    "/fin/reports",
+    "/admin/properties",
+    "/admin/leases",
+  ],
+  accounts_officer: [
+    "/fin/ledger",
+    "/fin/ap-ar",
+    "/fin/cheques",
+    "/fin/reports",
+    "/admin/properties",
+    "/admin/leases",
+  ],
+  rentals_officer: [
+    "/fin",
+    "/fin/rentals",
+    "/fin/mandates",
+    "/admin/properties",
+    "/admin/leases",
+  ],
+  rentals_mandates_officer: [
+    "/fin",
+    "/fin/rentals",
+    "/fin/mandates",
+    "/admin/properties",
+    "/admin/leases",
+  ],
   payroll_officer: ["/fin/payroll"],
+
+  // ── HR family ───────────────────────────────────────────────────────────────
   hr_head: ["/admin/hr", "/admin/reports"],
   hr_manager: ["/admin/hr", "/admin/reports"],
   hr_officer: ["/admin/hr"],
-  line_manager: ["/admin/pipeline", "/admin/contacts", "/admin/properties", "/admin/leases"],
-  bd_head: ["/admin/pipeline", "/admin/contacts", "/admin/properties", "/admin/leases"],
+
+  // ── Business Development ────────────────────────────────────────────────────
+  line_manager: [
+    "/admin/pipeline",
+    "/admin/contacts",
+    "/admin/properties",
+    "/admin/leases",
+  ],
+  bd_head: [
+    "/admin/pipeline",
+    "/admin/contacts",
+    "/admin/properties",
+    "/admin/leases",
+  ],
   agent: ["/admin/pipeline", "/admin/contacts", "/admin/properties"],
   bd_agent: ["/admin/pipeline", "/admin/contacts", "/admin/properties"],
-  front_office_head: ["/admin/front-office", "/admin/contacts", "/admin/properties", "/admin/leases"],
+
+  // ── Front Office ─────────────────────────────────────────────────────────────
+  front_office_head: [
+    "/admin/front-office",
+    "/admin/contacts",
+    "/admin/properties",
+    "/admin/leases",
+  ],
   front_office_admin: ["/admin/front-office"],
   driver: ["/admin/front-office/logistics"],
+
+  // ── Operations ───────────────────────────────────────────────────────────────
   operations_lead: ["/admin/properties", "/admin/leases", "/admin/maintenance"],
   property_manager: ["/admin/properties", "/admin/leases", "/admin/maintenance"],
   valuer: ["/admin/properties", "/admin/valuations"],
+
+  // ── Audit / Compliance ───────────────────────────────────────────────────────
+  // Auditor has broad read access but no write paths — action-level authz
+  // in the service layer enforces this; the portal access here is coarse.
   auditor: ["/admin", "/ops", "/fin", "/hr"],
   auditor_compliance: ["/admin", "/ops", "/fin", "/hr"],
 };
 
+// Roles that can reach the Finance Overview landing page (/fin root exactly)
 const financeOverviewRoles: UserRole[] = [
   "ceo",
   "general_manager",
@@ -58,19 +142,42 @@ const financeOverviewRoles: UserRole[] = [
   "auditor_compliance",
 ];
 
+// Roles that can reach the Executive Approvals Queue and Reports Center
+const executiveOversightRoles: UserRole[] = [
+  "ceo",
+  "general_manager",
+  "auditor_compliance",
+];
+
 export function isUniversalPath(pathname: string): boolean {
   return UNIVERSAL_PATHS.some((p) => pathname.startsWith(p));
 }
 
 export function canAccess(role: UserRole, pathname: string): boolean {
-  // Universal self-service paths are always accessible to any authenticated user
+  // 1. Universal self-service paths — always accessible to any authenticated user
   if (isUniversalPath(pathname)) return true;
 
+  // 2. CEO-only paths — explicitly absent (not greyed) for every other role.
+  //    Per Executive spec §4.1 and ADR 012, System Administration is CEO-exclusive.
+  if (CEO_ONLY_PATHS.some((p) => pathname.startsWith(p))) {
+    return role === "ceo";
+  }
+
+  // 3. Executive oversight paths (Approvals Queue, Reports Center)
+  if (
+    pathname.startsWith("/admin/approvals") ||
+    pathname.startsWith("/admin/reports")
+  ) {
+    return executiveOversightRoles.includes(role);
+  }
+
+  // 4. Finance Overview exact-match (the /fin root is a dashboard landing page,
+  //    not just a path prefix — restrict who may land there)
   if (pathname === "/fin") {
     return financeOverviewRoles.includes(role);
   }
 
-  // Allow access to sub-resources and handle base case
+  // 5. General prefix-based access
   return (roleAccess[role] || []).some((prefix) => pathname.startsWith(prefix));
 }
 

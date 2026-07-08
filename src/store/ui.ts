@@ -38,7 +38,7 @@ type UIStore = {
   toggleChat: () => void;
   openChat: () => void;
   closeChat: () => void;
-  setSelectedChatDMId: (id: string | null) => void;
+  setSelectedChatDMId: (id: string | null, openChat?: boolean) => void;
 };
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -76,5 +76,9 @@ export const useUIStore = create<UIStore>((set) => ({
   toggleChat: () => set((state) => ({ chatOpen: !state.chatOpen })),
   openChat: () => set({ chatOpen: true }),
   closeChat: () => set({ chatOpen: false }),
-  setSelectedChatDMId: (id) => set({ selectedChatDMId: id, chatOpen: id !== null }),
+  setSelectedChatDMId: (id, openChat) =>
+    set((state) => ({
+      selectedChatDMId: id,
+      chatOpen: openChat !== undefined ? openChat : (id !== null),
+    })),
 }));

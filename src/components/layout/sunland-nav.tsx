@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,7 +12,6 @@ import {
   IconChevronRight,
   IconExternalLink,
   IconHelp,
-  IconKeyboard,
   IconLogout,
   IconPlus,
   IconSettings,
@@ -207,13 +206,9 @@ export function SunlandNav() {
     window.location.href = "/login";
   };
 
-  const handleOpenTeamChat = (memberName: string) => {
-    const nameMap: Record<string, string> = {
-      "Esther Howard": "dm1",
-      "Jacob Jones": "dm2",
-      "Cody Fisher": "dm3",
-    };
-    setSelectedChatDMId(nameMap[memberName] || "dm1");
+  const handleOpenTeamChat = (dmId: string) => {
+    const isMessagesPage = pathname?.endsWith("/messages");
+    setSelectedChatDMId(dmId, !isMessagesPage);
   };
 
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -442,23 +437,17 @@ export function SunlandNav() {
         <div className="space-y-0.5 pt-6">
           {navSections
             .filter((section) => {
+              // Section IDs: fin-* = Finance portal only; exec-* = CEO/admin portal only.
+              // ADR 010: each portal shows only its own sections.
               const isFinRoute = pathname.startsWith("/fin");
-              const isFinSection = section.id.startsWith("finance");
+              const isFinSection = section.id.startsWith("fin-");
               return isFinRoute ? isFinSection : !isFinSection;
             })
             .map((section) => {
+              // Filter items the current user can actually access (action-level gating
+              // is in the service layer; this is coarse portal-nav visibility only).
               const items = section.items
-                .filter((item) => canAccess(currentUser.role as UserRole, item.href))
-                .map((item) => {
-                  if (portalPrefix === "/fin" && item.href.startsWith("/admin/")) {
-                    const keys = ["settings", "profile", "notifications", "security", "messages"];
-                    const segment = item.href.split("/")[2];
-                    if (keys.includes(segment)) {
-                      return { ...item, href: item.href.replace("/admin/", "/fin/") };
-                    }
-                  }
-                  return item;
-                });
+                .filter((item) => canAccess(currentUser.role as UserRole, item.href));
               return { ...section, items };
             })
             .filter((section) => section.items.length > 0)
@@ -667,7 +656,7 @@ export function SunlandNav() {
                   <button
                     type="button"
                     aria-label={member.name}
-                    onClick={() => handleOpenTeamChat(member.name)}
+                    onClick={() => handleOpenTeamChat(member.dmId)}
                     className="flex size-10 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.04]"
                   >
                     <Avatar
@@ -683,7 +672,7 @@ export function SunlandNav() {
                   key={member.id}
                   type="button"
                   aria-label={`Message ${member.name}`}
-                  onClick={() => handleOpenTeamChat(member.name)}
+                  onClick={() => handleOpenTeamChat(member.dmId)}
                   className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
                 >
                   <Avatar
@@ -699,7 +688,7 @@ export function SunlandNav() {
                     <p className="truncate text-sm text-white/40">{member.role}</p>
                   </div>
                 </button>
-              ),
+              )
             )}
           </div>
         </div>
@@ -873,27 +862,4 @@ export function SunlandNav() {
   );
 }
 
-// ─── Profile menu item helper (kept for backward compat if reused) ─────────────
 
-function ProfileMenuItem({ icon: ItemIcon, label, href }: { icon: Icon; label: string; href?: string }) {
-  if (href) {
-    return (
-      <Link
-        href={href}
-        className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
-      >
-        <ItemIcon size={14} aria-hidden className="shrink-0 opacity-65" />
-        {label}
-      </Link>
-    );
-  }
-  return (
-    <button
-      type="button"
-      className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
-    >
-      <ItemIcon size={14} aria-hidden className="shrink-0 opacity-65" />
-      {label}
-    </button>
-  );
-}

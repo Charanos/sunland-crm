@@ -36,6 +36,7 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
+import { PageTransition } from "./page-transition";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -319,7 +320,7 @@ function EditableField({
         ) : (
           <p className="text-sm text-slate-800 leading-snug mt-0.5">
             {value || (
-              <span className="text-slate-300 italic text-xs">Not set</span>
+              <span className="text-slate-300 italic text-sm">Not set</span>
             )}
           </p>
         )}
@@ -454,12 +455,12 @@ function ProfileCompletionBar({ profile }: { profile: UserProfile }) {
           <div className="size-6 rounded-md bg-amber-100 flex items-center justify-center">
             <IconCircleDashed size={13} className="text-amber-600" />
           </div>
-          <p className="text-xs text-amber-800">
+          <p className="text-sm text-amber-800">
             Profile{" "}
             <span className="font-mono">{pct}%</span> complete
           </p>
         </div>
-        <span className="font-mono text-xs text-amber-500">
+        <span className="font-mono text-sm text-amber-500">
           {done}/{total} fields
         </span>
       </div>
@@ -475,7 +476,7 @@ function ProfileCompletionBar({ profile }: { profile: UserProfile }) {
           .map((c) => (
             <span
               key={c.key}
-              className="px-2 py-0.5 rounded-md text-tiny label-caps bg-white border border-amber-200 text-amber-700"
+              className="px-2 py-0.5 rounded-md text-sm label-caps bg-white border border-amber-200 text-amber-700"
             >
               + {c.label}
             </span>
@@ -541,7 +542,7 @@ function SecurityHealthCard({
       <div className="flex items-center justify-between mb-4">
         <h2 className="title-serif text-slate-900">Security Health</h2>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-slate-500">{score}/100</span>
+          <span className="font-mono text-sm text-slate-500">{score}/100</span>
           <div className="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
             <div
               className={cn("h-full rounded-full transition-all", scoreTone)}
@@ -571,12 +572,12 @@ function SecurityHealthCard({
               <item.icon size={13} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-slate-500 leading-none mb-0.5">
+              <p className="text-sm text-slate-500 leading-none mb-0.5">
                 {item.label}
               </p>
               <p
                 className={cn(
-                  "text-xs",
+                  "text-sm",
                   item.tone === "risk"
                     ? "text-rose-600"
                     : item.tone === "warning"
@@ -593,7 +594,7 @@ function SecurityHealthCard({
               <button
                 type="button"
                 onClick={item.onAction}
-                className="text-tiny label-caps text-[#151936] hover:underline shrink-0 transition-colors px-1.5 py-0.5 rounded hover:bg-slate-100"
+                className="text-sm label-caps text-[#151936] hover:underline shrink-0 transition-colors px-1.5 py-0.5 rounded hover:bg-slate-100"
               >
                 {item.action} →
               </button>
@@ -650,7 +651,7 @@ function PasswordTab({ onSave }: { onSave: (msg: string) => void }) {
           </div>
           <div>
             <h2 className="title-serif text-white">Change Password</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-sm text-slate-400 mt-0.5">
               Use a strong, unique password you don&apos;t use elsewhere
             </p>
           </div>
@@ -723,7 +724,7 @@ function PasswordTab({ onSave }: { onSave: (msg: string) => void }) {
                 <div className="flex items-center justify-between">
                   <p
                     className={cn(
-                      "text-xs",
+                      "text-sm",
                       strength.score >= 4
                         ? "text-emerald-600"
                         : strength.score >= 3
@@ -733,7 +734,7 @@ function PasswordTab({ onSave }: { onSave: (msg: string) => void }) {
                   >
                     {strength.label}
                   </p>
-                  <span className="font-mono text-tiny text-slate-400">
+                  <span className="font-mono text-sm text-slate-400">
                     {strength.score}/5
                   </span>
                 </div>
@@ -770,13 +771,13 @@ function PasswordTab({ onSave }: { onSave: (msg: string) => void }) {
               </div>
             </div>
             {mismatch && (
-              <p className="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
+              <p className="text-sm text-rose-500 mt-1.5 flex items-center gap-1">
                 <IconX size={11} />
                 Passwords do not match
               </p>
             )}
             {!mismatch && confirm.length > 0 && next === confirm && (
-              <p className="text-xs text-emerald-600 mt-1.5 flex items-center gap-1">
+              <p className="text-sm text-emerald-600 mt-1.5 flex items-center gap-1">
                 <IconCheck size={11} />
                 Passwords match
               </p>
@@ -826,7 +827,7 @@ function PasswordTab({ onSave }: { onSave: (msg: string) => void }) {
               </div>
               <p
                 className={cn(
-                  "text-xs transition-colors",
+                  "text-sm transition-colors",
                   item.ok ? "text-emerald-700" : "text-slate-400"
                 )}
               >
@@ -850,13 +851,13 @@ function ActivityTimeline() {
       <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
         <div>
           <h2 className="title-serif text-slate-900">Activity Log</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-sm text-slate-400 mt-0.5">
             All actions performed in the last 30 days
           </p>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200">
           <IconCalendar size={12} className="text-slate-400" />
-          <span className="text-xs text-slate-500">Last 30 days</span>
+          <span className="text-sm text-slate-500">Last 30 days</span>
         </div>
       </div>
 
@@ -869,7 +870,7 @@ function ActivityTimeline() {
             {/* Day divider */}
             <div className="flex items-center gap-3 mb-5">
               <div className="h-px flex-1 bg-slate-100" />
-              <span className="label-caps text-tiny text-slate-400 px-2">
+              <span className="label-caps text-sm text-slate-400 px-2">
                 {group.label}
               </span>
               <div className="h-px flex-1 bg-slate-100" />
@@ -902,14 +903,14 @@ function ActivityTimeline() {
                       <p className="text-sm text-slate-800 leading-snug">
                         {item.action}
                       </p>
-                      <span className="font-mono text-tiny text-slate-400 whitespace-nowrap mt-0.5 shrink-0">
+                      <span className="font-mono text-sm text-slate-400 whitespace-nowrap mt-0.5 shrink-0">
                         {item.time}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <span
                         className={cn(
-                          "px-2 py-0.5 rounded-md text-tiny label-caps border",
+                          "px-2 py-0.5 rounded-md text-sm label-caps border",
                           MODULE_TONES[item.module] ||
                           "bg-slate-100 text-slate-600 border-slate-200"
                         )}
@@ -917,7 +918,7 @@ function ActivityTimeline() {
                         {item.module}
                       </span>
                       {item.ref && (
-                        <span className="font-mono text-tiny text-slate-400">
+                        <span className="font-mono text-sm text-slate-400">
                           {item.ref}
                         </span>
                       )}
@@ -1062,10 +1063,10 @@ export function ProfilePageContent({
   const completion = useMemo(() => getProfileCompletion(profile), [profile]);
 
   return (
-    <div className="mx-auto max-w-[98rem] flex flex-col gap-5 pb-12 px-4 md:px-6 animate-fade-in">
+    <PageTransition className="mx-auto max-w-[98rem] flex flex-col gap-5 pb-12 px-4 md:px-6">
 
       {/* ── Profile Hero ─────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] shadow-xl">
+      <div className="gsap-stagger relative overflow-hidden rounded-2xl border border-white/[0.06] shadow-xl">
         {/* Satin gradient background */}
         <div className="absolute inset-0 bg-tertiary-gradient" />
 
@@ -1097,7 +1098,7 @@ export function ProfilePageContent({
               <h1 className="title-serif text-[1.75rem] text-white leading-tight">
                 {profile.name}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-tiny label-caps bg-[#f3df27]/12 text-[#f3df27] border border-[#f3df27]/20">
+              <span className="px-2.5 py-0.5 rounded-full text-sm label-caps bg-[#f3df27]/12 text-[#f3df27] border border-[#f3df27]/20">
                 {formatRole(profile.role)}
               </span>
             </div>
@@ -1114,7 +1115,7 @@ export function ProfilePageContent({
                 <span className="font-mono text-white text-sm">
                   {profile.modules.length}
                 </span>
-                <span className="text-slate-500 text-xs">modules</span>
+                <span className="text-slate-500 text-sm">modules</span>
               </div>
 
               <div className="h-3 w-px bg-white/10" />
@@ -1126,7 +1127,7 @@ export function ProfilePageContent({
                 <span className="font-mono text-white text-sm">
                   {sessions.length}
                 </span>
-                <span className="text-slate-500 text-xs">sessions</span>
+                <span className="text-slate-500 text-sm">sessions</span>
               </div>
 
               <div className="h-3 w-px bg-white/10" />
@@ -1144,7 +1145,7 @@ export function ProfilePageContent({
                 />
                 <span
                   className={cn(
-                    "text-xs capitalize",
+                    "text-sm capitalize",
                     profile.status === "online"
                       ? "text-emerald-400"
                       : profile.status === "busy"
@@ -1158,7 +1159,7 @@ export function ProfilePageContent({
 
               <div className="h-3 w-px bg-white/10" />
 
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5 text-sm text-slate-500">
                 <IconCalendar size={11} />
                 <span>Since {profile.joinDate}</span>
               </div>
@@ -1169,15 +1170,15 @@ export function ProfilePageContent({
           <div className="hidden lg:flex flex-col items-end gap-2.5 shrink-0">
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
               <IconShieldCheck size={14} className="text-[#f3df27]" />
-              <span className="text-xs text-slate-300">{profile.accessLevel}</span>
+              <span className="text-sm text-slate-300">{profile.accessLevel}</span>
             </div>
             {completion.pct < 100 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/15">
                 <IconCircleDashed size={12} className="text-amber-400" />
-                <span className="text-xs text-amber-400 font-mono">
+                <span className="text-sm text-amber-400 font-mono">
                   {completion.pct}%
                 </span>
-                <span className="text-xs text-amber-500">complete</span>
+                <span className="text-sm text-amber-500">complete</span>
               </div>
             )}
           </div>
@@ -1208,7 +1209,7 @@ export function ProfilePageContent({
                 {count !== null && (
                   <span
                     className={cn(
-                      "rounded-full px-1.5 py-0.5 text-xs font-medium font-mono",
+                      "rounded-full px-1.5 py-0.5 text-sm font-medium font-mono",
                       isActive
                         ? "bg-[#151936] text-white"
                         : "bg-white/10 text-white/55"
@@ -1232,13 +1233,13 @@ export function ProfilePageContent({
             <ProfileCompletionBar profile={profile} />
 
             {/* Account information */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+            <div className="gsap-stagger rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h2 className="title-serif text-slate-900">
                     Account Information
                   </h2>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-400 mt-0.5">
                     Hover any field to edit
                   </p>
                 </div>
@@ -1298,7 +1299,7 @@ export function ProfilePageContent({
                             });
                           }}
                           className={cn(
-                            "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition-all border",
+                            "flex items-center gap-1.5 rounded-full px-3 py-1 text-sm transition-all border",
                             profile.status === s
                               ? s === "online"
                                 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
@@ -1338,7 +1339,7 @@ export function ProfilePageContent({
                       {profile.joinDate}
                     </p>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] label-caps bg-slate-100 text-slate-400">
+                  <span className="px-2 py-0.5 rounded-md text-sm label-caps bg-slate-100 text-slate-400">
                     Read-only
                   </span>
                 </div>
@@ -1349,7 +1350,7 @@ export function ProfilePageContent({
           {/* Right column */}
           <div className="lg:col-span-5 flex flex-col gap-4">
             {/* Role & Permissions */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+            <div className="gsap-stagger rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
               <h2 className="title-serif text-slate-900 mb-4">
                 Role & Permissions
               </h2>
@@ -1363,7 +1364,7 @@ export function ProfilePageContent({
                   <p className="text-sm text-white">
                     {formatRole(profile.role)}
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-400 mt-0.5">
                     {profile.accessLevel}
                   </p>
                 </div>
@@ -1376,7 +1377,7 @@ export function ProfilePageContent({
                 {profile.modules.map((mod) => (
                   <span
                     key={mod}
-                    className="px-2.5 py-1 rounded-lg text-xs bg-slate-50 border border-slate-200 text-slate-600"
+                    className="px-2.5 py-1 rounded-lg text-sm bg-slate-50 border border-slate-200 text-slate-600"
                   >
                     {mod}
                   </span>
@@ -1388,7 +1389,7 @@ export function ProfilePageContent({
             <SecurityHealthCard onChangeTab={setActiveTab} />
 
             {/* Quick Actions */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+            <div className="gsap-stagger rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
               <h2 className="title-serif text-slate-900 mb-3">
                 Quick Actions
               </h2>
@@ -1430,7 +1431,7 @@ export function ProfilePageContent({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-slate-800">{item.label}</p>
-                        <p className="text-xs text-slate-400">{item.desc}</p>
+                        <p className="text-sm text-slate-400">{item.desc}</p>
                       </div>
                       <IconChevronRight
                         size={12}
@@ -1449,7 +1450,7 @@ export function ProfilePageContent({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-slate-800">{item.label}</p>
-                        <p className="text-xs text-slate-400">{item.desc}</p>
+                        <p className="text-sm text-slate-400">{item.desc}</p>
                       </div>
                       <IconChevronRight
                         size={12}
@@ -1482,7 +1483,7 @@ export function ProfilePageContent({
           <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 className="title-serif text-slate-900">Active Sessions</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-400 mt-0.5">
                 {sessions.length} device{sessions.length !== 1 ? "s" : ""}{" "}
                 currently signed in
               </p>
@@ -1490,7 +1491,7 @@ export function ProfilePageContent({
             <button
               type="button"
               onClick={revokeAllOthers}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-rose-500 border border-rose-100 bg-rose-50 hover:bg-rose-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-rose-500 border border-rose-100 bg-rose-50 hover:bg-rose-100 transition-colors"
             >
               <IconLogout size={12} />
               Revoke all others
@@ -1529,12 +1530,12 @@ export function ProfilePageContent({
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-sm text-slate-800">{session.device}</p>
                       {session.current && (
-                        <span className="px-2 py-0.5 rounded-full text-tiny label-caps bg-emerald-100 text-emerald-700 border border-emerald-200">
+                        <span className="px-2 py-0.5 rounded-full text-sm label-caps bg-emerald-100 text-emerald-700 border border-emerald-200">
                           Current
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
                       <span className="flex items-center gap-1">
                         <BrowserIcon size={11} />
                         {session.browser}
@@ -1545,7 +1546,7 @@ export function ProfilePageContent({
                         {session.location}
                       </span>
                       <span className="text-slate-200">·</span>
-                      <span className="flex items-center gap-1 font-mono text-tiny">
+                      <span className="flex items-center gap-1 font-mono text-sm">
                         <IconClock size={11} />
                         {session.lastActive}
                       </span>
@@ -1554,14 +1555,14 @@ export function ProfilePageContent({
 
                   {/* IP + revoke */}
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="hidden md:block font-mono text-tiny text-slate-400 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="hidden md:block font-mono text-sm text-slate-400 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100">
                       {session.ip}
                     </span>
                     {!session.current && (
                       <button
                         type="button"
                         onClick={() => revokeSession(session.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-rose-500 border border-rose-100 hover:bg-rose-50 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-rose-500 border border-rose-100 hover:bg-rose-50 transition-colors"
                       >
                         <IconLogout size={12} />
                         Revoke
@@ -1583,7 +1584,7 @@ export function ProfilePageContent({
                 <p className="text-sm text-slate-600">
                   No other active sessions
                 </p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-sm text-slate-400 mt-1">
                   Only this device is currently signed in
                 </p>
               </div>
@@ -1591,6 +1592,6 @@ export function ProfilePageContent({
           </div>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 }

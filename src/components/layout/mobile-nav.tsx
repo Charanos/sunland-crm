@@ -312,9 +312,7 @@ export function MobileNavigationDrawer() {
             </div>
             <div className="space-y-0.5">
               {TEAM_MEMBERS.map((member) => {
-                const dmId = MOCK_DMS.find(
-                  (dm) => dm.name === member.name,
-                )?.id || "dm1";
+                const dmId = member.dmId;
                 const dmContact = MOCK_DMS.find((dm) => dm.id === dmId);
                 const unread = dmContact?.unread ?? 0;
 
@@ -323,7 +321,8 @@ export function MobileNavigationDrawer() {
                     key={member.id}
                     type="button"
                     onClick={() => {
-                      setSelectedChatDMId(dmId);
+                      const isMessagesPage = pathname?.endsWith("/messages");
+                      setSelectedChatDMId(dmId, !isMessagesPage);
                       closeMobileNav();
                     }}
                     className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-white/[0.04]"

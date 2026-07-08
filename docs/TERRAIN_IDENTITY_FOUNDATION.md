@@ -25,7 +25,7 @@ The retired teal `#15464e` must not be used. When a state fits the semantic pale
 ## Typography
 
 - Page and section titles use `title-serif` with Cormorant Garamond, `font-weight: 300`.
-- Body and interface text use figtree.
+- Body and interface text use nunito.
 - KES amounts, dates, IDs, ticket references, mandate references, payroll references, percentages, and compact metrics use JetBrains Mono.
 - Font weights are capped at 500. Use size, color, spacing, and hierarchy instead of `font-semibold` or `font-bold`.
 - Letter spacing is `0` for numeric mono data. Caps labels may use positive tracking only.

@@ -14,6 +14,8 @@ import {
   activityLogs,
 } from "@/db/schema";
 import { hashPassword } from "@/lib/auth/password";
+import { grantUserRole, seedPermissionCatalog } from "@/lib/authz/seed";
+import { seedDefaultSettings } from "@/lib/services/settings";
 
 export async function POST() {
   console.log("--------------------------------------------------");
@@ -68,7 +70,16 @@ export async function POST() {
     // 3. Create Demo Users
     const hashedPass = await hashPassword("sunland-demo");
 
-    const [ceoUser, , , financeOfficerUser, pmUser] = await db
+    const [
+      ceoUser,
+      gmUser,
+      financeHeadUser,
+      financeOfficerUser,
+      pmUser,
+      hrHeadUser,
+      lineManagerUser,
+      frontOfficeUser,
+    ] = await db
       .insert(users)
       .values([
         {
@@ -137,6 +148,24 @@ export async function POST() {
         },
       ])
       .returning();
+
+    // 3b. Seed the permission catalog + system roles, then grant each seeded
+    // user their role (backend master §3.1).
+    await seedPermissionCatalog();
+    const roleGrants: Array<{ userId: string; roleSlug: string; entityId: string | null }> = [
+      { userId: ceoUser.id, roleSlug: "ceo", entityId: null },
+      { userId: gmUser.id, roleSlug: "general_manager", entityId: null },
+      { userId: financeHeadUser.id, roleSlug: "finance_head", entityId: null },
+      { userId: financeOfficerUser.id, roleSlug: "finance_officer", entityId: commEntity.id },
+      { userId: pmUser.id, roleSlug: "operations_lead", entityId: resEntity.id },
+      { userId: hrHeadUser.id, roleSlug: "hr_head", entityId: null },
+      { userId: lineManagerUser.id, roleSlug: "line_manager", entityId: resEntity.id },
+      { userId: frontOfficeUser.id, roleSlug: "front_office_head", entityId: null },
+    ];
+    for (const grant of roleGrants) {
+      await grantUserRole(grant.userId, grant.roleSlug, grant.entityId);
+    }
+    await seedDefaultSettings(groupEntity.id);
 
     // 4. Create Contacts (Landlords and Tenants)
     const [landlordA, landlordB, tenantA, tenantB] = await db

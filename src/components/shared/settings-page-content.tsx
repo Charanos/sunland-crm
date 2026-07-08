@@ -23,6 +23,7 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
+import { PageTransition } from "./page-transition";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -152,8 +153,8 @@ function SettingRow({ label, desc, children }: { label: string; desc?: string; c
   return (
     <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-0">
       <div className="flex-1 pr-6">
-        <p className="text-caption text-slate-800">{label}</p>
-        {desc && <p className="text-tiny text-slate-400 mt-0.5 leading-relaxed">{desc}</p>}
+        <p className="text-sm text-slate-800">{label}</p>
+        {desc && <p className="text-sm text-slate-400 mt-0.5 leading-relaxed">{desc}</p>}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
@@ -172,7 +173,7 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: () => void 
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {
   return (
     <select value={value} onChange={e => onChange(e.target.value)}
-      className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-tiny text-slate-700 focus:outline-none focus:border-[var(--sidebar)] transition-all">
+      className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-[var(--sidebar)] transition-all">
       {options.map(o => <option key={o}>{o}</option>)}
     </select>
   );
@@ -180,18 +181,18 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 
 function PanelCard({ title, desc, children, onSave }: { title: string; desc?: string; children: React.ReactNode; onSave?: () => void }) {
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+    <div className="gsap-stagger rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between mb-1">
         <h2 className="headline-md font-serif text-slate-900">{title}</h2>
         {onSave && (
           <button type="button" onClick={onSave}
-            className="flex items-center gap-1.5 rounded-xl bg-[var(--sidebar)] px-4 py-1.5 text-tiny text-white shadow-sm hover:opacity-90 transition-opacity">
+            className="flex items-center gap-1.5 rounded-xl bg-[var(--sidebar)] px-4 py-1.5 text-sm text-white shadow-sm hover:opacity-90 transition-opacity">
             <IconCheck size={12} />
             Save
           </button>
         )}
       </div>
-      {desc && <p className="text-tiny text-slate-400 mb-4">{desc}</p>}
+      {desc && <p className="text-sm text-slate-400 mb-4">{desc}</p>}
       <div>{children}</div>
     </div>
   );
@@ -246,7 +247,7 @@ export function SettingsPageContent() {
   }
 
   return (
-    <div className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 animate-fade-in px-4 md:px-6">
+    <PageTransition className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 px-4 md:px-6">
 
       <BoardHeader
         title="Settings & Preferences"
@@ -258,7 +259,7 @@ export function SettingsPageContent() {
         {SETTINGS_TABS.map(tab => (
           <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "inline-flex px-4 py-2 text-caption font-medium rounded-xl transition-all flex items-center gap-1.5",
+              "inline-flex px-4 py-2 text-sm font-medium rounded-xl transition-all flex items-center gap-1.5",
               activeTab === tab.id
                 ? "bg-[#151936] text-white shadow-sm"
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
@@ -284,7 +285,7 @@ export function SettingsPageContent() {
                   control: (
                     <input value={settings.workspace.organizationName}
                       onChange={e => update("workspace", { organizationName: e.target.value })}
-                      className="w-56 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-tiny text-slate-700 focus:outline-none focus:border-[var(--sidebar)] transition-all" />
+                      className="w-56 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-[var(--sidebar)] transition-all" />
                   )
                 },
                 {
@@ -320,7 +321,7 @@ export function SettingsPageContent() {
 
               {/* Theme selector */}
               <div className="py-4 border-b border-slate-100">
-                <p className="text-caption text-slate-800 mb-3">Theme</p>
+                <p className="text-sm text-slate-800 mb-3">Theme</p>
                 <div className="grid grid-cols-3 gap-2">
                   {([
                     { value: "light", label: "Light", icon: IconSun },
@@ -335,7 +336,7 @@ export function SettingsPageContent() {
                           : "border-slate-200 text-slate-500 hover:border-slate-300"
                       )}>
                       <t.icon size={18} />
-                      <span className="text-tiny">{t.label}</span>
+                      <span className="text-sm">{t.label}</span>
                     </button>
                   ))}
                 </div>
@@ -362,8 +363,8 @@ export function SettingsPageContent() {
               {/* Accent color */}
               <div className="py-4 flex items-center justify-between border-b border-slate-100">
                 <div>
-                  <p className="text-caption text-slate-800">Accent Color</p>
-                  <p className="text-tiny text-slate-400 mt-0.5">Highlight color for buttons and active states.</p>
+                  <p className="text-sm text-slate-800">Accent Color</p>
+                  <p className="text-sm text-slate-400 mt-0.5">Highlight color for buttons and active states.</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {["#151936", "#122a20", "#1e3a5f", "#7c3aed", "#0ea5e9"].map(color => (
@@ -385,7 +386,7 @@ export function SettingsPageContent() {
               onSave={() => saveSection("Notifications")}>
 
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
-                <p className="text-caption text-slate-800">Digest Frequency</p>
+                <p className="text-sm text-slate-800">Digest Frequency</p>
                 <Select value={settings.notifications.digestFrequency}
                   onChange={v => update("notifications", { digestFrequency: v as NotificationSettings["digestFrequency"] })}
                   options={["daily", "weekly", "monthly"]} />
@@ -476,12 +477,12 @@ export function SettingsPageContent() {
                       item.tone === "red" ? "border-red-100 bg-red-50/50" : "border-slate-100 bg-white"
                     )}>
                       <div>
-                        <p className={cn("text-caption", item.tone === "red" ? "text-red-700" : "text-slate-800")}>{item.label}</p>
-                        <p className="text-tiny text-slate-400 mt-0.5">{item.desc}</p>
+                        <p className={cn("text-sm", item.tone === "red" ? "text-red-700" : "text-slate-800")}>{item.label}</p>
+                        <p className="text-sm text-slate-400 mt-0.5">{item.desc}</p>
                       </div>
                       <button type="button" onClick={item.action} disabled={item.loading}
                         className={cn(
-                          "flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-tiny transition-all disabled:opacity-50",
+                          "flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-sm transition-all disabled:opacity-50",
                           item.tone === "red"
                             ? "bg-red-500 text-white hover:bg-red-600"
                             : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 shadow-sm"
@@ -506,7 +507,7 @@ export function SettingsPageContent() {
                   </div>
                   <div>
                     <p className="text-label text-slate-900">Sunland ERP Platform</p>
-                    <p className="text-tiny text-slate-500 mt-0.5">Version 2.1.0 · Build 20260627</p>
+                    <p className="text-sm text-slate-500 mt-0.5">Version 2.1.0 · Build 20260627</p>
                   </div>
                 </div>
 
@@ -519,8 +520,8 @@ export function SettingsPageContent() {
                   { label: "Support Contact", value: "support@sunland.co.ke" },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
-                    <p className="text-caption text-slate-500">{item.label}</p>
-                    <p className="text-caption text-slate-800 font-mono">{item.value}</p>
+                    <p className="text-sm text-slate-500">{item.label}</p>
+                    <p className="text-sm text-slate-800 font-mono">{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -529,6 +530,6 @@ export function SettingsPageContent() {
 
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

@@ -16,6 +16,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { useUIStore } from "@/store/ui";
 import { cn } from "@/lib/utils/cn";
+import { usePathname } from "next/navigation";
 
 import { MOCK_DMS, MOCK_CHANNELS } from "@/data/messaging";
 
@@ -29,6 +30,9 @@ const MOCK_MESSAGES = [
 ];
 
 export function GlobalChatWidget() {
+  const pathname = usePathname();
+  const isMessagesPage = pathname?.endsWith("/messages");
+
   const { chatOpen, toggleChat, closeChat, selectedChatDMId: activeChatId, setSelectedChatDMId: setActiveChatId } = useUIStore();
   const [activeTab, setActiveTab] = useState("Direct");
   const [inputText, setInputText] = useState("");
@@ -36,6 +40,8 @@ export function GlobalChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
+
+  if (isMessagesPage) return null;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

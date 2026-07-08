@@ -40,6 +40,8 @@ import {
   activityLogs,
 } from "@/db/schema";
 import { hashPassword } from "@/lib/auth/password";
+import { grantUserRole, seedPermissionCatalog } from "@/lib/authz/seed";
+import { seedDefaultSettings } from "@/lib/services/settings";
 
 async function runSeed() {
   console.log("--------------------------------------------------");
@@ -100,7 +102,16 @@ async function runSeed() {
     console.log("Step 3: Creating administrative and operational user roles...");
     const hashedPass = await hashPassword("sunland-demo");
 
-    const [ceoUser, , , financeOfficerUser, pmUser] = await db
+    const [
+      ceoUser,
+      gmUser,
+      financeHeadUser,
+      financeOfficerUser,
+      pmUser,
+      hrHeadUser,
+      lineManagerUser,
+      frontOfficeUser,
+    ] = await db
       .insert(users)
       .values([
         {
@@ -170,7 +181,30 @@ async function runSeed() {
       ])
       .returning();
 
-    console.log(`Created 6 users. Authenticate with email and password 'sunland-demo'.`);
+    console.log(`Created 8 users. Authenticate with email and password 'sunland-demo'.`);
+
+    // 3b. Seed the permission catalog + system roles, then grant each seeded
+    // user their role (backend master §3.1). CEO/GM are global scope (no
+    // entity restriction); the rest are scoped to their own primaryEntityId.
+    console.log("Step 3b: Seeding permission catalog and granting system roles...");
+    await seedPermissionCatalog();
+    const roleGrants: Array<{ userId: string; roleSlug: string; entityId: string | null }> = [
+      { userId: ceoUser.id, roleSlug: "ceo", entityId: null },
+      { userId: gmUser.id, roleSlug: "general_manager", entityId: null },
+      { userId: financeHeadUser.id, roleSlug: "finance_head", entityId: null },
+      { userId: financeOfficerUser.id, roleSlug: "finance_officer", entityId: commEntity.id },
+      { userId: pmUser.id, roleSlug: "operations_lead", entityId: resEntity.id },
+      { userId: hrHeadUser.id, roleSlug: "hr_head", entityId: null },
+      { userId: lineManagerUser.id, roleSlug: "line_manager", entityId: resEntity.id },
+      { userId: frontOfficeUser.id, roleSlug: "front_office_head", entityId: null },
+    ];
+    for (const grant of roleGrants) {
+      await grantUserRole(grant.userId, grant.roleSlug, grant.entityId);
+    }
+    console.log(`Granted roles to ${roleGrants.length} users.`);
+
+    await seedDefaultSettings(groupEntity.id);
+    console.log("Seeded default entity settings/thresholds.");
 
     // 4. Create Contacts (Landlords and Tenants)
     console.log("Step 4: Creating client and partner records...");
@@ -379,4 +413,9 @@ async function runSeed() {
   }
 }
 
-runSeed();
+// drizzle-orm/neon-serverless's Pool keeps a WebSocket connection open (unlike
+// the old neon-http transport, which was stateless per-request) — the process
+// won't exit on its own once runSeed() resolves, so this script must do it.
+runSeed()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1));

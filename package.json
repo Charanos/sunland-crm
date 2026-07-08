@@ -14,6 +14,7 @@
     "db:seed": "npx tsx src/db/seed.ts"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.4.0",
     "@neondatabase/serverless": "^1.1.0",
     "@tabler/icons-react": "^3.44.0",
@@ -25,6 +26,7 @@
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "framer-motion": "^12.40.0",
+    "gsap": "^3.15.0",
     "jose": "^6.2.3",
     "next": "16.2.9",
     "next-cloudinary": "^6.17.5",
@@ -35,6 +37,7 @@
     "react-hook-form": "^7.79.0",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.6.0",
+    "ws": "^8.21.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
@@ -43,10 +46,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
+    "tsx": "^4.23.0",
     "typescript": "^5"
   }
 }

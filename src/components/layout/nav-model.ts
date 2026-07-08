@@ -1,13 +1,17 @@
 import type { Icon } from "@tabler/icons-react";
 import {
+  IconApps,
   IconBell,
+  IconBriefcase,
   IconBuildingBank,
   IconBuildingCommunity,
   IconCalendarDollar,
   IconCashBanknote,
   IconChartBar,
+  IconChecklist,
   IconClipboardCheck,
   IconClipboardList,
+  IconDatabase,
   IconFileAnalytics,
   IconHomeDollar,
   IconHomeStats,
@@ -17,6 +21,7 @@ import {
   IconShieldLock,
   IconTool,
   IconUserCog,
+  IconUsers,
   IconUsersGroup,
   IconWallet,
 } from "@tabler/icons-react";
@@ -36,78 +41,113 @@ export type NavSection = {
   items: NavItem[];
 };
 
+// ─── FINANCE PORTAL sections (shown when pathname starts with /fin) ──────────
+// Section IDs all start with "fin-" so the sidebar filter can correctly scope them.
+
 export const navSections: NavSection[] = [
+  // ── Finance: Command (single flat link) ────────────────────────────────────
   {
-    id: "command",
-    label: "Command",
-    icon: IconHomeStats,
-    items: [{ href: "/admin", label: "Overview", icon: IconHomeStats }],
-  },
-  {
-    id: "finance-command",
+    id: "fin-command",
     label: "Finance Command",
     icon: IconChartBar,
-    items: [
-      { href: "/fin", label: "Overview", icon: IconChartBar },
-    ],
+    items: [{ href: "/fin", label: "Overview", icon: IconChartBar }],
   },
+
+  // ── Finance: Core Accounting ───────────────────────────────────────────────
   {
-    id: "finance-core",
+    id: "fin-core-accounting",
     label: "Core Accounting",
     icon: IconWallet,
     items: [
-      { href: "/fin/ledger", label: "Ledger & Accounts", icon: IconWallet, badge: "1" },
+      {
+        href: "/fin/ledger/journal-entries",
+        label: "Ledger & Accounts",
+        icon: IconWallet,
+        badge: "1",
+      },
     ],
   },
+
+  // ── Finance: Property Revenue ──────────────────────────────────────────────
   {
-    id: "finance-revenue",
+    id: "fin-property-revenue",
     label: "Property Revenue",
     icon: IconHomeDollar,
     items: [
-      { href: "/fin/rentals", label: "Rentals", icon: IconHomeDollar, badge: "12" },
-      { href: "/fin/mandates", label: "Mandates", icon: IconClipboardCheck, badge: "3" },
-      { href: "/fin/fees", label: "Service Fees", icon: IconCashBanknote },
+      { href: "/fin/rentals/collections", label: "Rentals", icon: IconHomeDollar, badge: "12" },
+      { href: "/fin/mandates/active", label: "Mandates", icon: IconClipboardCheck, badge: "3" },
+      { href: "/fin/fees/rules", label: "Service Fees", icon: IconCashBanknote },
     ],
   },
+
+  // ── Finance: Treasury Control ──────────────────────────────────────────────
   {
-    id: "finance-treasury",
+    id: "fin-treasury-control",
     label: "Treasury Control",
     icon: IconBuildingBank,
     items: [
-      { href: "/fin/ap-ar", label: "Payables & Receivables", icon: IconClipboardList, badge: "2" },
-      { href: "/fin/cheques", label: "Cheques", icon: IconBuildingBank, badge: "1" },
+      {
+        href: "/fin/ap-ar/payables",
+        label: "Payables & Receivables",
+        icon: IconClipboardList,
+        badge: "2",
+      },
+      { href: "/fin/cheques/deposited", label: "Cheques", icon: IconBuildingBank, badge: "1" },
     ],
   },
+
+  // ── Finance: People & Statutory ───────────────────────────────────────────
   {
-    id: "finance-people",
+    id: "fin-people-statutory",
     label: "People & Statutory",
     icon: IconUsersGroup,
     items: [
-      { href: "/fin/payroll", label: "Payroll", icon: IconUsersGroup },
-      { href: "/fin/commissions", label: "Commissions & WHT", icon: IconCashBanknote },
+      { href: "/fin/payroll/runs", label: "Payroll", icon: IconUsersGroup },
+      { href: "/fin/commissions/deals", label: "Commissions & WHT", icon: IconCashBanknote },
     ],
   },
+
+  // ── Finance: Assurance (single flat link) ─────────────────────────────────
   {
-    id: "finance-assurance",
+    id: "fin-assurance",
     label: "Finance Assurance",
     icon: IconFileAnalytics,
     items: [
-      { href: "/fin/reports", label: "Reports", icon: IconReportAnalytics },
+      {
+        href: "/fin/reports/generate",
+        label: "Reports",
+        icon: IconReportAnalytics,
+      },
     ],
   },
+
+  // ─── EXECUTIVE / CEO PORTAL sections (shown on /admin routes) ──────────────
+  // Section IDs all start with "exec-" — none start with "fin-".
+
+  // ── Executive: Command (single flat link) ─────────────────────────────────
   {
-    id: "finance-account",
-    label: "Account & System",
-    icon: IconUserCog,
+    id: "exec-command",
+    label: "Executive Overview",
+    icon: IconHomeStats,
+    items: [{ href: "/admin", label: "Overview", icon: IconHomeStats }],
+  },
+
+  // ── Executive: Oversight ──────────────────────────────────────────────────
+  // /admin/system is gated CEO-only via canAccess() in sunland-nav.tsx
+  {
+    id: "exec-oversight",
+    label: "Oversight",
+    icon: IconChecklist,
     items: [
-      { href: "/admin/messages", label: "Messages", icon: IconMessageCircle, badge: "3" },
-      { href: "/admin/settings", label: "Settings", icon: IconSettings },
-      { href: "/admin/notifications", label: "Notifications", icon: IconBell },
-      { href: "/admin/security", label: "Security", icon: IconShieldLock },
+      { href: "/admin/approvals", label: "Approvals Queue", icon: IconChecklist, badge: "9" },
+      { href: "/admin/reports", label: "Reports Center", icon: IconReportAnalytics },
+      { href: "/admin/system", label: "System Administration", icon: IconDatabase },
     ],
   },
+
+  // ── Executive: Operations ─────────────────────────────────────────────────
   {
-    id: "operations",
+    id: "exec-operations",
     label: "Operations",
     icon: IconClipboardList,
     items: [
@@ -117,18 +157,36 @@ export const navSections: NavSection[] = [
       { href: "/admin/maintenance", label: "Maintenance", icon: IconTool },
     ],
   },
+
+  // ── Executive: Property Portfolio ─────────────────────────────────────────
   {
-    id: "portfolio",
-    label: "Portfolio",
+    id: "exec-portfolio",
+    label: "Property Portfolio",
     icon: IconBuildingCommunity,
     items: [
       { href: "/admin/properties", label: "Properties", icon: IconBuildingCommunity },
       { href: "/admin/valuations", label: "Valuations", icon: IconFileAnalytics },
     ],
   },
+
+  // ── Executive: Departments (cross-portal links) ───────────────────────────
   {
-    id: "admin",
-    label: "Admin",
+    id: "exec-departments",
+    label: "Departments",
+    icon: IconApps,
+    items: [
+      { href: "/fin", label: "Finance", icon: IconWallet, group: "Internal Portals" },
+      { href: "/admin/hr", label: "Human Resources", icon: IconUsers, group: "Internal Portals" },
+      { href: "/admin/front-office", label: "Front Office", icon: IconBriefcase, group: "Internal Portals" },
+    ],
+  },
+
+  // ── Executive: Account & System (self-service — kept for non-fin /admin routes) ──
+  // NOTE: Self-service links in the nav remain here for the CEO/admin portal.
+  // Finance portal self-service is handled exclusively by the profile footer popup.
+  {
+    id: "exec-account",
+    label: "Account & System",
     icon: IconUserCog,
     items: [
       { href: "/admin/messages", label: "Messages", icon: IconMessageCircle, badge: "3" },
@@ -139,40 +197,43 @@ export const navSections: NavSection[] = [
   },
 ];
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 const findNavItem = (secId: string, href: string) => {
   const sec = navSections.find((s) => s.id === secId);
   return sec?.items.find((i) => i.href === href);
 };
 
 export const mobilePrimaryNav = [
-  findNavItem("command", "/admin"),
-  findNavItem("operations", "/admin/contacts"),
-  findNavItem("finance-command", "/fin"),
-  findNavItem("finance-revenue", "/fin/rentals"),
-  findNavItem("portfolio", "/admin/properties"),
+  findNavItem("exec-command", "/admin"),
+  findNavItem("exec-operations", "/admin/contacts"),
+  findNavItem("fin-command", "/fin"),
+  findNavItem("fin-property-revenue", "/fin/rentals/collections"),
+  findNavItem("exec-portfolio", "/admin/properties"),
 ].filter((item): item is NavItem => !!item);
 
 export const collapsedNavItems = [
-  findNavItem("command", "/admin"),
-  findNavItem("operations", "/admin/contacts"),
-  findNavItem("finance-command", "/fin"),
-  findNavItem("finance-core", "/fin/ledger"),
-  findNavItem("finance-revenue", "/fin/rentals"),
-  findNavItem("finance-treasury", "/fin/ap-ar"),
-  findNavItem("portfolio", "/admin/properties"),
+  findNavItem("exec-command", "/admin"),
+  findNavItem("exec-operations", "/admin/contacts"),
+  findNavItem("fin-command", "/fin"),
+  findNavItem("fin-core-accounting", "/fin/ledger/journal-entries"),
+  findNavItem("fin-property-revenue", "/fin/rentals/collections"),
+  findNavItem("fin-treasury-control", "/fin/ap-ar/payables"),
+  findNavItem("exec-portfolio", "/admin/properties"),
 ].filter((item): item is NavItem => !!item);
 
 export function getActiveNavItem(pathname: string): NavItem | null {
   const allItems = navSections.flatMap((section) => section.items);
-  const matches = allItems.filter((item) =>
-    item.href === "/admin" || item.href === "/fin"
-      ? pathname === item.href
-      : pathname.startsWith(item.href),
-  );
+
+  // Exact-match roots first, then longest startsWith
+  const matches = allItems.filter((item) => {
+    if (item.href === "/admin" || item.href === "/fin") {
+      return pathname === item.href;
+    }
+    return pathname.startsWith(item.href);
+  });
 
   if (matches.length === 0) return null;
-
-  // Return the one with the longest href (most specific match)
   return matches.sort((a, b) => b.href.length - a.href.length)[0];
 }
 

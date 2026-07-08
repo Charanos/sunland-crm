@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Cardo, JetBrains_Mono, Figtree, Libre_Baskerville } from "next/font/google";
+import { Cardo, JetBrains_Mono, Nunito, Libre_Baskerville } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
-const figtree = Figtree({
-  variable: "--font-figtree",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
   weight: ["300", "400", "500"],
 });
@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${figtree.variable} ${jetbrains.variable} ${cardo.variable} h-full antialiased`}
+      className={`${nunito.variable} ${jetbrains.variable} ${cardo.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <AppProviders>{children}</AppProviders>
