@@ -17,7 +17,6 @@ import {
   IconLogout,
   IconChevronRight,
   IconKey,
-  IconMapPin,
   IconClock,
   IconDeviceMobile,
   IconActivity,
@@ -41,9 +40,13 @@ import { PageTransition } from "./page-transition";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface UserProfile {
+  id: string;
   name: string;
   email: string;
-  phone: string;
+  title: string | null;
+  // No `phone` column exists on `users` — kept null rather than a fabricated
+  // value; displayed as "Not set" and not offered as an editable field.
+  phone: string | null;
   department: string;
   joinDate: string;
   role: string;
@@ -65,24 +68,54 @@ interface ActivityItem {
 interface Session {
   id: string;
   device: string;
-  location: string;
   lastActive: string;
   browser: string;
   current: boolean;
   ip: string;
 }
 
+// No IP-geolocation service exists in this codebase, so sessions show the
+// raw IP rather than a fabricated city/location string.
+function parseUserAgent(ua: string | null): { device: string; browser: string } {
+  const raw = ua ?? "";
+  const browser = raw.includes("Edg") ? "Edge" : raw.includes("Chrome") ? "Chrome" : raw.includes("Safari") ? "Safari" : raw.includes("Firefox") ? "Firefox" : "Unknown browser";
+  const device = raw.includes("iPhone")
+    ? "iPhone"
+    : raw.includes("Android")
+      ? "Android device"
+      : raw.includes("Mobile")
+        ? "Mobile device"
+        : raw.includes("Macintosh")
+          ? "Mac"
+          : raw.includes("Windows")
+            ? "Windows PC"
+            : "Unknown device";
+  return { device, browser };
+}
+
+function formatActivityTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "Just now";
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hour${hr === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hr / 24);
+  return days === 1 ? "Yesterday" : `${days} days ago`;
+}
+
 // ── Static Data ───────────────────────────────────────────────────────────────
 
 const INITIAL_PROFILE: UserProfile = {
-  name: "Paul Amos",
-  email: "paul.amos@sunland.co.ke",
-  phone: "+254 712 345 678",
+  id: "",
+  name: "",
+  email: "",
+  title: null,
+  phone: null,
   department: "Executive Management",
-  joinDate: "March 2021",
+  joinDate: "—",
   role: "ceo",
-  avatarUrl:
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
+  avatarUrl: null,
   status: "online",
   accessLevel: "Full Access — All modules",
   modules: [
@@ -95,19 +128,6 @@ const INITIAL_PROFILE: UserProfile = {
   ],
 };
 
-const ACTIVITY_LOG: ActivityItem[] = [
-  { id: "1", action: "Approved payroll run PR-2026-06", module: "Finance", time: "10 min ago", tone: "success", ref: "PR-2026-06" },
-  { id: "2", action: "Reviewed Kilimani Heights mandate MDT-005", module: "Properties", time: "1 hour ago", tone: "neutral", ref: "MDT-005" },
-  { id: "3", action: "Signed off on cheque CHQ-0098 clearance", module: "Finance", time: "3 hours ago", tone: "success", ref: "CHQ-0098" },
-  { id: "4", action: "Updated user preferences", module: "Settings", time: "Yesterday", tone: "neutral", ref: null },
-  { id: "5", action: "Generated Monthly Report RPT-208", module: "Reports", time: "2 days ago", tone: "neutral", ref: "RPT-208" },
-];
-
-const SESSIONS: Session[] = [
-  { id: "1", device: 'MacBook Pro 14"', location: "Nairobi, KE", lastActive: "Active now", browser: "Chrome 126", current: true, ip: "102.213.xx.xx" },
-  { id: "2", device: "iPhone 15 Pro", location: "Nairobi, KE", lastActive: "2 hours ago", browser: "Safari Mobile", current: false, ip: "102.213.xx.xx" },
-  { id: "3", device: "Windows PC", location: "Westlands, Nairobi", lastActive: "Yesterday 4:32 PM", browser: "Edge 125", current: false, ip: "41.90.xx.xx" },
-];
 
 const PROFILE_TABS = [
   { id: "Overview" as const, label: "Overview", icon: IconUser },
@@ -843,8 +863,8 @@ function PasswordTab({ onSave }: { onSave: (msg: string) => void }) {
 
 // ── Activity Timeline ──────────────────────────────────────────────────────────
 
-function ActivityTimeline() {
-  const groups = useMemo(() => groupActivityByDay(ACTIVITY_LOG), []);
+function ActivityTimeline({ activityLog }: { activityLog: ActivityItem[] }) {
+  const groups = useMemo(() => groupActivityByDay(activityLog), [activityLog]);
 
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
@@ -943,96 +963,147 @@ export function ProfilePageContent({
 }) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
-  const [sessions, setSessions] = useState<Session[]>(SESSIONS);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
   const { pushToast } = useToast();
 
-  // Fetch real user on mount
+  // `phone` has no backing column and `department`/`accessLevel`/`modules` are
+  // computed from the real role, not stored — kept separate from the fields
+  // that genuinely round-trip to the database (name/title/avatarUrl).
+  function deriveRoleDisplay(role: string) {
+    if (role === "ceo" || role === "general_manager") {
+      return { department: "Executive Management", accessLevel: "Full Access — All modules", modules: ["Finance Command", "Operations", "HR Portal", "Properties & Portfolio", "Reports & Audit", "Security & Admin"] };
+    }
+    if (role.startsWith("finance") || role.startsWith("accounts") || role.startsWith("payroll")) {
+      return { department: "Finance & Accounts", accessLevel: "Ledgers, Approvals & Cash flows", modules: ["Finance Command", "Reports & Audit"] };
+    }
+    if (role.startsWith("hr")) {
+      return { department: "Human Resources", accessLevel: "Employee Profiles & Payroll Head", modules: ["HR Portal", "Reports & Audit"] };
+    }
+    if (role.startsWith("rentals")) {
+      return { department: "Rentals & Portfolios", accessLevel: "Properties, Leases & Mandates", modules: ["Properties & Portfolio", "Operations"] };
+    }
+    if (role.startsWith("operations") || role.startsWith("property")) {
+      return { department: "Operations & Maintenance", accessLevel: "Properties & Maintenance Tickets", modules: ["Operations", "Properties & Portfolio"] };
+    }
+    return { department: "General", accessLevel: "Standard Access", modules: [] };
+  }
+
+  const loadProfile = useCallback(async () => {
+    try {
+      const meRes = await fetch("/api/auth/me");
+      const meData = await meRes.json();
+      if (!meData?.user) return;
+
+      const userRes = await fetch(`/api/identity/users/${meData.user.id}`);
+      const userData = await userRes.json();
+      if (!userRes.ok) throw new Error(userData.error || "Failed to load profile");
+      const user = userData.user;
+      const { department, accessLevel, modules } = deriveRoleDisplay(user.role);
+
+      setProfile({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        title: user.title,
+        phone: null,
+        department,
+        joinDate: user.createdAt
+          ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+          : "—",
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+        status: "online",
+        accessLevel,
+        modules,
+      });
+
+      const [sessionsRes, auditRes] = await Promise.all([
+        fetch("/api/identity/sessions"),
+        fetch(`/api/audit?actorId=${user.id}&limit=20`),
+      ]);
+      const sessionsData = await sessionsRes.json();
+      const auditData = await auditRes.json();
+
+      if (sessionsRes.ok) {
+        const rows = (sessionsData.sessions ?? []) as Array<{ id: string; ip: string | null; userAgent: string | null; revokedAt: string | null; createdAt: string }>;
+        const active = rows.filter((s) => !s.revokedAt);
+        // The frontend has no way to know which listed session is *this*
+        // request's own session (that would require exposing the session id
+        // from getCurrentUser(), which only returns id/email/name/role today)
+        // — the most-recently-created active session is used as a reasonable
+        // "current device" approximation rather than guessing further.
+        const mostRecentId = active.length
+          ? [...active].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].id
+          : null;
+        setSessions(
+          active.map((s) => {
+            const { device, browser } = parseUserAgent(s.userAgent);
+            return {
+              id: s.id,
+              device,
+              browser,
+              ip: s.ip ?? "—",
+              lastActive: formatActivityTime(s.createdAt),
+              current: s.id === mostRecentId,
+            };
+          }),
+        );
+      }
+
+      if (auditRes.ok) {
+        const entries = (auditData.entries ?? []) as Array<{ id: string; associatedType: string; associatedId: string | null; action: string; summary: string; createdAt: string }>;
+        setActivityLog(
+          entries.map((e) => ({
+            id: e.id,
+            action: e.summary,
+            module: e.associatedType.charAt(0).toUpperCase() + e.associatedType.slice(1),
+            time: formatActivityTime(e.createdAt),
+            tone: "neutral" as const,
+            ref: e.associatedId,
+          })),
+        );
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load profile";
+      pushToast({ tone: "error", title: "Error", body: message });
+    }
+  }, [pushToast]);
+
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.user) {
-          const user = data.user;
-          let department = "Executive Management";
-          let accessLevel = "Full Access — All modules";
-          let modules = [
-            "Finance Command",
-            "Operations",
-            "HR Portal",
-            "Properties & Portfolio",
-            "Reports & Audit",
-            "Security & Admin",
-          ];
-
-          if (
-            user.role === "ceo" ||
-            user.role === "general_manager"
-          ) {
-            department = "Executive Management";
-            accessLevel = "Full Access — All modules";
-          } else if (
-            user.role.startsWith("finance") ||
-            user.role.startsWith("accounts") ||
-            user.role.startsWith("payroll")
-          ) {
-            department = "Finance & Accounts";
-            accessLevel = "Ledgers, Approvals & Cash flows";
-            modules = ["Finance Command", "Reports & Audit"];
-          } else if (user.role.startsWith("hr")) {
-            department = "Human Resources";
-            accessLevel = "Employee Profiles & Payroll Head";
-            modules = ["HR Portal", "Reports & Audit"];
-          } else if (user.role.startsWith("rentals")) {
-            department = "Rentals & Portfolios";
-            accessLevel = "Properties, Leases & Mandates";
-            modules = ["Properties & Portfolio", "Operations"];
-          } else if (
-            user.role.startsWith("operations") ||
-            user.role.startsWith("property")
-          ) {
-            department = "Operations & Maintenance";
-            accessLevel = "Properties & Maintenance Tickets";
-            modules = ["Operations", "Properties & Portfolio"];
-          }
-
-          let avatarUrl =
-            user.avatarUrl ||
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face";
-          if (user.role === "ceo") {
-            avatarUrl =
-              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face";
-          } else if (user.role === "general_manager") {
-            avatarUrl =
-              "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face";
-          }
-
-          setProfile({
-            name: user.name || "Paul Amos",
-            email: user.email || "paul.amos@sunland.co.ke",
-            phone: "+254 712 345 678",
-            department,
-            joinDate: "March 2021",
-            role: user.role,
-            avatarUrl,
-            status: "online",
-            accessLevel,
-            modules,
-          });
-        }
-      })
-      .catch(() => { });
-  }, []);
+    Promise.resolve().then(() => loadProfile());
+  }, [loadProfile]);
 
   const handleSaveField = async (field: keyof UserProfile, value: string) => {
-    await new Promise((r) => setTimeout(r, 600));
+    if (field !== "name" && field !== "title") {
+      pushToast({ tone: "warning", title: "Not editable yet", body: `${field.charAt(0).toUpperCase() + field.slice(1)} isn't backed by a saved field yet.` });
+      return;
+    }
+    const previous = profile[field];
     setProfile((p) => ({ ...p, [field]: value }));
-    pushToast({
-      tone: "success",
-      title: "Saved",
-      body: `${field.charAt(0).toUpperCase() + field.slice(1)} updated.`,
-    });
+    try {
+      const res = await fetch(`/api/identity/users/${profile.id}/profile`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save");
+      pushToast({
+        tone: "success",
+        title: "Saved",
+        body: `${field.charAt(0).toUpperCase() + field.slice(1)} updated.`,
+      });
+    } catch (err) {
+      setProfile((p) => ({ ...p, [field]: previous }));
+      const message = err instanceof Error ? err.message : "Could not save this change.";
+      pushToast({ tone: "error", title: "Error", body: message });
+    }
   };
 
+  // No avatar upload endpoint exists yet (would need Cloudinary widget wiring
+  // like the property-image uploader) — this stays a local preview only, and
+  // says so, rather than claiming a save that doesn't happen.
   const handleAvatarChange = (url: string) => {
     setProfile((p) => ({ ...p, avatarUrl: url }));
     pushToast({
@@ -1042,22 +1113,31 @@ export function ProfilePageContent({
     });
   };
 
-  const revokeSession = (id: string) => {
-    setSessions((prev) => prev.filter((s) => s.id !== id));
-    pushToast({
-      tone: "warning",
-      title: "Session revoked",
-      body: "That device has been signed out.",
-    });
+  const revokeSession = async (id: string) => {
+    try {
+      const res = await fetch(`/api/identity/sessions/${id}/revoke`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to revoke session");
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+      pushToast({ tone: "warning", title: "Session revoked", body: "That device has been signed out." });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not revoke that session.";
+      pushToast({ tone: "error", title: "Error", body: message });
+    }
   };
 
-  const revokeAllOthers = () => {
+  const revokeAllOthers = async () => {
+    const others = sessions.filter((s) => !s.current);
+    const results = await Promise.allSettled(
+      others.map((s) => fetch(`/api/identity/sessions/${s.id}/revoke`, { method: "POST" })),
+    );
+    const failures = results.filter((r) => r.status === "rejected").length;
     setSessions((prev) => prev.filter((s) => s.current));
-    pushToast({
-      tone: "warning",
-      title: "All sessions revoked",
-      body: "All other devices have been signed out.",
-    });
+    if (failures > 0) {
+      pushToast({ tone: "warning", title: "Partially revoked", body: `${others.length - failures} of ${others.length} sessions signed out.` });
+    } else {
+      pushToast({ tone: "warning", title: "All sessions revoked", body: "All other devices have been signed out." });
+    }
   };
 
   const completion = useMemo(() => getProfileCompletion(profile), [profile]);
@@ -1190,7 +1270,7 @@ export function ProfilePageContent({
             const isActive = activeTab === tab.id;
             let count: number | null = null;
             if (tab.id === "Sessions") count = sessions.length;
-            if (tab.id === "Activity") count = ACTIVITY_LOG.length;
+            if (tab.id === "Activity") count = activityLog.length;
 
             return (
               <button
@@ -1256,6 +1336,12 @@ export function ProfilePageContent({
                   onSave={(v) => handleSaveField("name", v)}
                 />
                 <EditableField
+                  label="Title"
+                  value={profile.title ?? ""}
+                  icon={IconBuilding}
+                  onSave={(v) => handleSaveField("title", v)}
+                />
+                <EditableField
                   label="Email Address"
                   value={profile.email}
                   type="email"
@@ -1264,7 +1350,7 @@ export function ProfilePageContent({
                 />
                 <EditableField
                   label="Phone Number"
-                  value={profile.phone}
+                  value={profile.phone ?? ""}
                   type="tel"
                   icon={IconPhone}
                   onSave={(v) => handleSaveField("phone", v)}
@@ -1475,7 +1561,7 @@ export function ProfilePageContent({
       )}
 
       {/* ── Activity Tab ─────────────────────────────────────── */}
-      {activeTab === "Activity" && <ActivityTimeline />}
+      {activeTab === "Activity" && <ActivityTimeline activityLog={activityLog} />}
 
       {/* ── Sessions Tab ─────────────────────────────────────── */}
       {activeTab === "Sessions" && (
@@ -1539,11 +1625,6 @@ export function ProfilePageContent({
                       <span className="flex items-center gap-1">
                         <BrowserIcon size={11} />
                         {session.browser}
-                      </span>
-                      <span className="text-slate-200">·</span>
-                      <span className="flex items-center gap-1">
-                        <IconMapPin size={11} />
-                        {session.location}
                       </span>
                       <span className="text-slate-200">·</span>
                       <span className="flex items-center gap-1 font-mono text-sm">

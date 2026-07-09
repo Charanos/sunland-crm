@@ -146,23 +146,34 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/admin/approvals", label: "Approvals Queue", icon: IconChecklist, badge: "9" },
       { href: "/admin/hr/complaints", label: "Complaints", icon: IconAlertTriangle },
+      // Triage function, not personal self-service — the admin dashboard is the
+      // main technical-support endpoint, so ticket triage lives with the rest
+      // of executive oversight, not under Account & System.
+      { href: "/admin/support", label: "Support Tickets", icon: IconLifebuoy },
       { href: "/admin/reports", label: "Reports Center", icon: IconReportAnalytics },
       { href: "/admin/system", label: "System Administration", icon: IconDatabase },
     ],
   },
 
-  // ── Executive: Operations ─────────────────────────────────────────────────
+  // ── Executive: Sales & CRM ─────────────────────────────────────────────────
   {
-    id: "exec-operations",
-    label: "Operations",
-    icon: IconClipboardList,
+    id: "exec-sales",
+    label: "Sales & CRM",
+    icon: IconBriefcase,
     items: [
       { href: "/admin/contacts", label: "Contacts", icon: IconUsersGroup },
       { href: "/admin/pipeline", label: "Pipeline", icon: IconChartBar },
+    ],
+  },
+
+  // ── Executive: Property Operations ────────────────────────────────────────
+  {
+    id: "exec-property-ops",
+    label: "Property Operations",
+    icon: IconClipboardList,
+    items: [
       { href: "/admin/leases", label: "Leases", icon: IconCalendarDollar },
       { href: "/admin/maintenance", label: "Maintenance", icon: IconTool },
-      { href: "/admin/projects", label: "Projects", icon: IconLayoutKanban },
-      { href: "/admin/events", label: "Events", icon: IconCalendarEvent },
     ],
   },
 
@@ -174,6 +185,17 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/admin/properties", label: "Properties", icon: IconBuildingCommunity },
       { href: "/admin/valuations", label: "Valuations", icon: IconFileAnalytics },
+    ],
+  },
+
+  // ── Executive: Scheduling ──────────────────────────────────────────────────
+  {
+    id: "exec-scheduling",
+    label: "Scheduling",
+    icon: IconLayoutKanban,
+    items: [
+      { href: "/admin/projects", label: "Projects", icon: IconLayoutKanban },
+      { href: "/admin/events", label: "Events", icon: IconCalendarEvent },
     ],
   },
 
@@ -198,7 +220,6 @@ export const navSections: NavSection[] = [
     icon: IconUserCog,
     items: [
       { href: "/admin/messages", label: "Messages", icon: IconMessageCircle, badge: "3" },
-      { href: "/admin/support", label: "Support Tickets", icon: IconLifebuoy },
       { href: "/admin/settings", label: "Settings", icon: IconSettings },
       { href: "/admin/notifications", label: "Notifications", icon: IconBell },
       { href: "/admin/security", label: "Security", icon: IconShieldLock },
@@ -215,7 +236,7 @@ const findNavItem = (secId: string, href: string) => {
 
 export const mobilePrimaryNav = [
   findNavItem("exec-command", "/admin"),
-  findNavItem("exec-operations", "/admin/contacts"),
+  findNavItem("exec-sales", "/admin/contacts"),
   findNavItem("fin-command", "/fin"),
   findNavItem("fin-property-revenue", "/fin/rentals/collections"),
   findNavItem("exec-portfolio", "/admin/properties"),
@@ -223,7 +244,7 @@ export const mobilePrimaryNav = [
 
 export const collapsedNavItems = [
   findNavItem("exec-command", "/admin"),
-  findNavItem("exec-operations", "/admin/contacts"),
+  findNavItem("exec-sales", "/admin/contacts"),
   findNavItem("fin-command", "/fin"),
   findNavItem("fin-core-accounting", "/fin/ledger/journal-entries"),
   findNavItem("fin-property-revenue", "/fin/rentals/collections"),

@@ -22,46 +22,31 @@ export function MaintenanceBoard() {
         description="Prioritize maintenance issues by property, contractor, urgency, age, and resolution status."
       />
 
-      {/* ── Operations Control Hub Navigator ── */}
+      {/* ── Property Operations Hub Navigator ── */}
       <div className="flex items-center justify-between flex-wrap gap-4 bg-white border border-slate-100 p-4 rounded-[20px] shadow-sm">
         <div className="flex items-center gap-2">
           <div className="size-8 rounded-lg bg-indigo-50 text-indigo-650 flex items-center justify-center">
             <IconClipboardList size={16} />
           </div>
           <div>
-            <h3 className="text-base font-medium text-slate-800 leading-none">Operations Control Hub</h3>
-            <p className="text-sm text-slate-400 mt-1">Navigate across property CRM ops segments.</p>
+            <h3 className="text-base font-medium text-slate-800 leading-none">Property Operations Hub</h3>
+            <p className="text-sm text-slate-400 mt-1">Manage tenancies and maintenance requests.</p>
           </div>
         </div>
 
         <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
           <Link
-            href="/admin/contacts"
-            className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
-          >
-            <span>Contacts</span>
-            <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">CRM</span>
-          </Link>
-          <Link
-            href="/admin/pipeline"
-            className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
-          >
-            <span>Deals Pipeline</span>
-            <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">Active</span>
-          </Link>
-          <Link
             href="/admin/leases"
-            className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Leases</span>
-            <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-medium text-sm">Tenancies</span>
           </Link>
           <Link
             href="/admin/maintenance"
-            className="px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
+            className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
           >
             <span>Maintenance</span>
-            <span className="bg-[#f3df27] text-[#151936] px-1.5 py-0.2 rounded-full font-medium text-sm">Tickets</span>
+            <span className="bg-[#f3df27] text-[#151936] px-1.5 py-0.2 rounded-full text-meta-muted-strong">Active</span>
           </Link>
         </div>
       </div>

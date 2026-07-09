@@ -32,8 +32,8 @@ import {
   IconInbox,
   IconFileText,
   IconCheck,
+  IconBriefcase,
 } from "@tabler/icons-react";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils/cn";
@@ -411,12 +411,6 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
         </p>
       </section>
 
-      {/* Dynamic Approvals Queue for CEO and GM */}
-      {(currentUserRole === "ceo" || currentUserRole === "general_manager") && stats?.awaitingMyDecision?.count && stats.awaitingMyDecision.count > 0 ? (
-        <section className="w-full mt-2" aria-label="Approvals Queue">
-          <ApprovalQueue onActionComplete={loadDashboardData} />
-        </section>
-      ) : null}
 
 
 
@@ -635,6 +629,13 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
         </Card>
       </section>
 
+      {/* Dynamic Approvals Queue for CEO and GM */}
+      {(currentUserRole === "ceo" || currentUserRole === "general_manager") && stats?.awaitingMyDecision?.count && stats.awaitingMyDecision.count > 0 ? (
+        <section className="w-full mt-2 animate-fade-in-up" aria-label="Approvals Queue">
+          <ApprovalQueue onActionComplete={loadDashboardData} />
+        </section>
+      ) : null}
+
       {/* ── Internal Structure & Scheduler ─────────── */}
       <section className="w-full" aria-label="Internal operations">
         <InternalOperationsBoard entityId={context} departmentStats={stats?.departmentStats} />
@@ -646,29 +647,29 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
         <p className="text-base text-slate-500 font-medium tracking-wide mt-1">Deep-dive into revenue trends and core performance metrics.</p>
       </div>
 
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch" aria-label="Revenue analytics">
-        <div className="p-7 xl:col-span-8 flex flex-col justify-between bg-gradient-to-br from-white to-slate-50/30 rounded-[24px] border border-slate-200/60 shadow-sm hover:shadow-md transition-all min-h-[420px] relative overflow-hidden group">
-          {/* Subtle background icon */}
-          <IconChartLine className="absolute -bottom-8 -right-8 text-slate-100/50 size-64 rotate-12 pointer-events-none transition-transform group-hover:scale-105 duration-700" />
+      <section className="gsap-stagger grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch" aria-label="Revenue analytics">
+        <div className="xl:col-span-8 flex flex-col justify-between bg-transparent sm:bg-white rounded-none sm:rounded-[32px] border-0 sm:border border-slate-100 shadow-none sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] my-4 sm:my-0 p-0 sm:p-8 transition-all relative overflow-hidden group">
+          {/* Subtle background glow */}
+          <div className="hidden sm:block absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-indigo-50/50 to-transparent rounded-full blur-3xl -z-10 pointer-events-none opacity-60" />
 
           <div className="relative z-10">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 flex-wrap gap-4">
-              <h2 className="title-primary text-slate-900 flex items-center gap-2">
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between mb-8 flex-wrap gap-4">
+              <h2 className="text-title-primary">
                 Revenue Trajectory
               </h2>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap">
                 {/* Period selector */}
-                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl shadow-inner border border-slate-200/50">
+                <div className="flex items-center gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
                   {(["week", "month", "quarter"] as const).map((p) => (
-                    <button key={p} onClick={() => setChartPeriod(p)} className={cn("text-meta-muted px-3 py-1.5 rounded-lg transition-all capitalize hover:text-slate-800", chartPeriod === p ? "bg-white shadow-sm text-sm text-slate-900 border border-slate-200/50" : "")}>
+                    <button key={p} onClick={() => setChartPeriod(p)} className={cn("body-sm px-3.5 py-1.5 rounded-lg transition-all capitalize", chartPeriod === p ? "bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] text-slate-900" : "text-slate-500 hover:text-slate-700")}>
                       This {p}
                     </button>
                   ))}
                 </div>
                 {/* Data filter */}
-                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl shadow-inner border border-slate-200/50">
+                <div className="flex items-center gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
                   {(["all", "Revenue", "Transactions", "Leads"] as const).map((f) => (
-                    <button key={f} onClick={() => setChartFilter(f)} className={cn("text-meta-muted px-4 py-1.5 rounded-lg transition-all tracking-wide hover:text-slate-800", chartFilter === f ? "bg-white text-sm shadow-sm text-slate-900 border border-slate-200/50" : "")}>
+                    <button key={f} onClick={() => setChartFilter(f)} className={cn("body-sm px-4 py-1.5 rounded-lg transition-all", chartFilter === f ? "bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] text-slate-900" : "text-slate-500 hover:text-slate-700")}>
                       {f === "all" ? "All" : f}
                     </button>
                   ))}
@@ -676,50 +677,53 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 gsap-stagger">
               {/* Income */}
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/60 border border-slate-100 hover:bg-white transition-colors group/stat">
-                <div className="size-12 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 flex items-center justify-center text-teal-600 shadow-sm group-hover/stat:scale-110 transition-transform">
-                  <IconCoin size={22} stroke={1.5} />
+              <div className="flex items-start gap-4 p-5 rounded-[20px] bg-slate-50/80 hover:bg-white hover:shadow-[0_8px_20px_rgb(0,0,0,0.03)] border border-transparent hover:border-slate-100 transition-all duration-300 group/stat">
+                <div className="size-12 rounded-[14px] bg-emerald-500/10 flex items-center justify-center text-emerald-600 group-hover/stat:scale-110 group-hover/stat:bg-emerald-500 group-hover/stat:text-white transition-all duration-500 shrink-0">
+                  <IconCoin size={22} stroke={2} />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 font-medium mb-1">Income</p>
-                  <div className="flex items-baseline gap-2">
+                  <p className="label-caps mb-1.5">Income</p>
+                  <div className="flex flex-wrap items-baseline gap-2">
                     <span className="mono-stat text-slate-900">{formatCompactKES(metrics.income)}</span>
-                    <span className={cn("text-xs flex items-center px-1.5 py-0.5 rounded-md font-medium", metrics.incomeGrowth >= 0 ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50")}>
-                      {Math.abs(metrics.incomeGrowth)}% {metrics.incomeGrowth >= 0 ? <IconTrendingUp size={12} className="ml-0.5" /> : <IconTrendingDown size={12} className="ml-0.5" />}
+                    <span className={cn("mono-data flex items-center", metrics.incomeGrowth >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                      {metrics.incomeGrowth >= 0 ? <IconTrendingUp size={14} className="mr-0.5" /> : <IconTrendingDown size={14} className="mr-0.5" />}
+                      {Math.abs(metrics.incomeGrowth)}%
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Expenses */}
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/60 border border-slate-100 hover:bg-white transition-colors group/stat">
-                <div className="size-12 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-sm group-hover/stat:scale-110 transition-transform">
-                  <IconWallet size={22} stroke={1.5} />
+              <div className="flex items-start gap-4 p-5 rounded-[20px] bg-slate-50/80 hover:bg-white hover:shadow-[0_8px_20px_rgb(0,0,0,0.03)] border border-transparent hover:border-slate-100 transition-all duration-300 group/stat">
+                <div className="size-12 rounded-[14px] bg-amber-500/10 flex items-center justify-center text-amber-600 group-hover/stat:scale-110 group-hover/stat:bg-amber-500 group-hover/stat:text-white transition-all duration-500 shrink-0">
+                  <IconWallet size={22} stroke={2} />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 font-medium mb-1">Expenses</p>
-                  <div className="flex items-baseline gap-2">
+                  <p className="label-caps mb-1.5">Expenses</p>
+                  <div className="flex flex-wrap items-baseline gap-2">
                     <span className="mono-stat text-slate-900">{formatCompactKES(metrics.expenses)}</span>
-                    <span className={cn("text-xs flex items-center px-1.5 py-0.5 rounded-md font-medium", metrics.expenseGrowth <= 0 ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50")}>
-                      {Math.abs(metrics.expenseGrowth)}% {metrics.expenseGrowth > 0 ? <IconTrendingUp size={12} className="ml-0.5" /> : <IconTrendingDown size={12} className="ml-0.5" />}
+                    <span className={cn("mono-data flex items-center", metrics.expenseGrowth <= 0 ? "text-emerald-500" : "text-rose-500")}>
+                      {metrics.expenseGrowth > 0 ? <IconTrendingUp size={14} className="mr-0.5" /> : <IconTrendingDown size={14} className="mr-0.5" />}
+                      {Math.abs(metrics.expenseGrowth)}%
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Profit */}
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/60 border border-slate-100 hover:bg-white transition-colors group/stat">
-                <div className="size-12 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm group-hover/stat:scale-110 transition-transform">
-                  <IconChartLine size={22} stroke={1.5} />
+              <div className="flex items-start gap-4 p-5 rounded-[20px] bg-slate-50/80 hover:bg-white hover:shadow-[0_8px_20px_rgb(0,0,0,0.03)] border border-transparent hover:border-slate-100 transition-all duration-300 group/stat">
+                <div className="size-12 rounded-[14px] bg-indigo-500/10 flex items-center justify-center text-indigo-600 group-hover/stat:scale-110 group-hover/stat:bg-indigo-500 group-hover/stat:text-white transition-all duration-500 shrink-0">
+                  <IconChartLine size={22} stroke={2} />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 font-medium mb-1">Profit</p>
-                  <div className="flex items-baseline gap-2">
+                  <p className="label-caps mb-1.5">Profit</p>
+                  <div className="flex flex-wrap items-baseline gap-2">
                     <span className="mono-stat text-slate-900">{formatCompactKES(metrics.profit)}</span>
-                    <span className={cn("text-xs flex items-center px-1.5 py-0.5 rounded-md font-medium", metrics.profitGrowth >= 0 ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50")}>
-                      {Math.abs(metrics.profitGrowth)}% {metrics.profitGrowth >= 0 ? <IconTrendingUp size={12} className="ml-0.5" /> : <IconTrendingDown size={12} className="ml-0.5" />}
+                    <span className={cn("mono-data flex items-center", metrics.profitGrowth >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                      {metrics.profitGrowth >= 0 ? <IconTrendingUp size={14} className="mr-0.5" /> : <IconTrendingDown size={14} className="mr-0.5" />}
+                      {Math.abs(metrics.profitGrowth)}%
                     </span>
                   </div>
                 </div>
@@ -727,43 +731,43 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
             </div>
           </div>
 
-          <div className="flex-1 min-h-[220px] flex items-end relative z-10 bg-white/40 rounded-xl p-2 border border-white/60">
-            {mounted ? <SalesChart data={chartData} activeFilter={chartFilter} /> : <div className="h-full w-full skeleton-shimmer rounded-xl" />}
+          <div className="flex-1 min-h-[260px] flex items-end relative z-10 bg-slate-50/50 rounded-2xl p-4 border border-slate-100/50">
+            {mounted ? <SalesChart data={chartData} activeFilter={chartFilter} /> : <div className="h-full w-full skeleton-shimmer rounded-2xl" />}
           </div>
         </div>
 
         {/* Stats Column */}
-        <div className="xl:col-span-4 flex flex-col gap-4">
+        <div className="xl:col-span-4 flex flex-col gap-4 gsap-stagger">
           {/* Sales Statistic — KES */}
           <Link href="/fin" className="block flex-1 group/card">
-            <div className="p-6 bg-gradient-to-br from-white to-slate-50/50 rounded-[24px] shadow-sm border border-slate-200/60 flex flex-col justify-between group-hover/card:shadow-md group-hover/card:border-slate-300/60 transition-all h-full relative overflow-hidden min-h-[140px]">
-              <div className="absolute top-0 right-0 p-6 opacity-0 group-hover/card:opacity-100 transition-opacity translate-x-2 group-hover/card:translate-x-0 group-hover/card:-translate-y-1">
+            <div className="p-6 bg-white rounded-[24px] sm:rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 h-full relative overflow-hidden min-h-[140px]">
+              <div className="absolute top-0 right-0 p-6 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 translate-x-2 group-hover/card:translate-x-0 group-hover/card:-translate-y-1">
                 <IconArrowUpRight size={20} className="text-slate-400" />
               </div>
-              <div className="flex items-center justify-between mb-3 relative z-10">
-                <h3 className="title-primary text-slate-800">Sales Performance</h3>
+              <div className="flex items-center justify-between mb-4 relative z-10">
+                <h3 className="text-title-primary">Sales Performance</h3>
               </div>
-              <div className="flex items-end justify-between relative z-10">
+              <div className="flex items-end justify-between relative z-10 gap-2">
                 <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0 shadow-sm group-hover/card:scale-110 transition-transform">
-                    <IconCoin size={22} stroke={1.5} />
+                  <div className="size-12 rounded-[14px] bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 group-hover/card:scale-110 group-hover/card:bg-indigo-600 group-hover/card:text-white transition-all duration-500">
+                    <IconCoin size={22} stroke={2} />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 font-medium mb-1">Total Profit</p>
+                    <p className="label-caps mb-1">Total Profit</p>
                     <p className="mono-stat text-slate-900">{formatCompactKES(metrics.profit)}</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-2 mb-2">
-                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Margin</p>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <p className="label-caps">Margin</p>
                     <span className={cn(
-                      "text-xs flex items-center px-2 py-0.5 rounded border shadow-sm",
-                      profitMargin >= 0 ? "text-emerald-700 bg-emerald-50 border-emerald-100" : "text-rose-700 bg-rose-50 border-rose-100",
+                      "mono-data",
+                      profitMargin >= 0 ? "text-emerald-500" : "text-rose-500",
                     )}>
                       {profitMargin >= 0 ? "+" : ""}{profitMargin}%
                     </span>
                   </div>
-                  <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
+                  <div className="w-20 sm:w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div className={cn("h-full rounded-full transition-all duration-1000", profitMargin >= 0 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-rose-400 to-rose-500")} style={{ width: `${Math.min(100, Math.abs(profitMargin))}%` }} />
                   </div>
                 </div>
@@ -772,52 +776,52 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
           </Link>
 
           {/* Site Inquiries — CRM Relevant */}
-          <div className="p-6 bg-gradient-to-br from-white to-slate-50/50 rounded-[24px] shadow-sm border border-slate-200/60 flex flex-col justify-between hover:shadow-md hover:border-slate-300/60 transition-all flex-1 min-h-[140px] group/card relative overflow-hidden">
-            <div className="flex items-center justify-between mb-3 relative z-10">
-              <h3 className="title-primary text-slate-800">Site Inquiries</h3>
-              <div className="p-1.5 rounded-lg bg-sky-50 text-sky-600 border border-sky-100 group-hover/card:scale-110 transition-transform">
-                <IconChartLine size={16} />
+          <div className="p-6 bg-white rounded-[24px] sm:rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 flex-1 min-h-[140px] group/card relative overflow-hidden">
+            <div className="flex items-center justify-between mb-4 relative z-10">
+              <h3 className="text-title-primary">Site Inquiries</h3>
+              <div className="size-8 rounded-[10px] bg-sky-50 text-sky-600 flex items-center justify-center group-hover/card:scale-110 group-hover/card:bg-sky-500 group-hover/card:text-white transition-all duration-500">
+                <IconChartLine size={16} stroke={2} />
               </div>
             </div>
             <div className="flex items-end justify-between relative z-10">
               <div>
-                <p className="text-sm text-slate-500 font-medium mb-1">Property inquiries this week</p>
+                <p className="label-caps mb-1">Inquiries This Week</p>
                 <div className="flex items-center gap-2">
                   <span className="mono-stat text-slate-900">{metrics.siteInquiries}</span>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest mb-2">Conversion</p>
-                <span className="text-sm text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-1 rounded shadow-sm mono-data">{metrics.inquiryRate}</span>
+              <div className="text-right flex flex-col items-end">
+                <p className="label-caps mb-1.5">Conversion</p>
+                <span className="mono-data text-sky-600 bg-sky-50 px-2.5 py-1 rounded-lg">{metrics.inquiryRate}</span>
               </div>
             </div>
           </div>
 
           {/* New Leads — CRM Relevant */}
           <Link href="/admin/pipeline" className="block flex-1 group/card">
-            <div className="p-6 bg-gradient-to-br from-white to-slate-50/50 rounded-[24px] shadow-sm border border-slate-200/60 flex flex-col justify-between group-hover/card:shadow-md group-hover/card:border-slate-300/60 transition-all h-full relative overflow-hidden min-h-[140px]">
-              <div className="flex items-center justify-between mb-3 relative z-10">
-                <h3 className="title-primary text-slate-800">New Leads</h3>
-                <span className="text-[10px] font-medium text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded shadow-sm uppercase tracking-widest">MTD</span>
+            <div className="p-6 bg-white rounded-[24px] sm:rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 h-full relative overflow-hidden min-h-[140px]">
+              <div className="flex items-center justify-between mb-4 relative z-10">
+                <h3 className="text-title-primary">New Leads</h3>
+                <span className="label-caps bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-md">MTD</span>
               </div>
               <div className="flex items-end justify-between relative z-10">
                 <div>
-                  <p className="text-sm text-slate-500 font-medium mb-1">New leads added this month</p>
-                  <div className="flex items-center gap-3">
+                  <p className="label-caps mb-1">Added This Month</p>
+                  <div className="flex items-center gap-2.5">
                     <span className="mono-stat text-slate-900">{metrics.newLeads}</span>
                     <span className={cn(
-                      "text-xs flex items-center px-2 py-0.5 rounded border shadow-sm",
-                      stats && stats.newLeadsTrend < 0 ? "text-rose-700 bg-rose-50 border-rose-100" : "text-emerald-700 bg-emerald-50 border-emerald-100",
+                      "mono-data flex items-center",
+                      stats && stats.newLeadsTrend < 0 ? "text-rose-500" : "text-emerald-500",
                     )}>
-                      {stats && stats.newLeadsTrend < 0 ? <IconTrendingDown size={12} className="mr-0.5" /> : <IconTrendingUp size={12} className="mr-0.5" />} {metrics.newLeadsGrowth}
+                      {stats && stats.newLeadsTrend < 0 ? <IconTrendingDown size={14} className="mr-0.5" /> : <IconTrendingUp size={14} className="mr-0.5" />} {metrics.newLeadsGrowth}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-end gap-1.5 h-10 opacity-90 group-hover/card:gap-2 transition-all">
-                  <div className="w-4 h-[30%] bg-slate-200 rounded-sm group-hover/card:bg-slate-300 transition-colors" />
-                  <div className="w-4 h-[50%] bg-slate-200 rounded-sm group-hover/card:bg-slate-300 transition-colors" />
-                  <div className="w-4 h-[70%] bg-indigo-400 rounded-sm shadow-sm group-hover/card:bg-indigo-500 transition-colors" />
-                  <div className="w-4 h-[100%] bg-[#151936] rounded-sm shadow-sm" />
+                <div className="flex items-end gap-1.5 h-10 group-hover/card:gap-2 transition-all duration-500">
+                  <div className="w-3.5 h-[30%] bg-slate-100 rounded-sm group-hover/card:bg-slate-200 transition-colors" />
+                  <div className="w-3.5 h-[50%] bg-slate-100 rounded-sm group-hover/card:bg-slate-200 transition-colors" />
+                  <div className="w-3.5 h-[70%] bg-indigo-500/20 rounded-sm group-hover/card:bg-indigo-500/40 transition-colors" />
+                  <div className="w-3.5 h-[100%] bg-indigo-600 rounded-sm shadow-sm" />
                 </div>
               </div>
             </div>
@@ -827,11 +831,11 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
 
       {/* ── Listing Board + Growth Widget ─ */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch mt-1" aria-label="Property listing board">
-        <div className="p-6 xl:col-span-8 flex flex-col justify-between bg-white rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden min-h-[420px]">
+        <div className="my-4 sm:my-0 p-0 sm:p-6 xl:col-span-8 flex flex-col justify-between bg-transparent sm:bg-white rounded-none sm:rounded-[20px] border-0 sm:border sm:border-slate-100 shadow-none sm:shadow-sm sm:hover:shadow-md transition-all overflow-hidden min-h-[420px]">
           <div>
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2 border-b border-slate-100/60 pb-4">
               <div>
-                <h2 className="text-lg font-medium text-slate-900 tracking-tight">Listing Board</h2>
+                <h2 className="text-title-primary">Listing Board</h2>
                 {activeTab === "listings" && (
                   <p className="text-meta-muted mt-0.5">{formatCompactKES(metrics.rentPool)} total rent pool under management</p>
                 )}
@@ -844,8 +848,8 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                       key={tab}
                       onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
                       className={cn(
-                        "text-sm px-3.5 py-1.5 rounded-md transition-all font-medium tracking-wide capitalize",
-                        activeTab === tab ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800" : "text-slate-500 hover:text-slate-700"
+                        "body-sm px-3.5 py-1.5 rounded-md transition-all tracking-wide capitalize",
+                        activeTab === tab ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800 font-medium" : "text-slate-500 hover:text-slate-700"
                       )}
                     >
                       {tab === "activity" ? "Activity Logs" : tab === "transactions" ? "Transactions" : "Listings"}
@@ -889,7 +893,8 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col animate-fade-in">
-                  <div className="flex-1 overflow-x-auto [scrollbar-width:thin] mt-1">
+                  {/* Desktop view */}
+                  <div className="hidden sm:block flex-1 overflow-x-auto [scrollbar-width:thin] mt-1">
                     <table className="w-full text-left border-collapse min-w-[600px]">
                       <thead>
                         <tr className="border-b border-slate-100/60 text-slate-400 label-caps">
@@ -983,6 +988,71 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                         )}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Mobile view */}
+                  <div className="block sm:hidden flex-1 space-y-3 mt-1">
+                    {paginatedListings.length > 0 ? paginatedListings.map((listing, idx) => (
+                      <div
+                        key={listing.id}
+                        className="p-4 rounded-xl border border-slate-100 bg-white shadow-sm flex flex-col gap-3 group animate-fade-in-up"
+                        style={{ animationDelay: `${idx * 40}ms` }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="size-11 relative rounded-lg overflow-hidden shrink-0 border border-slate-100 bg-slate-100 flex items-center justify-center">
+                            {listing.imageUrl ? (
+                              <Image src={listing.imageUrl} alt={listing.name} fill sizes="44px" className="object-cover" />
+                            ) : (
+                              <IconBuildingSkyscraper size={16} className="text-slate-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-base text-slate-800 font-medium truncate">{listing.name}</h4>
+                            <p className="text-xs text-slate-455 mt-0.5">{listing.location}</p>
+                          </div>
+                          <span className={cn("text-xs px-2.5 py-0.5 rounded-full font-medium tracking-wide whitespace-nowrap", TABLE_STATUS_STYLES[listing.status])}>
+                            {listing.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                          <div>
+                            <span className="text-xs text-slate-400 uppercase tracking-wider block">ROI / Price</span>
+                            <div className="flex items-baseline gap-1.5 mt-0.5">
+                              <span className="mono-data text-xs text-slate-600 font-mono">{listing.roi}</span>
+                              <span className="text-slate-300">·</span>
+                              <span className="mono-amount text-xs text-slate-850 font-mono">{listing.price}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setDrawerProperty(listing)}
+                              className="text-xs text-[#151936] hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors font-medium"
+                            >
+                              Details
+                            </button>
+                            <button
+                              onClick={() => { setEditingProperty(listing); setPropertyModalMode("edit"); setPropertyModalOpen(true); }}
+                              className="text-xs text-slate-500 hover:text-slate-700 border border-slate-200 p-1.5 rounded-lg transition-colors"
+                              aria-label="Edit"
+                            >
+                              <IconEdit size={14} />
+                            </button>
+                            <button
+                              onClick={() => { setDeleteConfirmId(listing.id); }}
+                              className="text-xs text-red-500 hover:text-red-700 border border-red-100 bg-red-50/50 p-1.5 rounded-lg transition-colors"
+                              aria-label="Delete"
+                            >
+                              <IconTrash size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="text-center py-12">
+                        <IconBuildingSkyscraper size={28} className="text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm text-slate-500 font-medium">No properties match your search.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1112,47 +1182,49 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
 
       {/* ── Action & Health Center (Moved) ── */}
       {(stats && ((stats.awaitingMyDecision && stats.awaitingMyDecision.count > 0) || (stats.systemHealth && currentUserRole === "ceo"))) && (
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-10 animate-fade-in-up">
+        <section className="mt-12 pt-10 border-t border-slate-200/60 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up">
           {stats.awaitingMyDecision && stats.awaitingMyDecision.count > 0 && (
-            <div className="bg-white border border-slate-200/60 p-6 rounded-[24px] shadow-sm flex flex-col justify-between hover:shadow-md hover:border-slate-300 transition-all group relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-500 opacity-80" />
-              <div className="flex justify-between items-start mb-6">
+            <div className="bg-white border border-slate-100 p-6 sm:p-8 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all group relative overflow-hidden z-0">
+              <IconInbox size={260} stroke={1} className="absolute -right-12 -bottom-12 text-slate-50 opacity-60 pointer-events-none group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-700 -z-10" />
+              <div className="flex justify-between items-start mb-6 relative z-10">
                 <div>
                   <h3 className="text-title-primary">Awaiting Decision</h3>
                   <p className="text-desc-secondary mt-1">Pending requests requiring your action</p>
                 </div>
-                <div className="size-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0 shadow-sm border border-amber-100 group-hover:scale-105 transition-transform">
+                <div className="size-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0 shadow-sm border border-amber-100/50 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
                   <IconInbox size={24} stroke={1.5} />
                 </div>
               </div>
-              <div className="space-y-4 mb-6">
+              <div className="space-y-4 mb-6 relative z-10">
                 {stats.awaitingMyDecision.items.map((item, idx) => (
                   <div key={idx} className="flex justify-between items-center text-body-regular border-b border-slate-100 pb-3 last:border-0 last:pb-0">
                     <div className="flex items-center gap-3">
-                      <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                      <div className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 shadow-sm">
                         <IconFileText size={14} />
                       </div>
                       <div>
-                        <span className="text-body-primary capitalize">{item.requestType.replace(/_/g, ' ')}</span>
-                        <p className="text-meta-muted mt-0.5">{new Date(item.requestedAt).toLocaleDateString()}</p>
+                        <span className="text-body-primary capitalize font-medium">{item.requestType.replace(/_/g, ' ')}</span>
+                        <p className="text-meta-muted mt-0.5 text-xs">{new Date(item.requestedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
                       </div>
                     </div>
                     {item.amountKes !== null && (
-                      <span className="mono-data text-slate-900 tracking-tight">
+                      <span className="mono-stat text-slate-900 tracking-tight text-sm bg-white/80 px-1 py-0.5 rounded">
                         {formatCompactKES(item.amountKes)}
                       </span>
                     )}
                   </div>
                 ))}
               </div>
-              <Link href="/admin/approvals" className="mt-auto w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl body-md transition-colors shadow-sm">
-                Review Queue <IconArrowRight size={16} />
-              </Link>
+              <div className="relative z-10 mt-auto">
+                <Link href="/admin/approvals" className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 hover:bg-[#f3df27] text-slate-700 hover:text-[#151936] text-sm font-medium rounded-lg transition-colors border border-slate-200/60 hover:border-transparent">
+                  Review Queue <IconArrowRight size={14} />
+                </Link>
+              </div>
             </div>
           )}
 
           {stats.systemHealth && currentUserRole === "ceo" && (
-            <div className="bg-[#0b1120] border border-slate-800 p-6 rounded-[24px] shadow-lg flex flex-col justify-between hover:shadow-xl hover:border-slate-700 transition-all relative overflow-hidden group">
+            <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-[24px] shadow-xl flex flex-col justify-between hover:shadow-2xl transition-all relative overflow-hidden group">
               <div className="absolute -right-12 -top-12 size-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-700" />
               <div className="flex justify-between items-start mb-6 relative z-10">
                 <div>
@@ -1165,24 +1237,78 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                   </h3>
                   <p className="body-sm text-slate-400 mt-1">Real-time integrity monitoring</p>
                 </div>
-                <div className="size-12 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-400 shrink-0 border border-white/10 group-hover:bg-white/10 transition-colors">
+                <div className="size-12 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-400 shrink-0 border border-white/10 group-hover:bg-white/10 transition-colors shadow-sm">
                   <IconActivity size={24} stroke={1.5} />
                 </div>
               </div>
-              <div className="space-y-6 relative z-10 mb-2">
-                <div className="flex items-baseline gap-3">
-                  <p className="mono-stat text-white leading-none tracking-tight">{stats.systemHealth.activeUserCount}</p>
-                  <p className="body-md text-slate-400">Active Users</p>
-                </div>
-                <div className="pt-4 border-t border-white/10">
-                  <p className="label-caps text-slate-400 mb-2">Last Threshold Update</p>
-                  <div className="flex items-center gap-2 body-sm text-slate-300 text-xs mono-data bg-white/5 px-3.5 py-2 rounded-xl border border-white/5 w-fit">
-                    <IconCheck size={14} className="text-emerald-500" />
-                    {stats.systemHealth.lastThresholdChangeAt
-                      ? new Date(stats.systemHealth.lastThresholdChangeAt).toLocaleString()
-                      : "No recorded updates"}
+              <div className="space-y-6 relative z-10 mb-2 mt-auto">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-baseline gap-3">
+                    <p className="mono-stat text-white leading-none tracking-tight text-5xl">{stats.systemHealth.activeUserCount}</p>
+                    <p className="body-md text-slate-400 font-medium">Active Users</p>
+                  </div>
+                  <div className="flex -space-x-3 opacity-90 hover:opacity-100 transition-opacity cursor-pointer drop-shadow-md">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces&q=80" alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
+                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=faces&q=80" alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces&q=80" alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
+                    <div className="size-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-xs font-medium text-slate-300">
+                      +{Math.max(0, stats.systemHealth.activeUserCount - 3)}
+                    </div>
                   </div>
                 </div>
+                <div className="pt-5 border-t border-white/10">
+                  <p className="label-caps text-slate-500 mb-2.5">Last Threshold Update</p>
+                  <div className="flex items-center gap-2 text-slate-300 text-xs uppercase tracking-wider mono-data bg-white/5 px-3 py-1.5 rounded-md border border-white/5 w-fit">
+                    <IconCheck size={14} className="text-emerald-500" />
+                    {stats.systemHealth.lastThresholdChangeAt
+                      ? new Date(stats.systemHealth.lastThresholdChangeAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+                      : "No updates"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {stats.departmentStats && (
+            <div className="bg-white border border-slate-100 p-6 sm:p-8 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all group relative overflow-hidden z-0">
+              <IconBriefcase size={260} stroke={1} className="absolute -right-16 -bottom-12 text-slate-50 opacity-60 pointer-events-none group-hover:scale-105 group-hover:rotate-3 transition-transform duration-700 -z-10" />
+              <div className="flex justify-between items-start mb-6 relative z-10">
+                <div>
+                  <h3 className="text-title-primary">Organizational Load</h3>
+                  <p className="text-desc-secondary mt-1">Active projects by division</p>
+                </div>
+                <div className="size-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0 shadow-sm border border-indigo-100/50 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
+                  <IconBriefcase size={24} stroke={1.5} />
+                </div>
+              </div>
+              
+              <div className="space-y-3 mb-6 relative z-10">
+                <div className="flex justify-between items-center p-3 rounded-xl hover:bg-slate-50/80 transition-colors backdrop-blur-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="size-2 rounded-full bg-teal-500 shadow-sm" />
+                    <span className="text-body-primary font-medium">Sales & Marketing</span>
+                  </div>
+                  <span className="mono-stat text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">{stats.departmentStats.sales}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 rounded-xl hover:bg-slate-50/80 transition-colors backdrop-blur-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="size-2 rounded-full bg-amber-500 shadow-sm" />
+                    <span className="text-body-primary font-medium">Operations</span>
+                  </div>
+                  <span className="mono-stat text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">{stats.departmentStats.ops}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 rounded-xl hover:bg-slate-50/80 transition-colors backdrop-blur-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="size-2 rounded-full bg-indigo-500 shadow-sm" />
+                    <span className="text-body-primary font-medium">Legal & Compliance</span>
+                  </div>
+                  <span className="mono-stat text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">{stats.departmentStats.legal}</span>
+                </div>
+              </div>
+              <div className="relative z-10 mt-auto">
+                <Link href="/admin/operations" className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-medium rounded-lg transition-colors border border-slate-200/60">
+                  View Operations <IconArrowRight size={14} />
+                </Link>
               </div>
             </div>
           )}

@@ -6,6 +6,7 @@ const userRoleEnum = z.enum(userRole.enumValues as [string, ...string[]]);
 export const updateUserProfileSchema = z.object({
   name: z.string().min(1).optional(),
   title: z.string().optional(),
+  avatarUrl: z.string().url().optional(),
 });
 
 export const updateUserAccessSchema = z.object({

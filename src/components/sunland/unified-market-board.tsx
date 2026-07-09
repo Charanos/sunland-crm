@@ -26,8 +26,10 @@ interface Agent {
   sold: number;
   rented: number;
   revenue: string;
+  totalValueKes?: number;
   img?: string;
   avatarUrl?: string | null;
+  timeLabel?: string;
 }
 
 interface ListingCard {
@@ -93,10 +95,19 @@ interface RevenueDataPoint {
   [key: string]: unknown;
 }
 
+const AVATAR_FALLBACKS = [
+  "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&h=100&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&q=80"
+];
+
 export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: { initialListings?: InitialListing[], revenueData?: RevenueDataPoint[] }) {
   const [activeType, setActiveType] = useState<PropertyType>("All Properties");
   const [searchQuery, setSearchQuery] = useState("");
   const [drawerProperty, setDrawerProperty] = useState<PropertyDetailData | null>(null);
+  const [managerTimeFilter, setManagerTimeFilter] = useState<"This Month" | "This Quarter" | "Annually">("Annually");
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -133,13 +144,14 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
       .then(res => res.json())
       .then(data => {
         if (data.agents) {
-          const agents = data.agents.map((a: { userId: string; name: string; avatarUrl: string | null; closedDealsCount: number; totalValueKes: number }) => ({
+          const agents = data.agents.map((a: { userId: string; name: string; avatarUrl: string | null; closedDealsCount: number; totalValueKes: number }, idx: number) => ({
             userId: a.userId,
             name: a.name,
             sold: a.closedDealsCount,
             rented: 0, // Using closed deals as primary metric for now
             revenue: a.totalValueKes >= 1000000 ? `KES ${(a.totalValueKes / 1000000).toFixed(1)}M` : `KES ${(a.totalValueKes / 1000).toFixed(0)}K`,
-            img: a.avatarUrl || undefined
+            totalValueKes: a.totalValueKes,
+            img: a.avatarUrl || AVATAR_FALLBACKS[idx % AVATAR_FALLBACKS.length]
           }));
           setRealAgents(agents);
         }
@@ -194,7 +206,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
       vacantPercent,
       agents
     };
-  }, [activeType, activeInventory, realAgents]);
+  }, [activeType, activeInventory, realAgents, managerTimeFilter]);
 
   const barChartData = useMemo(() => {
     if (revenueData.length > 0) {
@@ -319,27 +331,27 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
         </div>
 
         {/* Properties Types Donut */}
-        <div className="xl:col-span-4 bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col hover:shadow-md transition-all">
+        <div className="xl:col-span-4 bg-white rounded-[24px] p-6 sm:p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-medium text-slate-900 tracking-tight">Properties Types</h3>
-            <span className="text-xs font-medium text-[#151936] bg-[#eef2f6] px-2.5 py-1 rounded-md border border-[#eef2f6]/50">{activeType}</span>
+            <h3 className="text-title-primary">Properties Types</h3>
+            <span className="body-sm text-[#151936] bg-[#eef2f6] px-2.5 py-1 rounded-md border border-[#eef2f6]/50">{activeType}</span>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center mb-6 mt-2 relative">
-            <div className="relative size-[140px] flex items-center justify-center">
+          <div className="flex-1 flex flex-col items-center justify-center mb-4 mt-2 relative">
+            <div className="relative size-[160px] flex items-center justify-center hover:scale-105 transition-transform duration-700 drop-shadow-[0_8px_16px_rgba(0,0,0,0.04)]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Tooltip content={<PropertyPieTooltip />} />
+                  <Tooltip content={<PropertyPieTooltip />} cursor={{ fill: "transparent" }} />
                   <Pie
                     data={pieChartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={60}
-                    paddingAngle={3}
+                    innerRadius={62}
+                    outerRadius={76}
+                    paddingAngle={4}
                     dataKey="value"
                     stroke="none"
-                    animationDuration={800}
+                    animationDuration={1200}
                   >
                     {pieChartData.map((entry, index) => {
                       const isHighlighted = activeType === "All Properties" || activeType === entry.name;
@@ -347,8 +359,9 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                         <Cell
                           key={`cell-${index}`}
                           fill={entry.color}
-                          opacity={isHighlighted ? 1 : 0.25}
-                          className="transition-all duration-300 outline-none"
+                          opacity={isHighlighted ? 1 : 0.15}
+                          className="transition-all duration-500 outline-none hover:opacity-100 cursor-pointer"
+                          onClick={() => setActiveType(entry.name as PropertyType)}
                         />
                       );
                     })}
@@ -356,13 +369,13 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-slate-800 leading-none mb-1 tracking-tight mono-stat">{analytics.totalProps}</span>
-                <span className="text-slate-400 text-center leading-[1.2] label-caps">Total<br />{activeType === 'All Properties' ? 'Property' : activeType}</span>
+                <span className="mono-stat text-3xl leading-none mb-1.5 text-slate-800 tracking-tight">{analytics.totalProps}</span>
+                <span className="label-caps text-slate-400 text-center leading-tight">Total<br />{activeType === 'All Properties' ? 'Units' : activeType}</span>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-y-4 gap-x-2 mt-auto">
+          <div className="flex flex-col gap-1 mt-auto">
             {pieChartData.filter(d => d.name !== "Other").map((item) => {
               const isHighlighted = activeType === "All Properties" || activeType === item.name;
               return (
@@ -370,16 +383,22 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                   key={item.name}
                   onClick={() => setActiveType(item.name as PropertyType)}
                   className={cn(
-                    "flex items-center gap-3 transition-all duration-300 cursor-pointer p-1 rounded-lg hover:bg-slate-50/60",
-                    isHighlighted ? "opacity-100" : "opacity-35"
+                    "group flex items-center justify-between p-3 rounded-[16px] transition-all duration-300 cursor-pointer border border-transparent",
+                    isHighlighted 
+                      ? "bg-slate-50/70 hover:bg-slate-100 hover:border-slate-200/50" 
+                      : "opacity-40 hover:opacity-100 hover:bg-slate-50 hover:border-slate-200/50"
                   )}
                 >
-                  <div className="size-[28px] rounded-lg flex items-center justify-center text-xs text-white shadow-sm font-mono shrink-0" style={{ backgroundColor: item.color }}>
-                    {item.value}%
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="size-2.5 rounded-full shadow-sm transition-transform duration-500 group-hover:scale-150"
+                      style={{ backgroundColor: item.color }} 
+                    />
+                    <span className="body-sm text-slate-700 font-medium group-hover:text-slate-900 transition-colors">{item.name}</span>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm text-slate-500 leading-none mb-1 font-medium">{item.name}</p>
-                    <p className="text-slate-800 leading-none mono-stat text-xs">{item.count}</p>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-slate-400 font-medium bg-white px-2 py-0.5 rounded-md shadow-sm border border-slate-100">{item.value}%</span>
+                    <span className="mono-stat text-slate-800 w-4 text-right">{item.count}</span>
                   </div>
                 </div>
               );
@@ -387,11 +406,19 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
           </div>
         </div>
 
-        {/* Top Agents */}
-        <div className="xl:col-span-3 bg-white rounded-[20px] p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col hover:shadow-md transition-all">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-medium text-slate-900 tracking-tight">Top Agents</h3>
-            <button className="text-xs font-medium text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100 hover:bg-slate-100 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)]">This Month ⌄</button>
+        {/* Property Managers */}
+        <div className="xl:col-span-3 bg-white rounded-[24px] p-6 sm:p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500">
+          <div className="flex justify-between items-center mb-6 gap-2">
+            <h3 className="text-title-primary">Property Managers</h3>
+            <select
+              value={managerTimeFilter}
+              onChange={(e) => setManagerTimeFilter(e.target.value as any)}
+              className="body-sm text-slate-600 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 hover:bg-slate-100 transition-colors shadow-sm outline-none cursor-pointer"
+            >
+              <option value="This Month">This Month</option>
+              <option value="This Quarter">This Quarter</option>
+              <option value="Annually">Annually</option>
+            </select>
           </div>
 
           <div className="flex flex-col gap-[18px] mt-1">
@@ -402,13 +429,13 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                     <Avatar src={agent.img} fallback={agent.name.substring(0, 2)} className="size-full group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-slate-800 leading-none mb-1.5 group-hover:text-[#151936] transition-colors">{agent.name}</h4>
-                    <p className="text-xs text-slate-400 leading-none">{agent.sold} sold - {agent.rented} rented</p>
+                    <h4 className="body-sm text-slate-800 leading-none mb-1.5 group-hover:text-[#151936] transition-colors">{agent.name}</h4>
+                    <p className="text-desc-secondary leading-none text-[11px]">{agent.sold} deals closed</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-[#151936] leading-none mb-1 mono-amount">{agent.revenue}</p>
-                  <p className="text-slate-400 leading-none label-caps">annually</p>
+                  <p className="text-slate-400 leading-none label-caps">{agent.timeLabel}</p>
                 </div>
               </div>
             ))}
@@ -493,7 +520,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                     />
                     <div className="min-w-0">
                       <p className="text-body-primary text-slate-700 leading-none truncate mb-1">{card.agent.name}</p>
-                      <p className="text-xs text-slate-400 leading-none truncate">Listing Agent</p>
+                      <p className="text-desc-secondary leading-none text-[11px] truncate">Property Manager</p>
                     </div>
                   </div>
                 </div>

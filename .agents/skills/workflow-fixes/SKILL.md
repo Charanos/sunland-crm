@@ -87,3 +87,12 @@ To ensure consistent, premium executive-level design throughout the CRM, strictl
 4. **Environment Variables & Database Setup**:
    - The production branch uses a separate Neon PostgreSQL database URL in `.env`. Ensure that development commands (like `npm run db:seed` or `drizzle-kit` tasks) explicitly load the correct local environment file (e.g., via `--env-file=.env.local` in `package.json`) to avoid connecting to the wrong database instance or falling back to defaults.
    - Do not overwrite or mutate `.env` directly with development credentials if it is configured for production. Rely on `.env.local` for local overrides and ensure both Next.js and TSX scripts respect it.
+
+5. **Premium Card & Button Styling**:
+   - **Cards**: Avoid bulky nested grey boxes and dark background top borders. Prefer sleek, modern floating cards using `bg-white border border-slate-100 rounded-[24px]` with soft, premium drop shadows like `shadow-[0_8px_30px_rgb(0,0,0,0.04)]` and hover transitions `hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)]`.
+   - **Buttons**: Do NOT use bulky full-width button blocks (e.g., `py-3 rounded-xl` full-width). Prefer elegant ghost pill buttons (e.g., `px-3 py-2 text-sm rounded-lg bg-slate-50`) that reveal the brand accent colors strictly upon hover.
+   - **Whitespace**: Creatively utilize card whitespace using massive, faint background watermarks (`absolute -z-10 opacity-60`) or interactive avatar stacks (for metrics like Active Users).
+
+6. **Typography Standardization (No Arbitrary Pixels)**:
+   - **NEVER use custom pixel sizing classes** like `text-[11px]`, `text-[15px]`, or `text-[42px]`.
+   - Strictly map all typography sizes to standard Tailwind semantics (`text-xs`, `text-sm`, `text-lg`, `text-5xl`).

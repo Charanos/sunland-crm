@@ -21,6 +21,7 @@ const PUBLIC_COLUMNS = {
   name: users.name,
   role: users.role,
   title: users.title,
+  avatarUrl: users.avatarUrl,
   primaryEntityId: users.primaryEntityId,
   isActive: users.isActive,
   lastSignedInAt: users.lastSignedInAt,
@@ -50,7 +51,7 @@ export async function getUser(ctx: CallerContext, userId: string) {
   return target;
 }
 
-/** Self-service only — name/title. Never role/status/entity (that's updateUserAccess). */
+/** Self-service only — name/title/avatarUrl. Never role/status/entity (that's updateUserAccess). */
 export async function updateUserProfile(ctx: CallerContext, userId: string, rawInput: unknown) {
   if (userId !== ctx.user.id) {
     throw new ForbiddenError("You may only edit your own profile");

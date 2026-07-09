@@ -82,7 +82,7 @@ export function MobileNavigationDrawer() {
   const isFinRoute = pathname.startsWith("/fin");
   const filteredSections = navSections
     .filter((section) => {
-      const isFinSection = section.id.startsWith("finance");
+      const isFinSection = section.id.startsWith("fin-");
       return isFinRoute ? isFinSection : !isFinSection;
     })
     .map((section) => {

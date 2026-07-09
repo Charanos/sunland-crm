@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { BoardHeader } from "@/components/ui/erp-primitives";
 import {
   IconAlertTriangle,
@@ -16,16 +16,21 @@ import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
 import { QRCodeSVG } from "qrcode.react";
 import { Modal } from "@/components/ui/modal";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { PageTransition } from "@/components/shared/page-transition";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
+// Matches the real activity_logs / users tables — no `ip`/`risk` columns exist
+// on activity_logs, and no `mfa` column exists on users (2FA has no backend
+// yet — see the MFA panel below), so those are not represented here.
 
-interface SecurityAuditLog {
+interface AuditEntry {
   id: string;
-  actor: string;
+  actorId: string | null;
+  associatedType: string;
   action: string;
-  ip: string;
-  at: string;
-  risk: "low" | "medium" | "high";
+  summary: string;
+  createdAt: string;
 }
 
 interface PlatformUser {
@@ -33,39 +38,31 @@ interface PlatformUser {
   name: string;
   email: string;
   role: string;
-  status: "active" | "inactive";
-  lastLogin: string;
-  mfa: boolean;
+  title: string | null;
+  isActive: boolean;
+  lastSignedInAt: string | null;
 }
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
-const INITIAL_AUDIT_LOGS: SecurityAuditLog[] = [
-  { id: "1", actor: "Paul Amos", action: "Approved payroll run PR-2026-06", ip: "196.254.12.8", at: "10 min ago", risk: "low" },
-  { id: "2", actor: "Grace Omondi", action: "Exported chart of accounts (CSV)", ip: "41.215.8.122", at: "1 hour ago", risk: "medium" },
-  { id: "3", actor: "James Mutua", action: "3 failed login attempts", ip: "197.248.64.10", at: "2 hours ago", risk: "high" },
-  { id: "4", actor: "System", action: "Automated backup completed", ip: "Internal", at: "4 hours ago", risk: "low" },
-  { id: "5", actor: "Amina Hassan", action: "Role changed: rentals_officer → finance_officer", ip: "41.215.8.121", at: "Yesterday", risk: "medium" },
-];
-
-const INITIAL_USERS: PlatformUser[] = [
-  { id: "u1", name: "Paul Amos", email: "paul.amos@sunland.co.ke", role: "ceo", status: "active", lastLogin: "Active now", mfa: true },
-  { id: "u2", name: "Grace Omondi", email: "grace.omondi@sunland.co.ke", role: "finance_officer", status: "active", lastLogin: "2h ago", mfa: false },
-  { id: "u3", name: "James Mutua", email: "james.mutua@sunland.co.ke", role: "property_manager", status: "active", lastLogin: "Yesterday", mfa: true },
-  { id: "u4", name: "Amina Hassan", email: "amina.hassan@sunland.co.ke", role: "property_manager", status: "active", lastLogin: "3h ago", mfa: false },
-];
-
-const RISK_COLORS = {
-  low: "text-emerald-700 bg-emerald-50 border-emerald-100",
-  medium: "text-amber-700 bg-amber-50 border-amber-100",
-  high: "text-red-700 bg-red-50 border-red-100",
-};
+function relativeTime(isoStr: string | null): string {
+  if (!isoStr) return "Never";
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "Just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.floor(hr / 24);
+  return days === 1 ? "Yesterday" : `${days}d ago`;
+}
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-export function SecurityPageContent() {
-  const [logs, setLogs] = useState<SecurityAuditLog[]>(INITIAL_AUDIT_LOGS);
-  const [users, setUsers] = useState<PlatformUser[]>(INITIAL_USERS);
+export function SecurityPageContent({ entityId = "group" }: { entityId?: string }) {
+  const [logs, setLogs] = useState<AuditEntry[]>([]);
+  const [users, setUsers] = useState<PlatformUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaModalOpen, setMfaModalOpen] = useState(false);
   const [mfaStep, setMfaStep] = useState<"intro" | "scan" | "verify">("intro");
@@ -74,35 +71,29 @@ export function SecurityPageContent() {
 
   const { pushToast } = useToast();
 
+  const loadData = useCallback(async () => {
+    try {
+      const [logsRes, usersRes] = await Promise.all([
+        fetch(`/api/audit?entityId=${entityId}&limit=15`),
+        fetch(`/api/identity/users?entityId=${entityId}`),
+      ]);
+      const logsData = await logsRes.json();
+      const usersData = await usersRes.json();
+      if (!logsRes.ok) throw new Error(logsData.error || "Failed to load audit log");
+      if (!usersRes.ok) throw new Error(usersData.error || "Failed to load users");
+      setLogs(logsData.entries ?? []);
+      setUsers(usersData.users ?? []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load security data";
+      pushToast({ tone: "error", title: "Error", body: message });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [entityId, pushToast]);
+
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then(res => res.json())
-      .then(data => {
-        if (data?.user) {
-          const user = data.user;
-          setUsers(prev => {
-            const hasUser = prev.some(u => u.email === user.email);
-            if (hasUser) {
-              return prev.map(u => u.email === user.email ? { ...u, name: `${user.name} (You)`, mfa: mfaEnabled } : u);
-            } else {
-              return [
-                {
-                  id: "current-user",
-                  name: `${user.name} (You)`,
-                  email: user.email,
-                  role: user.role,
-                  status: "active",
-                  lastLogin: "Active now",
-                  mfa: mfaEnabled
-                },
-                ...prev.filter(u => u.role !== user.role)
-              ];
-            }
-          });
-        }
-      })
-      .catch(() => { });
-  }, [mfaEnabled]);
+    Promise.resolve().then(() => loadData());
+  }, [loadData]);
 
   const mfaSecret = "K5SG E4TN J5SG UZ3M O53G K=== ";
 
@@ -111,6 +102,9 @@ export function SecurityPageContent() {
     pushToast({ tone: "success", title: "Copied", body: "Secret key copied to clipboard." });
   };
 
+  // MFA has no backend yet (no TOTP secret storage, no login-time challenge) —
+  // this wizard is a client-only demo of the intended flow, not a real
+  // enable/disable toggle. Flagged here rather than silently faked as working.
   const handleVerifyMfa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mfaCode.length !== 6) return;
@@ -121,18 +115,7 @@ export function SecurityPageContent() {
     if (mfaCode === "123456" || mfaCode === "000000" || mfaCode.startsWith("123")) {
       setMfaEnabled(true);
       setMfaModalOpen(false);
-      pushToast({ tone: "success", title: "MFA Activated", body: "Two-factor authentication is now active on your account." });
-      setLogs(prev => [
-        {
-          id: `log-${Date.now()}`,
-          actor: "You",
-          action: "Enabled Two-Factor Authentication (MFA)",
-          ip: "196.254.12.8",
-          at: "Just now",
-          risk: "low"
-        },
-        ...prev
-      ]);
+      pushToast({ tone: "success", title: "MFA Activated (Demo)", body: "This is a UI preview only — not yet enforced at login." });
     } else {
       pushToast({ tone: "error", title: "Invalid Code", body: "The 6-digit code was incorrect. Try again." });
     }
@@ -140,43 +123,32 @@ export function SecurityPageContent() {
 
   const handleDisableMfa = () => {
     setMfaEnabled(false);
-    pushToast({ tone: "warning", title: "MFA Disabled", body: "Two-factor authentication has been turned off." });
-    setLogs(prev => [
-      {
-        id: `log-${Date.now()}`,
-        actor: "You",
-        action: "Disabled Two-Factor Authentication (MFA)",
-        ip: "196.254.12.8",
-        at: "Just now",
-        risk: "medium"
-      },
-      ...prev
-    ]);
+    pushToast({ tone: "warning", title: "MFA Disabled", body: "Two-factor authentication demo turned off." });
   };
 
   return (
-    <div className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 animate-fade-in px-4 md:px-6">
+    <PageTransition className="mx-auto max-w-[98rem] flex flex-col gap-6 pb-12 px-4 md:px-6">
 
       <BoardHeader
         title="Security & Audit Center"
-        description="Monitor account login history, manage two-factor authentication, and review platform threat metrics."
+        description="Review platform audit history, manage authorized users, and preview two-factor authentication."
       />
 
       {/* ── Main Layout Grid ─────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* ── Left Column: Controls (MFA & Sessions) ─────────── */}
+        {/* ── Left Column: Controls (MFA & Policy) ─────────── */}
         <div className="lg:col-span-5 flex flex-col gap-6">
 
           {/* MFA Panel */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="size-11 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shadow-inner shrink-0">
                 <IconShieldCheck size={20} />
               </div>
               <div>
                 <h2 className="headline-md text-slate-900 leading-tight">Two-Factor Auth (2FA)</h2>
-                <p className="text-tiny text-slate-400 mt-0.5">Secure your Sunland login</p>
+                <p className="text-tiny text-slate-400 mt-0.5">Preview — not yet enforced at login</p>
               </div>
             </div>
 
@@ -223,7 +195,7 @@ export function SecurityPageContent() {
           </div>
 
           {/* Platform Access Limits */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             <h2 className="headline-md text-slate-900 mb-2">Access Rules Policy</h2>
             <p className="text-caption text-slate-500 mb-4">Standard constraints enforced on Sunland ERP accounts:</p>
             <div className="space-y-3">
@@ -242,19 +214,20 @@ export function SecurityPageContent() {
           </div>
         </div>
 
-        {/* ── Right Column: Logs (Audit Logs & Active Logins) ── */}
+        {/* ── Right Column: Logs (Audit Logs & Access Users) ── */}
         <div className="lg:col-span-7 flex flex-col gap-6">
 
           {/* Audit Logs */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
               <div>
                 <h2 className="headline-md text-slate-900">Security Audit Logs</h2>
-                <p className="text-tiny text-slate-400 mt-0.5">Real-time log of administrative events</p>
+                <p className="text-tiny text-slate-400 mt-0.5">Real log of administrative events</p>
               </div>
               <button
                 type="button"
                 onClick={() => {
+                  loadData();
                   pushToast({ tone: "success", title: "Refreshed", body: "Audit log updated." });
                 }}
                 className="flex size-8 items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100 transition-colors shadow-sm"
@@ -263,49 +236,63 @@ export function SecurityPageContent() {
               </button>
             </div>
 
-            <div className="space-y-3.5 max-h-[350px] overflow-y-auto pr-1 [scrollbar-width:thin]">
-              {logs.map((log) => (
-                <div key={log.id} className="flex items-start justify-between gap-4 py-2.5 border-b border-slate-50 last:border-0">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-caption text-slate-800 font-medium">{log.action}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-tiny text-slate-400">{log.actor}</span>
-                      <span className="text-slate-200">•</span>
-                      <span className="text-tiny text-slate-400 font-mono">{log.ip}</span>
-                      <span className="text-slate-200">•</span>
-                      <span className="text-tiny text-slate-400">{log.at}</span>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <div className="gsap-stagger space-y-3.5 max-h-[350px] overflow-y-auto pr-1 [scrollbar-width:thin]">
+                {logs.length === 0 ? (
+                  <p className="text-caption text-slate-400 py-6 text-center">No audit events recorded yet.</p>
+                ) : (
+                  logs.map((log) => (
+                    <div key={log.id} className="flex items-start justify-between gap-4 py-2.5 border-b border-slate-50 last:border-0">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-caption text-slate-800 font-medium">{log.summary}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-tiny text-slate-400 font-mono">{log.action}</span>
+                          <span className="text-slate-200">•</span>
+                          <span className="text-tiny text-slate-400">{relativeTime(log.createdAt)}</span>
+                        </div>
+                      </div>
+                      <span className="badge-pill border text-tiny px-2 py-0.5 text-slate-600 bg-slate-50 border-slate-200 capitalize shrink-0">
+                        {log.associatedType}
+                      </span>
                     </div>
-                  </div>
-                  <span className={cn("badge-pill border text-tiny px-2 py-0.5", RISK_COLORS[log.risk])}>
-                    {log.risk.toUpperCase()}
-                  </span>
-                </div>
-              ))}
-            </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           {/* Access Users List */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             <h2 className="headline-md text-slate-900 mb-1">Administrative Group</h2>
             <p className="text-tiny text-slate-400 mb-4">Workspace users authorized under executive scopes</p>
-            <div className="space-y-3">
-              {users.map(u => (
-                <div key={u.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
-                  <div>
-                    <p className="text-caption font-normal text-slate-800">{u.name}</p>
-                    <p className="text-tiny text-slate-400 mt-0.5">{u.email} · {u.role.toUpperCase()}</p>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {users.map(u => (
+                  <div key={u.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                    <div>
+                      <p className="text-caption font-normal text-slate-800">{u.name}</p>
+                      <p className="text-tiny text-slate-400 mt-0.5">{u.email} · {u.role.toUpperCase()} · Last seen {relativeTime(u.lastSignedInAt)}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {u.isActive ? (
+                        <span className="badge-pill badge-tone-success text-[9px]">ACTIVE</span>
+                      ) : (
+                        <span className="badge-pill badge-tone-neutral text-[9px]">SUSPENDED</span>
+                      )}
+                      <span className={cn("size-2 rounded-full shadow-sm", u.isActive ? "bg-emerald-500" : "bg-slate-300")} title={u.isActive ? "Active" : "Suspended"} />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {u.mfa ? (
-                      <span className="badge-pill badge-tone-success text-[9px]">2FA ACTIVE</span>
-                    ) : (
-                      <span className="badge-pill badge-tone-neutral text-[9px]">NO 2FA</span>
-                    )}
-                    <span className="size-2 rounded-full bg-emerald-500 shadow-sm" title="Active session" />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -368,7 +355,7 @@ export function SecurityPageContent() {
               <div className="flex flex-col items-center gap-3">
                 <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                   <QRCodeSVG
-                    value={`otpauth://totp/SunlandERP:paul.amos@sunland.co.ke?secret=${mfaSecret.replace(/\s/g, "")}&issuer=Sunland%20Group`}
+                    value={`otpauth://totp/SunlandERP:security@sunland.co.ke?secret=${mfaSecret.replace(/\s/g, "")}&issuer=Sunland%20Group`}
                     size={135}
                     level="M"
                   />
@@ -435,7 +422,7 @@ export function SecurityPageContent() {
                   onChange={e => setMfaCode(e.target.value.replace(/\D/g, ""))}
                   className="w-full text-center tracking-[8px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-lg font-mono font-bold text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all"
                 />
-                <p className="text-[10px] text-center text-slate-400 mt-2">Recommended tip: type any 6 digits to bypass mock verification.</p>
+                <p className="text-[10px] text-center text-slate-400 mt-2">Preview only — any 6 digits will proceed, no backend verification exists yet.</p>
               </div>
 
               <div className="flex justify-between items-center pt-2 border-t border-slate-100">
@@ -465,6 +452,6 @@ export function SecurityPageContent() {
         </div>
       </Modal>
 
-    </div>
+    </PageTransition>
   );
 }

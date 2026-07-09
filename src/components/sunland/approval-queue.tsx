@@ -9,14 +9,15 @@ import { Modal } from "@/components/ui/modal";
 
 export interface ApprovalRequest {
   id: string;
-  targetRole: string;
+  requiredApproverRole: string;
   entityId: string;
-  requestedBy: string;
+  requestedByName: string;
   amountKes: string;
   decisionNotes?: string;
   requestType: string;
-  payload?: Record<string, unknown>;
-  createdAt: string;
+  relatedTable?: string;
+  relatedId?: string;
+  requestedAt: string;
 }
 
 export function ApprovalQueue({ onActionComplete }: { onActionComplete?: () => void }) {
@@ -89,7 +90,7 @@ export function ApprovalQueue({ onActionComplete }: { onActionComplete?: () => v
 
   return (
     <>
-      <BoardPanel className="flex flex-col gap-4 min-h-[220px] p-0 sm:p-6 bg-transparent sm:bg-slate-50/30 border-0 sm:border sm:border-slate-100 shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
+      <BoardPanel className="flex flex-col gap-4 min-h-[220px] p-4 sm:p-6 bg-transparent sm:bg-slate-50/30 border-0 sm:border sm:border-slate-100 shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
         <div className="flex items-center justify-between border-b border-slate-200/60 pb-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-700">
@@ -115,57 +116,53 @@ export function ApprovalQueue({ onActionComplete }: { onActionComplete?: () => v
               <div
                 key={req.id}
                 onClick={() => setSelectedRequest(req)}
-                className="group bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-start justify-between gap-4 cursor-pointer"
+                className="group bg-white border border-slate-200/60 rounded-[18px] p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-slate-300 hover:-translate-y-[1px] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-5 cursor-pointer"
               >
                 <div className="flex flex-col gap-3 w-full">
-                  <div className="flex items-center gap-2">
-                    <span className="label-caps px-2 py-1 rounded border bg-slate-50 text-slate-600 border-slate-200">
-                      {req.targetRole ? req.targetRole.replace("_", " ") : "GENERAL"}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="label-caps px-2 py-0.5 rounded-md border bg-slate-50 text-slate-600 border-slate-200 shadow-sm">
+                      {req.requestType ? req.requestType.replace(/_/g, " ") : "GENERAL"}
                     </span>
                     <span className="text-meta-muted">ID: <span className="mono-data">{req.id.split("-")[0]}</span></span>
+                    <span className="text-slate-300 mx-1 hidden sm:inline">•</span>
+                    <span className="text-meta-muted body-sm hidden sm:inline">{new Date(req.requestedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-3 rounded-lg border border-slate-100">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-meta-muted-strong">Entity</span>
-                      <span className="text-body-primary capitalize">{req.entityId}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-meta-muted-strong">Requested By</span>
-                      <span className="text-body-primary">{req.requestedBy}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
+                  <div className="flex items-center flex-wrap gap-x-8 gap-y-3">
                     <div className="flex flex-col">
-                      <span className="text-meta-muted">Amount</span>
-                      <span className="mono-amount text-slate-900">{formatKES(parseFloat(req.amountKes) || 0)}</span>
+                      <span className="text-meta-muted-strong text-xs uppercase tracking-wider mb-0.5">Entity</span>
+                      <span className="text-body-primary font-medium">{req.entityId === "group" ? "Sunland Group" : req.entityId.toUpperCase()}</span>
                     </div>
-                    {req.decisionNotes && (
-                      <p className="text-body-regular text-slate-500 italic max-w-[200px] truncate text-right" title={req.decisionNotes}>
-                        {req.decisionNotes}
-                      </p>
-                    )}
+                    <div className="w-px h-8 bg-slate-100 hidden sm:block"></div>
+                    <div className="flex flex-col">
+                      <span className="text-meta-muted-strong text-xs uppercase tracking-wider mb-0.5">Requested By</span>
+                      <span className="text-body-primary font-medium">{req.requestedByName || "System"}</span>
+                    </div>
+                    <div className="w-px h-8 bg-slate-100 hidden sm:block"></div>
+                    <div className="flex flex-col">
+                      <span className="text-meta-muted-strong text-xs uppercase tracking-wider mb-0.5">Amount</span>
+                      <span className="mono-amount text-slate-900 text-lg leading-none">{formatKES(parseFloat(req.amountKes) || 0)}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex sm:flex-col items-center gap-2 shrink-0 sm:mt-10 sm:min-w-[110px]">
+                <div className="flex items-center gap-2.5 shrink-0 justify-end mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-100 w-full sm:w-auto">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="flex-1 sm:flex-none hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors shadow-sm"
+                    disabled={actioningId === req.id}
+                    onClick={(e) => { e.stopPropagation(); handleDecision(req.id, "rejected"); }}
+                  >
+                    <IconX size={16} /> <span className="hidden sm:inline ml-1.5">Reject</span>
+                  </Button>
                   <Button
                     size="sm"
                     disabled={actioningId === req.id}
                     onClick={(e) => { e.stopPropagation(); handleDecision(req.id, "approved"); }}
-                    className="w-full bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] transition-colors border-0"
+                    className="flex-1 sm:flex-none bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] transition-colors border-0 shadow-sm"
                   >
                     <IconCheck size={16} className="mr-1.5" /> Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="w-full hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors"
-                    disabled={actioningId === req.id}
-                    onClick={(e) => { e.stopPropagation(); handleDecision(req.id, "rejected"); }}
-                  >
-                    <IconX size={16} className="mr-1.5" /> Reject
                   </Button>
                 </div>
               </div>
@@ -197,26 +194,26 @@ export function ApprovalQueue({ onActionComplete }: { onActionComplete?: () => v
               </div>
               <div>
                 <h3 className="text-title-primary">Request {selectedRequest.id.split("-")[0]}</h3>
-                <p className="text-meta-muted">Submitted on {new Date().toLocaleDateString()}</p>
+                <p className="text-meta-muted">Submitted on {new Date(selectedRequest.requestedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label-caps text-slate-400 block mb-1">Target Role</label>
-                <div className="text-body-primary">{selectedRequest.targetRole ? selectedRequest.targetRole.replace("_", " ") : "GENERAL"}</div>
+                <span className="text-meta-muted-strong block mb-1 text-xs uppercase tracking-wider">Entity</span>
+                <span className="text-body-primary font-medium">{selectedRequest.entityId === "group" ? "Sunland Group" : selectedRequest.entityId.toUpperCase()}</span>
               </div>
               <div>
-                <label className="label-caps text-slate-400 block mb-1">Entity ID</label>
-                <div className="text-body-primary capitalize">{selectedRequest.entityId}</div>
+                <span className="text-meta-muted-strong block mb-1 text-xs uppercase tracking-wider">Approver Role</span>
+                <span className="label-caps px-2 py-0.5 rounded border bg-slate-50">{selectedRequest.requiredApproverRole}</span>
               </div>
               <div>
-                <label className="label-caps text-slate-400 block mb-1">Requested By</label>
-                <div className="text-body-primary">{selectedRequest.requestedBy}</div>
+                <span className="text-meta-muted-strong block mb-1 text-xs uppercase tracking-wider">Amount</span>
+                <span className="mono-amount text-slate-900 text-lg">{formatKES(parseFloat(selectedRequest.amountKes) || 0)}</span>
               </div>
               <div>
-                <label className="label-caps text-slate-400 block mb-1">Amount</label>
-                <div className="mono-amount text-lg">{formatKES(parseFloat(selectedRequest.amountKes) || 0)}</div>
+                <span className="text-meta-muted-strong block mb-1 text-xs uppercase tracking-wider">Requested By</span>
+                <span className="text-body-primary">{selectedRequest.requestedByName || "System"}</span>
               </div>
               {selectedRequest.decisionNotes && (
                 <div className="col-span-2">

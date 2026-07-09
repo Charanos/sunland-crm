@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   IconCalendarEvent,
@@ -16,12 +16,14 @@ import {
   IconMapPin,
   IconTrash,
   IconCheck,
-  IconX
+  IconX,
+  IconArrowsMaximize
 } from "@tabler/icons-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { BoardPanel } from "@/components/ui/erp-primitives";
 import { EventFormModal } from "./event-form-modal";
 import { ProjectDetailModal } from "./project-detail-modal";
+import { CalendarModal } from "@/components/ui/calendar-modal";
 import { cn } from "@/lib/utils/cn";
 
 // Matches the real /api/scheduling/events response shape (calendar_events
@@ -95,12 +97,13 @@ export function InternalOperationsBoard({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [eventForEdit, setEventForEdit] = useState<Event | null>(null);
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
 
   const [events, setEvents] = useState<Event[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  useEffect(() => {
+  const loadEvents = useCallback(() => {
     // scope=all: this is an org-wide executive view, not "my calendar" — the
     // default "mine" scope would hide every event organized by someone else.
     fetch(`/api/scheduling/events?entityId=${entityId}&scope=all`)
@@ -109,6 +112,10 @@ export function InternalOperationsBoard({
         if (Array.isArray(data.events)) setEvents(data.events);
       })
       .catch((e) => console.error(e));
+  }, [entityId]);
+
+  useEffect(() => {
+    loadEvents();
 
     fetch(`/api/operations/projects?entityId=${entityId}`)
       .then((r) => r.json())
@@ -116,7 +123,7 @@ export function InternalOperationsBoard({
         if (Array.isArray(data.projects)) setProjects(data.projects);
       })
       .catch((e) => console.error(e));
-  }, [entityId]);
+  }, [entityId, loadEvents]);
 
   // Calendar logic
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -284,10 +291,10 @@ export function InternalOperationsBoard({
   };
 
   const TYPE_STYLES = {
-    internal: { bg: "bg-teal-50/50 border-teal-200", text: "text-teal-900", icon: IconVideo, accent: "bg-teal-500", iconColor: "text-teal-600" },
-    external: { bg: "bg-sky-50/50 border-sky-200", text: "text-sky-900", icon: IconMapPin, accent: "bg-sky-500", iconColor: "text-sky-600" },
-    legal: { bg: "bg-indigo-50/50 border-indigo-200", text: "text-indigo-900", icon: IconGavel, accent: "bg-indigo-500", iconColor: "text-indigo-600" },
-    maintenance: { bg: "bg-amber-50/50 border-amber-200", text: "text-amber-900", icon: IconTool, accent: "bg-amber-500", iconColor: "text-amber-600" },
+    internal: { bg: "bg-emerald-50", text: "text-emerald-700", icon: IconVideo, accent: "bg-emerald-500", iconColor: "text-emerald-500" },
+    external: { bg: "bg-sky-50", text: "text-sky-700", icon: IconMapPin, accent: "bg-sky-500", iconColor: "text-sky-500" },
+    legal: { bg: "bg-indigo-50", text: "text-indigo-700", icon: IconGavel, accent: "bg-indigo-500", iconColor: "text-indigo-500" },
+    maintenance: { bg: "bg-amber-50", text: "text-amber-700", icon: IconTool, accent: "bg-amber-500", iconColor: "text-amber-500" },
   };
 
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -403,7 +410,7 @@ export function InternalOperationsBoard({
           </div>
 
           {/* Active Workflows Timeline */}
-          <BoardPanel className="flex flex-1 flex-col p-0 sm:p-6 bg-transparent sm:bg-slate-50/30 border-0 sm:border sm:border-slate-200/80 shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
+          <BoardPanel className="flex flex-1 flex-col p-4 sm:p-6 bg-transparent sm:bg-slate-50/30 border-0 sm:border sm:border-slate-200/80 shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
             <div className="flex items-center justify-between mb-6 border-b border-slate-200/60 pb-4">
               <h3 className="text-title-secondary text-slate-900 flex items-center gap-2">
                 Cross-Department Operations
@@ -496,37 +503,46 @@ export function InternalOperationsBoard({
         </div>
 
         {/* ── Executive Scheduler (Right) ── */}
-        <BoardPanel className="lg:col-span-5 flex flex-col border-slate-200/80">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100/60">
-            <h3 className="text-title-secondary text-slate-900 flex items-center gap-2">
-              <IconCalendarEvent size={20} className="text-slate-400" />
+        <BoardPanel className="lg:col-span-5 flex flex-col p-6 sm:p-8 bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[24px]">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100/60">
+            <h3 className="text-title-primary text-slate-900 flex items-center gap-3">
+              <div className="size-8 rounded-[10px] bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm">
+                <IconCalendarEvent size={18} stroke={1.5} />
+              </div>
               Executive Scheduler
             </h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href="/admin/events"
-                className="text-meta-muted-strong hover:text-slate-800 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow"
+                className="body-sm text-slate-500 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow"
               >
-                View All Events
+                View All
               </Link>
-              <div className="flex items-center gap-1 bg-slate-50 rounded-lg border border-slate-200 p-1">
+              <button
+                onClick={() => setCalendarModalOpen(true)}
+                className="text-slate-500 hover:text-slate-900 bg-white p-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow transition-all"
+                title="Expand"
+              >
+                <IconArrowsMaximize size={16} stroke={2} />
+              </button>
+              <div className="flex items-center gap-1 bg-slate-50 rounded-lg border border-slate-200 p-1 shadow-sm">
                 <button onClick={prevMonth} className="text-slate-500 hover:text-slate-900 hover:bg-white p-1 rounded-md transition-all">
-                  <IconChevronLeft size={18} stroke={2} />
+                  <IconChevronLeft size={16} stroke={2} />
                 </button>
-                <span className="text-body-primary text-slate-800 w-28 text-center">
+                <span className="body-sm text-slate-800 w-24 sm:w-32 text-center truncate font-medium">
                   {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                 </span>
                 <button onClick={nextMonth} className="text-slate-500 hover:text-slate-900 hover:bg-white p-1 rounded-md transition-all">
-                  <IconChevronRight size={18} stroke={2} />
+                  <IconChevronRight size={16} stroke={2} />
                 </button>
               </div>
             </div>
           </div>
 
           {/* Real Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1.5 mb-8">
+          <div className="grid grid-cols-7 gap-2 sm:gap-3 mb-8">
             {daysOfWeek.map(d => (
-              <div key={d} className="text-center text-slate-400 mb-4 label-caps font-medium tracking-wider">{d}</div>
+              <div key={d} className="text-center text-slate-400 mb-2 label-caps font-medium tracking-wider">{d}</div>
             ))}
             {calendarDays.map((day, i) => {
               const isSelected = day &&
@@ -546,31 +562,31 @@ export function InternalOperationsBoard({
                   onClick={() => day && setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day, 12))}
                   disabled={!day}
                   className={cn(
-                    "h-[46px] w-full flex flex-col items-center justify-center text-[15px] rounded-[14px] transition-all relative border outline-none overflow-hidden group",
-                    !day ? "text-transparent border-transparent pointer-events-none" : "hover:-translate-y-0.5",
+                    "h-10 sm:h-12 w-full flex flex-col items-center justify-center text-[15px] rounded-xl sm:rounded-[14px] transition-all relative outline-none group",
+                    !day ? "text-transparent pointer-events-none" : "hover:-translate-y-0.5",
                     isSelected
-                      ? "bg-tertiary-gradient text-white shadow-md border-transparent font-medium"
+                      ? "bg-slate-900 text-white shadow-md font-medium"
                       : isToday
-                        ? "bg-emerald-50/50 text-emerald-800 font-semibold border-emerald-200/60"
-                        : "bg-white text-slate-700 border-slate-100/60 hover:border-slate-300 hover:shadow-sm"
+                        ? "bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200/50"
+                        : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-100"
                   )}
                 >
-                  <span className={cn("relative z-10 leading-none", dayEvents.length > 0 ? "mb-2.5" : "")}>{day}</span>
+                  <span className={cn("relative z-10 leading-none", dayEvents.length > 0 ? "mb-1.5" : "")}>{day}</span>
 
                   {/* Event Indicators */}
                   {dayEvents.length > 0 && (
-                    <div className="absolute bottom-2 flex gap-1 justify-center items-center z-10 w-full px-1">
-                      {dayEvents.slice(0, 4).map((evt, idx) => {
+                    <div className="absolute bottom-1.5 flex gap-1 justify-center items-center z-10 w-full px-1">
+                      {dayEvents.slice(0, 3).map((evt, idx) => {
                         let dotColor = "bg-emerald-500";
                         if (evt.type === "external") dotColor = "bg-sky-500";
                         else if (evt.type === "legal") dotColor = "bg-indigo-500";
                         else if (evt.type === "maintenance") dotColor = "bg-amber-500";
 
                         if (isSelected) {
-                          dotColor = "bg-white/90";
+                          dotColor = "bg-white/80";
                         }
                         return (
-                          <div key={idx} className={cn("h-1 w-full max-w-[12px] rounded-full", dotColor)} />
+                          <div key={idx} className={cn("size-1.5 rounded-full shadow-sm", dotColor)} />
                         );
                       })}
                     </div>
@@ -581,47 +597,48 @@ export function InternalOperationsBoard({
           </div>
 
           {/* Selected Date Itinerary */}
-          <div className="flex-1 flex flex-col bg-slate-50/50 -mx-6 -mb-6 p-6 rounded-b-[24px] border-t border-slate-200/60">
-            <h4 className="text-body-primary text-slate-800 mb-4 flex justify-between items-center">
+          <div className="flex-1 flex flex-col mt-4">
+            <h4 className="text-title-secondary text-slate-800 mb-6 flex justify-between items-center px-1">
               <span>
                 {selectedDate.toDateString() === new Date().toDateString()
                   ? 'Today\'s Itinerary'
                   : selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </span>
-              <span className="text-meta-muted px-2.5 py-1 bg-white border border-slate-200 rounded-lg shadow-sm">{selectedDateEvents.length} events</span>
+              <span className="text-desc-secondary bg-slate-50 border border-slate-200/60 rounded-lg px-2.5 py-1 shadow-sm">{selectedDateEvents.length} events</span>
             </h4>
 
-            <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
               {selectedDateEvents.slice(0, 3).map((evt) => {
                 const style = TYPE_STYLES[evt.type];
                 const [timePart, periodPart] = new Date(evt.startsAt)
                   .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
                   .split(" ");
                 return (
-                  <div key={evt.id} className={cn("p-4 rounded-xl border bg-white flex gap-4 relative overflow-hidden group shadow-sm hover:shadow-md hover:-translate-y-[1px] transition-all", style.bg)}>
+                  <div key={evt.id} className="p-5 rounded-[20px] bg-white border border-slate-100 flex gap-5 relative overflow-hidden group shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md hover:-translate-y-0.5 transition-all">
                     <div className={cn("absolute left-0 top-0 bottom-0 w-1", style.accent)} />
-                    <div className={cn("flex flex-col items-center justify-center shrink-0 pr-4 border-r border-slate-100 min-w-[70px]", style.text)}>
-                      <span className="mono-data text-lg mb-0.5">{timePart}</span>
+                    <div className={cn("flex flex-col items-center justify-center shrink-0 pr-5 border-r border-slate-100/80 min-w-[70px]", style.text)}>
+                      <span className="mono-stat text-[22px] leading-none mb-1">{timePart}</span>
                       <span className="label-caps opacity-70">{periodPart ?? ""}</span>
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <h5 className="text-body-primary text-slate-900 truncate mb-1">{evt.title}</h5>
-                      <div className="flex items-center gap-4 text-meta-muted-strong">
-                        <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                          <IconClock size={14} stroke={2} className={style.iconColor} />
+                      <h5 className="text-body-primary text-slate-900 truncate mb-1.5">{evt.title}</h5>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 body-sm text-slate-500">
+                          <IconClock size={14} className={style.iconColor} />
                           <span>{formatEventTime(evt.endsAt)}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                          <style.icon size={14} stroke={2} className={style.iconColor} />
+                        <span className="text-slate-300">•</span>
+                        <div className="flex items-center gap-1.5 body-sm text-slate-500">
+                          <style.icon size={14} className={style.iconColor} />
                           <span className="capitalize">{evt.type}</span>
                         </div>
                         {evt.needsDisposition && (
-                          <span className="bg-rose-50 text-rose-600 border border-rose-100 px-2 py-0.5 rounded-md label-caps">
+                          <span className="ml-auto bg-rose-50 text-rose-600 border border-rose-100/60 px-2 py-0.5 rounded-md label-caps shrink-0 shadow-sm">
                             Needs disposition
                           </span>
                         )}
                       </div>
-                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                         {evt.needsDisposition && (
                           <>
                             <button
@@ -708,6 +725,11 @@ export function InternalOperationsBoard({
         project={selectedProject}
         open={selectedProject !== null}
         onClose={() => setSelectedProject(null)}
+      />
+      <CalendarModal
+        open={calendarModalOpen}
+        onClose={() => { setCalendarModalOpen(false); loadEvents(); }}
+        entityId={entityId}
       />
     </div>
   );
