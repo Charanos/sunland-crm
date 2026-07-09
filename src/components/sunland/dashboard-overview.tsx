@@ -609,7 +609,7 @@ export function DashboardOverview({
         </div>
 
         {/* Col 2-3: Featured Property */}
-        <Card className="xl:col-span-2 h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all overflow-hidden relative group flex flex-col justify-between animate-fade-in-up stagger-3 rounded-2xl">
+        <Card className="h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all overflow-hidden relative group flex flex-col justify-between animate-fade-in-up stagger-3 rounded-2xl">
           {featured ? (
             <>
               <div className="absolute inset-0 z-0">
