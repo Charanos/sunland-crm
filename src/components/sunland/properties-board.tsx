@@ -17,10 +17,14 @@ import {
   IconChevronRight,
   IconChevronLeft,
   IconStar,
+  IconStarFilled,
   IconChartPie,
-  IconMapPin
+  IconMapPin,
+  IconEdit,
+  IconTrash
 } from "@tabler/icons-react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Badge,
   BoardHeader,
@@ -53,7 +57,32 @@ type Property = {
   bathrooms: number | null;
   sizeSqft: number | null;
   isFeatured: boolean;
+  media: Array<{ url: string; alt?: string; isPrimary?: boolean }> | null;
 };
+
+type Contact = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+};
+
+function primaryImageUrl(property: Property): string | null {
+  if (!property.media || property.media.length === 0) return null;
+  return property.media.find((m) => m.isPrimary)?.url ?? property.media[0].url;
+}
+
+// Rental-only properties have no askingPriceKes — fall back to rent rather
+// than formatting NaN, which would render literal "KES NaN" in the carousel.
+function featuredPriceDisplay(property: Property): { label: string; value: string } {
+  if (property.askingPriceKes) {
+    return { label: "Asking Price", value: formatCompactKES(parseFloat(property.askingPriceKes)) };
+  }
+  if (property.monthlyRentKes) {
+    return { label: "Monthly Rent", value: `${formatCompactKES(parseFloat(property.monthlyRentKes))}/mo` };
+  }
+  return { label: "Price", value: "On Request" };
+}
 
 type SortConfig = {
   key: keyof Property;
@@ -75,6 +104,7 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [contacts, setContacts] = useState<Contact[]>([]);
 
   const { pushToast } = useToast();
   const rowsPerPage = 8;
@@ -100,11 +130,29 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
         if (active) await loadProperties();
       };
       fetchInitial();
+      fetch(`/api/contacts?entityId=${entityId}&type=landlord`)
+        .then((r) => r.json())
+        .then((data) => {
+          // Contacts API returns `displayName`, not `name` — normalized here
+          // rather than renaming the Contact type, matching the same mapping
+          // property-form-modal.tsx already does for its landlord picker.
+          if (active && Array.isArray(data.contacts)) {
+            setContacts(data.contacts.map((c: { id: string; displayName: string; email: string | null; phone: string | null }) => ({
+              id: c.id,
+              name: c.displayName,
+              email: c.email,
+              phone: c.phone,
+            })));
+          }
+        })
+        .catch(() => { });
     }
     return () => {
       active = false;
     };
   }, [entityId, loadProperties]);
+
+  const ownerOf = useCallback((contactId: string | null) => (contactId ? contacts.find((c) => c.id === contactId) ?? null : null), [contacts]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -123,6 +171,18 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
       sortable.sort((a, b) => {
         const aValue = a[sortConfig.key] ?? "";
         const bValue = b[sortConfig.key] ?? "";
+
+        // monthlyRentKes (and similar) are numeric strings — plain string
+        // comparison sorts "9000" above "80000" lexicographically, which is
+        // wrong for a rent-rate column. Compare numerically when both sides
+        // parse cleanly, falling back to string comparison otherwise.
+        const aNum = Number(aValue);
+        const bNum = Number(bValue);
+        if (aValue !== "" && bValue !== "" && !Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+          if (aNum < bNum) return sortConfig.direction === "asc" ? -1 : 1;
+          if (aNum > bNum) return sortConfig.direction === "asc" ? 1 : -1;
+          return 0;
+        }
 
         if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
@@ -189,8 +249,12 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
         body: JSON.stringify({ entityId, isFeatured: !currentlyFeatured }),
       });
       if (!res.ok) throw new Error("Failed to update feature status");
-      
+
       loadProperties();
+      // The drawer holds its own snapshot of the selected property — without
+      // this it keeps showing the pre-toggle star/badge until closed and
+      // reopened, even though the write already succeeded.
+      setSelectedProperty((prev) => (prev && prev.id === id ? { ...prev, isFeatured: !currentlyFeatured } : prev));
       pushToast({ tone: "success", title: "Property Updated", body: `Property is ${!currentlyFeatured ? 'now featured' : 'no longer featured'}.` });
     } catch (err) {
       console.error(err);
@@ -245,14 +309,14 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mt-2">
+      <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />
         <span className="label-caps text-slate-400 tracking-wider">Analytics & Command</span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
       {/* ── Dense, High-Contrast Dark KPI Tier ── */}
-      <div className="bg-tertiary-gradient border border-[#122a20]/80 p-1.5 rounded-[24px] shadow-xl relative overflow-hidden group">
+      <div className="gsap-stagger bg-tertiary-gradient border border-[#122a20]/80 p-1.5 rounded-[24px] shadow-xl relative overflow-hidden group">
         <div className="absolute right-0 top-0 size-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-700 -z-10" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10">
 
@@ -316,9 +380,9 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
 
 
       {/* ── Market Highlights Tier ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Featured Properties Carousel */}
-        <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[24px] shadow-sm p-6 flex flex-col relative overflow-hidden">
+        <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[24px] shadow-sm p-4 sm:p-6 flex flex-col relative overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-title-primary flex items-center gap-2">
               <IconStar size={18} className="text-amber-400" /> Featured Listings
@@ -345,9 +409,21 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
           {featuredProperties.length > 0 ? (
             <div className="flex items-center gap-6 animate-fade-in-up" key={featuredIndex}>
               <div className="w-1/3 aspect-[4/3] rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden relative">
-                {/* Fallback pattern for featured image */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                <IconBuildingCommunity size={48} className="text-slate-300" stroke={1} />
+                {primaryImageUrl(featuredProperties[featuredIndex]) ? (
+                  <Image
+                    src={primaryImageUrl(featuredProperties[featuredIndex])!}
+                    alt={featuredProperties[featuredIndex].name}
+                    fill
+                    sizes="300px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <>
+                    {/* Fallback pattern when no photo has been uploaded */}
+                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                    <IconBuildingCommunity size={48} className="text-slate-300" stroke={1} />
+                  </>
+                )}
               </div>
               <div className="flex-1 space-y-3">
                 <div>
@@ -359,9 +435,9 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
                 </div>
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                   <div>
-                    <p className="label-caps text-slate-400 mb-1">Asking Price</p>
+                    <p className="label-caps text-slate-400 mb-1">{featuredPriceDisplay(featuredProperties[featuredIndex]).label}</p>
                     <p className="mono-stat text-slate-900 text-2xl tracking-tight">
-                      {formatCompactKES(parseFloat(featuredProperties[featuredIndex].askingPriceKes!))}
+                      {featuredPriceDisplay(featuredProperties[featuredIndex]).value}
                     </p>
                   </div>
                   <Button size="sm" onClick={() => setSelectedProperty(featuredProperties[featuredIndex])}>View Details</Button>
@@ -377,7 +453,7 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
         </div>
 
         {/* Portfolio Distribution CSS Chart */}
-        <div className="bg-white border border-slate-100 rounded-[24px] shadow-sm p-6 flex flex-col">
+        <div className="bg-white border border-slate-100 rounded-[24px] shadow-sm p-4 sm:p-6 flex flex-col">
           <h3 className="text-title-primary flex items-center gap-2 mb-6">
             <IconChartPie size={18} className="text-indigo-400" /> Portfolio Mix
           </h3>
@@ -405,14 +481,14 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mt-4">
+      <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />
         <span className="label-caps text-slate-400 tracking-wider">Inventory Data</span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
       {/* ── Data Tier: Properties Board ── */}
-      <div className="bg-white border border-slate-100 p-6 sm:p-8 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
+      <div className="bg-white border border-slate-100 p-4 sm:p-8 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-5">
           <div className="flex-1 min-w-[250px] max-w-md">
             <div className="relative flex items-center group">
@@ -480,6 +556,9 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
               <table className="w-full min-w-[850px] text-left">
                 <thead>
                   <tr className="border-b border-slate-100 label-caps text-slate-500 bg-slate-50/50">
+                    <th className="pl-4 pr-1 py-3 w-8">
+                      <span className="sr-only">Featured</span>
+                    </th>
                     <th
                       className="px-4 py-3 cursor-pointer hover:text-slate-800 transition-colors group"
                       onClick={() => requestSort("propertyCode")}
@@ -532,8 +611,38 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
                       className="transition-colors hover:bg-slate-50/80 group cursor-pointer"
                       onClick={() => setSelectedProperty(p)}
                     >
+                      <td className="pl-4 pr-1 py-4" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFeature(p.id, p.isFeatured)}
+                          aria-label={p.isFeatured ? "Remove from featured" : "Add to featured"}
+                          aria-pressed={p.isFeatured}
+                          title={p.isFeatured ? "Featured" : "Add to featured"}
+                          className={cn(
+                            "flex size-7 items-center justify-center rounded-lg transition-all",
+                            p.isFeatured
+                              ? "text-amber-400 hover:text-amber-500"
+                              : "text-slate-300 opacity-0 group-hover:opacity-100 hover:text-amber-400"
+                          )}
+                        >
+                          {p.isFeatured ? <IconStarFilled size={16} /> : <IconStar size={16} />}
+                        </button>
+                      </td>
                       <td className="px-4 py-4 mono-data text-slate-500 group-hover:text-slate-900 transition-colors">{p.propertyCode}</td>
-                      <td className="px-4 py-4 text-title-primary">{p.name}</td>
+                      <td className="px-4 py-4 text-title-primary">
+                        <div className="flex items-center gap-3">
+                          <div className="relative size-9 shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                            {primaryImageUrl(p) ? (
+                              <Image src={primaryImageUrl(p)!} alt={p.name} fill sizes="36px" className="object-cover" />
+                            ) : (
+                              <div className="size-full flex items-center justify-center text-slate-300">
+                                <IconBuildingCommunity size={16} stroke={1.5} />
+                              </div>
+                            )}
+                          </div>
+                          <span>{p.name}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-4 body-sm text-slate-600">{p.propertyType}</td>
                       <td className="px-4 py-4 body-sm text-slate-600">{p.location}</td>
                       <td className="px-4 py-4 text-right mono-amount text-slate-900">
@@ -548,16 +657,17 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
                         <DropdownMenu
                           label="Row Actions"
                           trigger={
-                            <button
+                            <div
                               className="p-1.5 rounded-md text-slate-400 hover:bg-white hover:shadow-sm hover:text-slate-900 transition-all border border-transparent hover:border-slate-200"
                               aria-label="Row actions"
                             >
                               <IconDotsVertical size={16} />
-                            </button>
+                            </div>
                           }
                           align="right"
                         >
                           <DropdownItem
+                            icon={IconEdit}
                             onClick={() => {
                               setEditProperty(p);
                               setIsModalOpen(true);
@@ -566,16 +676,19 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
                             Edit Property
                           </DropdownItem>
                           <DropdownItem
+                            icon={p.isFeatured ? IconStarFilled : IconStar}
                             onClick={() => handleToggleFeature(p.id, p.isFeatured)}
                           >
-                            {p.isFeatured ? "Unfeature Property" : "Feature Property"}
+                            {p.isFeatured ? "Remove from Featured" : "Add to Featured"}
                           </DropdownItem>
                           <DropdownItem
+                            icon={IconTrash}
+                            variant="danger"
                             onClick={() => {
                               setDeleteConfirmId(p.id);
                             }}
                           >
-                            Delete
+                            Delete Property
                           </DropdownItem>
                         </DropdownMenu>
                       </td>
@@ -614,17 +727,26 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
       {selectedProperty && (
         <PropertyDetailDrawer
           open={!!selectedProperty}
+          entityId={entityId}
           property={{
             id: selectedProperty.id,
             name: selectedProperty.name,
             location: selectedProperty.location,
             type: selectedProperty.propertyType,
+            listingType: selectedProperty.listingType,
             status: selectedProperty.status === "occupied" ? "Occupied" :
               selectedProperty.status === "under_offer" ? "Under Offer" :
                 "Available",
-            roi: "8.5%", // Hardcoded as per mock data
-            price: selectedProperty.askingPriceKes ? formatCompactKES(parseFloat(selectedProperty.askingPriceKes)) : "N/A",
-            imageUrl: null,
+            // No valuation/appraisal model exists yet — an honest "N/A" rather
+            // than a fabricated figure (matches the Executive Overview page).
+            roi: "N/A",
+            price: featuredPriceDisplay(selectedProperty).value,
+            imageUrl: primaryImageUrl(selectedProperty),
+            bedrooms: selectedProperty.bedrooms,
+            bathrooms: selectedProperty.bathrooms,
+            sizeSqft: selectedProperty.sizeSqft,
+            owner: ownerOf(selectedProperty.ownerContactId),
+            isFeatured: selectedProperty.isFeatured,
           }}
           onClose={() => setSelectedProperty(null)}
           onEdit={(id) => {
@@ -636,6 +758,7 @@ export function PropertiesBoard({ entityId }: { entityId: string }) {
             setSelectedProperty(null);
             setDeleteConfirmId(id);
           }}
+          onToggleFeature={(id, currentlyFeatured) => handleToggleFeature(id, currentlyFeatured)}
         />
       )}
 

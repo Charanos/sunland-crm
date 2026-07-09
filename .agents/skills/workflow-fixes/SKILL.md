@@ -104,5 +104,3 @@ To ensure consistent, premium executive-level design throughout the CRM, strictl
    - Always wire destructive actions (e.g., delete row) to the custom Sunland `<ConfirmDialog>` component rather than native `window.confirm`.
    - Critical "Featured" or "Highlighted" tags should be modeled via explicit database boolean columns (e.g., `isFeatured`) to give admins granular control, rather than relying on automatic logic loops like price-sorting.
 
-9. **Next.js & Neon Serverless Caching Gotcha**:
-   - If a database schema change (migration) is applied while the Next.js local development server (`npm run dev`) is running against a Neon Serverless instance, the dev server will maintain a stale prepared statement cache (`NeonPreparedQuery.execute`). The terminal process running `npm run dev` MUST be explicitly restarted to prevent internal server 500 errors on database reads.

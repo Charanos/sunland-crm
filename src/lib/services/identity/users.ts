@@ -14,6 +14,7 @@ import {
   updateUserProfileSchema,
 } from "@/lib/validation/identity";
 import { parseInput } from "@/lib/validation/parse";
+import { resolveEntityId } from "@/lib/services/entity";
 
 const PUBLIC_COLUMNS = {
   id: users.id,
@@ -31,8 +32,9 @@ const PUBLIC_COLUMNS = {
 
 /** Always entity-filtered — consistent with every other module's scopeEntityFilter reads. */
 export async function listUsers(ctx: CallerContext, filters: { entityId?: string } = {}) {
-  const entityId = filters.entityId ?? ctx.entityId;
-  if (!entityId) throw new DomainValidationError("entityId is required");
+  const rawEntityId = filters.entityId ?? ctx.entityId;
+  if (!rawEntityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(rawEntityId);
   await authorize(ctx, "identity.user.read", entityId);
 
   return db.select(PUBLIC_COLUMNS).from(users).where(eq(users.primaryEntityId, entityId));

@@ -270,24 +270,28 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
               href="/admin/hr/complaints"
               className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
             >
+              <IconAlertTriangle size={14} />
               <span>Complaints</span>
             </Link>
             <Link
               href="/admin/support"
               className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
+              <IconLifebuoy size={14} />
               <span>Support Tickets</span>
             </Link>
             <Link
               href="/admin/reports"
               className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
+              <IconReportAnalytics size={14} />
               <span>Reports Center</span>
             </Link>
             <Link
               href="/admin/system"
               className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
+              <IconDatabase size={14} />
               <span>System & Roles</span>
             </Link>
           </div>

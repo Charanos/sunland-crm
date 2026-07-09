@@ -141,7 +141,7 @@ export async function POST() {
           passwordHash: hashedPass,
           name: "Jared Omondi",
           role: "property_manager",
-          title: "Line Manager",
+          title: "Property Manager",
           primaryEntityId: resEntity.id,
         },
         {

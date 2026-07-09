@@ -1,15 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   IconMessageCircle,
   IconX,
   IconSend,
   IconSearch,
-  IconDotsVertical,
-  IconPhoneCall,
-  IconVideo,
   IconHash,
   IconChecks
 } from "@tabler/icons-react";
@@ -17,30 +14,78 @@ import { Avatar } from "@/components/ui/avatar";
 import { useUIStore } from "@/store/ui";
 import { cn } from "@/lib/utils/cn";
 import { usePathname } from "next/navigation";
+import { useAblyChannel } from "@/hooks/use-ably-channel";
 
-import { MOCK_DMS, MOCK_CHANNELS } from "@/data/messaging";
+const TABS = ["Direct", "Channels"];
 
-// Mock Data
-const TABS = ["Direct", "Channels", "Alerts"];
+interface Conversation {
+  id: string;
+  type: "dm" | "channel";
+  name: string | null;
+  otherParticipant: { id: string; name: string; email: string; role: string } | null;
+  unreadCount: number;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+}
 
-const MOCK_MESSAGES = [
-  { id: "m1", sender: "Amina Hassan", text: "Hey! Did you check the new maintenance log for Westlands Tower?", time: "10:24 AM", isMe: false },
-  { id: "m2", sender: "You", text: "Just looking at it now. The plumbing issue on 4B right?", time: "10:26 AM", isMe: true },
-  { id: "m3", sender: "Amina Hassan", text: "Yes exactly. I've assigned the contractor for ticket #421. Should be fixed by tomorrow.", time: "10:28 AM", isMe: false },
-];
+interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+}
 
-export function GlobalChatWidget() {
+interface UserOption {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit" });
+}
+
+export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) {
   const pathname = usePathname();
   const isMessagesPage = pathname?.endsWith("/messages");
 
   const { chatOpen, toggleChat, closeChat, selectedChatDMId: activeChatId, setSelectedChatDMId: setActiveChatId } = useUIStore();
   const [activeTab, setActiveTab] = useState("Direct");
   const [inputText, setInputText] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
 
+  const userInfo = useCallback((id: string) => users.find((u) => u.id === id), [users]);
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const res = await fetch("/api/messaging/conversations");
+      const data = await res.json();
+      if (Array.isArray(data.conversations)) setConversations(data.conversations);
+    } catch {
+      // Widget stays empty rather than erroring loudly — Messages page is the source of truth.
+    }
+  }, []);
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      fetch("/api/auth/me").then((r) => r.json()).then((d) => { if (d?.user) setCurrentUserId(d.user.id); }).catch(() => {});
+      fetch(`/api/identity/users?entityId=${entityId}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.users)) setUsers(d.users); }).catch(() => {});
+      loadConversations();
+    });
+  }, [loadConversations, entityId]);
+
+  useEffect(() => {
+    if (chatOpen) Promise.resolve().then(() => loadConversations());
+  }, [chatOpen, loadConversations]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -60,17 +105,62 @@ export function GlobalChatWidget() {
     };
   }, [chatOpen, closeChat]);
 
-  // Scroll to bottom when opening a chat
+  // Load thread + mark read whenever the active conversation changes.
+  useEffect(() => {
+    if (!activeChatId) {
+      Promise.resolve().then(() => setMessages([]));
+      return;
+    }
+    fetch(`/api/messaging/conversations/${activeChatId}/messages`)
+      .then((r) => r.json())
+      .then((d) => setMessages(Array.isArray(d.messages) ? d.messages : []))
+      .catch(() => {});
+    fetch(`/api/messaging/conversations/${activeChatId}/read`, { method: "POST" }).catch(() => {});
+  }, [activeChatId]);
+
+  useAblyChannel<Message>(
+    activeChatId ? `conversation-${activeChatId}` : null,
+    "message",
+    (data) => {
+      setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, data]));
+    },
+  );
+
+  // Scroll to bottom on new messages / opening a chat
   useEffect(() => {
     if (activeChatId && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [activeChatId, chatOpen]);
+  }, [activeChatId, chatOpen, messages.length]);
 
-  // FAB Spring
-  const fabSpring = { type: "spring", stiffness: 300, damping: 25 } as const;
+  const handleSend = async () => {
+    if (!inputText.trim() || !activeChatId || isSending) return;
+    const content = inputText.trim();
+    setInputText("");
+    setIsSending(true);
+    try {
+      const res = await fetch(`/api/messaging/conversations/${activeChatId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (res.ok && data.message) {
+        setMessages((prev) => (prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]));
+      }
+    } catch {
+      // Left in the input-cleared state — a full retry affordance isn't worth the space in this compact widget.
+    } finally {
+      setIsSending(false);
+    }
+  };
 
-  // Panel Spring
+  const activeConvo = conversations.find((c) => c.id === activeChatId) ?? null;
+  const activeName = activeConvo?.type === "channel" ? activeConvo.name : activeConvo?.otherParticipant?.name;
+  const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
+  const dms = conversations.filter((c) => c.type === "dm");
+  const channels = conversations.filter((c) => c.type === "channel");
+
   const panelSpring = { type: "spring", stiffness: 350, damping: 30 } as const;
 
   if (isMessagesPage) return null;
@@ -92,36 +182,29 @@ export function GlobalChatWidget() {
               {activeChatId ? (
                 <div className="flex items-center gap-3">
                   <button onClick={() => setActiveChatId(null)} className="text-white/70 hover:text-white transition-colors">
-                    <IconX size={20} className="rotate-45" /> {/* Use as back button conceptually */}
+                    <IconX size={20} className="rotate-45" />
                   </button>
                   <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Avatar src={MOCK_DMS.find(d => d.id === activeChatId)?.avatarUrl} fallback="A" className="size-8 border border-white/20" />
-                      <div className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-400 border-2 border-[#151936]"></div>
-                    </div>
+                    <Avatar
+                      src={activeConvo?.type === "dm" && activeConvo.otherParticipant ? userInfo(activeConvo.otherParticipant.id)?.avatarUrl ?? undefined : undefined}
+                      fallback={(activeName ?? "?").slice(0, 1)}
+                      className="size-8 border border-white/20"
+                    />
                     <div>
-                      <h4 className="font-medium leading-none mb-1 text-caption">{MOCK_DMS.find(d => d.id === activeChatId)?.name}</h4>
-                      <p className="text-tiny text-white/60 leading-none">Online</p>
+                      <h4 className="font-medium leading-none mb-1 text-caption">{activeName ?? "Conversation"}</h4>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div>
                   <h3 className="font-medium tracking-tight text-caption">Internal Comms</h3>
-                  <p className="text-tiny text-white/60">3 unread messages</p>
+                  <p className="text-tiny text-white/60">{totalUnread > 0 ? `${totalUnread} unread message${totalUnread === 1 ? "" : "s"}` : "All caught up"}</p>
                 </div>
               )}
 
               <div className="flex items-center gap-2">
-                {activeChatId ? (
-                  <>
-                    <button className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><IconPhoneCall size={18} /></button>
-                    <button className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><IconVideo size={18} /></button>
-                  </>
-                ) : (
-                  <>
-                    <button className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><IconSearch size={18} /></button>
-                  </>
+                {!activeChatId && (
+                  <button className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><IconSearch size={18} /></button>
                 )}
                 <button onClick={closeChat} className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors ml-1">
                   <IconX size={18} />
@@ -134,32 +217,36 @@ export function GlobalChatWidget() {
               // ── Active Chat View ──
               <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
-                  <div className="text-center mb-2">
-                    <span className="text-slate-400 bg-slate-200/50 px-3 py-1 rounded-full label-caps">Today</span>
-                  </div>
-
-                  {MOCK_MESSAGES.map((msg) => (
-                    <div key={msg.id} className={cn("flex max-w-[85%]", msg.isMe ? "self-end" : "self-start")}>
-                      {!msg.isMe && (
-                        <Avatar src={MOCK_DMS[0].avatarUrl} fallback="A" className="size-6 mr-2 mt-auto shrink-0" />
-                      )}
-                      <div className={cn(
-                        "p-2.5 rounded-2xl text-caption shadow-sm leading-relaxed",
-                        msg.isMe
-                          ? "bg-[#151936] text-white rounded-br-sm"
-                          : "bg-white border border-slate-100 text-slate-800 rounded-bl-sm"
-                      )}>
-                        {msg.text}
-                        <div className={cn(
-                          "flex items-center justify-end gap-1 mt-1 text-[10px] font-mono",
-                          msg.isMe ? "text-white/50" : "text-slate-400"
-                        )}>
-                          {msg.time}
-                          {msg.isMe && <IconChecks size={12} className="text-[#f3df27]" />}
+                  {messages.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center text-slate-400 text-caption">No messages yet — say hello.</div>
+                  ) : (
+                    messages.map((msg) => {
+                      const isMe = msg.senderId === currentUserId;
+                      const sender = userInfo(msg.senderId);
+                      return (
+                        <div key={msg.id} className={cn("flex max-w-[85%]", isMe ? "self-end" : "self-start")}>
+                          {!isMe && (
+                            <Avatar src={sender?.avatarUrl ?? undefined} fallback={(sender?.name ?? "?").slice(0, 1)} className="size-6 mr-2 mt-auto shrink-0" />
+                          )}
+                          <div className={cn(
+                            "p-2.5 rounded-2xl text-caption shadow-sm leading-relaxed",
+                            isMe
+                              ? "bg-[#151936] text-white rounded-br-sm"
+                              : "bg-white border border-slate-100 text-slate-800 rounded-bl-sm"
+                          )}>
+                            {msg.content}
+                            <div className={cn(
+                              "flex items-center justify-end gap-1 mt-1 text-[10px] font-mono",
+                              isMe ? "text-white/50" : "text-slate-400"
+                            )}>
+                              {formatTime(msg.createdAt)}
+                              {isMe && <IconChecks size={12} className="text-[#f3df27]" />}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
 
@@ -173,13 +260,12 @@ export function GlobalChatWidget() {
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && inputText.trim()) {
-                          setInputText('');
-                          // In real app: send message
-                        }
+                        if (e.key === "Enter" && inputText.trim()) handleSend();
                       }}
                     />
                     <button
+                      onClick={handleSend}
+                      disabled={!inputText.trim() || isSending}
                       className={cn(
                         "size-8 rounded-lg flex items-center justify-center transition-colors",
                         inputText.trim() ? "bg-[#f3df27] text-[#151936]" : "bg-slate-200 text-slate-400"
@@ -213,36 +299,40 @@ export function GlobalChatWidget() {
 
                 {/* List */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-                  {activeTab === "Direct" && MOCK_DMS.map((dm) => (
-                    <button
-                      key={dm.id}
-                      onClick={() => setActiveChatId(dm.id)}
-                      className="w-full p-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-xl transition-all hover:shadow-sm border border-transparent hover:border-slate-100 text-left group"
-                    >
-                      <div className="relative shrink-0">
-                        <Avatar src={dm.avatarUrl} fallback={dm.name[0]} className="size-10 border border-slate-100 shadow-sm" />
-                        {dm.online && (
-                          <div className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-500 border-2 border-white"></div>
+                  {activeTab === "Direct" && (dms.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-slate-400 text-caption px-6 text-center">No direct messages yet — start one from the Messages page.</div>
+                  ) : dms.map((dm) => {
+                    const other = dm.otherParticipant;
+                    const info = other ? userInfo(other.id) : undefined;
+                    return (
+                      <button
+                        key={dm.id}
+                        onClick={() => setActiveChatId(dm.id)}
+                        className="w-full p-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-xl transition-all hover:shadow-sm border border-transparent hover:border-slate-100 text-left group"
+                      >
+                        <Avatar src={info?.avatarUrl ?? undefined} fallback={(other?.name ?? "?").slice(0, 1)} className="size-10 border border-slate-100 shadow-sm shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center mb-0.5">
+                            <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] text-caption">{other?.name ?? "Unknown"}</h4>
+                            {dm.lastMessageAt && <span className="text-[10px] font-mono text-slate-400">{formatTime(dm.lastMessageAt)}</span>}
+                          </div>
+                          <p className="text-tiny text-slate-500 truncate pr-4">{dm.lastMessagePreview ?? "No messages yet"}</p>
+                        </div>
+                        {dm.unreadCount > 0 && (
+                          <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
+                            {dm.unreadCount}
+                          </div>
                         )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-center mb-0.5">
-                          <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] text-caption">{dm.name}</h4>
-                          <span className="text-[10px] font-mono text-slate-400">{dm.lastMessageTime}</span>
-                        </div>
-                        <p className="text-tiny text-slate-500 truncate pr-4">{dm.lastMessage}</p>
-                      </div>
-                      {dm.unread > 0 && (
-                        <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
-                          {dm.unread}
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  }))}
 
-                  {activeTab === "Channels" && MOCK_CHANNELS.map((ch) => (
+                  {activeTab === "Channels" && (channels.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-slate-400 text-caption px-6 text-center">No channels yet — create one from the Messages page.</div>
+                  ) : channels.map((ch) => (
                     <button
                       key={ch.id}
+                      onClick={() => setActiveChatId(ch.id)}
                       className="w-full p-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-xl transition-all hover:shadow-sm border border-transparent hover:border-slate-100 text-left group"
                     >
                       <div className="size-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200">
@@ -250,15 +340,15 @@ export function GlobalChatWidget() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] text-caption">{ch.name}</h4>
-                        <p className="text-tiny text-slate-500 truncate">Latest update in channel...</p>
+                        <p className="text-tiny text-slate-500 truncate">{ch.lastMessagePreview ?? "No messages yet"}</p>
                       </div>
-                      {ch.unread > 0 && (
+                      {ch.unreadCount > 0 && (
                         <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
-                          {ch.unread}
+                          {ch.unreadCount}
                         </div>
                       )}
                     </button>
-                  ))}
+                  )))}
                 </div>
               </div>
             )}
@@ -302,9 +392,9 @@ export function GlobalChatWidget() {
         </AnimatePresence>
 
         {/* Unread Badge */}
-        {!chatOpen && (
+        {!chatOpen && totalUnread > 0 && (
           <div className="absolute top-0 right-0 size-4 bg-[#f3df27] rounded-full border-2 border-[#151936] flex items-center justify-center">
-            <span className="text-sm  font-medium text-[#151936]">3</span>
+            <span className="text-sm font-medium text-[#151936]">{totalUnread > 9 ? "9+" : totalUnread}</span>
           </div>
         )}
       </motion.button>

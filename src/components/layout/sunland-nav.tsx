@@ -32,32 +32,7 @@ import type { UserRole } from "@/types";
 import { Avatar } from "@/components/ui/avatar";
 import { ENTITIES, getEntityById } from "@/data/entities";
 import Image from "next/image";
-export const TEAM_MEMBERS = [
-  {
-    id: 1,
-    name: "Amina Hassan",
-    role: "Property Manager",
-    status: "online" as const,
-    avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=faces",
-    dmId: "dm1",
-  },
-  {
-    id: 2,
-    name: "James Mutua",
-    role: "Head of BD",
-    status: "online" as const,
-    avatarUrl: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=80&h=80&fit=crop&crop=faces",
-    dmId: "dm2",
-  },
-  {
-    id: 3,
-    name: "Grace Omondi",
-    role: "Finance Officer",
-    status: "away" as const,
-    avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&h=80&fit=crop&crop=faces",
-    dmId: "dm3",
-  },
-];
+import { useTeamMembers, getOrCreateDmConversationId } from "@/hooks/use-team-members";
 
 // ─── Hook: click-outside + escape ────────────────────────────────────────────
 
@@ -206,9 +181,12 @@ export function SunlandNav() {
     window.location.href = "/login";
   };
 
-  const handleOpenTeamChat = (dmId: string) => {
+  const { members: teamMembers } = useTeamMembers();
+
+  const handleOpenTeamChat = async (userId: string) => {
     const isMessagesPage = pathname?.endsWith("/messages");
-    setSelectedChatDMId(dmId, !isMessagesPage);
+    const conversationId = await getOrCreateDmConversationId("group", userId);
+    if (conversationId) setSelectedChatDMId(conversationId, !isMessagesPage);
   };
 
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -650,19 +628,18 @@ export function SunlandNav() {
           </div>
 
           <div className={cn("space-y-0.5", sidebarCollapsed && "flex flex-col items-center gap-0.5")}>
-            {TEAM_MEMBERS.map((member) =>
+            {teamMembers.map((member) =>
               sidebarCollapsed ? (
-                <NavTooltip key={member.id} label={`${member.name} · ${member.role}`}>
+                <NavTooltip key={member.id} label={`${member.name} · ${member.role.replace("_", " ")}`}>
                   <button
                     type="button"
                     aria-label={member.name}
-                    onClick={() => handleOpenTeamChat(member.dmId)}
+                    onClick={() => handleOpenTeamChat(member.id)}
                     className="flex size-10 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.04]"
                   >
                     <Avatar
-                      src={member.avatarUrl}
+                      src={member.avatarUrl ?? undefined}
                       fallback={member.name.substring(0, 2)}
-                      status={member.status}
                       className="size-8"
                     />
                   </button>
@@ -672,20 +649,19 @@ export function SunlandNav() {
                   key={member.id}
                   type="button"
                   aria-label={`Message ${member.name}`}
-                  onClick={() => handleOpenTeamChat(member.dmId)}
+                  onClick={() => handleOpenTeamChat(member.id)}
                   className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
                 >
                   <Avatar
-                    src={member.avatarUrl}
+                    src={member.avatarUrl ?? undefined}
                     fallback={member.name.substring(0, 2)}
-                    status={member.status}
                     className="size-8 shrink-0"
                   />
                   <div className="min-w-0 text-left">
                     <p className="truncate text-base text-white/75 group-hover:text-white/95 transition-colors">
                       {member.name}
                     </p>
-                    <p className="truncate text-sm text-white/40">{member.role}</p>
+                    <p className="truncate text-sm text-white/40">{member.role.replace("_", " ")}</p>
                   </div>
                 </button>
               )

@@ -11,8 +11,6 @@ import {
   IconLifebuoy,
   IconReportAnalytics,
   IconDatabase,
-  IconUser,
-  IconCircleCheck,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { Badge, BoardHeader, BoardPanel, Button, KpiCard } from "@/components/ui/erp-primitives";
@@ -87,6 +85,12 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
   const [isSaving, setIsSaving] = useState(false);
   const [selected, setSelected] = useState<SupportTicket | null>(null);
   const [busy, setBusy] = useState(false);
+  // Org-wide triage (scope=all) requires support.ticket.manage (CEO/GM). Any
+  // other authenticated staff member can still reach this page to file and
+  // track their own tickets ("admin is the main support endpoint" — the
+  // backend scopes them to scope=mine automatically), so a 403 on the
+  // org-wide query falls back to the caller's own queue rather than erroring.
+  const [scope, setScope] = useState<"all" | "mine">("all");
 
   // Edit / Resolve form state
   const [editStatus, setEditStatus] = useState<TicketStatus>("open");
@@ -97,9 +101,15 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
   const loadTickets = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/support/tickets?entityId=${entityId}&scope=all`);
+      const res = await fetch(`/api/support/tickets?entityId=${entityId}&scope=${scope}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load support tickets");
+      if (!res.ok) {
+        if (res.status === 403 && scope === "all") {
+          setScope("mine");
+          return;
+        }
+        throw new Error(data.error || "Failed to load support tickets");
+      }
       setTickets(data.tickets ?? []);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load support tickets";
@@ -107,7 +117,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
     } finally {
       setIsLoading(false);
     }
-  }, [entityId, pushToast]);
+  }, [entityId, scope, pushToast]);
 
   const loadStaff = useCallback(async () => {
     try {
@@ -122,8 +132,10 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
   }, []);
 
   useEffect(() => {
-    loadTickets();
-    loadStaff();
+    Promise.resolve().then(() => {
+      loadTickets();
+      loadStaff();
+    });
   }, [loadTickets, loadStaff]);
 
   const handleCreate = async () => {
@@ -247,24 +259,28 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
               href="/admin/hr/complaints"
               className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
+              <IconAlertTriangle size={14} />
               <span>Complaints</span>
             </Link>
             <Link
               href="/admin/support"
               className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
             >
+              <IconLifebuoy size={14} />
               <span>Support Tickets</span>
             </Link>
             <Link
               href="/admin/reports"
               className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
+              <IconReportAnalytics size={14} />
               <span>Reports Center</span>
             </Link>
             <Link
               href="/admin/system"
               className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
+              <IconDatabase size={14} />
               <span>System & Roles</span>
             </Link>
           </div>

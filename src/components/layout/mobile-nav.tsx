@@ -22,8 +22,7 @@ import {
   getActiveNavItem,
   findSectionByPath,
 } from "@/components/layout/nav-model";
-import { TEAM_MEMBERS } from "./sunland-nav";
-import { MOCK_DMS } from "@/data/messaging";
+import { useTeamMembers, getOrCreateDmConversationId } from "@/hooks/use-team-members";
 
 // ─── Mobile Bottom Pill Nav ──────────────────────────────────────────────────
 
@@ -129,7 +128,7 @@ export function MobileNavigationDrawer() {
     );
   };
 
-  const totalUnread = MOCK_DMS.reduce((sum, dm) => sum + dm.unread, 0);
+  const { members: teamMembers } = useTeamMembers();
   const contextLabel = isFinRoute ? "Finance" : "Operations";
   const contextColor = isFinRoute
     ? "bg-emerald-400/20 text-emerald-300 border-emerald-400/30"
@@ -304,51 +303,33 @@ export function MobileNavigationDrawer() {
           <div className="mt-4 border-t border-white/[0.08] pt-4">
             <div className="mb-2 flex items-center justify-between px-3">
               <p className="label-caps text-white/50">Team</p>
-              {totalUnread > 0 && (
-                <span className="rounded-full bg-[var(--primary)]/20 px-2 py-0.5 text-tiny text-[var(--primary)]">
-                  {totalUnread} unread
-                </span>
-              )}
             </div>
             <div className="space-y-0.5">
-              {TEAM_MEMBERS.map((member) => {
-                const dmId = member.dmId;
-                const dmContact = MOCK_DMS.find((dm) => dm.id === dmId);
-                const unread = dmContact?.unread ?? 0;
-
-                return (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => {
-                      const isMessagesPage = pathname?.endsWith("/messages");
-                      setSelectedChatDMId(dmId, !isMessagesPage);
-                      closeMobileNav();
-                    }}
-                    className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-white/[0.04]"
-                  >
-                    <div className="relative shrink-0">
-                      <Avatar
-                        src={member.avatarUrl}
-                        fallback={member.name.substring(0, 2)}
-                        status={member.status}
-                        className="size-8"
-                      />
-                      {unread > 0 && (
-                        <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-[var(--primary)] text-xs text-[var(--on-primary)]">
-                          {unread}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 text-left">
-                      <p className="truncate text-caption text-white/75 transition-colors group-hover:text-white/95">
-                        {member.name}
-                      </p>
-                      <p className="truncate text-tiny text-white/40">{member.role}</p>
-                    </div>
-                  </button>
-                );
-              })}
+              {teamMembers.map((member) => (
+                <button
+                  key={member.id}
+                  type="button"
+                  onClick={async () => {
+                    const isMessagesPage = pathname?.endsWith("/messages");
+                    const conversationId = await getOrCreateDmConversationId("group", member.id);
+                    if (conversationId) setSelectedChatDMId(conversationId, !isMessagesPage);
+                    closeMobileNav();
+                  }}
+                  className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left transition-colors hover:bg-white/[0.04]"
+                >
+                  <Avatar
+                    src={member.avatarUrl ?? undefined}
+                    fallback={member.name.substring(0, 2)}
+                    className="size-8 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="truncate text-caption text-white/75 transition-colors group-hover:text-white/95">
+                      {member.name}
+                    </p>
+                    <p className="truncate text-tiny text-white/40">{member.role.replace("_", " ")}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
         </nav>

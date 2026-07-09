@@ -84,7 +84,7 @@ function tabDescription(sectionId: FinanceSectionId, tabId: string) {
     "rentals:deficits":
       "Filtered view of rental ledger rows where the generated deficit is above zero.",
     "rentals:vacancies":
-      "Vacant unit tracking and escalation handoff to the relevant line manager.",
+      "Vacant unit tracking and escalation handoff to the relevant property manager.",
     "rentals:defaulters":
       "Tenant arrears aging, payment plans, and collection escalation queue.",
     "mandates:active":

@@ -5,9 +5,6 @@ import {
   IconFolderOpen,
   IconReportAnalytics,
   IconClipboardCheck,
-  IconAlertTriangle,
-  IconLifebuoy,
-  IconDatabase,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import {
@@ -47,7 +44,7 @@ const DEPARTMENT_GROUPS = [
   },
   {
     id: "bd",
-    label: "Business Development",
+    label: "Property Management",
     description: "Pipeline performance, commission summaries, lead conversion reports.",
     reportCount: 0,
     primaryColor: "bg-violet-50 text-violet-700 border-violet-200",

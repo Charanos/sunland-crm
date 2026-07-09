@@ -742,7 +742,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 <IconArrowUpRight size={20} className="text-slate-400" />
               </div>
               <div className="flex items-center justify-between mb-4 relative z-10">
-                <h3 className="text-title-primary">Sales Performance</h3>
+                <h3 className="text-title-primary">Property Management Performance</h3>
               </div>
               <div className="flex items-end justify-between relative z-10 gap-2">
                 <div className="flex items-center gap-4">
@@ -1283,7 +1283,7 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                 <div className="flex justify-between items-center p-3 rounded-xl hover:bg-slate-50/80 transition-colors backdrop-blur-sm">
                   <div className="flex items-center gap-3">
                     <div className="size-2 rounded-full bg-teal-500 shadow-sm" />
-                    <span className="text-body-primary font-medium">Sales & Marketing</span>
+                    <span className="text-body-primary font-medium">Property Management</span>
                   </div>
                   <span className="mono-stat text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">{stats.departmentStats.sales}</span>
                 </div>

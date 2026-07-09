@@ -46,7 +46,7 @@ const EMULATION_PROFILES = [
   {
     role: "property_manager",
     name: "Jared Omondi",
-    title: "Line Manager / Business Dev",
+    title: "Property Manager",
     initials: "JO",
     avatarUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop&crop=face",
   },

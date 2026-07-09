@@ -1278,7 +1278,7 @@ export function FinanceOverviewScaffold() {
       <div className="pt-6 border-t border-slate-200/60 my-4 animate-fade-in-up">
         <h2 className="title-serif text-slate-900 font-normal">Cross-Departmental Financial Sync</h2>
         <p className="text-desc-secondary mt-1">
-          Monitor operating inputs and ledger accruals flowing from human resources, business development, and front office logistics.
+          Monitor operating inputs and ledger accruals flowing from human resources, property management, and front office logistics.
         </p>
       </div>
 
@@ -1312,7 +1312,7 @@ export function FinanceOverviewScaffold() {
           </div>
         </Card>
 
-        {/* Card 2: Business Development & Commissions Pipeline */}
+        {/* Card 2: Property Management & Commissions Pipeline */}
         <Card className="p-5 bg-white border border-slate-100 shadow-sm flex flex-col justify-between h-[180px] rounded-2xl group hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

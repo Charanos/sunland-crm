@@ -40,7 +40,6 @@ export function ConfirmDialog({
 
   return (
     <Modal
-      description={description}
       onClose={isLoading ? () => {} : onClose}
       open={open}
       title={title}
@@ -54,8 +53,7 @@ export function ConfirmDialog({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-slate-500 leading-relaxed text-base">
-            This action is intentional and will be recorded in the activity log
-            when audit logging is enabled.
+            {description}
           </p>
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button onClick={onClose} variant="secondary" disabled={isLoading}>
