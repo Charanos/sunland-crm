@@ -95,32 +95,32 @@ export function ReportsCenterBoard() {
           <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
             <Link
               href="/admin/approvals"
-              className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Approvals</span>
               <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full text-meta-muted-strong">Queue</span>
             </Link>
             <Link
               href="/admin/hr/complaints"
-              className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Complaints</span>
             </Link>
             <Link
               href="/admin/support"
-              className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Support Tickets</span>
             </Link>
             <Link
               href="/admin/reports"
-              className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
             >
               <span>Reports Center</span>
             </Link>
             <Link
               href="/admin/system"
-              className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>System & Roles</span>
             </Link>

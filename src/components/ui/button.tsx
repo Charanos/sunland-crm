@@ -6,7 +6,7 @@ type ButtonSize = "sm" | "md" | "lg";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "border-transparent bg-[var(--primary)] text-[var(--on-primary)] hover:bg-[var(--primary-container)]",
+    "border-transparent bg-tertiary-gradient text-white hover:opacity-90",
   secondary:
     "border-[var(--outline)] bg-white text-[var(--on-surface)] hover:bg-[var(--surface-muted)]",
   ghost:

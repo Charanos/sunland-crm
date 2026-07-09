@@ -596,13 +596,13 @@ export function PipelineBoard({
           <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
             <Link
               href="/admin/contacts"
-              className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Contacts</span>
             </Link>
             <Link
               href="/admin/pipeline"
-              className="px-3.5 py-1.5 text-body-primary rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
             >
               <span>Deals Pipeline</span>
               <span className="bg-[#f3df27] text-[#151936] px-1.5 py-0.2 rounded-full text-meta-muted-strong">Active</span>

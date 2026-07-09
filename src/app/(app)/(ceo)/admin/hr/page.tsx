@@ -60,7 +60,7 @@ export default function HRPortalPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="label-caps text-[var(--on-surface-dim)] mb-1">People Operations</p>
-          <h1 className="headline-lg text-slate-900">HR Portal</h1>
+          <h1 className="title-serif mt-2 text-slate-900">HR Portal</h1>
           <p className="body-sm text-slate-500 mt-1">Manage your workforce, payroll, attendance, and HR operations.</p>
         </div>
         <button type="button"

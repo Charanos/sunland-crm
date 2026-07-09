@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import {
   IconSearch,
@@ -1459,7 +1460,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                       </div>
                     ) : logPhotoUrl ? (
                       <div className="relative w-full">
-                        <img src={logPhotoUrl} alt="Cheque" className="w-full rounded-xl object-contain max-h-[250px]" />
+                        <Image src={logPhotoUrl} width={800} height={250} alt="Cheque" className="w-full rounded-xl object-contain max-h-[250px]" />
                         <button type="button" onClick={() => setLogPhotoUrl(null)}
                           className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors">
                           <IconX size={14} />
@@ -1530,7 +1531,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                       <div className="shrink-0">
                         <p className="label-caps text-slate-400 mb-1.5">Cheque Photo</p>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={logPhotoUrl} alt="Cheque" className="w-32 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                        <Image src={logPhotoUrl} width={128} height={80} alt="Cheque" className="w-32 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
                       </div>
                     )}
                     <div className="flex-1">

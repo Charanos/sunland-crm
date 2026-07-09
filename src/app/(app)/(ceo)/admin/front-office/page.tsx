@@ -53,7 +53,7 @@ export default function FrontOfficePage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="label-caps text-[var(--on-surface-dim)] mb-1">Operations</p>
-          <h1 className="headline-lg text-slate-900">Front Office</h1>
+          <h1 className="title-serif mt-2 text-slate-900">Front Office</h1>
           <p className="body-sm text-slate-500 mt-1">Manage daily front office operations, fleet logistics, and client reception.</p>
         </div>
         <Link href="/admin/front-office/logistics"

@@ -96,3 +96,13 @@ To ensure consistent, premium executive-level design throughout the CRM, strictl
 6. **Typography Standardization (No Arbitrary Pixels)**:
    - **NEVER use custom pixel sizing classes** like `text-[11px]`, `text-[15px]`, or `text-[42px]`.
    - Strictly map all typography sizes to standard Tailwind semantics (`text-xs`, `text-sm`, `text-lg`, `text-5xl`).
+
+7. **Media Optimization**:
+   - Comprehensively remove standard HTML `<img>` tags. Always use the `next/image` `<Image />` component with properly optimized layouts for properties, avatars, and dashboards.
+
+8. **Admin Operations & Components**:
+   - Always wire destructive actions (e.g., delete row) to the custom Sunland `<ConfirmDialog>` component rather than native `window.confirm`.
+   - Critical "Featured" or "Highlighted" tags should be modeled via explicit database boolean columns (e.g., `isFeatured`) to give admins granular control, rather than relying on automatic logic loops like price-sorting.
+
+9. **Next.js & Neon Serverless Caching Gotcha**:
+   - If a database schema change (migration) is applied while the Next.js local development server (`npm run dev`) is running against a Neon Serverless instance, the dev server will maintain a stale prepared statement cache (`NeonPreparedQuery.execute`). The terminal process running `npm run dev` MUST be explicitly restarted to prevent internal server 500 errors on database reads.

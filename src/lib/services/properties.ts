@@ -138,6 +138,7 @@ export async function updateProperty(
     status: "available" | "occupied" | "under_offer" | "off_market" | "maintenance";
     media: MediaEntry[];
     unitBreakdown: UnitBreakdownEntry[];
+    isFeatured: boolean;
   }>
 ) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
@@ -176,6 +177,7 @@ export async function updateProperty(
     status: input.status,
     media: input.media,
     unitBreakdown: input.unitBreakdown,
+    isFeatured: input.isFeatured,
   };
   for (const key of Object.keys(updatableFields) as (keyof typeof updatableFields)[]) {
     if (updatableFields[key] === undefined) delete updatableFields[key];

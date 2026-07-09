@@ -359,14 +359,11 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
       {/* ── Hero Command Title ──────────────────────────────── */}
       <section className="relative z-10 flex flex-col gap-1 border-b border-slate-200/60 pb-3 animate-fade-in-up" aria-label="Dashboard header">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          {/* <div className="flex items-center gap-2.5">
-            <Badge tone="primary" className="font-medium tracking-wide">
-              {isComm ? "Commercial Operations" : isRes ? "Residential Operations" : "Consolidated Group"}
-            </Badge>
+          <div className="flex items-center gap-2.5">
             <span className="text-slate-400 hidden sm:inline mono-data">
               Updated {mounted ? lastRefreshed.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }) : "--:--"}
             </span>
-          </div> */}
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleRefresh}
@@ -1247,11 +1244,11 @@ export function DashboardOverview({ entityId = "group" }: { entityId?: string })
                     <p className="mono-stat text-white leading-none tracking-tight text-5xl">{stats.systemHealth.activeUserCount}</p>
                     <p className="body-md text-slate-400 font-medium">Active Users</p>
                   </div>
-                  <div className="flex -space-x-3 opacity-90 hover:opacity-100 transition-opacity cursor-pointer drop-shadow-md">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces&q=80" alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
-                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=faces&q=80" alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
-                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces&q=80" alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
-                    <div className="size-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-xs font-medium text-slate-300">
+                  <div className="flex -space-x-4 mr-6">
+                    <Image src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces&q=80" width={40} height={40} alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
+                    <Image src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=faces&q=80" width={40} height={40} alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
+                    <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces&q=80" width={40} height={40} alt="User" className="size-10 rounded-full border-2 border-slate-900 object-cover" />
+                    <div className="size-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-white text-xs font-medium z-10">
                       +{Math.max(0, stats.systemHealth.activeUserCount - 3)}
                     </div>
                   </div>

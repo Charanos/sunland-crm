@@ -64,6 +64,7 @@ export const properties = pgTable(
     unitBreakdown: jsonb("unit_breakdown")
       .$type<Array<{ unitType: string; count: number; monthlyRentKes?: string }>>()
       .default([]),
+    isFeatured: boolean("is_featured").default(false).notNull(),
     ...timestamps,
   },
   (table) => ({

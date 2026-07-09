@@ -9,7 +9,7 @@ export default function ContactsPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-medium font-serif tracking-tight text-slate-900">
+        <h1 className="title-serif mt-2 text-slate-900">
           Directory & Relationships
         </h1>
         <p className="text-slate-500 max-w-2xl">
