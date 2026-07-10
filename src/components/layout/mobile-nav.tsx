@@ -100,9 +100,9 @@ export function MobileBottomNav() {
         <div className="absolute left-1/2 top-[-20px] flex flex-col items-center -translate-x-1/2">
           <Link
             href={centerItem.href}
-            className="flex size-14 items-center justify-center rounded-full bg-tertiary-gradient text-white shadow-[0_8px_24px_rgba(18,42,32,0.3)] transition-transform hover:scale-105 active:scale-95"
+            className="flex size-15 items-center justify-center rounded-full bg-tertiary-gradient text-white shadow-[0_8px_24px_rgba(18,42,32,0.3)] transition-transform hover:scale-105 active:scale-95"
           >
-            <CenterIcon size={24} stroke={1.5} />
+            <CenterIcon size={25} stroke={1.5} />
           </Link>
           <span className="absolute top-[72px] text-xs font-medium text-slate-500">
             {centerItem.label}

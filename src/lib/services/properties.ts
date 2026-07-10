@@ -299,7 +299,76 @@ export async function listLeases(ctx: CallerContext) {
   const entityId = await resolveEntityId(ctx.entityId);
   await authorize(ctx, "properties.lease.read", entityId);
 
-  return db.select().from(leases).where(eq(leases.entityId, entityId));
+  return db
+    .select({
+      id: leases.id,
+      entityId: leases.entityId,
+      propertyId: leases.propertyId,
+      tenantContactId: leases.tenantContactId,
+      startsAt: leases.startsAt,
+      endsAt: leases.endsAt,
+      monthlyRentKes: leases.monthlyRentKes,
+      depositKes: leases.depositKes,
+      isActive: leases.isActive,
+      createdAt: leases.createdAt,
+      updatedAt: leases.updatedAt,
+      propertyName: properties.name,
+      propertyCode: properties.propertyCode,
+      propertyType: properties.propertyType,
+      tenantName: contacts.displayName,
+      tenantEmail: contacts.email,
+      tenantPhone: contacts.phone,
+    })
+    .from(leases)
+    .innerJoin(properties, eq(leases.propertyId, properties.id))
+    .innerJoin(contacts, eq(leases.tenantContactId, contacts.id))
+    .where(eq(leases.entityId, entityId));
+}
+
+export async function terminateLease(ctx: CallerContext, leaseId: string) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.lease.write", entityId);
+
+  return db.transaction(async (tx) => {
+    // 1. Fetch lease
+    const [lease] = await tx
+      .select()
+      .from(leases)
+      .where(and(eq(leases.id, leaseId), eq(leases.entityId, entityId)))
+      .limit(1);
+
+    if (!lease) throw new NotFoundError("Lease not found");
+    if (!lease.isActive) {
+      throw new DomainValidationError("Lease is already terminated.");
+    }
+
+    // 2. Set lease to inactive
+    const [updatedLease] = await tx
+      .update(leases)
+      .set({ isActive: false })
+      .where(eq(leases.id, leaseId))
+      .returning();
+
+    // 3. Update the associated property's status back to "available"
+    const [updatedProp] = await tx
+      .update(properties)
+      .set({ status: "available" })
+      .where(eq(properties.id, lease.propertyId))
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "properties.lease.terminate",
+      associatedType: "lease",
+      associatedId: lease.id,
+      summary: `Terminated lease agreement for property ${updatedProp?.name ?? lease.propertyId}`,
+      entityId,
+      before: lease,
+      after: { lease: updatedLease, propertyStatus: updatedProp?.status },
+    });
+
+    return updatedLease;
+  });
 }
 
 export async function createLease(

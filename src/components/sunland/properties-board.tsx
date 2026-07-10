@@ -418,7 +418,7 @@ export function PropertiesBoard({
             <div className="flex items-end justify-between gap-3">
               <span className="font-mono font-normal mt-1 text-4xl text-white">{kpis.total}</span>
               <div className="text-right mb-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-400">{kpis.available} AVAILABLE</span>
+                <span className="text-xs font-medium uppercase tracking-wider text-emerald-400">{kpis.available} AVAILABLE</span>
               </div>
             </div>
           </div>
@@ -436,7 +436,7 @@ export function PropertiesBoard({
             </div>
             <div className="flex items-end justify-between gap-3">
               <span className="font-mono font-normal mt-1 text-4xl text-white">{kpis.occupied}</span>
-              <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-400 mb-1">{kpis.rate.toFixed(0)}% RATE</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-emerald-400 mb-1">{kpis.rate.toFixed(0)}% RATE</span>
             </div>
           </div>
 
@@ -457,7 +457,7 @@ export function PropertiesBoard({
                 statusCounts[status] > 0 ? (
                   <div
                     key={status}
-                    className={cn("h-full transition-all duration-1000", config.dot.replace("bg-", "bg-"))}
+                    className={cn("h-full transition-all duration-1000 text-xs", config.dot.replace("bg-", "bg-"))}
                     style={{ width: `${pct}%` }}
                     title={`${config.label}: ${statusCounts[status]}`}
                   />
@@ -468,7 +468,7 @@ export function PropertiesBoard({
               {portfolioMix.slice(0, 3).map(({ status, count, config }) => (
                 <div key={status} className="flex items-center gap-1">
                   <span className={cn("size-1.5 rounded-full inline-block", config.dot)} />
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">{config.label}: {count}</span>
+                  <span className="text-xs  font-medium uppercase tracking-wider text-slate-500">{config.label}: {count}</span>
                 </div>
               ))}
             </div>
@@ -486,7 +486,7 @@ export function PropertiesBoard({
               <span className="font-mono font-normal mt-1 text-4xl text-white">
                 {formatCompactKES(kpis.rentPool)}
               </span>
-              <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500 mt-2">Contracted — occupied only</p>
+              <p className="text-xs  font-medium uppercase tracking-widest text-slate-500 mt-2">Contracted — occupied only</p>
             </div>
           </div>
         </div>
@@ -687,7 +687,7 @@ export function PropertiesBoard({
           {typeMix.length > 0 && (
             <>
               <div className="border-t border-slate-100 pt-5 mt-auto">
-                <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400 mb-4">By Property Type</p>
+                <p className="text-xs  font-medium uppercase tracking-widest text-slate-400 mb-4">By Property Type</p>
                 <div className="space-y-2.5">
                   {typeMix.map(({ type, count }) => (
                     <div key={type} className="flex items-center gap-3">
@@ -948,7 +948,7 @@ export function PropertiesBoard({
                       </div>
                       <div>
                         <p className="label-caps text-slate-400 mb-0.5">Status</p>
-                        <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] uppercase tracking-wider font-medium", sc.pill)}>
+                        <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs uppercase tracking-wider font-medium", sc.pill)}>
                           <span className={cn("size-1 rounded-full", sc.dot)} />
                           {sc.label}
                         </span>
