@@ -45,6 +45,19 @@ const roleAccess: Record<UserRole, string[]> = {
   ceo: ["/admin", "/ops", "/fin", "/hr"],
   general_manager: ["/admin", "/ops", "/fin", "/hr"],
 
+  // Head of Strategy (ADR 013 §13.1, ADR 014 §14.3) — global-scope BD/
+  // property-management department head, sits above Property Manager.
+  head_of_strategy: [
+    "/admin/contacts",
+    "/admin/properties",
+    "/admin/leases",
+    "/admin/maintenance",
+    "/admin/valuations",
+    "/admin/projects",
+    "/admin/events",
+    "/admin/reports",
+  ],
+
   // ── Finance family ──────────────────────────────────────────────────────────
   // finance_head sees the full /fin portal + cross-reads on properties/leases
   finance_head: [
@@ -203,6 +216,8 @@ export function getDefaultPortal(role: UserRole): string {
     case "ceo":
     case "general_manager":
       return "/admin";
+    case "head_of_strategy":
+      return "/admin/properties";
     case "finance_head":
     case "accounts_manager":
     case "finance_officer":

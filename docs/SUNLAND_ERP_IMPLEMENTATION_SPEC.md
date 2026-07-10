@@ -154,7 +154,9 @@ HR finalizes a payroll run from aggregated time logs → payroll run is pushed t
 
 ### 4.3 Mandate Letter Flow
 
-Line Manager negotiates terms with a landlord → drafts mandate terms in the BD module → Front Office formalizes the mandate letter (templated document, Section 7.4.4) → an `approval_requests` row is raised to GM (mandate value or unit count above a configurable threshold also requires CEO) → on approval, Finance activates the mandate record (Section 7.1.4) and rental collection tracking begins.
+Line Manager (now Property Manager) negotiates terms with a landlord → drafts mandate terms in the BD module → Front Office formalizes the mandate letter (templated document, Section 7.4.4) → an `approval_requests` row is raised to GM (mandate value or unit count above a configurable threshold also requires CEO) → on approval, Finance activates the mandate record (Section 7.1.4) and rental collection tracking begins.
+
+**See ADR 014** (`ARCHITECTURE_DECISIONS.md`) for: the approval requirement is a ceiling on required authority, not a flat rule — a Property Manager or Head of Strategy always needs GM sign-off as described above, but a GM or CEO creating the mandate within their own authority self-approves (no escalation above the CEO, and a GM doesn't wait on another GM). ADR 014 also covers the interim CEO-admin implementation (BD/Front Office modules described here are not yet built; `property_mandates` + the property full-view page stand in for them today) and landlord identity/document verification.
 
 ### 4.4 Property Mandate Expense Reimbursement
 

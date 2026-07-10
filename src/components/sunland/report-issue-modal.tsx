@@ -1,31 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconX, IconClipboardList } from "@tabler/icons-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
 
+interface PropertyOption {
+  id: string;
+  name: string;
+  propertyCode: string;
+}
+
+interface ContactOption {
+  id: string;
+  displayName: string;
+}
+
 interface ReportIssueModalProps {
   open: boolean;
-  propertyId: string;
-  propertyName: string;
+  entityId: string | null;
+  /** Pre-set when opened from a specific property's page; omit to show a property picker (board-level "Log Request"). */
+  propertyId?: string;
+  propertyName?: string;
   onClose: () => void;
   onCreated: () => void;
 }
 
-export function ReportIssueModal({ open, propertyId, propertyName, onClose, onCreated }: ReportIssueModalProps) {
+export function ReportIssueModal({ open, entityId, propertyId, propertyName, onClose, onCreated }: ReportIssueModalProps) {
   const { pushToast } = useToast();
+  const [selectedPropertyId, setSelectedPropertyId] = useState(propertyId ?? "");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("normal");
+  const [contractorId, setContractorId] = useState("");
+  const [dueAt, setDueAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const [propertyOptions, setPropertyOptions] = useState<PropertyOption[]>([]);
+  const [contractorOptions, setContractorOptions] = useState<ContactOption[]>([]);
+
+  useEffect(() => {
+    Promise.resolve().then(() => setSelectedPropertyId(propertyId ?? ""));
+  }, [propertyId, open]);
+
+  useEffect(() => {
+    if (!open || !entityId) return;
+    if (!propertyId) {
+      fetch(`/api/properties?entityId=${entityId}`)
+        .then((res) => res.json())
+        .then((data) => setPropertyOptions(data.properties ?? []))
+        .catch(() => setPropertyOptions([]));
+    }
+    fetch(`/api/contacts?entityId=${entityId}&type=contractor`)
+      .then((res) => res.json())
+      .then((data) => setContractorOptions(data.contacts ?? []))
+      .catch(() => setContractorOptions([]));
+  }, [open, entityId, propertyId]);
 
   if (!open) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) {
-      pushToast({ tone: "warning", title: "Missing fields", body: "Please fill in all fields." });
+    if (!selectedPropertyId || !title.trim() || !description.trim()) {
+      pushToast({ tone: "warning", title: "Missing fields", body: "Please fill in all required fields." });
       return;
     }
 
@@ -35,26 +72,36 @@ export function ReportIssueModal({ open, propertyId, propertyName, onClose, onCr
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          propertyId,
+          entityId,
+          propertyId: selectedPropertyId,
           title: title.trim(),
           description: description.trim(),
           priority,
+          assignedContractorId: contractorId || undefined,
+          dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
         }),
       });
 
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error("Failed to report issue");
+        throw new Error(data?.error ?? "Failed to report issue");
       }
 
-      pushToast({ tone: "success", title: "Issue reported", body: `Successfully logged issue for ${propertyName}.` });
+      pushToast({
+        tone: "success",
+        title: "Issue reported",
+        body: `Successfully logged issue for ${propertyName ?? propertyOptions.find((p) => p.id === selectedPropertyId)?.name ?? "the property"}.`,
+      });
       setTitle("");
       setDescription("");
       setPriority("normal");
+      setContractorId("");
+      setDueAt("");
       onCreated();
       onClose();
     } catch (err) {
       console.error(err);
-      pushToast({ tone: "warning", title: "Error", body: "Could not save the maintenance request." });
+      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Could not save the maintenance request." });
     } finally {
       setSubmitting(false);
     }
@@ -80,7 +127,7 @@ export function ReportIssueModal({ open, propertyId, propertyName, onClose, onCr
               <h2 className="font-medium text-slate-900 tracking-tight text-lg">
                 Report Maintenance Issue
               </h2>
-              <p className="body-sm text-slate-500 mt-0.5">{propertyName}</p>
+              {propertyName && <p className="body-sm text-slate-500 mt-0.5">{propertyName}</p>}
             </div>
           </div>
           <button
@@ -93,6 +140,25 @@ export function ReportIssueModal({ open, propertyId, propertyName, onClose, onCr
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+          {!propertyId && (
+            <div>
+              <label className="block text-slate-500 mb-1.5 label-caps">Property</label>
+              <select
+                required
+                value={selectedPropertyId}
+                onChange={(e) => setSelectedPropertyId(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+              >
+                <option value="">Select a property...</option>
+                {propertyOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.propertyCode})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-slate-500 mb-1.5 label-caps">Issue Summary / Title</label>
             <input
@@ -105,17 +171,44 @@ export function ReportIssueModal({ open, propertyId, propertyName, onClose, onCr
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-slate-500 mb-1.5 label-caps">Priority Rating</label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+              >
+                <option value="low">Low Priority</option>
+                <option value="normal">Medium Priority</option>
+                <option value="high">High Priority</option>
+                <option value="critical">Urgent / Critical</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-slate-500 mb-1.5 label-caps">Due Date (optional)</label>
+              <input
+                type="date"
+                value={dueAt}
+                onChange={(e) => setDueAt(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">Priority Rating</label>
+            <label className="block text-slate-500 mb-1.5 label-caps">Assign Contractor (optional)</label>
             <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
+              value={contractorId}
+              onChange={(e) => setContractorId(e.target.value)}
               className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
             >
-              <option value="low">Low Priority</option>
-              <option value="normal">Medium Priority</option>
-              <option value="high">High Priority</option>
-              <option value="critical">Urgent / Critical</option>
+              <option value="">Unassigned</option>
+              {contractorOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.displayName}
+                </option>
+              ))}
             </select>
           </div>
 

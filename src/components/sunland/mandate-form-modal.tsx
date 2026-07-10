@@ -73,12 +73,19 @@ export function MandateFormModal({
         throw new Error(data?.error ?? "Failed to submit mandate");
       }
 
-      const approverLabel = data?.mandate?.requiredApproverRole === "ceo" ? "CEO" : "GM";
-      pushToast({
-        tone: "success",
-        title: "Mandate submitted",
-        body: `Awaiting ${approverLabel} approval before it goes active.`,
-      });
+      const requiredApproverRole = data?.mandate?.requiredApproverRole as "gm" | "ceo" | null | undefined;
+      if (!requiredApproverRole) {
+        // CEO/GM creating within their own authority self-approves — see
+        // ADR 014 §14.2 — so it's already active, no approval to wait on.
+        pushToast({ tone: "success", title: "Mandate activated", body: "Created and activated immediately under your authority." });
+      } else {
+        const approverLabel = requiredApproverRole === "ceo" ? "CEO" : "GM";
+        pushToast({
+          tone: "success",
+          title: "Mandate submitted",
+          body: `Awaiting ${approverLabel} approval before it goes active.`,
+        });
+      }
       onCreated();
       onClose();
     } catch (err) {

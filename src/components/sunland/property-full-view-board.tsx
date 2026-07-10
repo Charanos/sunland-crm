@@ -25,6 +25,7 @@ import {
   IconPlus,
   IconReceipt2,
   IconRuler,
+  IconShieldCheck,
   IconStar,
   IconStarFilled,
   IconTrash,
@@ -40,6 +41,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PropertyFormModal } from "./property-form-modal";
 import { ReportIssueModal } from "./report-issue-modal";
 import { MandateFormModal } from "./mandate-form-modal";
+import { VerifyContactModal } from "./verify-contact-modal";
 import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { LISTING_TYPE_LABEL, MANDATE_STATUS_CONFIG, PROPERTY_TYPE_ICON, STATUS_CONFIG, STATUS_ORDER, formatPropertyDate } from "./property-constants";
@@ -83,6 +85,7 @@ export function PropertyFullViewBoard({
   const [createMandateOpen, setCreateMandateOpen] = useState(false);
   const [terminateMandateOpen, setTerminateMandateOpen] = useState(false);
   const [isTerminatingMandate, setIsTerminatingMandate] = useState(false);
+  const [verifyLandlordOpen, setVerifyLandlordOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
@@ -198,6 +201,7 @@ export function PropertyFullViewBoard({
   const primaryImage = mediaList[activeMediaIndex]?.url ?? mediaList[0]?.url;
 
   const adaptiveMetric = getAdaptiveMetric(property);
+  const mandateLetterDoc = property.documents?.find((d) => d.type === "mandate_letter");
 
   const handleEditSave = () => {
     setEditModalOpen(false);
@@ -469,27 +473,49 @@ export function PropertyFullViewBoard({
         {/* Context rail */}
         <div className="flex flex-col gap-4">
           <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <h3 className="text-title-primary mb-4">Owner / Landlord</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-title-primary">Owner / Landlord</h3>
+              {property.owner?.verifiedAt && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/60 bg-emerald-500/15 px-2.5 py-0.5 label-caps text-emerald-700">
+                  <IconShieldCheck size={12} aria-hidden="true" /> Verified
+                </span>
+              )}
+            </div>
             {property.owner ? (
-              <div className="flex items-start gap-3">
-                <div className="size-11 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 mono-data shrink-0">
-                  {property.owner.name?.slice(0, 2).toUpperCase() || "??"}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="size-11 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 mono-data shrink-0">
+                    {property.owner.name?.slice(0, 2).toUpperCase() || "??"}
+                  </div>
+                  <div className="flex flex-col gap-2 min-w-0">
+                    <p className="text-body-primary text-slate-900 truncate">{property.owner.name || "Unknown"}</p>
+                    {property.owner.phone && (
+                      <a href={`tel:${property.owner.phone}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                        <IconPhone size={14} className="shrink-0" aria-hidden="true" />
+                        <span className="truncate">{property.owner.phone}</span>
+                      </a>
+                    )}
+                    {property.owner.email && (
+                      <a href={`mailto:${property.owner.email}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                        <IconMail size={14} className="shrink-0" aria-hidden="true" />
+                        <span className="truncate">{property.owner.email}</span>
+                      </a>
+                    )}
+                    {property.owner.idNumber && (
+                      <span className="text-body-regular text-slate-500 mono-data">ID {property.owner.idNumber}</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2 min-w-0">
-                  <p className="text-body-primary text-slate-900 truncate">{property.owner.name || "Unknown"}</p>
-                  {property.owner.phone && (
-                    <a href={`tel:${property.owner.phone}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
-                      <IconPhone size={14} className="shrink-0" aria-hidden="true" />
-                      <span className="truncate">{property.owner.phone}</span>
-                    </a>
-                  )}
-                  {property.owner.email && (
-                    <a href={`mailto:${property.owner.email}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
-                      <IconMail size={14} className="shrink-0" aria-hidden="true" />
-                      <span className="truncate">{property.owner.email}</span>
-                    </a>
-                  )}
-                </div>
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => setVerifyLandlordOpen(true)}
+                    className="inline-flex items-center gap-1 self-start text-body-regular text-[#122a20] hover:underline"
+                  >
+                    <IconShieldCheck size={13} aria-hidden="true" />
+                    {property.owner.verifiedAt ? "Re-confirm landlord" : "Confirm landlord"}
+                  </button>
+                )}
               </div>
             ) : (
               <p className="text-desc-secondary">No owner assigned.</p>
@@ -506,6 +532,16 @@ export function PropertyFullViewBoard({
                 {(property.mandate.mandateRate * 100).toFixed(0)}% management fee · started{" "}
                 {formatPropertyDate(property.mandate.startDate)}
               </p>
+              {mandateLetterDoc?.url && (
+                <a
+                  href={mandateLetterDoc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-body-regular text-slate-600 hover:text-[#122a20] mb-3"
+                >
+                  <IconFileText size={14} aria-hidden="true" /> Mandate letter <IconExternalLink size={12} aria-hidden="true" />
+                </a>
+              )}
               <div className="flex items-center gap-4">
                 <button type="button" onClick={() => setActiveTab("financials")} className="inline-flex items-center gap-1 text-body-regular text-[#122a20] hover:underline">
                   View financials <IconExternalLink size={13} aria-hidden="true" />
@@ -556,6 +592,7 @@ export function PropertyFullViewBoard({
 
       <ReportIssueModal
         open={reportIssueOpen}
+        entityId={entityId}
         propertyId={property.id}
         propertyName={property.name}
         onClose={() => setReportIssueOpen(false)}
@@ -576,6 +613,18 @@ export function PropertyFullViewBoard({
           }
           onClose={() => setCreateMandateOpen(false)}
           onCreated={() => setRefreshCount((c) => c + 1)}
+        />
+      )}
+
+      {property.owner && (
+        <VerifyContactModal
+          open={verifyLandlordOpen}
+          entityId={entityId}
+          contactId={property.owner.id}
+          contactName={property.owner.name}
+          initialIdNumber={property.owner.idNumber}
+          onClose={() => setVerifyLandlordOpen(false)}
+          onVerified={() => setRefreshCount((c) => c + 1)}
         />
       )}
 

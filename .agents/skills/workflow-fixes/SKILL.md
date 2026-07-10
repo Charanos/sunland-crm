@@ -66,7 +66,9 @@ The business development and line management roles have been consolidated compre
 
 6. **Tenant/Landlord portal updates** (spec exists, portal not yet built): tenant complaints now route to the assigned Property Manager, not Front Office/Ops. New **Miscellaneous Charges** payment category — water, garbage — joins rent as a tenant-payable charge type. **Electricity is explicitly out of scope**, run on a prepaid token system entirely outside Sunland's ledger.
 
-*Not yet implemented: `head_of_strategy` and `admin_assistant` as real catalog roles/seed users, the `grantedAt` time-gate mechanism, the Property Manager unified complaint/arrears/misc-charges view, and the misc-charges schema itself. This file plus ADR 013 are the design record for when that build happens.*
+*Implemented (2026-07-10, ADR 014): `head_of_strategy` as a real catalog role (enum + `catalog.ts` permissions, no seed user yet) — became load-bearing for correct mandate-activation approval routing (a Property Manager or Head of Strategy always needs GM sign-off; a GM/CEO acting within their own authority self-approves, so nothing escalates above the CEO).*
+
+*Still not yet implemented: `admin_assistant` as a real catalog role/seed user, the `grantedAt` time-gate mechanism, the Property Manager unified complaint/arrears/misc-charges view, and the misc-charges schema itself. This file plus ADR 013/014 are the design record for when that build happens.*
 
 # UI/UX Hierarchy & Branding Patterns
 

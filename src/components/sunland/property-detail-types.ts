@@ -5,6 +5,9 @@ export interface OwnerInfo {
   name: string;
   email: string | null;
   phone: string | null;
+  idNumber?: string | null;
+  verifiedAt?: string | null;
+  verifiedByName?: string | null;
 }
 
 export interface MandatePeriod {
@@ -72,6 +75,7 @@ export interface PropertyDocumentSummary {
   name: string;
   status: "draft" | "awaiting_signature" | "signed";
   url?: string;
+  type?: "mandate_letter" | "lease_agreement" | "rent_receipt" | "statement" | "title_deed" | "identification" | "offer_letter";
 }
 
 export interface ActivityLogEntry {

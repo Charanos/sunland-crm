@@ -143,13 +143,25 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
       : 0;
   const annualizedValueKes = monthlyValue * 12;
 
-  // Mandate activation always requires at least GM sign-off (no auto-approve
-  // tier); CEO sign-off is additionally required above either threshold —
-  // Executive Dashboard spec §6.2 row "Mandate activation".
+  // Mandate activation requires at least GM sign-off (no auto-approve tier
+  // for non-executive creators); CEO sign-off is additionally required above
+  // either threshold — Executive Dashboard spec §6.2 row "Mandate activation".
+  // This is the *ceiling* the mandate needs to clear, not who necessarily has
+  // to clear it — see the self-approval check below (ADR 014 §14.2).
   const ceoUnitThreshold = await getGroupSettingValue("mandate_activation_ceo_unit_threshold", 10);
   const ceoAnnualThreshold = await getGroupSettingValue("mandate_activation_ceo_annual_value_kes", 5000000);
-  const requiredApproverRole: "gm" | "ceo" =
+  const requiredTier: "gm" | "ceo" =
     unitCount > ceoUnitThreshold || annualizedValueKes > ceoAnnualThreshold ? "ceo" : "gm";
+
+  // An actor whose own authority already meets or exceeds the required tier
+  // self-approves — the CEO never waits on anyone (nothing sits above him),
+  // and a GM doesn't wait on a *different* GM for a GM-tier mandate, only
+  // escalating to CEO when the mandate itself crosses the CEO threshold.
+  // Everyone else (Property Manager, Head of Strategy, ...) always needs at
+  // least GM sign-off. ADR 014 §14.2.
+  const actorRank = ctx.user.role === "ceo" ? 3 : ctx.user.role === "general_manager" ? 2 : 1;
+  const requiredTierRank = requiredTier === "ceo" ? 3 : 2;
+  const selfApproves = actorRank >= requiredTierRank;
 
   const startDate = input.startDate ? new Date(input.startDate) : new Date();
   if (Number.isNaN(startDate.getTime())) throw new DomainValidationError("Invalid start date");
@@ -168,9 +180,23 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
         unitCount,
         startDate,
         endDate,
-        status: "pending_approval",
+        status: selfApproves ? "active" : "pending_approval",
       })
       .returning();
+
+    if (selfApproves) {
+      await writeAudit(tx, ctx, {
+        action: "properties.mandate.create",
+        associatedType: "property_mandate",
+        associatedId: mandate.id,
+        summary: `${ctx.user.name} created and self-authorized a management mandate for ${property.name} (${ctx.user.role === "ceo" ? "CEO" : "GM"} authority)`,
+        entityId,
+        before: null,
+        after: mandate,
+      });
+
+      return { ...mandate, requiredApproverRole: null };
+    }
 
     const [approvalRequest] = await tx
       .insert(approvalRequests)
@@ -180,7 +206,7 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
         relatedTable: "property_mandates",
         relatedId: mandate.id,
         requestedById: ctx.user.id,
-        requiredApproverRole,
+        requiredApproverRole: requiredTier,
         status: "pending",
       })
       .returning();
@@ -189,18 +215,18 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
       action: "properties.mandate.create",
       associatedType: "property_mandate",
       associatedId: mandate.id,
-      summary: `${ctx.user.name} submitted a management mandate for ${property.name}, awaiting ${requiredApproverRole.toUpperCase()} approval`,
+      summary: `${ctx.user.name} submitted a management mandate for ${property.name}, awaiting ${requiredTier.toUpperCase()} approval`,
       entityId,
       before: null,
       after: mandate,
     });
 
-    await notifyMandateApprovers(tx, entityId, requiredApproverRole, {
+    await notifyMandateApprovers(tx, entityId, requiredTier, {
       id: approvalRequest.id,
       propertyName: property.name,
     });
 
-    return { ...mandate, requiredApproverRole };
+    return { ...mandate, requiredApproverRole: requiredTier };
   });
 }
 

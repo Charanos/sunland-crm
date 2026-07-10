@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
-import { eq, and, ne, desc, gte, inArray, getTableColumns, SQL } from "drizzle-orm";
+import { eq, and, ne, or, desc, gte, inArray, getTableColumns, SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { properties, leases, documents, transactions, contacts, maintenanceRequests, leads, propertyMandates, approvalRequests } from "@/db/schema";
+import { properties, leases, documents, transactions, contacts, maintenanceRequests, leads, propertyMandates, approvalRequests, users } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -301,7 +301,20 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
 
   const [ownerRows, leaseRows, maintenanceRows, documentRows, rentTxRows, leadRows, mandateRows] = await Promise.all([
     prop.ownerContactId
-      ? db.select().from(contacts).where(eq(contacts.id, prop.ownerContactId)).limit(1)
+      ? db
+          .select({
+            id: contacts.id,
+            displayName: contacts.displayName,
+            email: contacts.email,
+            phone: contacts.phone,
+            idNumber: contacts.idNumber,
+            verifiedAt: contacts.verifiedAt,
+            verifiedByName: users.name,
+          })
+          .from(contacts)
+          .leftJoin(users, eq(contacts.verifiedById, users.id))
+          .where(eq(contacts.id, prop.ownerContactId))
+          .limit(1)
       : Promise.resolve([]),
     db
       .select({
@@ -334,7 +347,15 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     db
       .select()
       .from(documents)
-      .where(eq(documents.propertyId, propertyId))
+      // Property-scoped docs (title deeds, leases) plus the owner's own
+      // documents (ID, mandate letter) — the property form modal saves the
+      // latter with only ownerContactId set, since one landlord's ID/title
+      // deed applies across every property they own (ADR 014 §14.4).
+      .where(
+        prop.ownerContactId
+          ? or(eq(documents.propertyId, propertyId), eq(documents.ownerContactId, prop.ownerContactId))
+          : eq(documents.propertyId, propertyId),
+      )
       .orderBy(desc(documents.createdAt)),
     db
       .select({ amountKes: transactions.amountKes, occurredAt: transactions.occurredAt })
@@ -374,7 +395,15 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   // owner.name, not the contacts table's displayName.
   const ownerRow = ownerRows[0];
   const owner = ownerRow
-    ? { id: ownerRow.id, name: ownerRow.displayName, email: ownerRow.email, phone: ownerRow.phone }
+    ? {
+        id: ownerRow.id,
+        name: ownerRow.displayName,
+        email: ownerRow.email,
+        phone: ownerRow.phone,
+        idNumber: ownerRow.idNumber,
+        verifiedAt: ownerRow.verifiedAt?.toISOString() ?? null,
+        verifiedByName: ownerRow.verifiedByName,
+      }
     : null;
 
   const activeLeaseRows = leaseRows.filter((l) => l.isActive);
@@ -463,6 +492,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     name: d.title,
     status: ((d.metadata as Record<string, unknown> | null)?.status as "draft" | "awaiting_signature" | "signed") ?? "signed",
     url: d.fileUrl,
+    type: d.type,
   }));
 
   // A pending mandate's own status doesn't say who it's waiting on — that

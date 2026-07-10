@@ -18,6 +18,10 @@ export const documentType = pgEnum("document_type", [
   "statement",
   "title_deed",
   "identification",
+  // Landlord-side offer-letter equivalent (ADR 014 §14.1) — uploadable today
+  // via the generic documents API even though the Front Office workflow that
+  // would normally formalize/track it isn't built.
+  "offer_letter",
 ]);
 
 export const documents = pgTable(

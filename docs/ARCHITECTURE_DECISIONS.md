@@ -122,7 +122,7 @@ Common account modules (Profile, Settings, Security, Messages, Notifications) ar
 |---|---|---|---|---|
 | Chief Executive Officer | `ceo` | global | — | Unchanged |
 | General Manager | `general_manager` | global | CEO | Unchanged |
-| **Head of Strategy** | `head_of_strategy` | global | GM | **New** |
+| **Head of Strategy** | `head_of_strategy` | global | GM | **Implemented — see ADR 014** |
 | Property Manager | `property_manager` | entity | Head of Strategy | Unchanged role, new reporting line |
 | Head of Finance | `finance_head` | global | GM | Unchanged |
 | **Senior Accountant** | `finance_officer` (relabeled) | entity | Finance Head | **Renamed**, same permission scope |
@@ -139,7 +139,7 @@ Common account modules (Profile, Settings, Security, Messages, Notifications) ar
 
 This is additive to, not a replacement for, the `property_manager` consolidation already in the codebase (`line_manager`/`bd_agent`/`bd_head`/`agent` were folded into `property_manager` earlier this build — see `src/lib/authz/catalog.ts`'s retired-alias comment). `head_of_strategy` sits *above* `property_manager` in the reporting chain; it does not merge into it.
 
-**Permissions (proposed, mirrors `finance_head`'s oversight shape):**
+**Permissions (implemented 2026-07-10 per ADR 014 §14.3, exactly as proposed here — mirrors `finance_head`'s oversight shape):**
 ```
 ...keysFor("crm")            // full pipeline/contact oversight, not just their own leads
 ...keysFor("properties")     // full property/lease/maintenance oversight
@@ -221,5 +221,82 @@ Covered in full in the updated `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md`:
 **Supersedes:** ADR 007's six-role emulation list (CEO, GM, Finance Head, HR Head, Line Manager, Front Office Head) is stale — "Line Manager" no longer exists as a role (folded into Property Manager earlier this build), and the roster above is now the canonical set. ADR 007 is kept for history with a superseded marker rather than deleted, per this file's own convention.
 
 **Rationale & build detail:** `.agents/skills/workflow-fixes/SKILL.md` (design notes, non-canonical scratch space), `docs/SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md` (complaint routing + misc charges), `docs/SUNLAND_FINANCE_LEDGER_ARCHITECTURE.md` §8 (downstream data-flow model, added alongside this ADR).
+
+---
+
+## ADR 014: Mandate Letter Flow — Corrected Model, Role-Based Approval, Landlord Verification
+
+**Context:** The Property Portfolio overhaul's WS3 workstream built a `property_mandates` anchor table and CEO-admin surfaces (property full-view rail card, create/terminate actions) against a simplified reading of the approval rule — "mandate activation always needs GM sign-off, CEO additionally above 10 units or KES 5M annualized" (Executive Dashboard spec §6.2) — treated as a flat rule applying to every mandate regardless of who creates it. The client clarified this is wrong on two counts: (1) the mandate letter is a real contract document produced partway through a multi-step landlord-onboarding flow, not just a status on an anchor row, and (2) the approval requirement depends on *who* is creating the mandate — a Property Manager or Head of Strategy always needs GM sign-off, but the CEO does not wait for anyone (nothing sits above the CEO to escalate to), and by the same logic a GM does not need GM sign-off from a *different* GM.
+
+### 14.1 The real landlord-onboarding sequence
+
+Per `SUNLAND_ERP_IMPLEMENTATION_SPEC.md` §4.3, `SUNLAND_BD_DASHBOARD_SPEC.md` §8.1/§8.4, and `SUNLAND_FRONT_OFFICE_DASHBOARD_SPEC.md` §8.4 (all pre-existing, cross-referenced, and mutually consistent — this ADR did not invent this flow, it recovers it and reconciles it with the client's plain-language description):
+
+```
+Property Manager prospects a landlord (BD Landlords > Prospecting tab)
+  stage: Initial Contact → Proposal Sent → Negotiating → Mandate Drafted
+         ─────────────────┬──────────────
+                  "Proposal Sent" is the informal offer — terms proposed
+                  to the landlord before any contract is signed. There is
+                  no separate tracked "Offer Letter" document for the
+                  landlord side today (unlike the tenant/buyer-side Offer
+                  Letters in Front Office Paperwork, which are generated
+                  from a closed listing deal, BD spec 8.2) — it is a
+                  Prospecting *stage*, not a document artifact, until the
+                  BD Landlords page is actually built.
+       ↓ (landlord accepts — "Mandate Drafted")
+Property Manager submits a mandate letter draft request
+  (BD Liaison & Requests page, routes to Front Office Paperwork queue)
+       ↓
+Front Office formalizes the Mandate Letter
+  (templated document — the actual contract that seals the agreement,
+   documents.type = 'mandate_letter', linked to the property + landlord
+   contact; this is the artifact the client means by "mandate letter")
+       ↓
+Approval — see 14.2 below (GM always for PM/Head-of-Strategy-originated
+  mandates, +CEO above threshold; CEO-originated mandates skip straight
+  to active; a GM-originated mandate needing CEO sign-off skips GM's own
+  and goes straight to CEO)
+       ↓
+Mandate activates — rental collection tracking begins
+```
+
+The `property_mandates` row is the *activation record* at the tail end of this sequence, not the whole sequence. Everything from Prospecting through Front Office formalization is BD/Front-Office departmental work that has **no built module yet** (`/admin/business-development/*` and `/admin/front-office/paperwork` do not exist in this codebase). Per the client's own instruction — build what's in scope, document the rest — this ADR draws the line explicitly at §14.4.
+
+### 14.2 Role-based approval routing — the actual fix
+
+**Decision:** The required approval tier is a function of *who is creating the mandate*, not a flat rule. Concretely, using each role's rank in the mandate-activation authority chain (`ceo` > `general_manager` > everyone else — `property_manager`, `head_of_strategy` (14.3), `rentals_mandates_officer`, or any other role holding the reused `properties.property.write` key):
+
+- **CEO-originated:** no approval step at all. The mandate goes straight to `active` on creation, with an audit entry noting self-authorization. Nothing sits above the CEO in this system to approve on his behalf, and per the client, "everything stops at him."
+- **GM-originated, within the GM tier** (≤10 units and ≤KES 5M annualized): same self-approval logic — a GM does not wait on another GM. Straight to `active`.
+- **GM-originated, exceeding the CEO threshold** (>10 units or >KES 5M annualized): needs CEO approval only — not GM, since the GM *is* the requester. One `approval_requests` row, `requiredApproverRole = "ceo"`.
+- **Everyone else (Property Manager, Head of Strategy, Rentals & Mandates Officer, ...):** always needs at least GM approval (mandate activation has no auto-approve tier for non-executive creators — Executive Dashboard spec §6.2's "always" column). One `approval_requests` row, `requiredApproverRole = "gm"`, or `"ceo"` if the unit/value threshold is additionally exceeded (GM's sign-off does not separately queue in that case — the CEO's approval is the higher bar and subsumes it, consistent with how every other threshold table in this system is a mutually-exclusive band, not a dual sign-off chain, except where a spec explicitly says "dual sign-off" — banker's cheques do, mandate activation does not).
+
+This generalizes a pattern this codebase didn't have before ("does the actor's own authority already satisfy the approval this action would otherwise require") — scoped narrowly to mandate activation here per the client's explicit ask, not generalized into `authorize()`/`can()` itself. If other approval-gated flows (petty cash, cheques, vehicle requests) turn out to need the same self-approval-skip logic, that is a separate, later decision, not assumed by this ADR.
+
+### 14.3 `head_of_strategy` — implementing what ADR 013 already decided
+
+ADR 013 §13.1 specified `head_of_strategy` (global scope, reports to GM, owns Property Managers/Line Managers/Sales/Marketers) but it was never added to the `user_role` enum or `catalog.ts` — confirmed absent from both as of this ADR. Since the client's mandate-approval correction explicitly names this role ("we shall also do same for head of strategy"), implementing it is now load-bearing, not speculative. Implemented exactly as ADR 013 §13.1 specified: `...keysFor("crm")`, `...keysFor("properties")`, `...keysFor("scheduling")`, `...keysFor("operations")`, `identity.user.read`, `settings.entity.read`, `audit.log.read`, global scope. No other part of ADR 013 (Senior Accountant/Internal Auditor relabels, the 90-day finance-access gate, Admin/CEO's Assistant) is in scope here — those remain separately tracked against ADR 013 itself.
+
+### 14.4 Landlord and property document verification
+
+**Decision:** The CEO (or anyone with `properties.property.write`) can confirm a landlord's identity and review the documents backing a property/mandate directly from the property full-view page:
+
+- `contacts` gains `idNumber` (text, nullable — national ID/passport number), `verifiedAt`/`verifiedById` (nullable — who confirmed this contact's identity and when). Generic to any contact, not landlord-specific, since the same verification concept applies to tenants and other counterparties later.
+- The property full-view's Owner/Landlord rail card gets a "Confirm Landlord" action (gated the same as other write actions) that records/edits the ID number and sets `verifiedAt`/`verifiedById` in one step.
+- Property documents (title deed, mandate letter, landlord ID) were already modelled (`documents.type` enum already had `mandate_letter`, `title_deed`, `identification` — this ADR adds `offer_letter` for vocabulary completeness) but two gaps existed: (a) `documents.type` was dropped when mapping to the frontend's `PropertyDocumentSummary`, so the full-view page couldn't distinguish a title deed from a mandate letter from anything else — fixed by threading `type` through; (b) landlord documents uploaded via the property form modal are saved scoped to `ownerContactId` only (no `propertyId` — deliberate, since one landlord's ID/title deed applies across all their properties), but `getPropertyWithDetails` only ever queried `documents` by `propertyId`, so those uploads were invisible on the full-view page they were meant to support. Fixed by additionally fetching the owner's documents.
+
+This is intentionally *not* a KYC workflow with states, expiry, or re-verification reminders — it is a single confirm action, matching the size of what was actually asked for. A fuller compliance workflow is a later decision if the client asks for one.
+
+### 14.5 What this ADR does not build — explicit deferral
+
+Per the client's own framing ("if it is scope otherwise document it"), the following are real, specified, but **not built**, and not implied to be built by anything above:
+
+- **BD Landlords page** (`/admin/business-development/landlords` — Directory, Mandate Status, Prospecting tabs) and **BD Liaison & Requests** (`/admin/business-development/liaison`) — `SUNLAND_BD_DASHBOARD_SPEC.md` §8.1/§8.4. No route, no schema beyond what `property_mandates`/`documents`/`contacts` already provide incidentally.
+- **Front Office Paperwork module** (`/admin/front-office/paperwork` — Application Forms, Offer Letters, Mandate Letters tabs with their own Drafted→Sent→Signed/Returned→Filed lifecycle and cross-department Pusher events) — `SUNLAND_FRONT_OFFICE_DASHBOARD_SPEC.md` §8.4. Today, a mandate letter (or an offer letter, or a title deed) is just a row in the existing generic `documents` table with the right `type` — there is no dedicated formalization workflow, signature capture, or status ladder around it.
+- **Prospecting stage tracking** (Initial Contact / Proposal Sent / Negotiating / Mandate Drafted) — no table exists for this; a mandate today either doesn't exist yet or exists as a `property_mandates` row starting at `pending_approval` (or `active` for self-approving creators). The pre-mandate courtship phase has no persisted record.
+- **Finance's dedicated Mandates module** (`/fin/mandates`, `SUNLAND_FINANCE_DASHBOARD_SPEC.md`) remains the pre-existing mock board (unrelated to this ADR, already flagged as a follow-up rewire in the WS3 plan) — the CEO-admin property full-view is the practical interim surface for mandate creation/approval/termination until that page is rewired.
+
+**Rationale & build detail:** `SUNLAND_ERP_IMPLEMENTATION_SPEC.md` §4.3, `SUNLAND_BACKEND_ARCHITECTURE_MASTER.md` (mandate letter flow cross-module summary), `SUNLAND_EXECUTIVE_DASHBOARD_SPEC.md` §6.2 (approval threshold table), `SUNLAND_BD_DASHBOARD_SPEC.md` §8.1/§8.4, `SUNLAND_FRONT_OFFICE_DASHBOARD_SPEC.md` §8.4, ADR 013 §13.1 (Head of Strategy).
 
 

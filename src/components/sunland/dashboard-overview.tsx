@@ -697,9 +697,9 @@ export function DashboardOverview({
                   setEditingProperty(null);
                   setPropertyModalOpen(true);
                 }}
-                className="mt-2 inline-flex items-center gap-2 text-white font-medium bg-slate-900 px-4 py-2 rounded-xl shadow-sm hover:bg-slate-800 transition-colors"
+                className="mt-2 inline-flex items-center gap-2 text-white font-medium bg-slate-900 px-4 py-1.5 text-sm rounded-xl shadow-sm hover:bg-slate-800 transition-colors"
               >
-                <IconPlus size={16} stroke={2.5} /> Add Property
+                <IconPlus size={14} stroke={2.5} /> Add Property
               </button>
             </div>
           )}

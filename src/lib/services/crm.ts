@@ -99,3 +99,51 @@ export async function getContact(ctx: CallerContext, contactId: string) {
   if (!target) throw new NotFoundError("Contact not found");
   return target;
 }
+
+/**
+ * "Confirm Landlord" (ADR 014 §14.4) — records/edits the ID number and marks
+ * the contact identity-verified in one step. Generic to any contact, not
+ * landlord-specific, though the property full-view's Owner card is the only
+ * caller today.
+ */
+export async function verifyContact(
+  ctx: CallerContext,
+  contactId: string,
+  input: { idNumber?: string | null }
+) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "crm.contact.write", entityId);
+
+  const [existing] = await db
+    .select()
+    .from(contacts)
+    .where(and(eq(contacts.id, contactId), eq(contacts.entityId, entityId)))
+    .limit(1);
+  if (!existing) throw new NotFoundError("Contact not found");
+
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(contacts)
+      .set({
+        idNumber: input.idNumber !== undefined ? input.idNumber : existing.idNumber,
+        verifiedAt: new Date(),
+        verifiedById: ctx.user.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(contacts.id, contactId))
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "crm.contact.verify",
+      associatedType: "contact",
+      associatedId: contactId,
+      summary: `${ctx.user.name} confirmed ${existing.displayName}'s identity`,
+      entityId,
+      before: existing,
+      after: updated,
+    });
+
+    return updated;
+  });
+}

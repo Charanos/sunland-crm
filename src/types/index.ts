@@ -1,6 +1,7 @@
 export type UserRole =
   | "ceo"
   | "general_manager"
+  | "head_of_strategy"
   | "finance_head" | "accounts_manager"
   | "finance_officer" | "accounts_officer"
   | "rentals_officer" | "rentals_mandates_officer"

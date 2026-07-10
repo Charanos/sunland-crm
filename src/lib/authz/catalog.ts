@@ -122,6 +122,24 @@ export const SYSTEM_ROLES: SystemRoleDefinition[] = [
     permissions: permissionKeys.filter((key) => key !== "identity.role.write"),
   },
   {
+    // ADR 013 §13.1 / ADR 014 §14.3 — sits above property_manager in the BD/
+    // property-management reporting line (owns Property Managers, Line
+    // Managers, Sales, Marketers). Specced in ADR 013 but never implemented
+    // until ADR 014 made it load-bearing for mandate approval routing.
+    slug: "head_of_strategy",
+    name: "Head of Strategy",
+    scopeType: "global",
+    permissions: [
+      ...keysFor("crm"),
+      ...keysFor("properties"),
+      ...keysFor("scheduling"),
+      ...keysFor("operations"),
+      "identity.user.read",
+      "settings.entity.read",
+      "audit.log.read",
+    ],
+  },
+  {
     slug: "finance_head",
     name: "Head of Finance",
     // Global, not entity-scoped: a department head oversees their function
