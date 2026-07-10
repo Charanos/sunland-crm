@@ -5,7 +5,8 @@ import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { IconArrowUpRight, IconMapPin, IconSearch } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
-import { PropertyDetailDrawer, PropertyDetailData } from "./property-detail-drawer";
+import { PropertyDetailDrawer } from "./property-detail-drawer";
+import { type Property } from "./property-constants";
 import { PaginationControls } from "@/components/ui/erp-primitives";
 import {
   ResponsiveContainer,
@@ -106,7 +107,7 @@ const AVATAR_FALLBACKS = [
 export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: { initialListings?: InitialListing[], revenueData?: RevenueDataPoint[] }) {
   const [activeType, setActiveType] = useState<PropertyType>("All Properties");
   const [searchQuery, setSearchQuery] = useState("");
-  const [drawerProperty, setDrawerProperty] = useState<PropertyDetailData | null>(null);
+  const [drawerProperty, setDrawerProperty] = useState<Property | null>(null);
   const [managerTimeFilter, setManagerTimeFilter] = useState<"This Month" | "This Quarter" | "Annually">("Annually");
 
   // Pagination state
@@ -130,7 +131,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
         sold: 0,
         rented: 0,
         revenue: "0",
-        img: idx % 2 === 0 
+        img: idx % 2 === 0
           ? "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&q=80"
           : "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80",
       }
@@ -384,15 +385,15 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                   onClick={() => setActiveType(item.name as PropertyType)}
                   className={cn(
                     "group flex items-center justify-between p-3 rounded-[16px] transition-all duration-300 cursor-pointer border border-transparent",
-                    isHighlighted 
-                      ? "bg-slate-50/70 hover:bg-slate-100 hover:border-slate-200/50" 
+                    isHighlighted
+                      ? "bg-slate-50/70 hover:bg-slate-100 hover:border-slate-200/50"
                       : "opacity-40 hover:opacity-100 hover:bg-slate-50 hover:border-slate-200/50"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className="size-2.5 rounded-full shadow-sm transition-transform duration-500 group-hover:scale-150"
-                      style={{ backgroundColor: item.color }} 
+                      style={{ backgroundColor: item.color }}
                     />
                     <span className="body-sm text-slate-700 font-medium group-hover:text-slate-900 transition-colors">{item.name}</span>
                   </div>
@@ -412,7 +413,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
             <h3 className="text-title-primary">Property Managers</h3>
             <select
               value={managerTimeFilter}
-              onChange={(e) => setManagerTimeFilter(e.target.value as any)}
+              onChange={(e) => setManagerTimeFilter(e.target.value as "This Month" | "This Quarter" | "Annually")}
               className="body-sm text-slate-600 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 hover:bg-slate-100 transition-colors shadow-sm outline-none cursor-pointer"
             >
               <option value="This Month">This Month</option>
@@ -450,21 +451,33 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
             {paginatedListings.map((card) => (
               <div
                 key={card.id}
-                className="bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-4 rounded-[20px] hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group animate-in fade-in zoom-in-95 duration-300 cursor-pointer"
+                className="bg-white border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.08)] transition-all duration-300 rounded-[20px] flex flex-col overflow-hidden group animate-in fade-in zoom-in-95 duration-300 cursor-pointer"
                 onClick={() => {
                   setDrawerProperty({
                     id: card.id,
                     name: card.title,
                     location: card.location,
-                    type: card.type,
-                    status: card.status as "Available" | "Sold" | "Under Offer" | "Occupied",
-                    roi: String(card.price),
-                    price: `KES ${card.price.toLocaleString()}`,
-                    imageUrl: card.media?.[0]?.url || card.imageUrl || null,
+                    propertyType: card.type,
+                    listingType: "let" as const,
+                    status: card.status === "Occupied" ? "occupied"
+                      : card.status === "Under Offer" ? "under_offer"
+                        : card.status === "Sold" ? "off_market"
+                          : "available",
+                    propertyCode: "",
+                    ownerContactId: null,
+                    askingPriceKes: null,
+                    monthlyRentKes: `${card.price}`,
+                    bedrooms: null,
+                    bathrooms: null,
+                    sizeSqft: null,
+                    media: (card.media?.[0]?.url || card.imageUrl)
+                      ? [{ url: card.media?.[0]?.url || card.imageUrl!, isPrimary: true }]
+                      : [],
                   })
                 }}
               >
-                <div className="relative aspect-[4/3] w-full rounded-[20px] overflow-hidden shrink-0">
+                {/* ── Image section ── */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden shrink-0">
                   <Image
                     src={card.media?.[0]?.url || card.imageUrl}
                     alt={card.title}
@@ -472,55 +485,63 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 350px"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent" />
+                  {/* Softer gradient — just enough to read text */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
+                  {/* Type — top left */}
+                  <div className="absolute top-3 left-3">
+                    <span className="label-caps px-2.5 py-1 rounded-full border border-white/20 bg-black/45 backdrop-blur-md text-white shadow-sm">
+                      {card.type}
+                    </span>
+                  </div>
+
+                  {/* Status — top right */}
                   <div className="absolute top-3 right-3">
                     <span className={cn(
-                      "text-xs font-medium px-3 py-1.5 rounded-full tracking-wide shadow-lg backdrop-blur-md",
-                      card.status === "Available" ? "bg-emerald-500/90 text-white border border-emerald-400/50" :
-                        card.status === "Occupied" ? "bg-slate-800/90 text-slate-200 border border-slate-600/50" :
-                          card.status === "Under Offer" ? "bg-amber-500/90 text-white border border-amber-400/50" : "bg-white/90 text-slate-800 border border-white/50"
+                      "label-caps px-2.5 py-1 rounded-full shadow-md backdrop-blur-md border",
+                      card.status === "Available"
+                        ? "bg-emerald-500/90 text-white border-emerald-400/40"
+                        : card.status === "Occupied"
+                          ? "bg-slate-800/90 text-slate-200 border-slate-600/40"
+                          : card.status === "Under Offer"
+                            ? "bg-amber-500/90 text-white border-amber-400/40"
+                            : "bg-white/90 text-slate-700 border-white/50"
                     )}>
                       {card.status}
                     </span>
                   </div>
 
-                  <div className="absolute top-3 left-3">
-                    <span className="label-caps px-2.5 py-1 rounded-full border border-white/20 bg-black/50 backdrop-blur-md text-white shadow-sm">
-                      {card.type}
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h4 className="text-white headline-md leading-tight line-clamp-1 drop-shadow-sm">
+                  {/* Name + location over gradient */}
+                  <div className="absolute bottom-0 inset-x-0 p-4">
+                    <h4 className="text-white text-md leading-snug line-clamp-1">
                       {card.title}
                     </h4>
-                    <p className="text-sm text-slate-300 mt-1 truncate drop-shadow-sm flex items-center gap-1.5">
-                      <IconMapPin size={14} className="opacity-70" />
+                    <p className="body-sm text-white/65 mt-0.5 truncate flex items-center gap-1">
+                      <IconMapPin size={12} className="opacity-60 shrink-0" />
                       {card.location}
                     </p>
                   </div>
                 </div>
 
-                <div className="p-4 pt-4 flex flex-col justify-between h-full bg-white">
-                  <div className="flex items-end justify-between mb-4">
-                    <div className="flex flex-col">
-                      <span className="label-caps mb-0.5">Asking Price</span>
-                      <p className="text-[#151936] text-body-primary mono-amount">
-                        KES {card.price >= 1000000 ? (card.price / 1000000).toFixed(1) + 'M' : (card.price / 1000).toFixed(0) + 'K'}
-                      </p>
-                    </div>
+                {/* ── Footer ── */}
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="label-caps text-slate-400 mb-0.5">Asking Price</p>
+                    <p className="mono-amount text-[#151936]">
+                      KES {card.price >= 1000000
+                        ? (card.price / 1000000).toFixed(1) + 'M'
+                        : (card.price / 1000).toFixed(0) + 'K'}
+                    </p>
                   </div>
-
-                  <div className="pt-4 border-t border-slate-100 flex items-center gap-3">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Avatar
                       src={card.agent.avatarUrl || card.agent.img}
                       fallback={card.agent.name.substring(0, 2)}
-                      className="size-8 shadow-sm border border-slate-200"
+                      className="size-7 shadow-sm border border-slate-200"
                     />
-                    <div className="min-w-0">
-                      <p className="text-body-primary text-slate-700 leading-none truncate mb-1">{card.agent.name}</p>
-                      <p className="text-desc-secondary leading-none text-[11px] truncate">Property Manager</p>
+                    <div className="min-w-0 hidden sm:block">
+                      <p className="body-sm text-slate-600 leading-none truncate">{card.agent.name}</p>
+                      <p className="label-caps text-slate-400 leading-none mt-0.5">PM</p>
                     </div>
                   </div>
                 </div>
@@ -545,8 +566,9 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
       <PropertyDetailDrawer
         open={!!drawerProperty}
         onClose={() => setDrawerProperty(null)}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        property={drawerProperty as any}
+        property={drawerProperty}
+        canManage={false}
+        onStatusChange={() => { }}
         onEdit={() => { }}
         onDelete={() => { }}
       />

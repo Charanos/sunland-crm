@@ -77,8 +77,8 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      fetch("/api/auth/me").then((r) => r.json()).then((d) => { if (d?.user) setCurrentUserId(d.user.id); }).catch(() => {});
-      fetch(`/api/identity/users?entityId=${entityId}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.users)) setUsers(d.users); }).catch(() => {});
+      fetch("/api/auth/me").then((r) => r.json()).then((d) => { if (d?.user) setCurrentUserId(d.user.id); }).catch(() => { });
+      fetch(`/api/identity/users?entityId=${entityId}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.users)) setUsers(d.users); }).catch(() => { });
       loadConversations();
     });
   }, [loadConversations, entityId]);
@@ -114,8 +114,8 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
     fetch(`/api/messaging/conversations/${activeChatId}/messages`)
       .then((r) => r.json())
       .then((d) => setMessages(Array.isArray(d.messages) ? d.messages : []))
-      .catch(() => {});
-    fetch(`/api/messaging/conversations/${activeChatId}/read`, { method: "POST" }).catch(() => {});
+      .catch(() => { });
+    fetch(`/api/messaging/conversations/${activeChatId}/read`, { method: "POST" }).catch(() => { });
   }, [activeChatId]);
 
   useAblyChannel<Message>(
@@ -363,7 +363,7 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         className={cn(
-          "fixed bottom-[90px] md:bottom-6 right-4 md:right-6 z-40 size-14 rounded-full bg-[#151936] text-white shadow-[0_8px_30px_rgba(21,25,54,0.3)] flex items-center justify-center border border-white/10 transition-[z-index]",
+          "fixed bottom-24 right-4 md:bottom-12 md:right-6 z-40 size-14 rounded-full bg-[#f3df27] text-[#151936] shadow-[0_8px_30px_rgba(243,223,39,0.3)] flex items-center justify-center border border-white/20 transition-all",
           chatOpen && "z-[101]"
         )}
       >
@@ -393,8 +393,8 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
 
         {/* Unread Badge */}
         {!chatOpen && totalUnread > 0 && (
-          <div className="absolute top-0 right-0 size-4 bg-[#f3df27] rounded-full border-2 border-[#151936] flex items-center justify-center">
-            <span className="text-sm font-medium text-[#151936]">{totalUnread > 9 ? "9+" : totalUnread}</span>
+          <div className="absolute top-0 right-0 size-4 bg-rose-500 rounded-full border-2 border-[#151936] flex items-center justify-center">
+            <span className="text-[9px] font-bold text-white">{totalUnread > 9 ? "9+" : totalUnread}</span>
           </div>
         )}
       </motion.button>

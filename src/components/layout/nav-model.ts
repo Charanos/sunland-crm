@@ -166,24 +166,19 @@ export const navSections: NavSection[] = [
     ],
   },
 
-  // ── Executive: Property Operations ────────────────────────────────────────
-  {
-    id: "exec-property-ops",
-    label: "Property Operations",
-    icon: IconClipboardList,
-    items: [
-      { href: "/admin/leases", label: "Leases", icon: IconCalendarDollar },
-      { href: "/admin/maintenance", label: "Maintenance", icon: IconTool },
-    ],
-  },
-
   // ── Executive: Property Portfolio ─────────────────────────────────────────
+  // Properties, Leases, Maintenance, and Valuations are one ecosystem — the
+  // same portfolio viewed as inventory, tenancy, upkeep, and advisory value.
+  // Previously split across two groups (Portfolio / Operations); merged since
+  // four closely-related items don't need two accordions to hold them.
   {
     id: "exec-portfolio",
     label: "Property Portfolio",
     icon: IconBuildingCommunity,
     items: [
       { href: "/admin/properties", label: "Properties", icon: IconBuildingCommunity },
+      { href: "/admin/leases", label: "Leases", icon: IconCalendarDollar },
+      { href: "/admin/maintenance", label: "Maintenance", icon: IconTool },
       { href: "/admin/valuations", label: "Valuations", icon: IconFileAnalytics },
     ],
   },
@@ -238,7 +233,6 @@ export const mobilePrimaryNav = [
   findNavItem("exec-command", "/admin"),
   findNavItem("exec-sales", "/admin/contacts"),
   findNavItem("fin-command", "/fin"),
-  findNavItem("fin-property-revenue", "/fin/rentals/collections"),
   findNavItem("exec-portfolio", "/admin/properties"),
 ].filter((item): item is NavItem => !!item);
 

@@ -40,7 +40,10 @@ export async function resolveActorPermissions(
   if (cached) return cached;
 
   const conditions = [eq(userRoles.userId, ctx.user.id)];
-  if (entityId) {
+  if (entityId === "group") {
+    // "group" represents Sunland HQ / Global context. Only global grants apply.
+    conditions.push(isNull(userRoles.entityId));
+  } else if (entityId) {
     // Global-scope role grants (entityId null) apply everywhere; entity-scoped
     // grants only apply when they match the entity being acted on.
     conditions.push(or(isNull(userRoles.entityId), eq(userRoles.entityId, entityId))!);

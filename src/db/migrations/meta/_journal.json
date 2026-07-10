@@ -64,6 +64,13 @@
       "when": 1783566957792,
       "tag": "0008_freezing_raza",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783670842799,
+      "tag": "0009_opposite_scarlet_spider",
+      "breakpoints": true
     }
   ]
 }

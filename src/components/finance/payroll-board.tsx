@@ -6,13 +6,8 @@ import {
   IconCoins,
   IconClock,
   IconBuildingBank,
-  IconCheck,
-  IconArrowUpRight,
-  IconTrendingDown,
   IconUser,
   IconShieldCheck,
-  IconReceipt2,
-  IconTimeline,
   IconTransfer,
   IconPlus,
   IconDotsVertical,
@@ -28,7 +23,6 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FinanceModuleNav } from "@/components/finance/finance-module-nav";
 import { FinanceQrProof } from "@/components/finance/finance-qr-proof";
 import { BoardHeader, BoardPanel, Button, PaginationControls } from "@/components/ui/erp-primitives";
-import { cn } from "@/lib/utils/cn";
 import { formatCompactKES } from "@/lib/utils/format";
 import { useUIStore } from "@/store/ui";
 
@@ -294,7 +288,6 @@ const ROWS_PER_PAGE = 5;
 
 export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
   const { pushToast } = useToast();
-  const activeEntityId = useUIStore((state) => state.activeEntityId);
   const mounted = useSyncExternalStore(
     () => () => { },
     () => true,
@@ -341,10 +334,6 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
   // Helpers
   const formatMoney = (val: number) => formatCompactKES(val);
-  const formatDate = (val: string) => {
-    if (!val) return "";
-    return new Intl.DateTimeFormat("en-KE", { month: "short", day: "numeric", year: "numeric" }).format(new Date(val));
-  };
 
   const calculateKenyanStatutories = (gross: number) => {
     // 1. NSSF: Standard Tier I & II (6% of gross up to pensionable salary cap of KES 36,000, max KES 2,160)

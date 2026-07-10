@@ -17,52 +17,126 @@ import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
 import {
-  mobilePrimaryNav,
-  navSections,
   getActiveNavItem,
   findSectionByPath,
+  navSections,
 } from "@/components/layout/nav-model";
 import { useTeamMembers, getOrCreateDmConversationId } from "@/hooks/use-team-members";
+
+import {
+  IconHomeStats,
+  IconChartBar,
+  IconBuildingCommunity,
+  IconUsersGroup,
+  IconHomeDollar,
+  IconWallet,
+  IconReportAnalytics,
+  IconMenu2,
+} from "@tabler/icons-react";
 
 // ─── Mobile Bottom Pill Nav ──────────────────────────────────────────────────
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const activeNavItem = getActiveNavItem(pathname);
+  const { openMobileNav } = useUIStore();
+  const isFinRoute = pathname.startsWith("/fin");
+
+  const centerItem = { href: isFinRoute ? "/fin" : "/admin", label: "Overview", icon: IconHomeStats };
+  const CenterIcon = centerItem.icon;
+
+  const leftItems = isFinRoute
+    ? [
+      { href: "/fin/rentals/collections", label: "Rentals", icon: IconHomeDollar },
+      { href: "/fin/ledger/journal-entries", label: "Ledger", icon: IconWallet },
+    ]
+    : [
+      { href: "/admin/properties", label: "Properties", icon: IconBuildingCommunity },
+      { href: "/admin/contacts", label: "Contacts", icon: IconUsersGroup },
+    ];
+
+  const rightItems = isFinRoute
+    ? [
+      { href: "/fin/reports/generate", label: "Reports", icon: IconReportAnalytics },
+    ]
+    : [
+      { href: "/admin/pipeline", label: "Pipeline", icon: IconChartBar },
+    ];
 
   return (
     <nav
       aria-label="Mobile primary"
-      className="fixed bottom-4 left-1/2 z-30 flex w-[min(25rem,calc(100vw-2rem))] -translate-x-1/2 items-center justify-between rounded-full border border-black/5 bg-white/90 p-2 shadow-[0_18px_52px_rgba(0,0,0,0.12)] backdrop-blur-2xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 lg:hidden drop-shadow-[0_-12px_28px_rgba(0,0,0,0.12)]"
     >
-      {mobilePrimaryNav.map((item) => {
-        const IconComponent = item.icon;
-        const isActive = activeNavItem?.href === item.href;
+      <div
+        className="absolute inset-0 bg-white rounded-t-[32px] pb-safe"
+        style={{
+          maskImage: "radial-gradient(circle at 50% 8px, transparent 38px, black 39px)",
+          WebkitMaskImage: "radial-gradient(circle at 50% 8px, transparent 38px, black 39px)",
+        }}
+      />
+      <div className="relative flex h-[80px] items-center justify-between px-2 pb-safe">
+        {/* Left items */}
+        <div className="flex flex-1 justify-around pr-8">
+          {leftItems.map((item) => {
+            const isActive = pathname.startsWith(item.href) && item.href !== "/admin" && item.href !== "/fin";
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex w-16 flex-col items-center justify-center gap-1 transition-colors",
+                  isActive ? "text-[#151936]" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <Icon size={24} stroke={isActive ? 2 : 1.5} />
+                <span className="text-xs font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
 
-        return (
+        {/* Center elevated button */}
+        <div className="absolute left-1/2 top-[-20px] flex flex-col items-center -translate-x-1/2">
           <Link
-            aria-label={item.label}
-            className={cn(
-              "focus-ring relative flex size-11 items-center justify-center rounded-full text-[var(--on-surface-dim)] transition",
-              isActive && "text-white",
-            )}
-            href={item.href}
-            key={item.href}
+            href={centerItem.href}
+            className="flex size-14 items-center justify-center rounded-full bg-tertiary-gradient text-white shadow-[0_8px_24px_rgba(18,42,32,0.3)] transition-transform hover:scale-105 active:scale-95"
           >
-            {isActive && (
-              <motion.div
-                layoutId="mobile-bottom-nav-active"
-                className="absolute inset-0 rounded-full bg-[var(--sidebar)] shadow-md"
-                initial={false}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
-            )}
-            <span className="relative z-10">
-              <IconComponent aria-hidden size={20} stroke={1.8} />
-            </span>
+            <CenterIcon size={24} stroke={1.5} />
           </Link>
-        );
-      })}
+          <span className="absolute top-[72px] text-xs font-medium text-slate-500">
+            {centerItem.label}
+          </span>
+        </div>
+
+        {/* Right items + Menu */}
+        <div className="flex flex-1 justify-around pl-8">
+          {rightItems.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex w-16 flex-col items-center justify-center gap-1 transition-colors",
+                  isActive ? "text-[#151936]" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <Icon size={24} stroke={isActive ? 2 : 1.5} />
+                <span className="text-xs font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            onClick={openMobileNav}
+            className="flex w-16 flex-col items-center justify-center gap-1 text-slate-400 transition-colors hover:text-slate-600"
+          >
+            <IconMenu2 size={24} stroke={1.5} />
+            <span className="text-xs font-medium">Menu</span>
+          </button>
+        </div>
+      </div>
     </nav>
   );
 }
@@ -157,6 +231,7 @@ export function MobileNavigationDrawer() {
         {/* ── Header ─────────────────────────────────────── */}
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/[0.08] px-4">
           <Link href={isFinRoute ? "/fin" : "/admin"} onClick={closeMobileNav}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png"
               className="h-8 w-auto max-w-[160px] object-contain pl-1"

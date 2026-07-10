@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { eq, and, ne, desc, SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { properties, leases, documents, transactions } from "@/db/schema";
+import { properties, leases, documents, transactions, contacts, maintenanceRequests } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -254,6 +254,42 @@ export async function deleteProperty(ctx: CallerContext, propertyId: string) {
       after: null,
     });
   });
+}
+
+// ─── Property Details ──────────────────────────────────────────────────────────
+
+export async function getPropertyWithDetails(ctx: CallerContext, propertyId: string) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.read", entityId);
+
+  const [prop] = await db
+    .select()
+    .from(properties)
+    .where(and(eq(properties.id, propertyId), eq(properties.entityId, entityId)));
+
+  if (!prop) throw new NotFoundError("Property not found");
+
+  const owner = prop.ownerContactId
+    ? await db.select().from(contacts).where(eq(contacts.id, prop.ownerContactId)).limit(1).then(res => res[0])
+    : null;
+
+  const activeLeases = await db
+    .select()
+    .from(leases)
+    .where(and(eq(leases.propertyId, propertyId), eq(leases.isActive, true)));
+
+  const openMaintenance = await db
+    .select()
+    .from(maintenanceRequests)
+    .where(and(eq(maintenanceRequests.propertyId, propertyId), ne(maintenanceRequests.status, "closed")));
+
+  return {
+    ...prop,
+    owner,
+    activeLeases,
+    openMaintenance,
+  };
 }
 
 // ─── Leases ──────────────────────────────────────────────────────────────────

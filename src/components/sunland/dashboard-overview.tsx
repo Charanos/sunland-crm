@@ -10,8 +10,6 @@ import {
   IconCoin,
   IconTrendingUp,
   IconTrendingDown,
-  IconFileCheck,
-  IconHomePlus,
   IconWallet,
   IconChartLine,
   IconPlus,
@@ -251,7 +249,7 @@ export function DashboardOverview({
           setCurrentUserRole(data.user.role);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -307,13 +305,13 @@ export function DashboardOverview({
   const hasListings = listings.length > 0;
   const featured = hasListings
     ? {
-        name: listings[0].name,
-        location: listings[0].location,
-        price: listings[0].price,
-        roi: listings[0].roi,
-        imageUrl: listings[0].imageUrl,
-        status: listings[0].status,
-      }
+      name: listings[0].name,
+      location: listings[0].location,
+      price: listings[0].price,
+      roi: listings[0].roi,
+      imageUrl: listings[0].imageUrl,
+      status: listings[0].status,
+    }
     : null;
 
   const chartData = stats?.chartSeries ?? [];
@@ -429,7 +427,7 @@ export function DashboardOverview({
     <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-3 transition-opacity duration-300">
       {/* ── Hero Command Title ──────────────────────────────── */}
       <section
-        className="relative z-10 flex flex-col gap-1 border-b border-slate-200/60 pb-3 animate-fade-in-up"
+        className="relative z-10 flex flex-col justify-center gap-1 border-b border-slate-200/60 pb-3 animate-fade-in-up"
         aria-label="Dashboard header"
       >
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -438,18 +436,18 @@ export function DashboardOverview({
               Updated{" "}
               {mounted
                 ? lastRefreshed.toLocaleTimeString("en-KE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
                 : "--:--"}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
               className={cn(
-                "flex items-center gap-1.5 text-base font-medium text-slate-500 hover:text-slate-800 transition-colors bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow",
+                "flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow",
                 isRefreshing && "opacity-60",
               )}
               aria-label="Refresh dashboard"
@@ -462,32 +460,32 @@ export function DashboardOverview({
               Refresh
             </button>
             <div className="relative group">
-              <button className="flex items-center gap-1.5 text-base font-medium text-white bg-tertiary-gradient px-3 py-1.5 rounded-lg shadow-sm hover:opacity-95 transition-all">
+              <button className="flex items-center gap-1.5 text-sm font-medium text-white bg-tertiary-gradient px-3 py-1.5 rounded-lg shadow-sm hover:opacity-95 transition-all">
                 <IconPlus size={13} stroke={2.5} />
                 Quick Action
               </button>
               <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 py-1">
                 <Link
                   href="/admin/properties"
-                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
+                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-sm"
                 >
                   <IconBuildingSkyscraper size={14} /> Add Property
                 </Link>
                 <Link
                   href="/admin/contacts"
-                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
+                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-sm"
                 >
                   <IconPlus size={14} /> Add Contact
                 </Link>
                 <Link
                   href="/fin"
-                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
+                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-sm"
                 >
                   <IconReceipt size={14} /> Record Payment
                 </Link>
                 <Link
                   href="/admin/pipeline"
-                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
+                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-sm"
                 >
                   <IconCalendarEvent size={14} /> Schedule Viewing
                 </Link>
@@ -511,7 +509,7 @@ export function DashboardOverview({
 
       {/* ── Grid Row 1: Key Performance Metrics ── */}
       <section
-        className="gsap-stagger grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 my-8"
+        className="gsap-stagger grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 my-8"
         aria-label="Key performance indicators"
       >
         {/* Col 1: Active Listings + Revenue (Stacked) */}
@@ -609,7 +607,7 @@ export function DashboardOverview({
         </div>
 
         {/* Col 2-3: Featured Property */}
-        <Card className="h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all overflow-hidden relative group flex flex-col justify-between animate-fade-in-up stagger-3 rounded-2xl">
+        <Card className="h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all overflow-hidden relative group flex flex-col justify-between animate-fade-in-up stagger-3 rounded-2xl lg:col-span-2">
           {featured ? (
             <>
               <div className="absolute inset-0 z-0">
@@ -864,8 +862,8 @@ export function DashboardOverview({
 
       {/* Dynamic Approvals Queue for CEO and GM */}
       {(currentUserRole === "ceo" || currentUserRole === "general_manager") &&
-      stats?.awaitingMyDecision?.count &&
-      stats.awaitingMyDecision.count > 0 ? (
+        stats?.awaitingMyDecision?.count &&
+        stats.awaitingMyDecision.count > 0 ? (
         <section
           className="w-full mt-2 animate-fade-in-up"
           aria-label="Approvals Queue"
@@ -1652,8 +1650,8 @@ export function DashboardOverview({
                   <LoadingSpinner size="md" />
                 </div>
               ) : (stats?.activityLogs || []).filter(
-                  (l) => l.type === "payment",
-                ).length > 0 ? (
+                (l) => l.type === "payment",
+              ).length > 0 ? (
                 (stats?.activityLogs || [])
                   .filter((l) => l.type === "payment")
                   .map((log, i) => {
@@ -1838,13 +1836,13 @@ export function DashboardOverview({
                       <IconCheck size={14} className="text-emerald-500" />
                       {stats.systemHealth.lastThresholdChangeAt
                         ? new Date(
-                            stats.systemHealth.lastThresholdChangeAt,
-                          ).toLocaleString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })
+                          stats.systemHealth.lastThresholdChangeAt,
+                        ).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
                         : "No updates"}
                     </div>
                   </div>
@@ -1930,15 +1928,15 @@ export function DashboardOverview({
         initialData={
           editingProperty
             ? {
-                id: editingProperty.id,
-                name: editingProperty.name,
-                location: editingProperty.location,
-                type: editingProperty.type,
-                status: editingProperty.status,
-                price: editingProperty.price,
-                roi: editingProperty.roi,
-                imageUrl: editingProperty.imageUrl,
-              }
+              id: editingProperty.id,
+              name: editingProperty.name,
+              location: editingProperty.location,
+              type: editingProperty.type,
+              status: editingProperty.status,
+              price: editingProperty.price,
+              roi: editingProperty.roi,
+              imageUrl: editingProperty.imageUrl,
+            }
             : undefined
         }
         mode={propertyModalMode}
@@ -1947,11 +1945,41 @@ export function DashboardOverview({
       <PropertyDetailDrawer
         open={!!drawerProperty}
         onClose={() => setDrawerProperty(null)}
-        property={drawerProperty}
-        onEdit={(id) => {
-          const prop = listings.find((l) => l.id === id) ?? drawerProperty;
-          if (prop) {
-            setEditingProperty(prop);
+        // Map the dashboard-local PropertyListing shape to the drawer's Property contract.
+        // The drawer accesses: id, name, location, propertyType, listingType, status, isFeatured, media.
+        // PropertyListing only carries {id,name,location,type,status,roi,price,imageUrl} — we
+        // shim the rest with safe defaults so nothing renders broken.
+        property={drawerProperty ? {
+          id: drawerProperty.id,
+          name: drawerProperty.name,
+          location: drawerProperty.location,
+          propertyType: drawerProperty.type,
+          listingType: "let" as const,
+          status: drawerProperty.status === "Occupied"
+            ? "occupied"
+            : drawerProperty.status === "Under Offer"
+              ? "under_offer"
+              : drawerProperty.status === "Sold"
+                ? "off_market"
+                : "available",
+          propertyCode: "",
+          ownerContactId: null,
+          askingPriceKes: null,
+          monthlyRentKes: drawerProperty.price ?? null,
+          bedrooms: null,
+          bathrooms: null,
+          sizeSqft: null,
+          isFeatured: false,
+          media: drawerProperty.imageUrl
+            ? [{ url: drawerProperty.imageUrl, isPrimary: true }]
+            : [],
+        } : null}
+        canManage={false}
+        onStatusChange={() => { }}
+        onEdit={(prop) => {
+          const original = listings.find((l) => l.id === prop.id);
+          if (original) {
+            setEditingProperty(original);
             setPropertyModalMode("edit");
             setPropertyModalOpen(true);
             setDrawerProperty(null);

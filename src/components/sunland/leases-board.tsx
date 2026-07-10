@@ -25,6 +25,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageTransition } from "@/components/shared/page-transition";
 import { formatCompactKES } from "@/lib/utils/format";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { cn } from "@/lib/utils/cn";
+import { IconBuildingCommunity } from "@tabler/icons-react";
 
 type Lease = {
   id: string;
@@ -115,31 +117,42 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         }
       />
 
-      {/* ── Property Operations Hub Navigator ── */}
+      {/* ── Property Portfolio Hub Navigator ── */}
       <div className="flex items-center justify-between flex-wrap gap-4 bg-white border border-slate-100 p-4 rounded-[20px] shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="size-8 rounded-lg bg-indigo-50 text-indigo-650 flex items-center justify-center">
-            <IconClipboardList size={16} />
+          <div className="size-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+            <IconBuildingCommunity size={20} />
           </div>
           <div>
-            <h3 className="text-base font-medium text-slate-800 leading-none">Property Operations Hub</h3>
-            <p className="text-sm text-slate-400 mt-1">Manage tenancies and maintenance requests.</p>
+            <h3 className="text-title-primary">Property Portfolio Hub</h3>
+            <p className="text-desc-secondary mt-1">Manage property inventory, tenancies, maintenance requests, and valuations.</p>
           </div>
         </div>
 
         <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
           <Link
+            href="/admin/properties"
+            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+          >
+            <span>Properties</span>
+          </Link>
+          <Link
             href="/admin/leases"
             className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
           >
             <span>Leases</span>
-            <span className="bg-[#f3df27] text-[#151936] px-1.5 py-0.2 rounded-full text-meta-muted-strong">Active</span>
           </Link>
           <Link
             href="/admin/maintenance"
             className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Maintenance</span>
+          </Link>
+          <Link
+            href="/admin/valuations"
+            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+          >
+            <span>Valuations</span>
           </Link>
         </div>
       </div>
@@ -167,10 +180,10 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       </div>
 
       {/* Leases List */}
-      <BoardPanel className="gsap-stagger space-y-4">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex h-9 flex-1 min-w-[200px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
-            <IconSearch size={14} className="text-slate-400" />
+      <BoardPanel className="gsap-stagger space-y-4 bg-transparent lg:bg-white border-transparent lg:border-slate-100 p-0 lg:p-6 shadow-none lg:shadow-sm hover:shadow-none lg:hover:shadow-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="flex h-10 w-full sm:flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-slate-200/60 bg-white sm:bg-slate-50 px-3 shadow-sm sm:shadow-none focus-within:bg-white focus-within:ring-2 focus-within:ring-[#151936]/10 focus-within:border-[#151936]/30 transition-all">
+            <IconSearch size={16} className="text-slate-400 shrink-0" />
             <input
               value={query}
               onChange={(e) => {
@@ -178,11 +191,11 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 setPage(1);
               }}
               placeholder="Search lease IDs or references…"
-              className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-base"
+              className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-sm py-1"
             />
           </div>
-          <Button variant="secondary" size="sm">
-            <IconFilter size={14} /> Filter
+          <Button variant="secondary" className="h-10 w-full sm:w-auto shrink-0 justify-center">
+            <IconFilter size={15} /> Filter
           </Button>
         </div>
 
@@ -200,7 +213,46 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
           />
         ) : (
           <div className="space-y-4">
-            <div className="overflow-x-auto">
+            {/* Mobile/Tablet Card Grid (hidden on desktop) */}
+            <div className="block lg:hidden space-y-4">
+              {visible.map((l) => (
+                <div
+                  key={l.id}
+                  className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col gap-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="label-caps text-slate-400 mb-0.5">Lease ID</p>
+                      <span className="font-mono text-slate-900 text-sm">{l.id.slice(0, 8).toUpperCase()}</span>
+                    </div>
+                    <Badge tone={l.isActive ? "success" : "neutral"}>
+                      {l.isActive ? "Active" : "Terminated"}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs border-t border-slate-50 pt-3">
+                    <div>
+                      <p className="label-caps text-slate-400 mb-0.5">Duration</p>
+                      <span className="body-sm text-slate-700 block">
+                        {formatDate(l.startsAt)} – {formatDate(l.endsAt)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="label-caps text-slate-400 mb-0.5">Rates (Rent &amp; Deposit)</p>
+                      <span className="body-sm text-slate-700 block font-mono">
+                        Rent: {formatCompactKES(parseFloat(l.monthlyRentKes))}/mo
+                      </span>
+                      <span className="body-sm text-slate-505 block font-mono text-slate-500">
+                        Dep: {l.depositKes ? formatCompactKES(parseFloat(l.depositKes)) : "—"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Table wrapper: hidden on mobile, visible on desktop */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full min-w-[800px] text-left text-body-regular">
                 <thead>
                   <tr className="border-b border-slate-100 label-caps text-slate-400">

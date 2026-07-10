@@ -22,9 +22,10 @@ When working within the Sunland CRM Next.js codebase, please adhere to these gui
    *Error prevented*: `Unexpected any. Specify a different type.`
 
 4. **Typography Strictness**:
-   - **CRITICAL: NEVER use `font-semibold` or `font-bold` under any circumstances.**
-   - **NO INLINE TEXT SIZING OR WEIGHTS**: Never use Tailwind utility classes like `text-sm`, `text-3xl`, `font-bold`, `font-semibold`, `font-medium`, `font-normal` inline in components.
-   - **USE SEMANTIC CSS**: Rely strictly on classes defined in `globals.css` such as `.headline-lg`, `.headline-md`, `.title-serif`, `.body-md`, `.body-sm`, `.label-caps`, `.text-heading-primary`, `.text-title-primary`, `.text-body-primary`, `.text-body-regular`, `.text-desc-secondary`, `.text-meta-muted`, `.text-meta-muted-strong`.
+   - **CRITICAL: NEVER use `font-semibold` or `font-bold` under any circumstances.** These are strictly forbidden site-wide.
+   - **`font-medium` inline is acceptable** for subtle weight variation where no semantic class maps precisely.
+   - **NO INLINE TEXT SIZING**: Never use arbitrary Tailwind sizing classes like `text-[11px]`, `text-[15px]`, `text-[42px]`.
+   - **USE SEMANTIC CSS** where a matching class exists in `globals.css`: `.headline-lg`, `.headline-md`, `.title-serif`, `.body-md`, `.body-sm`, `.label-caps`, `.text-heading-primary`, `.text-title-primary`, `.text-body-primary`, `.text-body-regular`, `.text-desc-secondary`, `.text-meta-muted`, `.text-meta-muted-strong`.
    - **NUMBERS USE MONO**: ALL numerals (KPIs, stats, prices) must utilize `.mono-stat`, `.mono-data`, or `.mono-amount` rather than generic font rendering.
 
 # Role Architecture (client-finalized, 2026 Q3 — full record in `docs/ARCHITECTURE_DECISIONS.md` ADR 013)
@@ -78,7 +79,7 @@ To ensure consistent, premium executive-level design throughout the CRM, strictl
 2. **Premium Emerald Branding**:
    - Do NOT use standard Tailwind `bg-emerald-500` or `bg-emerald-600` for primary action buttons or active states.
    - Use the `.bg-tertiary-gradient` class (defined in `globals.css`) for solid fill buttons.
-   - For text or subtle backgrounds, use the explicit tertiary emerald hex code: `#122a20` (e.g., `text-[#122a20]`, `bg-[#122a20]/10`).
+   - For text or subtle backgrounds, use the explicit tertiary emerald css `.bg-tertiary-emerald`.
 
 3. **Title Serif Constraints**:
    - The `.title-serif` class is reserved **exclusively** for high-level Section Headers (e.g., headers that sit directly on the page background, like "Market Insights & Portfolio" or "Revenue Trajectory").
@@ -103,4 +104,18 @@ To ensure consistent, premium executive-level design throughout the CRM, strictl
 8. **Admin Operations & Components**:
    - Always wire destructive actions (e.g., delete row) to the custom Sunland `<ConfirmDialog>` component rather than native `window.confirm`.
    - Critical "Featured" or "Highlighted" tags should be modeled via explicit database boolean columns (e.g., `isFeatured`) to give admins granular control, rather than relying on automatic logic loops like price-sorting.
+
+9. **Mobile-Responsive Tables**:
+   - **CRITICAL**: Do NOT allow standard tables to overflow and force horizontal scrolling on mobile/tablet devices.
+   - Implement a responsive split layout:
+     - For small screens (using `block lg:hidden`), render rows as rich, structured, card-like blocks.
+     - For large screens (using `hidden lg:block`), display the standard full-column table format.
+   - Mobile card layouts must pack key metadata densely (e.g., image/initials, status badge, specs, price/rates, and actions) while respecting typography constraints.
+
+10. **Responsive List Wrapping**:
+    - **CRITICAL**: Some heavily wrapped components (e.g., the primary list tables in Properties, Leases, and Valuations boards) must discard their outer card shell on mobile viewports.
+    - This allows inner items (which are converted to mobile cards per Rule 9) to float freely, preventing "double-boxing" and maximizing usable screen width on mobile devices.
+    - Example Implementation: Instead of a hardcoded `bg-white p-8 shadow-sm`, utilize responsive classes to conditionally drop the wrapper: `bg-transparent lg:bg-white border-transparent lg:border-slate-100 p-0 lg:p-8 shadow-none lg:shadow-sm`.
+    - **Note:** This does not apply to all components (e.g., individual KPI cards retain their shells), but is essential for heavily nested structural containers holding large collections.
+
 

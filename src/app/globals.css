@@ -141,7 +141,7 @@ button:disabled {
 .label-caps {
   font-family: var(--font-nunito), sans-serif;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
