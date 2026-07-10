@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
-import { eq, and, ne, desc, SQL } from "drizzle-orm";
+import { eq, and, ne, desc, gte, inArray, getTableColumns, SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { properties, leases, documents, transactions, contacts, maintenanceRequests } from "@/db/schema";
+import { properties, leases, documents, transactions, contacts, maintenanceRequests, leads, propertyMandates, approvalRequests } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -23,7 +23,23 @@ export async function listProperties(
     conditions = and(conditions, eq(properties.ownerContactId, filters.ownerContactId));
   }
 
-  return db.select().from(properties).where(conditions);
+  // Left join scoped to at-most-one in-flight mandate per property (the
+  // partial unique index on property_mandates guarantees no fan-out here) —
+  // surfaces mandateStatus on the board without a second round trip.
+  return db
+    .select({
+      ...getTableColumns(properties),
+      mandateStatus: propertyMandates.status,
+    })
+    .from(properties)
+    .leftJoin(
+      propertyMandates,
+      and(
+        eq(propertyMandates.propertyId, properties.id),
+        inArray(propertyMandates.status, ["pending_approval", "active"]),
+      ),
+    )
+    .where(conditions);
 }
 
 type UnitBreakdownEntry = { unitType: string; count: number; monthlyRentKes?: string };
@@ -71,6 +87,7 @@ export async function createProperty(
     bedrooms?: number | null;
     bathrooms?: number | null;
     sizeSqft?: number | null;
+    description?: string | null;
     media?: MediaEntry[];
     unitBreakdown?: UnitBreakdownEntry[];
   }
@@ -100,6 +117,7 @@ export async function createProperty(
         bedrooms: input.bedrooms ?? null,
         bathrooms: input.bathrooms ?? null,
         sizeSqft: input.sizeSqft ?? null,
+        description: input.description ?? null,
         media: input.media ?? [],
         unitBreakdown,
         status: "available",
@@ -135,6 +153,7 @@ export async function updateProperty(
     bedrooms: number | null;
     bathrooms: number | null;
     sizeSqft: number | null;
+    description: string | null;
     status: "available" | "occupied" | "under_offer" | "off_market" | "maintenance";
     media: MediaEntry[];
     unitBreakdown: UnitBreakdownEntry[];
@@ -174,6 +193,7 @@ export async function updateProperty(
     bedrooms: input.bedrooms,
     bathrooms: input.bathrooms,
     sizeSqft: input.sizeSqft,
+    description: input.description,
     status: input.status,
     media: input.media,
     unitBreakdown: input.unitBreakdown,
@@ -258,6 +278,12 @@ export async function deleteProperty(ctx: CallerContext, propertyId: string) {
 
 // ─── Property Details ──────────────────────────────────────────────────────────
 
+/**
+ * Assembles the full-view page's data contract (property-detail-types.ts's
+ * PropertyDetail) in one call. Every derived figure (collections, arrears,
+ * vacantSince, lease status) is computed live from the base tables on read —
+ * never stored — per the ledger doc §8.1 single-source-of-truth rule.
+ */
 export async function getPropertyWithDetails(ctx: CallerContext, propertyId: string) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(ctx.entityId);
@@ -270,25 +296,222 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
 
   if (!prop) throw new NotFoundError("Property not found");
 
-  const owner = prop.ownerContactId
-    ? await db.select().from(contacts).where(eq(contacts.id, prop.ownerContactId)).limit(1).then(res => res[0])
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  const [ownerRows, leaseRows, maintenanceRows, documentRows, rentTxRows, leadRows, mandateRows] = await Promise.all([
+    prop.ownerContactId
+      ? db.select().from(contacts).where(eq(contacts.id, prop.ownerContactId)).limit(1)
+      : Promise.resolve([]),
+    db
+      .select({
+        id: leases.id,
+        startsAt: leases.startsAt,
+        endsAt: leases.endsAt,
+        monthlyRentKes: leases.monthlyRentKes,
+        isActive: leases.isActive,
+        tenantName: contacts.displayName,
+        tenantPhone: contacts.phone,
+        tenantEmail: contacts.email,
+      })
+      .from(leases)
+      .innerJoin(contacts, eq(leases.tenantContactId, contacts.id))
+      .where(eq(leases.propertyId, propertyId))
+      .orderBy(desc(leases.startsAt)),
+    db
+      .select({
+        id: maintenanceRequests.id,
+        title: maintenanceRequests.title,
+        priority: maintenanceRequests.priority,
+        status: maintenanceRequests.status,
+        createdAt: maintenanceRequests.createdAt,
+        reportedBy: contacts.displayName,
+      })
+      .from(maintenanceRequests)
+      .leftJoin(contacts, eq(maintenanceRequests.reportedByContactId, contacts.id))
+      .where(eq(maintenanceRequests.propertyId, propertyId))
+      .orderBy(desc(maintenanceRequests.createdAt)),
+    db
+      .select()
+      .from(documents)
+      .where(eq(documents.propertyId, propertyId))
+      .orderBy(desc(documents.createdAt)),
+    db
+      .select({ amountKes: transactions.amountKes, occurredAt: transactions.occurredAt })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.propertyId, propertyId),
+          eq(transactions.type, "rent"),
+          gte(transactions.occurredAt, sixMonthsAgo),
+        ),
+      ),
+    db
+      .select({
+        stage: leads.stage,
+        expectedValueKes: leads.expectedValueKes,
+        updatedAt: leads.updatedAt,
+        leadName: contacts.displayName,
+      })
+      .from(leads)
+      .innerJoin(contacts, eq(leads.contactId, contacts.id))
+      .where(eq(leads.propertyId, propertyId))
+      .orderBy(desc(leads.updatedAt))
+      .limit(1),
+    db
+      .select()
+      .from(propertyMandates)
+      .where(
+        and(
+          eq(propertyMandates.propertyId, propertyId),
+          inArray(propertyMandates.status, ["pending_approval", "active"]),
+        ),
+      )
+      .limit(1),
+  ]);
+
+  // Owner mapped to the frontend's OwnerInfo shape — the board reads
+  // owner.name, not the contacts table's displayName.
+  const ownerRow = ownerRows[0];
+  const owner = ownerRow
+    ? { id: ownerRow.id, name: ownerRow.displayName, email: ownerRow.email, phone: ownerRow.phone }
     : null;
 
-  const activeLeases = await db
-    .select()
-    .from(leases)
-    .where(and(eq(leases.propertyId, propertyId), eq(leases.isActive, true)));
+  const activeLeaseRows = leaseRows.filter((l) => l.isActive);
+  const sixtyDaysOut = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+  const leaseSummaries = leaseRows.map((l) => ({
+    id: l.id,
+    tenantName: l.tenantName,
+    tenantPhone: l.tenantPhone ?? undefined,
+    tenantEmail: l.tenantEmail ?? undefined,
+    startDate: l.startsAt.toISOString(),
+    endDate: l.endsAt?.toISOString() ?? null,
+    status: !l.isActive
+      ? ("ended" as const)
+      : l.endsAt && l.endsAt <= sixtyDaysOut
+        ? ("expiring" as const)
+        : ("active" as const),
+    monthlyRentKes: l.monthlyRentKes,
+  }));
 
-  const openMaintenance = await db
-    .select()
-    .from(maintenanceRequests)
-    .where(and(eq(maintenanceRequests.propertyId, propertyId), ne(maintenanceRequests.status, "closed")));
+  // Expected monthly rent: sum of active leases, falling back to the listed
+  // rate — expected must reflect the contracted amount when a tenancy exists.
+  const expectedMonthly = activeLeaseRows.length > 0
+    ? activeLeaseRows.reduce((sum, l) => sum + parseFloat(l.monthlyRentKes), 0)
+    : prop.monthlyRentKes
+      ? parseFloat(prop.monthlyRentKes)
+      : 0;
+
+  // Six-month collection history bucketed by calendar month, oldest first.
+  const collections = Array.from({ length: 6 }, (_, i) => {
+    const monthStart = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const collected = rentTxRows
+      .filter((t) => {
+        const d = t.occurredAt;
+        return d.getFullYear() === monthStart.getFullYear() && d.getMonth() === monthStart.getMonth();
+      })
+      .reduce((sum, t) => sum + parseFloat(t.amountKes), 0);
+    return {
+      period: monthStart.toLocaleDateString("en-KE", { month: "short" }),
+      expected: expectedMonthly,
+      collected,
+    };
+  });
+
+  // Arrears reads the current month's bucket — only meaningful with a tenancy.
+  const currentMonth = collections[collections.length - 1];
+  let arrears: { status: "current" | "partial" | "defaulted"; amount: number; daysInArrears: number } | null = null;
+  if (activeLeaseRows.length > 0 && expectedMonthly > 0) {
+    const shortfall = Math.max(0, expectedMonthly - currentMonth.collected);
+    arrears = {
+      status: currentMonth.collected >= expectedMonthly ? "current" : currentMonth.collected > 0 ? "partial" : "defaulted",
+      amount: shortfall,
+      daysInArrears: shortfall > 0 ? now.getDate() : 0,
+    };
+  }
+
+  // Vacancy start: latest ended tenancy, only when nothing is currently let.
+  const vacantSince =
+    prop.status !== "occupied" && activeLeaseRows.length === 0
+      ? leaseRows
+          .filter((l) => !l.isActive && l.endsAt)
+          .reduce<Date | null>((latest, l) => (!latest || l.endsAt > latest ? l.endsAt : latest), null)
+          ?.toISOString() ?? null
+      : null;
+
+  // The full CRM pipeline stages collapse into the board's four display
+  // stages; a lost deal means there is no live pipeline to show.
+  const leadRow = leadRows[0];
+  const salesPipeline = leadRow && leadRow.stage !== "closed_lost"
+    ? {
+        stage:
+          leadRow.stage === "closed_won"
+            ? ("sale" as const)
+            : leadRow.stage === "offer" || leadRow.stage === "negotiation"
+              ? ("offer" as const)
+              : leadRow.stage === "viewing"
+                ? ("viewing" as const)
+                : ("lead" as const),
+        leadName: leadRow.leadName,
+        offerAmountKes: leadRow.expectedValueKes,
+        lastActivityAt: leadRow.updatedAt.toISOString(),
+      }
+    : null;
+
+  const documentSummaries = documentRows.map((d) => ({
+    id: d.id,
+    name: d.title,
+    status: ((d.metadata as Record<string, unknown> | null)?.status as "draft" | "awaiting_signature" | "signed") ?? "signed",
+    url: d.fileUrl,
+  }));
+
+  // A pending mandate's own status doesn't say who it's waiting on — that
+  // lives on its approval_requests row — so the rail card can show "Pending
+  // GM" vs "Pending CEO" rather than a generic "Pending".
+  const mandateRow = mandateRows[0];
+  let pendingApproverRole: "gm" | "ceo" | "department_head" | null = null;
+  if (mandateRow && mandateRow.status === "pending_approval") {
+    const [pendingApproval] = await db
+      .select({ requiredApproverRole: approvalRequests.requiredApproverRole })
+      .from(approvalRequests)
+      .where(
+        and(
+          eq(approvalRequests.relatedTable, "property_mandates"),
+          eq(approvalRequests.relatedId, mandateRow.id),
+          eq(approvalRequests.status, "pending"),
+        ),
+      )
+      .limit(1);
+    pendingApproverRole = pendingApproval?.requiredApproverRole ?? null;
+  }
+  const mandate = mandateRow
+    ? {
+        id: mandateRow.id,
+        status: mandateRow.status,
+        mandateRate: parseFloat(mandateRow.mandateRate),
+        startDate: mandateRow.startDate.toISOString(),
+        pendingApproverRole,
+      }
+    : null;
 
   return {
     ...prop,
     owner,
-    activeLeases,
-    openMaintenance,
+    mandate,
+    collections,
+    arrears,
+    leases: leaseSummaries,
+    maintenanceRequests: maintenanceRows.map((m) => ({
+      id: m.id,
+      title: m.title,
+      reportedAt: m.createdAt.toISOString(),
+      reportedBy: m.reportedBy ?? undefined,
+      priority: m.priority,
+      status: m.status,
+    })),
+    salesPipeline,
+    documents: documentSummaries,
+    vacantSince,
   };
 }
 

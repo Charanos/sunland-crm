@@ -45,5 +45,7 @@ export const transactions = pgTable(
     typeIdx: index("transactions_type_idx").on(table.type),
     entityIdx: index("transactions_entity_idx").on(table.entityId),
     occurredAtIdx: index("transactions_occurred_at_idx").on(table.occurredAt),
+    // Per-property collection history (property full view) filters on this.
+    propertyIdx: index("transactions_property_idx").on(table.propertyId),
   }),
 );

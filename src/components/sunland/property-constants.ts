@@ -104,6 +104,24 @@ export const STATUS_CONFIG: Record<
   },
 };
 
+export type MandateStatus = "draft" | "pending_approval" | "active" | "terminated";
+
+/**
+ * Colors mirror STATUS_CONFIG's semantic palette. Labels are the generic
+ * glance-able form ("Pending") — the full-view board's own MandateStatusPill
+ * overrides "Pending" with the approver-specific "Pending GM"/"Pending CEO"
+ * where it has that extra data.
+ */
+export const MANDATE_STATUS_CONFIG: Record<
+  MandateStatus,
+  { label: string; dot: string; pill: string }
+> = {
+  draft: { label: "Draft", dot: "bg-slate-400", pill: "bg-slate-100 text-slate-600 border-slate-200" },
+  pending_approval: { label: "Pending", dot: "bg-amber-500", pill: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
+  active: { label: "Active", dot: "bg-emerald-500", pill: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60" },
+  terminated: { label: "Terminated", dot: "bg-rose-500", pill: "bg-rose-500/15 text-rose-700 border-rose-300/60" },
+};
+
 export type Property = {
   id: string;
   propertyCode: string;

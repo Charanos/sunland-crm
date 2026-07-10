@@ -12,4 +12,5 @@ export * from "@/db/schema/support";
 export * from "@/db/schema/hr";
 export * from "@/db/schema/messaging";
 export * from "@/db/schema/valuations";
+export * from "@/db/schema/mandates";
 

@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { entities, timestamps, users } from "@/db/schema/platform";
 import { contacts } from "@/db/schema/crm";
+import { properties } from "@/db/schema/properties";
 
 export const documentType = pgEnum("document_type", [
   "mandate_letter",
@@ -29,12 +30,17 @@ export const documents = pgTable(
     fileUrl: text("file_url").notNull(),
     uploadedById: uuid("uploaded_by_id").references(() => users.id).notNull(),
     ownerContactId: uuid("owner_contact_id").references(() => contacts.id),
+    // Nullable — owner-level paperwork (ID, statements) has no property; a
+    // title deed or lease agreement belongs to one. Lets the property full
+    // view list exactly its own documents instead of everything the owner has.
+    propertyId: uuid("property_id").references(() => properties.id),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
     ...timestamps,
   },
   (table) => ({
     entityIdx: index("documents_entity_idx").on(table.entityId),
     ownerContactIdx: index("documents_owner_contact_idx").on(table.ownerContactId),
+    propertyIdx: index("documents_property_idx").on(table.propertyId),
     typeIdx: index("documents_type_idx").on(table.type),
   }),
 );

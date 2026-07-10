@@ -16,6 +16,7 @@ import {
   IconEye,
   IconTrendingUp,
   IconClock,
+  IconFilter,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import {
@@ -33,7 +34,7 @@ import { formatCompactKES } from "@/lib/utils/format";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
-import { PROPERTY_TYPE_ICON } from "./property-constants";
+import { PROPERTY_TYPE_ICON, PROPERTY_TYPES } from "./property-constants";
 
 interface Lease {
   id: string;
@@ -59,6 +60,8 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "terminated">("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [typeFilter, setTypeFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [drawerLease, setDrawerLease] = useState<Lease | null>(null);
 
@@ -131,6 +134,11 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       result = result.filter((l) => !l.isActive);
     }
 
+    // Apply type filter
+    if (typeFilter !== "all") {
+      result = result.filter((l) => l.propertyType === typeFilter);
+    }
+
     if (!q) return result;
 
     return result.filter((l) =>
@@ -148,6 +156,9 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
   const safePage = Math.min(page, totalPages);
   const visible = filtered.slice((safePage - 1) * rowsPerPage, safePage * rowsPerPage);
+
+  const activeFilterCount = (statusFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0);
+  const hasActiveFilters = statusFilter !== "all" || typeFilter !== "all";
 
   const kpis = useMemo(() => {
     const active = leases.filter((l) => l.isActive).length;
@@ -326,37 +337,17 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
 
       {/* ── Highlighted Recent Leases ── */}
       <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-3 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col overflow-hidden">
-          {/* Card header */}
-          <div className="flex items-center justify-between px-6 pt-6 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="bg-[#151936] px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 text-white text-xs font-medium shadow-sm">
-                <IconStarFilled size={12} className="text-amber-400" /> Newest Active Contracts
-              </span>
-            </div>
-            {latestLeases.length > 1 && (
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setFeaturedIndex((i) => (i === 0 ? latestLeases.length - 1 : i - 1))}
-                  className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                >
-                  <IconChevronLeft size={14} />
-                </button>
-                <span className="label-caps text-slate-400 tabular-nums">{safeFeaturedIndex + 1}&thinsp;/&thinsp;{latestLeases.length}</span>
-                <button
-                  onClick={() => setFeaturedIndex((i) => (i === latestLeases.length - 1 ? 0 : i + 1))}
-                  className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                >
-                  <IconChevronRight size={14} />
-                </button>
-              </div>
-            )}
-          </div>
+        <div className="lg:col-span-3 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col overflow-hidden relative">
 
           {latestLeases.length > 0 ? (
             <div className="flex gap-0 flex-1 min-h-0" key={safeFeaturedIndex}>
               {/* Tenant abstract graphic panel */}
               <div className="relative w-1/3 shrink-0 overflow-hidden bg-slate-50 flex items-center justify-center border-r border-slate-100">
+                <div className="absolute top-6 left-6 z-20">
+                  <span className="bg-[#151936] px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 text-white text-xs font-medium shadow-sm">
+                    <IconStarFilled size={12} className="text-amber-400" /> Newest Active Contracts
+                  </span>
+                </div>
                 <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
                 <div className="text-center z-10">
                   <div className="size-20 rounded-full bg-white text-slate-700 flex items-center justify-center text-2xl font-medium border border-slate-200 shadow-sm mx-auto mb-3">
@@ -368,7 +359,26 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
               </div>
 
               {/* Info panel */}
-              <div className="flex-1 flex flex-col px-6 pb-6 pt-2 min-w-0">
+              <div className="flex-1 flex flex-col px-6 pb-6 pt-5 min-w-0">
+                <div className="flex items-center justify-end mb-4">
+                  {latestLeases.length > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setFeaturedIndex((i) => (i === 0 ? latestLeases.length - 1 : i - 1))}
+                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                      >
+                        <IconChevronLeft size={14} />
+                      </button>
+                      <span className="label-caps text-slate-400 tabular-nums">{safeFeaturedIndex + 1}&thinsp;/&thinsp;{latestLeases.length}</span>
+                      <button
+                        onClick={() => setFeaturedIndex((i) => (i === latestLeases.length - 1 ? 0 : i + 1))}
+                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                      >
+                        <IconChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="mb-4">
                   <Badge tone="success" className="mb-2">Active</Badge>
                   <h4 className="text-title-primary leading-snug">{latestLeases[safeFeaturedIndex].propertyName}</h4>
@@ -422,51 +432,105 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       </div>
 
       {/* ── Data Tier: Leases Table ── */}
-      <BoardPanel className="gsap-stagger space-y-4 bg-transparent lg:bg-white border-transparent lg:border-slate-100 p-0 lg:p-6 shadow-none lg:shadow-sm">
-
-        {/* Majestic Search & Filter */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-slate-50/50 p-2 rounded-2xl border border-slate-100">
-          <div className="flex-1 flex h-12 items-center gap-3 rounded-xl bg-white px-4 shadow-sm border border-slate-200/60 focus-within:ring-2 focus-within:ring-[#151936]/10 focus-within:border-[#151936]/30 transition-all">
-            <IconSearch size={18} className="text-slate-400 shrink-0" />
-            <input
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search leases by tenant, property, or code..."
-              className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-sm py-1 font-medium"
-            />
-            {query && (
-              <button
-                onClick={() => setQuery("")}
-                className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full p-1 transition-colors"
-              >
-                <IconX size={14} />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl shadow-sm border border-slate-200/60 overflow-x-auto no-scrollbar shrink-0">
-            {(["all", "active", "terminated"] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => {
-                  setStatusFilter(status);
+      <div className="bg-transparent lg:bg-white border-transparent lg:border-slate-100 p-0 lg:p-8 rounded-none lg:rounded-[24px] shadow-none lg:shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-0 lg:border-b border-slate-100 pb-2 lg:pb-5 mb-4 lg:mb-5">
+          <div className="w-full md:w-auto md:flex-1 max-w-md">
+            <div className="relative flex items-center group w-full">
+              <IconSearch
+                size={16}
+                className="absolute left-3.5 text-slate-400 group-focus-within:text-[#151936] transition-colors"
+              />
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
                   setPage(1);
                 }}
-                className={cn(
-                  "px-5 py-2 text-xs font-medium uppercase tracking-wider rounded-lg transition-all shrink-0",
-                  statusFilter === status
-                    ? "bg-[#151936] text-white shadow-md"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                )}
-              >
-                {status}
-              </button>
-            ))}
+                placeholder="Search leases by tenant, property, or code..."
+                className="w-full bg-slate-50 lg:bg-slate-50 border border-slate-200/60 rounded-xl pl-10 pr-4 py-2.5 body-sm text-slate-900 outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#151936]/10 focus:border-[#151936]/30 transition-all shadow-sm"
+              />
+              {query && (
+                <button
+                  onClick={() => setQuery("")}
+                  className="absolute right-3 text-slate-300 hover:text-slate-600 transition-colors"
+                >
+                  <IconX size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
+              {(["all", "active", "terminated"] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => {
+                    setStatusFilter(status);
+                    setPage(1);
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 body-sm rounded-lg transition-colors capitalize",
+                    statusFilter === status
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  )}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className={cn(
+                "inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 body-sm rounded-xl transition-colors border shadow-sm",
+                filtersOpen
+                  ? "bg-[#151936] text-white border-[#151936]"
+                  : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/60"
+              )}
+            >
+              <IconFilter size={15} />
+              Advanced
+              {activeFilterCount > 0 && (
+                <span className="inline-flex size-4 items-center justify-center rounded-full bg-amber-400 text-[#151936] mono-data">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Advanced Filters Panel */}
+        {filtersOpen && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 mb-6">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="prop-type-filter" className="label-caps text-slate-400">
+                Property type
+              </label>
+              <select
+                id="prop-type-filter"
+                value={typeFilter}
+                onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+                className="bg-white border border-slate-200 rounded-xl px-3 py-2 body-sm outline-none focus:ring-2 focus:ring-[#151936]/10 focus:border-[#151936]/30"
+              >
+                <option value="all">All types</option>
+                {PROPERTY_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            {hasActiveFilters && (
+              <div className="sm:col-span-2 flex justify-end mt-2">
+                <button
+                  type="button"
+                  onClick={() => { setQuery(""); setStatusFilter("all"); setTypeFilter("all"); setPage(1); }}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 body-sm text-slate-500 hover:text-rose-600 transition-colors"
+                >
+                  <IconX size={14} /> Clear All Filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -665,7 +729,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
             />
           </div>
         )}
-      </BoardPanel>
+      </div>
 
       <LeaseDetailDrawer
         lease={drawerLease}

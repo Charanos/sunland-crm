@@ -4,9 +4,26 @@ import { settings } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { DomainValidationError } from "@/lib/authz/errors";
+import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
 import { upsertSettingSchema } from "@/lib/validation/settings";
 import { parseInput } from "@/lib/validation/parse";
+
+/**
+ * Reads a single company-wide (Group entity) setting value for business logic
+ * to branch on — thresholds as data, never hardcoded (master doc §5.1). Falls
+ * back rather than throwing so a not-yet-seeded environment degrades to the
+ * documented default instead of hard-failing the caller's whole operation.
+ */
+export async function getGroupSettingValue<T>(key: string, fallback: T): Promise<T> {
+  const groupEntityId = await resolveEntityId("group");
+  const [row] = await db
+    .select()
+    .from(settings)
+    .where(and(eq(settings.entityId, groupEntityId), eq(settings.key, key)))
+    .limit(1);
+  return row ? (row.value as T) : fallback;
+}
 
 export async function getSettings(ctx: CallerContext, entityId?: string) {
   const targetEntityId = entityId ?? ctx.entityId;

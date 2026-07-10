@@ -20,6 +20,8 @@ export interface ManagementMandate {
   mandateRate: number;
   startDate: string;
   currentPeriod?: MandatePeriod;
+  /** Only set while status is "pending_approval" — who the decision is awaiting. */
+  pendingApproverRole?: "gm" | "ceo" | "department_head" | null;
 }
 
 export interface CollectionHistoryEntry {
@@ -45,13 +47,16 @@ export interface LeaseSummary {
   monthlyRentKes: string;
 }
 
+// Priority/status mirror the DB enums (maintenance_priority /
+// maintenance_status in src/db/schema/properties.ts) — the earlier
+// medium/urgent/cancelled vocabulary never existed server-side.
 export interface MaintenanceRequestSummary {
   id: string;
   title: string;
   reportedAt: string;
   reportedBy?: string;
-  priority: "low" | "medium" | "high" | "urgent";
-  status: "open" | "in_progress" | "resolved" | "cancelled";
+  priority: "low" | "normal" | "high" | "critical";
+  status: "open" | "assigned" | "in_progress" | "resolved" | "closed";
 }
 
 export interface SalesPipelineSummary {

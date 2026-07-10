@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { approvalRequests, transactions, users } from "@/db/schema";
+import { approvalRequests, propertyMandates, transactions, users } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -170,6 +170,19 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
       .returning();
 
     if (!updated) throw new ConflictError("Approval request is already decided");
+
+    // Mandate activation side-effect: a decided property_mandates request
+    // flips the mandate itself, since the mandate has no independent
+    // decision UI of its own — this approval *is* its decision.
+    if (existing.relatedTable === "property_mandates") {
+      await tx
+        .update(propertyMandates)
+        .set({
+          status: input.status === "approved" ? "active" : "draft",
+          updatedAt: new Date(),
+        })
+        .where(and(eq(propertyMandates.id, existing.relatedId), eq(propertyMandates.status, "pending_approval")));
+    }
 
     // Disbursement side-effect on approval — will move onto the real ledger
     // posting recipe (finance ledger doc §5.3) once P1 lands; today's flat

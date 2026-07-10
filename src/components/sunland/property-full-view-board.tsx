@@ -1,13 +1,5 @@
 "use client";
 
-/**
- * INTEGRATION NOTES — read before merging:
- * This version is a tabbed command center: a persistent context rail
- * (owner, quick facts, mandate-at-a-glance) plus Overview / Financials /
- * Tenancy-or-Pipeline / Maintenance / Activity tabs, all reading from
- * *optional* fields so it degrades to empty states rather than breaking
- * against today's API.
- */
 
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import Image from "next/image";
@@ -23,6 +15,7 @@ import {
   IconClipboardList,
   IconEdit,
   IconExternalLink,
+  IconFileCertificate,
   IconFileText,
   IconHistory,
   IconMail,
@@ -46,13 +39,20 @@ import { useToast } from "@/components/ui/toast-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PropertyFormModal } from "./property-form-modal";
 import { ReportIssueModal } from "./report-issue-modal";
+import { MandateFormModal } from "./mandate-form-modal";
 import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
-import { LISTING_TYPE_LABEL, PROPERTY_TYPE_ICON, STATUS_CONFIG, STATUS_ORDER, formatPropertyDate } from "./property-constants";
+import { LISTING_TYPE_LABEL, MANDATE_STATUS_CONFIG, PROPERTY_TYPE_ICON, STATUS_CONFIG, STATUS_ORDER, formatPropertyDate } from "./property-constants";
 import type { PropertyStatus } from "./property-constants";
 import type { ActivityLogEntry, PropertyDetail, PropertyDocumentSummary } from "./property-detail-types";
 
 type TabKey = "overview" | "financials" | "tenancy" | "maintenance" | "activity";
+
+// Hides scrollbars on the mobile tab strip / pipeline stepper while staying scrollable
+// by touch, trackpad, or keyboard — cross-browser via one Tailwind arbitrary variant
+// plus the two non-standard scrollbar properties inline.
+const SCROLL_HIDDEN_CLASS = "[&::-webkit-scrollbar]:hidden";
+const scrollHiddenStyle: React.CSSProperties = { scrollbarWidth: "none", msOverflowStyle: "none" };
 
 export function PropertyFullViewBoard({
   entityId,
@@ -80,6 +80,9 @@ export function PropertyFullViewBoard({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [reportIssueOpen, setReportIssueOpen] = useState(false);
+  const [createMandateOpen, setCreateMandateOpen] = useState(false);
+  const [terminateMandateOpen, setTerminateMandateOpen] = useState(false);
+  const [isTerminatingMandate, setIsTerminatingMandate] = useState(false);
 
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
@@ -190,8 +193,7 @@ export function PropertyFullViewBoard({
   const TypeIcon =
     PROPERTY_TYPE_ICON[property.propertyType as keyof typeof PROPERTY_TYPE_ICON] ?? IconBuildingSkyscraper;
   const isForSale = property.listingType === "sale";
-  
-  // Safe extraction of media URLs
+
   const mediaList = property.media || [];
   const primaryImage = mediaList[activeMediaIndex]?.url ?? mediaList[0]?.url;
 
@@ -255,6 +257,29 @@ export function PropertyFullViewBoard({
     }
   };
 
+  const handleTerminateMandate = async () => {
+    if (!property.mandate) return;
+    setIsTerminatingMandate(true);
+    try {
+      const res = await fetch(`/api/mandates/${property.mandate.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "terminate" }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to terminate mandate");
+      }
+      pushToast({ tone: "success", title: "Mandate terminated" });
+      setTerminateMandateOpen(false);
+      setRefreshCount((c) => c + 1);
+    } catch (e: unknown) {
+      pushToast({ tone: "warning", title: "Error", body: e instanceof Error ? e.message : "Failed to terminate mandate" });
+    } finally {
+      setIsTerminatingMandate(false);
+    }
+  };
+
   return (
     <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
       {/* ── Breadcrumb + title + actions ── */}
@@ -271,11 +296,11 @@ export function PropertyFullViewBoard({
             Properties
           </Link>
           <span className="text-slate-300">/</span>
-          <span className="text-meta-muted-strong">{property.name}</span>
+          <span className="text-meta-muted-strong truncate max-w-[40vw]">{property.name}</span>
         </div>
 
         <div className="flex items-start justify-between flex-wrap gap-4">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               {canManage ? (
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 label-caps ${statusConfig.pill}`}>
@@ -312,32 +337,35 @@ export function PropertyFullViewBoard({
                 </span>
               )}
             </div>
-            <h1 className="title-serif text-slate-900">{property.name}</h1>
-            <div className="flex items-center gap-1.5 text-desc-secondary">
+            <h1 className="title-serif text-slate-900 truncate">{property.name}</h1>
+            <div className="flex items-center gap-1.5 text-desc-secondary min-w-0">
               <IconMapPin size={15} className="shrink-0" aria-hidden="true" />
-              <span>{property.location}</span>
-              <span className="text-slate-300">·</span>
-              <span className="mono-data">{property.propertyCode}</span>
+              <span className="truncate">{property.location}</span>
+              <span className="text-slate-300 shrink-0">·</span>
+              <span className="mono-data shrink-0">{property.propertyCode}</span>
             </div>
           </div>
 
           {canManage && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="secondary"
                 onClick={handleToggleFeature}
+                aria-label={property.isFeatured ? "Unfeature property" : "Feature property"}
                 className={cn(property.isFeatured && "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100")}
               >
-                {property.isFeatured ? <IconStarFilled size={16} className="mr-1.5" /> : <IconStar size={16} className="mr-1.5" />}
-                {property.isFeatured ? "Featured" : "Feature"}
+                {property.isFeatured ? <IconStarFilled size={16} className="sm:mr-1.5" /> : <IconStar size={16} className="sm:mr-1.5" />}
+                <span className="hidden sm:inline">{property.isFeatured ? "Featured" : "Feature"}</span>
               </Button>
               {canLogMaintenance && (
-                <Button variant="secondary" onClick={() => setReportIssueOpen(true)}>
-                  <IconPlus size={16} className="mr-1.5" /> Report Issue
+                <Button variant="secondary" onClick={() => setReportIssueOpen(true)} aria-label="Report an issue">
+                  <IconPlus size={16} className="sm:mr-1.5" />
+                  <span className="hidden sm:inline">Report Issue</span>
                 </Button>
               )}
-              <Button variant="secondary" onClick={() => setEditModalOpen(true)}>
-                <IconEdit size={16} className="mr-1.5" /> Edit
+              <Button variant="secondary" onClick={() => setEditModalOpen(true)} aria-label="Edit property">
+                <IconEdit size={16} className="sm:mr-1.5" />
+                <span className="hidden sm:inline">Edit</span>
               </Button>
               <button
                 type="button"
@@ -352,16 +380,16 @@ export function PropertyFullViewBoard({
         </div>
       </div>
 
-      {/* ── Gallery ── */}
+      {/* ── Gallery (only when there's actually media — no fake hero for empty listings) ── */}
       {mediaList.length > 0 && (
         <div className="flex flex-col gap-2">
-          <div className="relative aspect-[21/9] md:aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 bg-[#122a20]">
+          <div className="relative aspect-[21/9] md:aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 bg-tertiary-emerald">
             {primaryImage && (
               <Image src={primaryImage} alt={mediaList[activeMediaIndex]?.alt ?? property.name} fill sizes="100vw" className="object-cover" />
             )}
           </div>
           {mediaList.length > 1 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <div className={cn("flex items-center gap-2 overflow-x-auto pb-1", SCROLL_HIDDEN_CLASS)} style={scrollHiddenStyle}>
               {mediaList.map((m, i) => (
                 <button
                   key={m.url + i}
@@ -383,7 +411,7 @@ export function PropertyFullViewBoard({
       )}
 
       {/* ── Adaptive metrics row ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricTile icon={IconBed} label="Bedrooms" value={property.bedrooms ?? "—"} />
         <MetricTile icon={IconBath} label="Bathrooms" value={property.bathrooms ?? "—"} />
         <MetricTile icon={IconRuler} label="Size (Sqft)" value={property.sizeSqft ? property.sizeSqft.toLocaleString() : "—"} />
@@ -392,8 +420,13 @@ export function PropertyFullViewBoard({
 
       {/* ── Main: tabbed content + persistent context rail ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <div role="tablist" aria-label="Property sections" className="inline-flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1 self-start">
+        <div className="lg:col-span-2 flex flex-col gap-4 min-w-0">
+          <div
+            role="tablist"
+            aria-label="Property sections"
+            className={cn("flex bg-slate-100 p-1 rounded-xl gap-1 overflow-x-auto flex-nowrap", SCROLL_HIDDEN_CLASS)}
+            style={scrollHiddenStyle}
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -410,7 +443,7 @@ export function PropertyFullViewBoard({
                   setActiveTab(tabs[next].key);
                 }}
                 className={cn(
-                  "body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
+                  "body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap",
                   activeTab === tab.key ? "bg-[#151936] text-white shadow-sm" : "text-slate-500 hover:text-slate-900 hover:bg-white/45"
                 )}
               >
@@ -467,15 +500,32 @@ export function PropertyFullViewBoard({
             <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-title-primary">Management Mandate</h3>
-                <MandateStatusPill status={property.mandate.status} />
+                <MandateStatusPill status={property.mandate.status} pendingApproverRole={property.mandate.pendingApproverRole} />
               </div>
               <p className="text-desc-secondary mb-3">
                 {(property.mandate.mandateRate * 100).toFixed(0)}% management fee · started{" "}
                 {formatPropertyDate(property.mandate.startDate)}
               </p>
-              <button type="button" onClick={() => setActiveTab("financials")} className="inline-flex items-center gap-1 text-body-regular text-[#122a20] hover:underline">
-                View financials <IconExternalLink size={13} aria-hidden="true" />
-              </button>
+              <div className="flex items-center gap-4">
+                <button type="button" onClick={() => setActiveTab("financials")} className="inline-flex items-center gap-1 text-body-regular text-[#122a20] hover:underline">
+                  View financials <IconExternalLink size={13} aria-hidden="true" />
+                </button>
+                {canManage && property.mandate.status === "active" && (
+                  <button type="button" onClick={() => setTerminateMandateOpen(true)} className="text-body-regular text-rose-600 hover:underline">
+                    Terminate
+                  </button>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {canViewFinance && !property.mandate && canManage && property.owner && (
+            <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h3 className="text-title-primary mb-2">Management Mandate</h3>
+              <p className="text-desc-secondary mb-4">This property isn&apos;t under a Sunland management mandate yet.</p>
+              <Button variant="secondary" onClick={() => setCreateMandateOpen(true)} className="w-full justify-center">
+                <IconFileCertificate size={16} className="mr-1.5" /> Create Mandate
+              </Button>
             </Card>
           )}
 
@@ -510,6 +560,34 @@ export function PropertyFullViewBoard({
         propertyName={property.name}
         onClose={() => setReportIssueOpen(false)}
         onCreated={() => setRefreshCount((c) => c + 1)}
+      />
+
+      {property.owner && (
+        <MandateFormModal
+          open={createMandateOpen}
+          entityId={entityId}
+          propertyId={property.id}
+          propertyName={property.name}
+          landlordName={property.owner.name}
+          defaultUnitCount={
+            property.unitBreakdown && property.unitBreakdown.length > 0
+              ? property.unitBreakdown.reduce((sum, u) => sum + u.count, 0)
+              : 1
+          }
+          onClose={() => setCreateMandateOpen(false)}
+          onCreated={() => setRefreshCount((c) => c + 1)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={terminateMandateOpen}
+        onClose={() => setTerminateMandateOpen(false)}
+        onConfirm={handleTerminateMandate}
+        title="Terminate Mandate"
+        description="Are you sure you want to terminate this management mandate? This action cannot be undone."
+        confirmLabel="Terminate Mandate"
+        tone="danger"
+        isLoading={isTerminatingMandate}
       />
     </div>
   );
@@ -583,15 +661,21 @@ function FactRow({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-function MandateStatusPill({ status }: { status: "draft" | "pending_approval" | "active" | "terminated" }) {
-  const config: Record<typeof status, { label: string; className: string }> = {
-    draft: { label: "Draft", className: "bg-slate-100 text-slate-600 border-slate-200" },
-    pending_approval: { label: "Pending GM", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
-    active: { label: "Active", className: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60" },
-    terminated: { label: "Terminated", className: "bg-rose-500/15 text-rose-700 border-rose-300/60" },
-  };
-  const c = config[status];
-  return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.className}`}>{c.label}</span>;
+function MandateStatusPill({
+  status,
+  pendingApproverRole,
+}: {
+  status: "draft" | "pending_approval" | "active" | "terminated";
+  pendingApproverRole?: "gm" | "ceo" | "department_head" | null;
+}) {
+  const c = MANDATE_STATUS_CONFIG[status];
+  // The rail card has the extra approver-role data the compact board badge
+  // doesn't, so it earns the more precise "Pending GM"/"Pending CEO" label.
+  const label =
+    status === "pending_approval" && pendingApproverRole
+      ? `Pending ${pendingApproverRole.toUpperCase()}`
+      : c.label;
+  return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.pill}`}>{label}</span>;
 }
 
 function EmptyPanel({
@@ -720,8 +804,8 @@ function FinancialsPanel({ property }: { property: PropertyDetail }) {
         <EmptyPanel icon={IconTrendingUp} title="No collection history yet" description="Once rent starts being recorded against this mandate, expected-vs-collected trends will show up here." />
       )}
 
-      <Link href={`/admin/finance/mandates/${property.mandate.id}`} className="inline-flex items-center gap-1.5 text-body-regular text-[#122a20] hover:underline self-start">
-        View full mandate in Finance <IconExternalLink size={14} aria-hidden="true" />
+      <Link href="/fin/mandates" className="inline-flex items-center gap-1.5 text-body-regular text-[#122a20] hover:underline self-start">
+        View mandates in Finance <IconExternalLink size={14} aria-hidden="true" />
       </Link>
     </div>
   );
@@ -835,10 +919,10 @@ function PipelinePanel({ property }: { property: PropertyDetail }) {
   const currentIndex = PIPELINE_STAGES.findIndex((s) => s.key === pipeline.stage);
   return (
     <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-6">
-      <div className="flex items-center">
+      <div className={cn("flex items-center min-w-[420px] overflow-x-auto", SCROLL_HIDDEN_CLASS)} style={scrollHiddenStyle}>
         {PIPELINE_STAGES.map((stage, i) => (
           <div key={stage.key} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-2 shrink-0">
               <div
                 className={cn(
                   "size-8 rounded-full border-2 flex items-center justify-center mono-data",
@@ -847,10 +931,10 @@ function PipelinePanel({ property }: { property: PropertyDetail }) {
               >
                 {i + 1}
               </div>
-              <span className={cn("label-caps", i <= currentIndex ? "text-slate-700" : "text-slate-400")}>{stage.label}</span>
+              <span className={cn("label-caps whitespace-nowrap", i <= currentIndex ? "text-slate-700" : "text-slate-400")}>{stage.label}</span>
             </div>
             {i < PIPELINE_STAGES.length - 1 && (
-              <div className={cn("h-0.5 flex-1 mx-2 rounded-full", i < currentIndex ? "bg-[#151936]" : "bg-slate-200")} />
+              <div className={cn("h-0.5 flex-1 mx-2 rounded-full min-w-8", i < currentIndex ? "bg-[#151936]" : "bg-slate-200")} />
             )}
           </div>
         ))}
@@ -925,12 +1009,15 @@ function PriorityPill({ priority }: { priority: string }) {
   return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${style}`}>{normalized}</span>;
 }
 
-function MaintenanceStatusPill({ status }: { status: "open" | "in_progress" | "resolved" | "cancelled" }) {
+function MaintenanceStatusPill({ status }: { status: "open" | "assigned" | "in_progress" | "resolved" | "closed" }) {
   const config: Record<typeof status, { label: string; className: string }> = {
     open: { label: "Open", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
-    in_progress: { label: "In progress", className: "bg-slate-100 text-slate-650 border-slate-200" },
+    // Reuses the brand navy token at low opacity rather than introducing a new hue
+    // (the previous draft used `sky`, which isn't in the Terrain Identity palette).
+    assigned: { label: "Assigned", className: "bg-[#151936]/10 text-[#151936] border-[#151936]/20" },
+    in_progress: { label: "In progress", className: "bg-slate-100 text-slate-600 border-slate-200" },
     resolved: { label: "Resolved", className: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60" },
-    cancelled: { label: "Cancelled", className: "bg-slate-50 text-slate-400 border-slate-200" },
+    closed: { label: "Closed", className: "bg-slate-50 text-slate-400 border-slate-200" },
   };
   const c = config[status];
   return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.className}`}>{c.label}</span>;

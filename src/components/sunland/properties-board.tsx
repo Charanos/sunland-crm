@@ -48,6 +48,7 @@ import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import {
   LISTING_TYPE_LABEL,
+  MANDATE_STATUS_CONFIG,
   PROPERTY_TYPES,
   PROPERTY_TYPE_ICON,
   STATUS_CONFIG,
@@ -466,7 +467,7 @@ export function PropertiesBoard({
               {portfolioMix.slice(0, 3).map(({ status, count, config }) => (
                 <div key={status} className="flex items-center gap-1">
                   <span className={cn("size-1.5 rounded-full inline-block", config.dot)} />
-                  <span className="text-xs  font-medium uppercase tracking-wider text-slate-500">{config.label}: {count}</span>
+                  <span className="text-xs uppercase text-slate-400">{config.label}: {count}</span>
                 </div>
               ))}
             </div>
@@ -484,7 +485,7 @@ export function PropertiesBoard({
               <span className="font-mono font-normal mt-1 text-4xl text-white">
                 {formatCompactKES(kpis.rentPool)}
               </span>
-              <p className="text-xs  font-medium uppercase tracking-widest text-slate-500 mt-2">Contracted — occupied only</p>
+              <p className="text-xs uppercase text-slate-400 mt-2">Contracted — occupied only</p>
             </div>
           </div>
         </div>
@@ -947,6 +948,15 @@ export function PropertiesBoard({
                           {sc.label}
                         </span>
                       </div>
+                      {p.mandateStatus && (
+                        <div>
+                          <p className="label-caps text-slate-400 mb-0.5">Mandate</p>
+                          <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs uppercase tracking-wider font-medium", MANDATE_STATUS_CONFIG[p.mandateStatus].pill)}>
+                            <span className={cn("size-1 rounded-full", MANDATE_STATUS_CONFIG[p.mandateStatus].dot)} />
+                            {MANDATE_STATUS_CONFIG[p.mandateStatus].label}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {canManage && (
@@ -1119,15 +1129,28 @@ export function PropertiesBoard({
 
                         {/* Status badge */}
                         <td className="px-4 py-4 text-center">
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 label-caps",
-                              sc.pill
+                          <div className="flex flex-col items-center gap-1">
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 label-caps",
+                                sc.pill
+                              )}
+                            >
+                              <span className={cn("size-1.5 rounded-full", sc.dot)} aria-hidden="true" />
+                              {sc.label}
+                            </span>
+                            {p.mandateStatus && (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 label-caps text-[10px]",
+                                  MANDATE_STATUS_CONFIG[p.mandateStatus].pill
+                                )}
+                              >
+                                <span className={cn("size-1 rounded-full", MANDATE_STATUS_CONFIG[p.mandateStatus].dot)} aria-hidden="true" />
+                                {MANDATE_STATUS_CONFIG[p.mandateStatus].label}
+                              </span>
                             )}
-                          >
-                            <span className={cn("size-1.5 rounded-full", sc.dot)} aria-hidden="true" />
-                            {sc.label}
-                          </span>
+                          </div>
                         </td>
 
                         {/* Actions dropdown — rendered outside overflow so it isn't clipped */}

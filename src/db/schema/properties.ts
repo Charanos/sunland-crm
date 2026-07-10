@@ -54,6 +54,9 @@ export const properties = pgTable(
     bedrooms: integer("bedrooms"),
     bathrooms: integer("bathrooms"),
     sizeSqft: integer("size_sqft"),
+    // Marketing/context blurb rendered on the property full view — the board
+    // was already designed to show it; the column just didn't exist yet.
+    description: text("description"),
     media: jsonb("media").$type<Array<{ url: string; alt?: string; isPrimary?: boolean }>>().default([]),
     // For multi-unit properties (apartment blocks, hostels): the mix of unit
     // types making up the property — e.g. 10 bedsitters + 6 one-bedrooms.

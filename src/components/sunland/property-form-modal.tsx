@@ -35,6 +35,7 @@ export interface PropertyFormData {
   bedrooms: number | null;
   bathrooms: number | null;
   sizeSqft: number | null;
+  description: string;
   media: MediaEntry[];
   unitBreakdown: UnitBreakdownEntry[];
 }
@@ -119,6 +120,7 @@ export function PropertyFormModal({
     bedrooms: (initialData?.bedrooms as number | undefined) ?? null,
     bathrooms: (initialData?.bathrooms as number | undefined) ?? null,
     sizeSqft: (initialData?.sizeSqft as number | undefined) ?? null,
+    description: (initialData?.description as string | undefined) ?? "",
     media: (initialData?.media as MediaEntry[] | undefined) ?? [],
     unitBreakdown: (initialData?.unitBreakdown as UnitBreakdownEntry[] | undefined) ?? [],
   });
@@ -291,6 +293,7 @@ export function PropertyFormModal({
         bedrooms: isMultiUnit ? null : form.bedrooms,
         bathrooms: isMultiUnit ? null : form.bathrooms,
         sizeSqft: form.sizeSqft,
+        description: form.description.trim() || null,
         media: form.media,
         // Empty per-unit rent is coerced to undefined rather than sent as a
         // literal "" — consistent with how the top-level rent/price fields
@@ -410,6 +413,16 @@ export function PropertyFormModal({
                 ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="label-caps text-slate-500 mb-1.5 block">Description</label>
+            <textarea
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary resize-none h-20 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+              placeholder="Short marketing/context blurb shown on the property's full view…"
+              value={form.description}
+              onChange={(e) => updateField("description", e.target.value)}
+            />
           </div>
         </div>
 
