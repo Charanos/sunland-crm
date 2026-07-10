@@ -493,43 +493,17 @@ export function PropertiesBoard({
       {/* ── Market Highlights Tier ── */}
       <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Featured Properties Carousel */}
-        <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col overflow-hidden">
-
-          {/* Card header */}
-          <div className="flex items-center justify-between px-6 pt-6 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="bg-[#f3df27] px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 text-[#151936] text-xs font-medium shadow-sm">
-                <IconStarFilled size={12} /> Featured Listings
-              </span>
-              {featuredProperties.length > 0 && (
-                <span className="label-caps text-slate-400">
-                  {featuredProperties[safeFeaturedIndex].propertyCode}
-                </span>
-              )}
-            </div>
-            {featuredProperties.length > 1 && (
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setFeaturedIndex((i) => (i === 0 ? featuredProperties.length - 1 : i - 1))}
-                  className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                >
-                  <IconChevronLeft size={14} />
-                </button>
-                <span className="label-caps text-slate-400 tabular-nums">{safeFeaturedIndex + 1}&thinsp;/&thinsp;{featuredProperties.length}</span>
-                <button
-                  onClick={() => setFeaturedIndex((i) => (i === featuredProperties.length - 1 ? 0 : i + 1))}
-                  className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                >
-                  <IconChevronRight size={14} />
-                </button>
-              </div>
-            )}
-          </div>
+        <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col overflow-hidden relative">
 
           {featuredProperties.length > 0 ? (
             <div className="flex gap-0 flex-1 min-h-0" key={safeFeaturedIndex}>
               {/* Image panel */}
               <div className="relative w-2/5 shrink-0 overflow-hidden">
+                <div className="absolute top-6 left-6 z-20">
+                  <span className="bg-[#f3df27] px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 text-[#151936] text-xs font-medium shadow-sm">
+                    <IconStarFilled size={12} /> Featured Listings
+                  </span>
+                </div>
                 {primaryImageUrl(featuredProperties[safeFeaturedIndex]) ? (
                   <Image
                     src={primaryImageUrl(featuredProperties[safeFeaturedIndex])!}
@@ -558,7 +532,29 @@ export function PropertiesBoard({
               </div>
 
               {/* Info panel */}
-              <div className="flex-1 flex flex-col px-6 pb-6 pt-2 min-w-0">
+              <div className="flex-1 flex flex-col px-6 pb-6 pt-5 min-w-0">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="label-caps text-slate-400">
+                    {featuredProperties[safeFeaturedIndex].propertyCode}
+                  </span>
+                  {featuredProperties.length > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setFeaturedIndex((i) => (i === 0 ? featuredProperties.length - 1 : i - 1))}
+                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                      >
+                        <IconChevronLeft size={14} />
+                      </button>
+                      <span className="label-caps text-slate-400 tabular-nums">{safeFeaturedIndex + 1}&thinsp;/&thinsp;{featuredProperties.length}</span>
+                      <button
+                        onClick={() => setFeaturedIndex((i) => (i === featuredProperties.length - 1 ? 0 : i + 1))}
+                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                      >
+                        <IconChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
                 {/* Listing type + name */}
                 <div className="mb-4">
                   <Badge

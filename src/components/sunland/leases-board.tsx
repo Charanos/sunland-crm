@@ -61,7 +61,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "terminated">("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [drawerLease, setDrawerLease] = useState<Lease | null>(null);
-  
+
   // Carousel state
   const [featuredIndex, setFeaturedIndex] = useState(0);
 
@@ -251,10 +251,10 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       </div>
 
       {/* ── Majestic Dark KPI Tier ── */}
-      <div className="gsap-stagger bg-[#151936] text-white rounded-[24px] shadow-2xl relative overflow-hidden group mb-8 border border-[#151936]">
+      <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[24px] shadow-2xl relative overflow-hidden group mb-8 border border-[#151936]">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-transparent pointer-events-none" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
-          
+
           {/* Total Records */}
           <div className="p-8 flex flex-col justify-between">
             <div className="flex items-center gap-3 mb-6">
@@ -265,7 +265,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
             </div>
             <div className="flex items-end justify-between">
               <span className="font-mono text-4xl font-light text-white">{kpis.total}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1">ALL TIME</span>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500 mb-1">ALL TIME</span>
             </div>
           </div>
 
@@ -279,7 +279,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
             </div>
             <div className="flex items-end justify-between">
               <span className="font-mono text-4xl font-light text-white">{kpis.active}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400 mb-1">{kpis.rate.toFixed(1)}% SHARE</span>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-emerald-400 mb-1">{kpis.rate.toFixed(1)}% SHARE</span>
             </div>
           </div>
 
@@ -423,7 +423,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
 
       {/* ── Data Tier: Leases Table ── */}
       <BoardPanel className="gsap-stagger space-y-4 bg-transparent lg:bg-white border-transparent lg:border-slate-100 p-0 lg:p-6 shadow-none lg:shadow-sm">
-        
+
         {/* Majestic Search & Filter */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-slate-50/50 p-2 rounded-2xl border border-slate-100">
           <div className="flex-1 flex h-12 items-center gap-3 rounded-xl bg-white px-4 shadow-sm border border-slate-200/60 focus-within:ring-2 focus-within:ring-[#151936]/10 focus-within:border-[#151936]/30 transition-all">
@@ -456,7 +456,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                   setPage(1);
                 }}
                 className={cn(
-                  "px-5 py-2 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all shrink-0",
+                  "px-5 py-2 text-xs font-medium uppercase tracking-wider rounded-lg transition-all shrink-0",
                   statusFilter === status
                     ? "bg-[#151936] text-white shadow-md"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"

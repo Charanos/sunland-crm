@@ -234,28 +234,28 @@ export function LeaseFullViewBoard({
       </div>
 
       {/* ── Majestic Header ── */}
-      <div className="bg-[#151936] text-white rounded-[24px] shadow-2xl relative overflow-hidden group border border-[#151936] p-8 lg:p-10 mb-2">
+      <div className="bg-tertiary-gradient   text-white rounded-[24px] shadow-2xl relative overflow-hidden group border border-[#151936] p-8 lg:p-10 mb-2">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
         <div className="absolute right-0 bottom-0 size-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/20 transition-colors duration-700" />
-        
+
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-3 flex-wrap">
               <span className={cn(
-                "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-wider",
+                "inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs  uppercase tracking-wider",
                 lease.isActive ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" : "border-slate-500/30 bg-slate-500/10 text-slate-400"
               )}>
                 <span className={cn("size-2 rounded-full shadow-sm", lease.isActive ? "bg-emerald-400 shadow-emerald-400/50" : "bg-slate-400")} aria-hidden="true" />
                 {lease.isActive ? "Active Tenancy" : "Terminated"}
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-300 backdrop-blur-sm">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-wider text-slate-300 backdrop-blur-sm">
                 <PropIcon size={14} aria-hidden="true" />
                 {lease.propertyType}
               </span>
             </div>
-            
+
             <h1 className="text-4xl lg:text-5xl font-serif tracking-tight text-white drop-shadow-sm">{lease.propertyName}</h1>
-            
+
             <div className="flex items-center gap-3 text-slate-400 mt-1">
               <span className="flex items-center gap-1.5 font-medium"><IconMapPin size={16} /> {lease.propertyLocation || "Sunland Managed Location"}</span>
               <span className="text-slate-600">|</span>
@@ -268,9 +268,9 @@ export function LeaseFullViewBoard({
               <button
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-300 transition-all font-medium shadow-sm backdrop-blur-sm"
+                className="inline-flex items-center gap-2 px-6 py-1.5 text-sm rounded-xl bg-white/5 border border-white/10 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-300 transition-all font-medium shadow-sm backdrop-blur-sm"
               >
-                <IconTrash size={18} /> Terminate Lease
+                <IconTrash size={14} /> Terminate Lease
               </button>
             </div>
           )}
@@ -372,7 +372,7 @@ export function LeaseFullViewBoard({
                         <div className="size-[20px] rounded-full border-[3px] border-slate-200 bg-white shrink-0 mt-0.5 z-10 shadow-sm" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-slate-800 leading-snug">{entry.summary}</p>
-                          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1.5 flex items-center gap-1.5">
+                          <p className="text-xs  uppercase tracking-wider text-slate-400 mt-1.5 flex items-center gap-1.5">
                             <IconClock size={14} stroke={2} />
                             {relativeTime(entry.createdAt)}
                           </p>
@@ -415,7 +415,7 @@ export function LeaseFullViewBoard({
               </div>
             </div>
             <div className="mt-8 pt-6 border-t border-slate-100">
-              <Link href={`/admin/contacts/${lease.tenantContactId}`} className="text-sm font-semibold text-[#151936] flex items-center justify-center gap-2 hover:text-[#151936] bg-slate-50 border border-slate-100 rounded-xl py-3 transition-colors hover:bg-slate-100">
+              <Link href={`/admin/contacts/${lease.tenantContactId}`} className="text-sm  text-[#151936] flex items-center justify-center gap-2 hover:text-[#151936] bg-slate-50 border border-slate-100 rounded-xl py-3 transition-colors hover:bg-slate-100">
                 <IconUser size={16} /> View Full Profile
               </Link>
             </div>
@@ -450,11 +450,11 @@ export function LeaseFullViewBoard({
                 <PropIcon size={24} className="text-slate-500" stroke={1.5} />
               </div>
               <div className="min-w-0">
-                <p className="text-base font-semibold text-slate-900 truncate">{lease.propertyName}</p>
+                <p className="text-base  text-slate-900 truncate">{lease.propertyName}</p>
                 <p className="text-xs font-mono text-slate-500 mt-1.5 bg-slate-100 px-2 py-0.5 rounded inline-block">UNIT {lease.propertyCode}</p>
               </div>
             </div>
-            <Link href={`/admin/properties/${lease.propertyId}`} className="text-sm font-semibold text-[#151936] flex items-center justify-center gap-2 hover:text-[#151936] bg-slate-50 border border-slate-100 rounded-xl py-3 transition-colors hover:bg-slate-100 mt-2">
+            <Link href={`/admin/properties/${lease.propertyId}`} className="text-sm  text-[#151936] flex items-center justify-center gap-2 hover:text-[#151936] bg-slate-50 border border-slate-100 rounded-xl py-3 transition-colors hover:bg-slate-100 mt-2">
               <IconBuildingCommunity size={16} /> Go to Property Profile
             </Link>
           </Card>
