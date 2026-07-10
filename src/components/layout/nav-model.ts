@@ -155,17 +155,6 @@ export const navSections: NavSection[] = [
     ],
   },
 
-  // ── Executive: Sales & CRM ─────────────────────────────────────────────────
-  {
-    id: "exec-sales",
-    label: "Sales & CRM",
-    icon: IconBriefcase,
-    items: [
-      { href: "/admin/contacts", label: "Contacts", icon: IconUsersGroup },
-      { href: "/admin/pipeline", label: "Pipeline", icon: IconChartBar },
-    ],
-  },
-
   // ── Executive: Property Portfolio ─────────────────────────────────────────
   // Properties, Leases, Maintenance, and Valuations are one ecosystem — the
   // same portfolio viewed as inventory, tenancy, upkeep, and advisory value.
@@ -182,6 +171,19 @@ export const navSections: NavSection[] = [
       { href: "/admin/valuations", label: "Valuations", icon: IconFileAnalytics },
     ],
   },
+
+  // ── Executive: Sales & CRM ─────────────────────────────────────────────────
+  {
+    id: "exec-sales",
+    label: "Sales & CRM",
+    icon: IconBriefcase,
+    items: [
+      { href: "/admin/contacts", label: "Contacts", icon: IconUsersGroup },
+      { href: "/admin/pipeline", label: "Pipeline", icon: IconChartBar },
+    ],
+  },
+
+
 
   // ── Executive: Scheduling ──────────────────────────────────────────────────
   {
