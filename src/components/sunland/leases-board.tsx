@@ -10,8 +10,12 @@ import {
   IconShield,
   IconBuildingCommunity,
   IconX,
-  IconArrowUpRight,
-  IconFileText,
+  IconStarFilled,
+  IconChevronLeft,
+  IconChevronRight,
+  IconEye,
+  IconTrendingUp,
+  IconClock,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import {
@@ -22,13 +26,13 @@ import {
   PaginationControls,
 } from "@/components/ui/erp-primitives";
 import { LeaseFormModal } from "./lease-form-modal";
+import { LeaseDetailDrawer } from "./lease-detail-drawer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTransition } from "@/components/shared/page-transition";
 import { formatCompactKES } from "@/lib/utils/format";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PROPERTY_TYPE_ICON } from "./property-constants";
 
 interface Lease {
@@ -56,10 +60,10 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "terminated">("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Termination confirmation state
-  const [terminateConfirmId, setTerminateConfirmId] = useState<string | null>(null);
-  const [isTerminating, setIsTerminating] = useState(false);
+  const [drawerLease, setDrawerLease] = useState<Lease | null>(null);
+  
+  // Carousel state
+  const [featuredIndex, setFeaturedIndex] = useState(0);
 
   const rowsPerPage = 8;
 
@@ -88,12 +92,10 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     return () => clearTimeout(timer);
   }, [entityId, loadLeases]);
 
-  // Handle lease termination
-  const handleTerminate = async () => {
-    if (!terminateConfirmId) return;
-    setIsTerminating(true);
+  // Handle lease termination (from drawer)
+  const handleTerminate = async (id: string) => {
     try {
-      const res = await fetch(`/api/leases/${terminateConfirmId}`, {
+      const res = await fetch(`/api/leases/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entityId }),
@@ -106,7 +108,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         title: "Lease Terminated",
         body: "Lease has been set to inactive, and property status updated back to available.",
       });
-      setTerminateConfirmId(null);
+      setDrawerLease(null);
       loadLeases();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Termination failed.";
@@ -115,8 +117,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         title: "Action Failed",
         body: msg,
       });
-    } finally {
-      setIsTerminating(false);
     }
   };
 
@@ -146,17 +146,32 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   }, [leases, query, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-  const visible = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const safePage = Math.min(page, totalPages);
+  const visible = filtered.slice((safePage - 1) * rowsPerPage, safePage * rowsPerPage);
 
   const kpis = useMemo(() => {
     const active = leases.filter((l) => l.isActive).length;
-    const terminated = leases.filter((l) => !l.isActive).length;
+    const total = leases.length;
+    const rate = total > 0 ? (active / total) * 100 : 0;
     const deposits = leases
       .filter((l) => l.isActive && l.depositKes)
       .reduce((sum, l) => sum + parseFloat(l.depositKes!), 0);
+    const rentPool = leases
+      .filter((l) => l.isActive && l.monthlyRentKes)
+      .reduce((sum, l) => sum + parseFloat(l.monthlyRentKes), 0);
 
-    return { active, terminated, deposits };
+    return { total, active, rate, deposits, rentPool };
   }, [leases]);
+
+  const latestLeases = useMemo(() => {
+    // Top 5 most recent active leases for the carousel
+    return [...leases]
+      .filter(l => l.isActive)
+      .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())
+      .slice(0, 5);
+  }, [leases]);
+
+  const safeFeaturedIndex = latestLeases.length === 0 ? 0 : Math.min(featuredIndex, latestLeases.length - 1);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toISOString().split("T")[0];
@@ -172,17 +187,17 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   };
 
   return (
-    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-5">
+    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-4">
       <BoardHeader
         eyebrow={<Badge tone="data">Lease Agreements</Badge>}
         title="Tenancies & Leases"
         description="Onboard new tenants, authorize active occupancy contracts, verify deposits held, and download executed leases."
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={loadLeases} className="h-9">
-              <IconRefresh size={14} /> Refresh
+            <Button variant="secondary" size="sm" onClick={loadLeases} disabled={loading}>
+              <IconRefresh size={14} className={loading ? "animate-spin" : undefined} /> Refresh
             </Button>
-            <Button size="sm" onClick={() => setIsModalOpen(true)} className="h-9">
+            <Button size="sm" onClick={() => setIsModalOpen(true)}>
               <IconPlus size={14} /> Register Lease
             </Button>
           </div>
@@ -229,57 +244,189 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         </div>
       </div>
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Active Tenancies */}
-        <div className="bg-white border border-slate-100 p-5 rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.06)] transition-all duration-300 flex items-center justify-between group">
-          <div className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Active Tenancies</span>
-            <div className="flex items-baseline gap-2">
-              <span className="mono-stat text-3xl text-slate-900">{kpis.active}</span>
-              <span className="text-xs text-emerald-500 font-medium">Currently live</span>
-            </div>
-          </div>
-          <div className="size-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shadow-sm group-hover:scale-105 transition-transform duration-300">
-            <IconCheck size={22} />
-          </div>
-        </div>
+      <div className="flex items-center gap-4 my-6">
+        <hr className="flex-1 border-slate-200/60" />
+        <span className="label-caps text-slate-400 tracking-wider">Analytics & Command</span>
+        <hr className="flex-1 border-slate-200/60" />
+      </div>
 
-        {/* Deposits Held */}
-        <div className="bg-white border border-slate-100 p-5 rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.06)] transition-all duration-300 flex items-center justify-between group">
-          <div className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Deposits Held</span>
-            <div className="flex items-baseline gap-2">
-              <span className="mono-stat text-2xl text-slate-900">{formatCompactKES(kpis.deposits)}</span>
-              <span className="text-xs text-indigo-500 font-medium">Escrowed</span>
+      {/* ── Majestic Dark KPI Tier ── */}
+      <div className="gsap-stagger bg-[#151936] text-white rounded-[24px] shadow-2xl relative overflow-hidden group mb-8 border border-[#151936]">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-transparent pointer-events-none" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
+          
+          {/* Total Records */}
+          <div className="p-8 flex flex-col justify-between">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="size-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-300">
+                <IconCalendar size={14} />
+              </div>
+              <span className="text-xs font-medium text-slate-400 tracking-wider">Total Leases</span>
+            </div>
+            <div className="flex items-end justify-between">
+              <span className="font-mono text-4xl font-light text-white">{kpis.total}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1">ALL TIME</span>
             </div>
           </div>
-          <div className="size-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shadow-sm group-hover:scale-105 transition-transform duration-300">
-            <IconShield size={22} />
-          </div>
-        </div>
 
-        {/* Total Registered */}
-        <div className="bg-white border border-slate-100 p-5 rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.06)] transition-all duration-300 flex items-center justify-between group">
-          <div className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Total Leases</span>
-            <div className="flex items-baseline gap-2">
-              <span className="mono-stat text-3xl text-slate-900">{leases.length}</span>
-              <span className="text-xs text-slate-400 font-medium">All historical</span>
+          {/* Active Tenancies */}
+          <div className="p-8 flex flex-col justify-between bg-white/[0.02]">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="size-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+                <IconCheck size={14} />
+              </div>
+              <span className="text-xs font-medium text-slate-400 tracking-wider">Active Tenancies</span>
+            </div>
+            <div className="flex items-end justify-between">
+              <span className="font-mono text-4xl font-light text-white">{kpis.active}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400 mb-1">{kpis.rate.toFixed(1)}% SHARE</span>
             </div>
           </div>
-          <div className="size-12 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-200 shadow-sm group-hover:scale-105 transition-transform duration-300">
-            <IconCalendar size={22} />
+
+          {/* Occupancy Rate / Mix */}
+          <div className="p-8 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
+                  <IconTrendingUp size={14} />
+                </div>
+                <span className="text-xs font-medium text-slate-400 tracking-wider">Lease Status Mix</span>
+              </div>
+              <span className="font-mono text-xl text-white">{kpis.rate.toFixed(1)}%</span>
+            </div>
+            <div>
+              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden flex mb-3">
+                <div style={{ width: `${kpis.rate}%` }} className="bg-emerald-400 h-full rounded-r-full shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+              </div>
+              <div className="flex items-center gap-4 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-emerald-400" /> ACTIVE: {kpis.active}</span>
+                <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-slate-500" /> TERM: {kpis.total - kpis.active}</span>
+              </div>
+            </div>
           </div>
+
+          {/* Rent Pool */}
+          <div className="p-8 flex flex-col justify-between bg-white/[0.02]">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="size-8 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 text-indigo-400">
+                <IconShield size={14} />
+              </div>
+              <span className="text-xs font-medium text-slate-400 tracking-wider">Monthly Rent Pool</span>
+            </div>
+            <div>
+              <span className="font-mono text-3xl font-light text-white tracking-tight">
+                {formatCompactKES(kpis.rentPool)}
+              </span>
+              <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500 mt-2">CONTRACTED — ACTIVE ONLY</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {/* Leases List Panel (Discard card shell wrapper on mobile - Rule 10) */}
+      {/* ── Highlighted Recent Leases ── */}
+      <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-3 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col overflow-hidden">
+          {/* Card header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="bg-[#151936] px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 text-white text-xs font-medium shadow-sm">
+                <IconStarFilled size={12} className="text-amber-400" /> Newest Active Contracts
+              </span>
+            </div>
+            {latestLeases.length > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setFeaturedIndex((i) => (i === 0 ? latestLeases.length - 1 : i - 1))}
+                  className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                >
+                  <IconChevronLeft size={14} />
+                </button>
+                <span className="label-caps text-slate-400 tabular-nums">{safeFeaturedIndex + 1}&thinsp;/&thinsp;{latestLeases.length}</span>
+                <button
+                  onClick={() => setFeaturedIndex((i) => (i === latestLeases.length - 1 ? 0 : i + 1))}
+                  className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                >
+                  <IconChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {latestLeases.length > 0 ? (
+            <div className="flex gap-0 flex-1 min-h-0" key={safeFeaturedIndex}>
+              {/* Tenant abstract graphic panel */}
+              <div className="relative w-1/3 shrink-0 overflow-hidden bg-slate-50 flex items-center justify-center border-r border-slate-100">
+                <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
+                <div className="text-center z-10">
+                  <div className="size-20 rounded-full bg-white text-slate-700 flex items-center justify-center text-2xl font-medium border border-slate-200 shadow-sm mx-auto mb-3">
+                    {getInitials(latestLeases[safeFeaturedIndex].tenantName)}
+                  </div>
+                  <h4 className="text-slate-800 font-medium">{latestLeases[safeFeaturedIndex].tenantName}</h4>
+                  <p className="text-slate-400 text-xs mt-1">Started: {formatDate(latestLeases[safeFeaturedIndex].startsAt)}</p>
+                </div>
+              </div>
+
+              {/* Info panel */}
+              <div className="flex-1 flex flex-col px-6 pb-6 pt-2 min-w-0">
+                <div className="mb-4">
+                  <Badge tone="success" className="mb-2">Active</Badge>
+                  <h4 className="text-title-primary leading-snug">{latestLeases[safeFeaturedIndex].propertyName}</h4>
+                  <p className="body-sm text-slate-400 flex items-center gap-1 mt-1 font-mono text-xs">
+                    Unit: {latestLeases[safeFeaturedIndex].propertyCode}
+                  </p>
+                </div>
+
+                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="label-caps text-slate-400 mb-0.5">Expected Monthly Rent</p>
+                    <p className="mono-stat text-slate-900 text-xl tracking-tight">
+                      {formatCompactKES(parseFloat(latestLeases[safeFeaturedIndex].monthlyRentKes))}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setDrawerLease(latestLeases[safeFeaturedIndex])}
+                    >
+                      Details
+                    </Button>
+                    <Link href={`/admin/leases/${latestLeases[safeFeaturedIndex].id}`}>
+                      <Button
+                        size="sm"
+                        className="bg-[#151936] text-white hover:bg-[#151936]/90"
+                      >
+                        <IconEye size={14} /> View
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-14 text-center text-slate-400 flex-1">
+              <div className="size-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3">
+                <IconStarFilled size={24} className="opacity-40" />
+              </div>
+              <p className="body-sm text-slate-500">No active leases currently.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 my-6">
+        <hr className="flex-1 border-slate-200/60" />
+        <span className="label-caps text-slate-400 tracking-wider">Inventory Data</span>
+        <hr className="flex-1 border-slate-200/60" />
+      </div>
+
+      {/* ── Data Tier: Leases Table ── */}
       <BoardPanel className="gsap-stagger space-y-4 bg-transparent lg:bg-white border-transparent lg:border-slate-100 p-0 lg:p-6 shadow-none lg:shadow-sm">
         
-        {/* Search & Filter pills */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-          <div className="flex-1 flex h-11 items-center gap-2 rounded-2xl border border-slate-200/60 bg-white px-3.5 shadow-sm focus-within:ring-2 focus-within:ring-[#151936]/5 focus-within:border-[#151936]/20 transition-all">
+        {/* Majestic Search & Filter */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-slate-50/50 p-2 rounded-2xl border border-slate-100">
+          <div className="flex-1 flex h-12 items-center gap-3 rounded-xl bg-white px-4 shadow-sm border border-slate-200/60 focus-within:ring-2 focus-within:ring-[#151936]/10 focus-within:border-[#151936]/30 transition-all">
             <IconSearch size={18} className="text-slate-400 shrink-0" />
             <input
               value={query}
@@ -288,19 +435,19 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 setPage(1);
               }}
               placeholder="Search leases by tenant, property, or code..."
-              className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-sm py-1 font-normal"
+              className="w-full bg-transparent text-slate-700 outline-none placeholder:text-slate-400 text-sm py-1 font-medium"
             />
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="text-slate-400 hover:text-slate-600 p-0.5"
+                className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full p-1 transition-colors"
               >
-                <IconX size={16} />
+                <IconX size={14} />
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar shrink-0">
+          <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl shadow-sm border border-slate-200/60 overflow-x-auto no-scrollbar shrink-0">
             {(["all", "active", "terminated"] as const).map((status) => (
               <button
                 key={status}
@@ -309,10 +456,10 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                   setPage(1);
                 }}
                 className={cn(
-                  "px-4 py-2 text-xs font-medium uppercase tracking-wider rounded-xl border transition-all shrink-0",
+                  "px-5 py-2 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all shrink-0",
                   statusFilter === status
-                    ? "bg-[#151936] text-white border-transparent shadow-sm"
-                    : "bg-white text-slate-500 border-slate-100 hover:bg-slate-50/50 hover:text-slate-800"
+                    ? "bg-[#151936] text-white shadow-md"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
                 {status}
@@ -335,7 +482,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
           />
         ) : (
           <div className="space-y-5">
-            {/* Mobile/Tablet Card Grid (hidden on desktop - Rule 9) */}
+            {/* Mobile/Tablet Card Grid */}
             <div className="block lg:hidden space-y-4">
               {visible.map((l) => {
                 const PropIcon = (PROPERTY_TYPE_ICON as Record<string, React.ComponentType<{ size?: number; stroke?: number; className?: string }>>)[l.propertyType] ?? IconBuildingCommunity;
@@ -386,26 +533,32 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                     </div>
 
                     <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-50 mt-1">
-                      <span className="mono-data text-xs text-slate-400">
-                        {formatDate(l.startsAt)} to {formatDate(l.endsAt)}
+                      <span className="mono-data text-xs text-slate-400 flex flex-col">
+                        <span>{formatDate(l.startsAt)}</span>
+                        <span className="text-[10px]">to {formatDate(l.endsAt)}</span>
                       </span>
-                      {l.isActive && (
+                      <div className="flex items-center gap-2">
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50/50 border-red-100 hover:border-red-200"
-                          onClick={() => setTerminateConfirmId(l.id)}
+                          className="h-8"
+                          onClick={() => setDrawerLease(l)}
                         >
-                          Terminate
+                          Details
                         </Button>
-                      )}
+                        <Link href={`/admin/leases/${l.id}`}>
+                          <Button size="sm" className="h-8 bg-[#151936] text-white hover:bg-[#151936]/90 px-3">
+                            <IconEye size={14} /> View
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Table wrapper: hidden on mobile, visible on desktop (Rule 9) */}
+            {/* Desktop Table */}
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full min-w-[850px] text-left text-body-regular">
                 <thead>
@@ -430,7 +583,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           {l.id.slice(0, 8).toUpperCase()}
                         </td>
 
-                        {/* Tenant profile details */}
+                        {/* Tenant */}
                         <td className="px-3 py-4">
                           <div className="flex items-center gap-3">
                             <div className="size-9 shrink-0 rounded-full bg-slate-50 text-slate-700 flex items-center justify-center text-xs font-medium border border-slate-100 shadow-sm">
@@ -443,7 +596,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           </div>
                         </td>
 
-                        {/* Property joined unit details */}
+                        {/* Property */}
                         <td className="px-3 py-4">
                           <div className="flex items-center gap-2.5">
                             <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-200/60 text-slate-400 group-hover:text-slate-600 transition-colors">
@@ -464,7 +617,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           </div>
                         </td>
 
-                        {/* Financial stats */}
+                        {/* Financials */}
                         <td className="px-3 py-4 text-right mono-stat text-slate-900 font-medium">
                           {formatCompactKES(parseFloat(l.monthlyRentKes))}
                         </td>
@@ -472,27 +625,30 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           {l.depositKes ? formatCompactKES(parseFloat(l.depositKes)) : "—"}
                         </td>
 
-                        {/* Status badge */}
+                        {/* Status */}
                         <td className="px-3 py-4 text-center">
                           <Badge tone={l.isActive ? "success" : "neutral"}>
                             {l.isActive ? "Active" : "Terminated"}
                           </Badge>
                         </td>
 
-                        {/* Row action */}
-                        <td className="px-3 py-4 text-right">
-                          {l.isActive ? (
+                        {/* Actions */}
+                        <td className="px-3 py-4">
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               variant="secondary"
                               size="sm"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50/50 border-red-100 hover:border-red-200 h-8 font-medium"
-                              onClick={() => setTerminateConfirmId(l.id)}
+                              className="h-8"
+                              onClick={() => setDrawerLease(l)}
                             >
-                              Terminate
+                              Details
                             </Button>
-                          ) : (
-                            <span className="text-xs text-slate-400 italic">Historical</span>
-                          )}
+                            <Link href={`/admin/leases/${l.id}`}>
+                              <Button size="sm" className="h-8 bg-[#151936] text-white hover:bg-[#151936]/90 px-3">
+                                <IconEye size={14} /> View
+                              </Button>
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -511,20 +667,14 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         )}
       </BoardPanel>
 
-      {/* Confirm dialog wrapper for lease termination */}
-      {terminateConfirmId && (
-        <ConfirmDialog
-          open={!!terminateConfirmId}
-          title="Terminate Lease Agreement"
-          description="Are you sure you want to terminate this tenancy lease? This sets the lease status to inactive and changes the property occupancy status back to available immediately."
-          confirmLabel="Terminate Lease"
-          cancelLabel="Keep Active"
-          tone="warning"
-          isLoading={isTerminating}
-          onClose={() => setTerminateConfirmId(null)}
-          onConfirm={handleTerminate}
-        />
-      )}
+      <LeaseDetailDrawer
+        lease={drawerLease}
+        open={!!drawerLease}
+        entityId={entityId}
+        onClose={() => setDrawerLease(null)}
+        canManage={true}
+        onTerminate={handleTerminate}
+      />
 
       {isModalOpen && (
         <LeaseFormModal

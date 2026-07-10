@@ -151,105 +151,115 @@ export function LeaseFormModal({
       onClose={isSubmitting ? () => { } : onClose}
       title="Register Lease Agreement"
       description="Create a legal lease agreement binding a tenant contact to a property unit."
-      size="md"
+      size="xl"
     >
-      <div className="space-y-4">
-        {/* Select Property Unit */}
-        <div>
-          <label className="label-caps text-slate-500 mb-1.5 block">Select Property Unit (Available)</label>
-          <select
-            className={cn(
-              "w-full rounded-lg border bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors",
-              errors.propertyId ? "border-red-300 bg-red-50/30" : "border-slate-200"
-            )}
-            value={form.propertyId}
-            onChange={(e) => updateField("propertyId", e.target.value)}
-          >
-            <option value="">-- Choose Unit --</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-          {errors.propertyId && <p className="text-sm text-red-500 mt-1">{errors.propertyId}</p>}
-        </div>
+      <div className="space-y-6">
+        {/* Section 1: Parties Involved */}
+        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
+          <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Contracting Parties</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="label-caps text-slate-500 mb-1.5 block">Select Property Unit (Available)</label>
+              <select
+                className={cn(
+                  "w-full h-10 rounded-lg border bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
+                  errors.propertyId ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
+                )}
+                value={form.propertyId}
+                onChange={(e) => updateField("propertyId", e.target.value)}
+              >
+                <option value="">-- Choose Unit --</option>
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              {errors.propertyId && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.propertyId}</p>}
+            </div>
 
-        {/* Select Tenant Contact */}
-        <div>
-          <label className="label-caps text-slate-500 mb-1.5 block">Select Tenant Contact</label>
-          <select
-            className={cn(
-              "w-full rounded-lg border bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors",
-              errors.tenantContactId ? "border-red-300 bg-red-50/30" : "border-slate-200"
-            )}
-            value={form.tenantContactId}
-            onChange={(e) => updateField("tenantContactId", e.target.value)}
-          >
-            <option value="">-- Choose Tenant --</option>
-            {tenants.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-          {errors.tenantContactId && <p className="text-sm text-red-500 mt-1">{errors.tenantContactId}</p>}
-        </div>
-
-        {/* Start / End Dates */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Lease Starts</label>
-            <input
-              type="date"
-              className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors",
-                errors.startsAt ? "border-red-300 bg-red-50/30" : "border-slate-200"
-              )}
-              value={form.startsAt}
-              onChange={(e) => updateField("startsAt", e.target.value)}
-            />
-            {errors.startsAt && <p className="text-sm text-red-500 mt-1">{errors.startsAt}</p>}
-          </div>
-          <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Lease Ends</label>
-            <input
-              type="date"
-              className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors",
-                errors.endsAt ? "border-red-300 bg-red-50/30" : "border-slate-200"
-              )}
-              value={form.endsAt}
-              onChange={(e) => updateField("endsAt", e.target.value)}
-            />
-            {errors.endsAt && <p className="text-sm text-red-500 mt-1">{errors.endsAt}</p>}
+            <div>
+              <label className="label-caps text-slate-500 mb-1.5 block">Select Tenant Contact</label>
+              <select
+                className={cn(
+                  "w-full h-10 rounded-lg border bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
+                  errors.tenantContactId ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
+                )}
+                value={form.tenantContactId}
+                onChange={(e) => updateField("tenantContactId", e.target.value)}
+              >
+                <option value="">-- Choose Tenant --</option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              {errors.tenantContactId && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.tenantContactId}</p>}
+            </div>
           </div>
         </div>
 
-        {/* Financial Details */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label-caps text-slate-500 mb-1.5 block font-mono">Rent Rate (KES / month)</label>
-            <input
-              className={cn(
-                "w-full rounded-lg border bg-white px-3 py-2 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors",
-                errors.monthlyRentKes ? "border-red-300 bg-red-50/30" : "border-slate-200"
-              )}
-              placeholder="e.g. 85000"
-              value={form.monthlyRentKes}
-              onChange={(e) => updateField("monthlyRentKes", e.target.value)}
-            />
-            {errors.monthlyRentKes && <p className="text-sm text-red-500 mt-1">{errors.monthlyRentKes}</p>}
+        {/* Section 2: Duration */}
+        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
+          <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Lease Duration</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="label-caps text-slate-500 mb-1.5 block">Lease Starts</label>
+              <input
+                type="date"
+                className={cn(
+                  "w-full h-10 rounded-lg border bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
+                  errors.startsAt ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
+                )}
+                value={form.startsAt}
+                onChange={(e) => updateField("startsAt", e.target.value)}
+              />
+              {errors.startsAt && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.startsAt}</p>}
+            </div>
+            <div>
+              <label className="label-caps text-slate-500 mb-1.5 block">Lease Ends</label>
+              <input
+                type="date"
+                className={cn(
+                  "w-full h-10 rounded-lg border bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
+                  errors.endsAt ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
+                )}
+                value={form.endsAt}
+                onChange={(e) => updateField("endsAt", e.target.value)}
+              />
+              {errors.endsAt && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.endsAt}</p>}
+            </div>
           </div>
-          <div>
-            <label className="label-caps text-slate-500 mb-1.5 block font-mono">Security Deposit (KES)</label>
-            <input
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
-              placeholder="e.g. 170000"
-              value={form.depositKes}
-              onChange={(e) => updateField("depositKes", e.target.value)}
-            />
+        </div>
+
+        {/* Section 3: Financial Terms */}
+        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
+          <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Financial Terms</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="label-caps text-slate-500 mb-1.5 block">Rent Rate (KES / month)</label>
+              <input
+                className={cn(
+                  "w-full h-10 rounded-lg border bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
+                  errors.monthlyRentKes ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
+                )}
+                placeholder="e.g. 85000"
+                value={form.monthlyRentKes}
+                onChange={(e) => updateField("monthlyRentKes", e.target.value)}
+              />
+              {errors.monthlyRentKes && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.monthlyRentKes}</p>}
+            </div>
+            <div>
+              <label className="label-caps text-slate-500 mb-1.5 block">Security Deposit Held (KES)</label>
+              <input
+                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                placeholder="e.g. 170000"
+                value={form.depositKes}
+                onChange={(e) => updateField("depositKes", e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+        <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
           <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
@@ -257,7 +267,7 @@ export function LeaseFormModal({
             {isSubmitting ? (
               <>
                 <LoadingSpinner size="sm" />
-                <span>Executing…</span>
+                <span className="ml-2">Executing…</span>
               </>
             ) : (
               "Finalize Lease"

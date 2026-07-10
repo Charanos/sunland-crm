@@ -325,6 +325,44 @@ export async function listLeases(ctx: CallerContext) {
     .where(eq(leases.entityId, entityId));
 }
 
+export async function getLeaseById(ctx: CallerContext, leaseId: string) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.lease.read", entityId);
+
+  const [lease] = await db
+    .select({
+      id: leases.id,
+      entityId: leases.entityId,
+      propertyId: leases.propertyId,
+      tenantContactId: leases.tenantContactId,
+      startsAt: leases.startsAt,
+      endsAt: leases.endsAt,
+      monthlyRentKes: leases.monthlyRentKes,
+      depositKes: leases.depositKes,
+      isActive: leases.isActive,
+      createdAt: leases.createdAt,
+      updatedAt: leases.updatedAt,
+      propertyName: properties.name,
+      propertyCode: properties.propertyCode,
+      propertyType: properties.propertyType,
+      propertyLocation: properties.location,
+      propertyAskingPrice: properties.askingPriceKes,
+      tenantName: contacts.displayName,
+      tenantEmail: contacts.email,
+      tenantPhone: contacts.phone,
+    })
+    .from(leases)
+    .innerJoin(properties, eq(leases.propertyId, properties.id))
+    .innerJoin(contacts, eq(leases.tenantContactId, contacts.id))
+    .where(and(eq(leases.id, leaseId), eq(leases.entityId, entityId)))
+    .limit(1);
+
+  if (!lease) throw new NotFoundError("Lease not found");
+
+  return lease;
+}
+
 export async function terminateLease(ctx: CallerContext, leaseId: string) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(ctx.entityId);

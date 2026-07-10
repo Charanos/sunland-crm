@@ -22,13 +22,11 @@ import {
   IconMapPin,
   IconEdit,
   IconTrash,
-  IconTrees,
   IconX,
   IconBed,
   IconBath,
   IconRuler,
   IconEye,
-  IconTool,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import Image from "next/image";
