@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { IconX, IconFileCertificate } from "@tabler/icons-react";
+import { IconX, IconFileCertificate, IconAlertTriangle } from "@tabler/icons-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +11,7 @@ interface MandateFormModalProps {
   propertyId: string;
   propertyName: string;
   landlordName: string;
+  landlordVerified?: boolean;
   defaultUnitCount: number;
   onClose: () => void;
   onCreated: () => void;
@@ -24,6 +25,7 @@ export function MandateFormModal({
   propertyId,
   propertyName,
   landlordName,
+  landlordVerified = false,
   defaultUnitCount,
   onClose,
   onCreated,
@@ -125,6 +127,16 @@ export function MandateFormModal({
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+          {!landlordVerified && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-3">
+              <IconAlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="body-sm text-amber-800">
+                <span className="font-medium">{landlordName}</span> hasn&apos;t been identity-verified yet. You can
+                still submit this mandate, but confirming the landlord first is strongly recommended before funds
+                start moving under this agreement.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-slate-500 mb-1.5 label-caps">Management Fee Rate (%)</label>

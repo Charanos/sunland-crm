@@ -13,7 +13,6 @@ export interface OwnerInfo {
 export interface MandatePeriod {
   collectedAmount: number;
   managementFee: number;
-  approvedExpenses: number;
   landlordRemittance: number;
 }
 

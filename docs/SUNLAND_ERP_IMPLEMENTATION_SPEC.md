@@ -158,6 +158,8 @@ Line Manager (now Property Manager) negotiates terms with a landlord → drafts 
 
 **See ADR 014** (`ARCHITECTURE_DECISIONS.md`) for: the approval requirement is a ceiling on required authority, not a flat rule — a Property Manager or Head of Strategy always needs GM sign-off as described above, but a GM or CEO creating the mandate within their own authority self-approves (no escalation above the CEO, and a GM doesn't wait on another GM). ADR 014 also covers the interim CEO-admin implementation (BD/Front Office modules described here are not yet built; `property_mandates` + the property full-view page stand in for them today) and landlord identity/document verification.
 
+The interim implementation's Management Mandate rail card (property full-view page) surfaces the mandate letter directly — an "Upload"/"Replace" action opens a focused modal that attaches a `document` (type `mandate_letter`, scoped to the landlord's `ownerContactId` so it's reusable across every property they own) without leaving the mandate context, rather than requiring a detour through the property edit form. The Create Mandate modal also reads the landlord's `verifiedAt` status and shows a soft warning (not a hard block) when the landlord hasn't been identity-verified yet, nudging the mandate creator toward "Confirm Landlord" first.
+
 ### 4.4 Property Mandate Expense Reimbursement
 
 Line Manager logs a property-level petty cash expense (repairs, watchman wages, site costs) against a specific mandate → Finance reviews the expense against the mandate's collected-amount ledger → expenses under the configured threshold are deducted from the next landlord remittance automatically → expenses above threshold raise an `approval_requests` row to GM before being applied.

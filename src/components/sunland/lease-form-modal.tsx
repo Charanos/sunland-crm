@@ -17,17 +17,37 @@ export interface LeaseFormData {
   depositKes: string;
 }
 
+export interface LeaseEditTarget {
+  id: string;
+  propertyName: string;
+  tenantName: string;
+  startsAt: string;
+  endsAt: string;
+  monthlyRentKes: string;
+  depositKes: string | null;
+}
+
+function toDateInput(iso: string): string {
+  return iso ? iso.slice(0, 10) : "";
+}
+
 export function LeaseFormModal({
   open,
+  mode = "create",
+  lease,
   onClose,
   onSubmit,
 }: {
   open: boolean;
+  mode?: "create" | "edit";
+  /** Required when mode="edit" — the lease being edited. */
+  lease?: LeaseEditTarget | null;
   onClose: () => void;
   onSubmit: () => void;
 }) {
   const { pushToast } = useToast();
   const { activeEntityId } = useUIStore();
+  const isEdit = mode === "edit" && !!lease;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof LeaseFormData, string>>>({});
   const [properties, setProperties] = useState<{ id: string; name: string; monthlyRentKes: string | null }[]>([]);
@@ -42,9 +62,31 @@ export function LeaseFormModal({
     depositKes: "",
   });
 
-  // Load available properties & tenants
+  // Populate the form from the lease being edited, or reset for a fresh create.
   useEffect(() => {
-    if (!open || !activeEntityId) return;
+    if (!open) return;
+    Promise.resolve().then(() => {
+      if (isEdit && lease) {
+        setForm({
+          propertyId: "",
+          tenantContactId: "",
+          startsAt: toDateInput(lease.startsAt),
+          endsAt: toDateInput(lease.endsAt),
+          monthlyRentKes: lease.monthlyRentKes,
+          depositKes: lease.depositKes ?? "",
+        });
+      } else {
+        setForm({ propertyId: "", tenantContactId: "", startsAt: "", endsAt: "", monthlyRentKes: "", depositKes: "" });
+      }
+      setErrors({});
+    });
+  }, [open, isEdit, lease]);
+
+  // Load available properties & tenants — only needed for create mode, since
+  // edit mode keeps the property/tenant fixed (reassigning either is a new
+  // lease or a renewal, not an edit — see updateLease's whitelist).
+  useEffect(() => {
+    if (!open || !activeEntityId || isEdit) return;
 
     const loadOptions = async () => {
       try {
@@ -55,7 +97,6 @@ export function LeaseFormModal({
         const [propData, tenantData] = await Promise.all([propRes.json(), tenantRes.json()]);
 
         if (propData.properties) {
-          // Filter down to available property units in the frontend
           const available = propData.properties
             .filter((p: { id: string; name: string; status: string; monthlyRentKes: string | null }) => p.status === "available")
             .map((p: { id: string; name: string; monthlyRentKes: string | null }) => ({ id: p.id, name: p.name, monthlyRentKes: p.monthlyRentKes }));
@@ -70,7 +111,7 @@ export function LeaseFormModal({
     };
 
     loadOptions();
-  }, [open, activeEntityId]);
+  }, [open, activeEntityId, isEdit]);
 
   const updateField = <K extends keyof LeaseFormData>(
     field: K,
@@ -78,7 +119,6 @@ export function LeaseFormModal({
   ) => {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-      // Auto-fill rent if property changes
       if (field === "propertyId") {
         const selected = properties.find((p) => p.id === value);
         if (selected && selected.monthlyRentKes) {
@@ -95,8 +135,8 @@ export function LeaseFormModal({
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof LeaseFormData, string>> = {};
-    if (!form.propertyId) newErrors.propertyId = "Property unit selection is required";
-    if (!form.tenantContactId) newErrors.tenantContactId = "Tenant contact selection is required";
+    if (!isEdit && !form.propertyId) newErrors.propertyId = "Property unit selection is required";
+    if (!isEdit && !form.tenantContactId) newErrors.tenantContactId = "Tenant contact selection is required";
     if (!form.startsAt) newErrors.startsAt = "Lease start date is required";
     if (!form.endsAt) newErrors.endsAt = "Lease end date is required";
     if (!form.monthlyRentKes.trim()) newErrors.monthlyRentKes = "Monthly Rent is required";
@@ -109,27 +149,40 @@ export function LeaseFormModal({
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/leases", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entityId: activeEntityId,
-          propertyId: form.propertyId,
-          tenantContactId: form.tenantContactId,
-          startsAt: form.startsAt,
-          endsAt: form.endsAt,
-          monthlyRentKes: form.monthlyRentKes,
-          depositKes: form.depositKes || null,
-        }),
-      });
+      const res = isEdit
+        ? await fetch(`/api/leases/${lease!.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              entityId: activeEntityId,
+              action: "update",
+              startsAt: form.startsAt,
+              endsAt: form.endsAt,
+              monthlyRentKes: form.monthlyRentKes,
+              depositKes: form.depositKes || null,
+            }),
+          })
+        : await fetch("/api/leases", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              entityId: activeEntityId,
+              propertyId: form.propertyId,
+              tenantContactId: form.tenantContactId,
+              startsAt: form.startsAt,
+              endsAt: form.endsAt,
+              monthlyRentKes: form.monthlyRentKes,
+              depositKes: form.depositKes || null,
+            }),
+          });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to execute lease agreement");
+      if (!res.ok) throw new Error(data.error || "Failed to save lease agreement");
 
       pushToast({
         tone: "success",
-        title: "Lease Registered",
-        body: "Successfully finalized lease contract. Property unit updated to occupied.",
+        title: isEdit ? "Lease Updated" : "Lease Registered",
+        body: isEdit ? "Lease terms have been updated." : "Successfully finalized lease contract. Property unit updated to occupied.",
       });
       onSubmit();
       onClose();
@@ -137,7 +190,7 @@ export function LeaseFormModal({
       const message = err instanceof Error ? err.message : "An unexpected error occurred";
       pushToast({
         tone: "warning",
-        title: "Execution failed",
+        title: isEdit ? "Update failed" : "Execution failed",
         body: message,
       });
     } finally {
@@ -149,8 +202,8 @@ export function LeaseFormModal({
     <Modal
       open={open}
       onClose={isSubmitting ? () => { } : onClose}
-      title="Register Lease Agreement"
-      description="Create a legal lease agreement binding a tenant contact to a property unit."
+      title={isEdit ? "Edit Lease Terms" : "Register Lease Agreement"}
+      description={isEdit ? "Adjust the term dates, rent, or deposit for this lease." : "Create a legal lease agreement binding a tenant contact to a property unit."}
       size="xl"
     >
       <div className="space-y-6">
@@ -159,38 +212,50 @@ export function LeaseFormModal({
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Contracting Parties</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Select Property Unit (Available)</label>
-              <select
-                className={cn(
-                  "w-full h-10 rounded-lg border bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
-                  errors.propertyId ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
-                )}
-                value={form.propertyId}
-                onChange={(e) => updateField("propertyId", e.target.value)}
-              >
-                <option value="">-- Choose Unit --</option>
-                {properties.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+              <label className="label-caps text-slate-500 mb-1.5 block">Property Unit</label>
+              {isEdit ? (
+                <p className="h-10 flex items-center px-3 rounded-lg border border-slate-200 bg-slate-100 text-body-primary text-slate-600">
+                  {lease!.propertyName}
+                </p>
+              ) : (
+                <select
+                  className={cn(
+                    "w-full h-10 rounded-lg border bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
+                    errors.propertyId ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
+                  )}
+                  value={form.propertyId}
+                  onChange={(e) => updateField("propertyId", e.target.value)}
+                >
+                  <option value="">-- Choose Unit --</option>
+                  {properties.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              )}
               {errors.propertyId && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.propertyId}</p>}
             </div>
 
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Select Tenant Contact</label>
-              <select
-                className={cn(
-                  "w-full h-10 rounded-lg border bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
-                  errors.tenantContactId ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
-                )}
-                value={form.tenantContactId}
-                onChange={(e) => updateField("tenantContactId", e.target.value)}
-              >
-                <option value="">-- Choose Tenant --</option>
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+              <label className="label-caps text-slate-500 mb-1.5 block">Tenant Contact</label>
+              {isEdit ? (
+                <p className="h-10 flex items-center px-3 rounded-lg border border-slate-200 bg-slate-100 text-body-primary text-slate-600">
+                  {lease!.tenantName}
+                </p>
+              ) : (
+                <select
+                  className={cn(
+                    "w-full h-10 rounded-lg border bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
+                    errors.tenantContactId ? "border-red-300 bg-red-50/30 text-red-800" : "border-slate-200"
+                  )}
+                  value={form.tenantContactId}
+                  onChange={(e) => updateField("tenantContactId", e.target.value)}
+                >
+                  <option value="">-- Choose Tenant --</option>
+                  {tenants.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              )}
               {errors.tenantContactId && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.tenantContactId}</p>}
             </div>
           </div>
@@ -267,8 +332,10 @@ export function LeaseFormModal({
             {isSubmitting ? (
               <>
                 <LoadingSpinner size="sm" />
-                <span className="ml-2">Executing…</span>
+                <span className="ml-2">{isEdit ? "Saving…" : "Executing…"}</span>
               </>
+            ) : isEdit ? (
+              "Save Changes"
             ) : (
               "Finalize Lease"
             )}

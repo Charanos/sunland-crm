@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  IconAlertTriangle,
   IconCalendar,
   IconCheck,
   IconPlus,
@@ -15,19 +16,19 @@ import {
   IconChevronRight,
   IconEye,
   IconTrendingUp,
-  IconClock,
   IconFilter,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import {
   Badge,
   BoardHeader,
-  BoardPanel,
   Button,
   PaginationControls,
 } from "@/components/ui/erp-primitives";
-import { LeaseFormModal } from "./lease-form-modal";
+import { LeaseFormModal, type LeaseEditTarget } from "./lease-form-modal";
+import { LeaseRenewModal, type LeaseRenewTarget } from "./lease-renew-modal";
 import { LeaseDetailDrawer } from "./lease-detail-drawer";
+import { PortfolioHubNav } from "./portfolio-hub-nav";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageTransition } from "@/components/shared/page-transition";
 import { formatCompactKES } from "@/lib/utils/format";
@@ -62,8 +63,11 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "terminated">("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState("all");
+  const [expiryFilter, setExpiryFilter] = useState<"all" | "30" | "60" | "90">("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [drawerLease, setDrawerLease] = useState<Lease | null>(null);
+  const [editingLease, setEditingLease] = useState<Lease | null>(null);
+  const [renewingLease, setRenewingLease] = useState<Lease | null>(null);
 
   // Carousel state
   const [featuredIndex, setFeaturedIndex] = useState(0);
@@ -101,7 +105,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       const res = await fetch(`/api/leases/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entityId }),
+        body: JSON.stringify({ entityId, action: "terminate" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to terminate lease");
@@ -123,6 +127,8 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     }
   };
 
+  const daysUntilExpiry = (l: Lease) => Math.ceil((new Date(l.endsAt).getTime() - new Date().getTime()) / 86_400_000);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let result = leases;
@@ -139,6 +145,13 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       result = result.filter((l) => l.propertyType === typeFilter);
     }
 
+    // Apply expiry-window filter — active leases whose end date falls within
+    // the next N days (already past due doesn't count as "expiring soon").
+    if (expiryFilter !== "all") {
+      const windowDays = parseInt(expiryFilter, 10);
+      result = result.filter((l) => l.isActive && daysUntilExpiry(l) >= 0 && daysUntilExpiry(l) <= windowDays);
+    }
+
     if (!q) return result;
 
     return result.filter((l) =>
@@ -151,14 +164,14 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         l.tenantPhone || "",
       ].some((v) => v?.toLowerCase().includes(q))
     );
-  }, [leases, query, statusFilter]);
+  }, [leases, query, statusFilter, typeFilter, expiryFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
   const safePage = Math.min(page, totalPages);
   const visible = filtered.slice((safePage - 1) * rowsPerPage, safePage * rowsPerPage);
 
-  const activeFilterCount = (statusFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0);
-  const hasActiveFilters = statusFilter !== "all" || typeFilter !== "all";
+  const activeFilterCount = (statusFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0) + (expiryFilter !== "all" ? 1 : 0);
+  const hasActiveFilters = statusFilter !== "all" || typeFilter !== "all" || expiryFilter !== "all";
 
   const kpis = useMemo(() => {
     const active = leases.filter((l) => l.isActive).length;
@@ -170,8 +183,9 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     const rentPool = leases
       .filter((l) => l.isActive && l.monthlyRentKes)
       .reduce((sum, l) => sum + parseFloat(l.monthlyRentKes), 0);
+    const expiringSoon = leases.filter((l) => l.isActive && daysUntilExpiry(l) >= 0 && daysUntilExpiry(l) <= 60).length;
 
-    return { total, active, rate, deposits, rentPool };
+    return { total, active, rate, deposits, rentPool, expiringSoon };
   }, [leases]);
 
   const latestLeases = useMemo(() => {
@@ -215,45 +229,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         }
       />
 
-      {/* ── Property Portfolio Hub Navigator ── */}
-      <div className="flex items-center justify-between flex-wrap gap-4 bg-white border border-slate-100 p-4 rounded-[20px] shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="size-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center border border-teal-100/50">
-            <IconBuildingCommunity size={20} />
-          </div>
-          <div>
-            <h3 className="text-title-primary text-sm font-medium">Property Portfolio Hub</h3>
-            <p className="text-desc-secondary mt-0.5 text-xs">Manage property inventory, tenancies, maintenance requests, and valuations.</p>
-          </div>
-        </div>
-
-        <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
-          <Link
-            href="/admin/properties"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
-          >
-            <span>Properties</span>
-          </Link>
-          <Link
-            href="/admin/leases"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm font-medium"
-          >
-            <span>Leases</span>
-          </Link>
-          <Link
-            href="/admin/maintenance"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
-          >
-            <span>Maintenance</span>
-          </Link>
-          <Link
-            href="/admin/valuations"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
-          >
-            <span>Valuations</span>
-          </Link>
-        </div>
-      </div>
+      <PortfolioHubNav active="leases" />
 
       <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />
@@ -334,6 +310,19 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
 
         </div>
       </div>
+
+      {kpis.expiringSoon > 0 && (
+        <button
+          type="button"
+          onClick={() => { setExpiryFilter("60"); setStatusFilter("active"); setFiltersOpen(true); setPage(1); }}
+          className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/60 px-4 py-3 text-left hover:bg-amber-50 transition-colors"
+        >
+          <IconAlertTriangle size={18} className="text-amber-500 shrink-0" aria-hidden="true" />
+          <p className="text-body-regular text-amber-700">
+            {kpis.expiringSoon} lease{kpis.expiringSoon === 1 ? "" : "s"} expiring within 60 days — click to filter.
+          </p>
+        </button>
+      )}
 
       {/* ── Highlighted Recent Leases ── */}
       <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -518,11 +507,27 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 ))}
               </select>
             </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="expiry-filter" className="label-caps text-slate-400">
+                Expiring within
+              </label>
+              <select
+                id="expiry-filter"
+                value={expiryFilter}
+                onChange={(e) => { setExpiryFilter(e.target.value as typeof expiryFilter); setPage(1); }}
+                className="bg-white border border-slate-200 rounded-xl px-3 py-2 body-sm outline-none focus:ring-2 focus:ring-[#151936]/10 focus:border-[#151936]/30"
+              >
+                <option value="all">Any time</option>
+                <option value="30">30 days</option>
+                <option value="60">60 days</option>
+                <option value="90">90 days</option>
+              </select>
+            </div>
             {hasActiveFilters && (
               <div className="sm:col-span-2 flex justify-end mt-2">
                 <button
                   type="button"
-                  onClick={() => { setQuery(""); setStatusFilter("all"); setTypeFilter("all"); setPage(1); }}
+                  onClick={() => { setQuery(""); setStatusFilter("all"); setTypeFilter("all"); setExpiryFilter("all"); setPage(1); }}
                   className="inline-flex items-center gap-1 px-3 py-1.5 body-sm text-slate-500 hover:text-rose-600 transition-colors"
                 >
                   <IconX size={14} /> Clear All Filters
@@ -738,6 +743,8 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         onClose={() => setDrawerLease(null)}
         canManage={true}
         onTerminate={handleTerminate}
+        onEdit={(l) => { setDrawerLease(null); setEditingLease(l); }}
+        onRenew={(l) => { setDrawerLease(null); setRenewingLease(l); }}
       />
 
       {isModalOpen && (
@@ -747,6 +754,46 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
           onSubmit={loadLeases}
         />
       )}
+
+      {editingLease && (
+        <LeaseFormModal
+          open={!!editingLease}
+          mode="edit"
+          lease={leaseToEditTarget(editingLease)}
+          onClose={() => setEditingLease(null)}
+          onSubmit={loadLeases}
+        />
+      )}
+
+      <LeaseRenewModal
+        open={!!renewingLease}
+        lease={renewingLease ? leaseToRenewTarget(renewingLease) : null}
+        onClose={() => setRenewingLease(null)}
+        onRenewed={loadLeases}
+      />
     </PageTransition>
   );
+}
+
+function leaseToEditTarget(l: Lease): LeaseEditTarget {
+  return {
+    id: l.id,
+    propertyName: l.propertyName,
+    tenantName: l.tenantName,
+    startsAt: l.startsAt,
+    endsAt: l.endsAt,
+    monthlyRentKes: l.monthlyRentKes,
+    depositKes: l.depositKes,
+  };
+}
+
+function leaseToRenewTarget(l: Lease): LeaseRenewTarget {
+  return {
+    id: l.id,
+    propertyName: l.propertyName,
+    tenantName: l.tenantName,
+    endsAt: l.endsAt,
+    monthlyRentKes: l.monthlyRentKes,
+    depositKes: l.depositKes,
+  };
 }

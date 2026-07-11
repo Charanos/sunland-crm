@@ -26,10 +26,15 @@ export async function listProperties(
   // Left join scoped to at-most-one in-flight mandate per property (the
   // partial unique index on property_mandates guarantees no fan-out here) —
   // surfaces mandateStatus on the board without a second round trip.
-  return db
+  // Owner contact is also left-joined here so the board/quick-view never has
+  // to fall back to a raw ownerContactId label.
+  const rows = await db
     .select({
       ...getTableColumns(properties),
       mandateStatus: propertyMandates.status,
+      ownerName: contacts.displayName,
+      ownerPhone: contacts.phone,
+      ownerEmail: contacts.email,
     })
     .from(properties)
     .leftJoin(
@@ -39,7 +44,14 @@ export async function listProperties(
         inArray(propertyMandates.status, ["pending_approval", "active"]),
       ),
     )
+    .leftJoin(contacts, eq(contacts.id, properties.ownerContactId))
     .where(conditions);
+
+  return rows.map(({ ownerName, ownerPhone, ownerEmail, ...rest }) => ({
+    ...rest,
+    ownerName,
+    owner: rest.ownerContactId ? { name: ownerName, phone: ownerPhone, email: ownerEmail } : null,
+  }));
 }
 
 type UnitBreakdownEntry = { unitType: string; count: number; monthlyRentKes?: string };
@@ -514,13 +526,28 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       .limit(1);
     pendingApproverRole = pendingApproval?.requiredApproverRole ?? null;
   }
+  const mandateRate = mandateRow ? parseFloat(mandateRow.mandateRate) : 0;
+  // Current-period snapshot derived live from this month's collections
+  // bucket — no periodic ledger exists yet (mandate_collections/expenses is
+  // a deferred finance-ledger phase), so this is deliberately just the two
+  // figures that are honestly computable today rather than a full remittance
+  // statement.
+  const currentPeriod =
+    mandateRow && mandateRow.status === "active"
+      ? {
+          collectedAmount: currentMonth.collected,
+          managementFee: currentMonth.collected * mandateRate,
+          landlordRemittance: currentMonth.collected - currentMonth.collected * mandateRate,
+        }
+      : undefined;
   const mandate = mandateRow
     ? {
         id: mandateRow.id,
         status: mandateRow.status,
-        mandateRate: parseFloat(mandateRow.mandateRate),
+        mandateRate,
         startDate: mandateRow.startDate.toISOString(),
         pendingApproverRole,
+        currentPeriod,
       }
     : null;
 
@@ -733,11 +760,123 @@ export async function createLease(
   });
 }
 
+export async function updateLease(
+  ctx: CallerContext,
+  leaseId: string,
+  input: {
+    startsAt?: string;
+    endsAt?: string;
+    monthlyRentKes?: string;
+    depositKes?: string | null;
+  }
+) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.lease.write", entityId);
+
+  const [existing] = await db
+    .select()
+    .from(leases)
+    .where(and(eq(leases.id, leaseId), eq(leases.entityId, entityId)))
+    .limit(1);
+  if (!existing) throw new NotFoundError("Lease not found");
+
+  // Explicit whitelist — property/tenant are fixed for the life of a lease;
+  // reassigning either is a new lease (or a renewal), not an edit.
+  const updatable: Partial<typeof leases.$inferInsert> = {};
+  if (input.startsAt !== undefined) updatable.startsAt = new Date(input.startsAt);
+  if (input.endsAt !== undefined) updatable.endsAt = new Date(input.endsAt);
+  if (input.monthlyRentKes !== undefined) updatable.monthlyRentKes = input.monthlyRentKes;
+  if (input.depositKes !== undefined) updatable.depositKes = input.depositKes;
+
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(leases)
+      .set({ ...updatable, updatedAt: new Date() })
+      .where(eq(leases.id, leaseId))
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "properties.lease.update",
+      associatedType: "lease",
+      associatedId: leaseId,
+      summary: "Updated lease terms",
+      entityId,
+      before: existing,
+      after: updated,
+    });
+
+    return updated;
+  });
+}
+
+export async function renewLease(
+  ctx: CallerContext,
+  leaseId: string,
+  input: {
+    endsAt: string;
+    monthlyRentKes?: string;
+    depositKes?: string | null;
+  }
+) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.lease.write", entityId);
+
+  const [existing] = await db
+    .select()
+    .from(leases)
+    .where(and(eq(leases.id, leaseId), eq(leases.entityId, entityId)))
+    .limit(1);
+  if (!existing) throw new NotFoundError("Lease not found");
+  if (!existing.isActive) throw new DomainValidationError("Only an active lease can be renewed.");
+
+  return db.transaction(async (tx) => {
+    await tx.update(leases).set({ isActive: false, updatedAt: new Date() }).where(eq(leases.id, leaseId));
+
+    // New term picks up exactly where the old one ends — carries the same
+    // property/tenant, and the property never leaves "occupied" since one
+    // active lease is replaced by another in the same transaction (skips
+    // createLease's availability guard, which would otherwise reject a
+    // property that's already occupied by the lease being renewed).
+    const [renewed] = await tx
+      .insert(leases)
+      .values({
+        entityId,
+        propertyId: existing.propertyId,
+        tenantContactId: existing.tenantContactId,
+        startsAt: existing.endsAt,
+        endsAt: new Date(input.endsAt),
+        monthlyRentKes: input.monthlyRentKes ?? existing.monthlyRentKes,
+        depositKes: input.depositKes !== undefined ? input.depositKes : existing.depositKes,
+        isActive: true,
+      })
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "properties.lease.renew",
+      associatedType: "lease",
+      associatedId: renewed.id,
+      summary: `Renewed lease — new term starts ${existing.endsAt.toISOString().slice(0, 10)}`,
+      entityId,
+      before: existing,
+      after: renewed,
+    });
+
+    return renewed;
+  });
+}
+
 // ─── Digitized Documents ──────────────────────────────────────────────────────
 
 export async function listDocuments(
   ctx: CallerContext,
-  filters: { ownerContactId?: string; type?: typeof documents.type.enumValues[number] } = {}
+  filters: {
+    ownerContactId?: string;
+    propertyId?: string;
+    leaseId?: string;
+    type?: typeof documents.type.enumValues[number];
+  } = {}
 ) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(ctx.entityId);
@@ -748,6 +887,12 @@ export async function listDocuments(
   let conditions: SQL | undefined = eq(documents.entityId, entityId);
   if (filters.ownerContactId) {
     conditions = and(conditions, eq(documents.ownerContactId, filters.ownerContactId));
+  }
+  if (filters.propertyId) {
+    conditions = and(conditions, eq(documents.propertyId, filters.propertyId));
+  }
+  if (filters.leaseId) {
+    conditions = and(conditions, eq(documents.leaseId, filters.leaseId));
   }
   if (filters.type) {
     conditions = and(conditions, eq(documents.type, filters.type));
@@ -763,6 +908,8 @@ export async function createDocument(
     title: string;
     fileUrl: string;
     ownerContactId?: string | null;
+    propertyId?: string | null;
+    leaseId?: string | null;
     metadata?: Record<string, unknown>;
   }
 ) {
@@ -784,6 +931,8 @@ export async function createDocument(
         fileUrl: input.fileUrl,
         uploadedById: ctx.user.id,
         ownerContactId: input.ownerContactId ?? null,
+        propertyId: input.propertyId ?? null,
+        leaseId: input.leaseId ?? null,
         metadata: input.metadata ?? {},
       })
       .returning();

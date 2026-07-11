@@ -12,7 +12,6 @@ import {
   users,
 } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
-import { DomainValidationError } from "@/lib/authz/errors";
 import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
 import type { UserRole } from "@/types";
@@ -213,6 +212,8 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
     ["open", "assigned", "in_progress"].includes(m.status),
   ).length;
   const activeLeaseCount = allLeases.filter((l) => l.isActive).length;
+  const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const expiringLeases30d = allLeases.filter((l) => l.isActive && l.endsAt >= now && l.endsAt <= in30Days).length;
   const departmentStats = {
     sales: activePipeline.length,
     ops: openMaintenanceCount,
@@ -272,6 +273,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
     occupancyRate,
     occupiedProperties,
     rentPool,
+    expiringLeases30d,
 
     // Revenue (management-fee-aware)
     incomeKes: Math.round(incomeThisMonth),

@@ -133,6 +133,7 @@ export type Property = {
   ownerContactId: string | null;
   /** Optional joined display name — falls back to ownerContactId, then "Unassigned". */
   ownerName?: string | null;
+  owner?: { name?: string | null; phone?: string | null; email?: string | null } | null;
   askingPriceKes: string | null;
   monthlyRentKes: string | null;
   bedrooms: number | null;

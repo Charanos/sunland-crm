@@ -1,7 +1,22 @@
 import { NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/authz/errors";
-import { deleteValuation, updateValuation } from "@/lib/services/valuations";
+import { deleteValuation, getValuation, updateValuation } from "@/lib/services/valuations";
 import { requireCallerContext } from "@/lib/services/types";
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const entityId = searchParams.get("entityId") ?? null;
+
+    const ctx = await requireCallerContext(entityId, request);
+    const valuation = await getValuation(ctx, id);
+
+    return NextResponse.json({ valuation });
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

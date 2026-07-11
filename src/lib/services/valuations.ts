@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, getTableColumns } from "drizzle-orm";
 import { db } from "@/db";
-import { properties, valuations } from "@/db/schema";
+import { contacts, properties, users, valuations } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -40,6 +40,34 @@ export async function listValuations(ctx: CallerContext) {
   await authorize(ctx, "properties.property.read", entityId);
 
   return db.select().from(valuations).where(eq(valuations.entityId, entityId));
+}
+
+export async function getValuation(ctx: CallerContext, valuationId: string) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.read", entityId);
+
+  const [row] = await db
+    .select({
+      ...getTableColumns(valuations),
+      propertyName: properties.name,
+      propertyCode: properties.propertyCode,
+      propertyLocation: properties.location,
+      clientName: contacts.displayName,
+      clientEmail: contacts.email,
+      clientPhone: contacts.phone,
+      valuerName: users.name,
+      valuerEmail: users.email,
+    })
+    .from(valuations)
+    .leftJoin(properties, eq(valuations.propertyId, properties.id))
+    .leftJoin(contacts, eq(valuations.clientContactId, contacts.id))
+    .leftJoin(users, eq(valuations.valuerId, users.id))
+    .where(and(eq(valuations.id, valuationId), eq(valuations.entityId, entityId)))
+    .limit(1);
+
+  if (!row) throw new NotFoundError("Valuation not found");
+  return row;
 }
 
 export async function createValuation(ctx: CallerContext, rawInput: unknown) {

@@ -8,10 +8,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const entityId = searchParams.get("entityId") ?? null;
     const ownerContactId = searchParams.get("ownerContactId") ?? undefined;
+    const propertyId = searchParams.get("propertyId") ?? undefined;
+    const leaseId = searchParams.get("leaseId") ?? undefined;
     const type = (searchParams.get("type") as "mandate_letter" | "lease_agreement" | "rent_receipt" | "statement" | null) ?? undefined;
 
     const ctx = await requireCallerContext(entityId, request);
-    const documentsList = await listDocuments(ctx, { ownerContactId, type });
+    const documentsList = await listDocuments(ctx, { ownerContactId, propertyId, leaseId, type });
 
     return NextResponse.json({ documents: documentsList });
   } catch (error) {

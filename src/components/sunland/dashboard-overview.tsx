@@ -83,6 +83,7 @@ interface DashboardStats {
   occupancyRate: number;
   occupiedProperties: number;
   rentPool: number;
+  expiringLeases30d: number;
   incomeKes: number;
   incomeTrend: number;
   expensesKes: number;
@@ -285,6 +286,7 @@ export function DashboardOverview({
       ? `${stats.occupiedProperties} of ${stats.totalProperties} occupied`
       : "current occupancy rate",
     rentPool: stats ? stats.rentPool : 0,
+    expiringLeases30d: stats ? stats.expiringLeases30d : 0,
     income: stats ? stats.incomeKes : 0,
     expenses: stats ? stats.expensesKes : 0,
     profit: stats ? stats.profitKes : 0,
@@ -1186,6 +1188,14 @@ export function DashboardOverview({
                   <p className="text-meta-muted mt-0.5">
                     {formatCompactKES(metrics.rentPool)} total rent pool under
                     management
+                    {metrics.expiringLeases30d > 0 && (
+                      <>
+                        {" "}·{" "}
+                        <Link href="/admin/leases" className="text-amber-600 hover:underline">
+                          {metrics.expiringLeases30d} lease{metrics.expiringLeases30d === 1 ? "" : "s"} expiring within 30 days
+                        </Link>
+                      </>
+                    )}
                   </p>
                 )}
               </div>

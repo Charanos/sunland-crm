@@ -41,6 +41,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PropertyFormModal } from "./property-form-modal";
 import { ReportIssueModal } from "./report-issue-modal";
 import { MandateFormModal } from "./mandate-form-modal";
+import { MandateLetterModal } from "./mandate-letter-modal";
 import { VerifyContactModal } from "./verify-contact-modal";
 import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
@@ -86,6 +87,7 @@ export function PropertyFullViewBoard({
   const [terminateMandateOpen, setTerminateMandateOpen] = useState(false);
   const [isTerminatingMandate, setIsTerminatingMandate] = useState(false);
   const [verifyLandlordOpen, setVerifyLandlordOpen] = useState(false);
+  const [mandateLetterOpen, setMandateLetterOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
@@ -532,16 +534,34 @@ export function PropertyFullViewBoard({
                 {(property.mandate.mandateRate * 100).toFixed(0)}% management fee · started{" "}
                 {formatPropertyDate(property.mandate.startDate)}
               </p>
-              {mandateLetterDoc?.url && (
-                <a
-                  href={mandateLetterDoc.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-body-regular text-slate-600 hover:text-[#122a20] mb-3"
-                >
-                  <IconFileText size={14} aria-hidden="true" /> Mandate letter <IconExternalLink size={12} aria-hidden="true" />
-                </a>
-              )}
+              <div className="flex items-center justify-between gap-2 mb-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                {mandateLetterDoc?.url ? (
+                  <a
+                    href={mandateLetterDoc.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 min-w-0 text-body-regular text-slate-700 hover:text-[#122a20]"
+                  >
+                    <IconFileText size={14} className="shrink-0" aria-hidden="true" />
+                    <span className="truncate">Mandate letter</span>
+                    <IconExternalLink size={12} className="shrink-0" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-body-regular text-amber-700 min-w-0">
+                    <IconAlertTriangle size={14} className="shrink-0" aria-hidden="true" />
+                    <span className="truncate">No mandate letter on file</span>
+                  </span>
+                )}
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => setMandateLetterOpen(true)}
+                    className="text-meta-muted-strong hover:text-[#122a20] shrink-0"
+                  >
+                    {mandateLetterDoc?.url ? "Replace" : "Upload"}
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-4">
                 <button type="button" onClick={() => setActiveTab("financials")} className="inline-flex items-center gap-1 text-body-regular text-[#122a20] hover:underline">
                   View financials <IconExternalLink size={13} aria-hidden="true" />
@@ -600,12 +620,26 @@ export function PropertyFullViewBoard({
       />
 
       {property.owner && (
+        <MandateLetterModal
+          open={mandateLetterOpen}
+          entityId={entityId}
+          ownerContactId={property.owner.id}
+          propertyName={property.name}
+          landlordName={property.owner.name}
+          hasExistingLetter={!!mandateLetterDoc?.url}
+          onClose={() => setMandateLetterOpen(false)}
+          onAttached={() => setRefreshCount((c) => c + 1)}
+        />
+      )}
+
+      {property.owner && (
         <MandateFormModal
           open={createMandateOpen}
           entityId={entityId}
           propertyId={property.id}
           propertyName={property.name}
           landlordName={property.owner.name}
+          landlordVerified={!!property.owner.verifiedAt}
           defaultUnitCount={
             property.unitBreakdown && property.unitBreakdown.length > 0
               ? property.unitBreakdown.reduce((sum, u) => sum + u.count, 0)
@@ -816,11 +850,10 @@ function FinancialsPanel({ property }: { property: PropertyDetail }) {
       )}
 
       {period && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricTile icon={IconReceipt2} label="Collected" value={formatCompactKES(period.collectedAmount)} />
-          <MetricTile icon={IconTrendingUp} label="Management Fee" value={formatCompactKES(period.managementFee)} />
-          <MetricTile icon={IconClipboardList} label="Approved Expenses" value={formatCompactKES(period.approvedExpenses)} />
-          <MetricTile icon={IconReceipt2} label="Landlord Remittance" value={formatCompactKES(period.landlordRemittance)} />
+        <div className="grid grid-cols-3 gap-4">
+          <MetricTile icon={IconReceipt2} label="Collected This Month" value={formatCompactKES(period.collectedAmount)} />
+          <MetricTile icon={IconTrendingUp} label={`Management Fee (${((property.mandate?.mandateRate ?? 0) * 100).toFixed(0)}%)`} value={formatCompactKES(period.managementFee)} />
+          <MetricTile icon={IconShieldCheck} label="Landlord Remittance" value={formatCompactKES(period.landlordRemittance)} />
         </div>
       )}
 
@@ -896,36 +929,42 @@ function TenancyPanel({ property }: { property: PropertyDetail }) {
     return <EmptyPanel icon={IconUsers} title="No lease on record" description="This property doesn't have an active or past lease recorded yet." />;
   }
   return (
-    <div className="flex flex-col gap-3">
-      {leases.map((lease) => (
-        <Card key={lease.id} className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex flex-col gap-1.5">
-              <p className="text-body-primary text-slate-900">{lease.tenantName}</p>
-              <div className="flex items-center gap-3 flex-wrap">
+    <Card className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+      <div className="hidden sm:grid grid-cols-[1.6fr_1fr_1fr_auto] gap-3 px-5 py-2.5 border-b border-slate-100 label-caps text-slate-400">
+        <span>Tenant</span>
+        <span>Term</span>
+        <span>Status</span>
+        <span className="text-right">Rent</span>
+      </div>
+      <div className="divide-y divide-slate-100">
+        {leases.map((lease) => (
+          <div key={lease.id} className="grid grid-cols-1 sm:grid-cols-[1.6fr_1fr_1fr_auto] gap-1.5 sm:gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
+            <div className="min-w-0">
+              <p className="text-body-primary text-slate-900 truncate">{lease.tenantName}</p>
+              <div className="flex items-center gap-3 flex-wrap mt-0.5">
                 {lease.tenantPhone && (
-                  <a href={`tel:${lease.tenantPhone}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-1.5">
-                    <IconPhone size={13} aria-hidden="true" /> {lease.tenantPhone}
+                  <a href={`tel:${lease.tenantPhone}`} className="text-meta-muted hover:text-[#122a20] flex items-center gap-1">
+                    <IconPhone size={12} aria-hidden="true" /> {lease.tenantPhone}
                   </a>
                 )}
                 {lease.tenantEmail && (
-                  <a href={`mailto:${lease.tenantEmail}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-1.5">
-                    <IconMail size={13} aria-hidden="true" /> {lease.tenantEmail}
+                  <a href={`mailto:${lease.tenantEmail}`} className="text-meta-muted hover:text-[#122a20] flex items-center gap-1 truncate">
+                    <IconMail size={12} aria-hidden="true" /> <span className="truncate">{lease.tenantEmail}</span>
                   </a>
                 )}
               </div>
-              <p className="text-desc-secondary">
-                {formatPropertyDate(lease.startDate)} – {lease.endDate ? formatPropertyDate(lease.endDate) : "Ongoing"}
-              </p>
             </div>
-            <div className="flex flex-col items-end gap-1.5">
+            <p className="text-body-regular text-slate-600 sm:self-center">
+              {formatPropertyDate(lease.startDate)} – {lease.endDate ? formatPropertyDate(lease.endDate) : "Ongoing"}
+            </p>
+            <div className="sm:self-center">
               <LeaseStatusPill status={lease.status} />
-              <span className="mono-amount text-slate-900">{formatCompactKES(parseFloat(lease.monthlyRentKes))}/mo</span>
             </div>
+            <span className="mono-amount text-slate-900 sm:self-center sm:text-right">{formatCompactKES(parseFloat(lease.monthlyRentKes))}/mo</span>
           </div>
-        </Card>
-      ))}
-    </div>
+        ))}
+      </div>
+    </Card>
   );
 }
 
@@ -1025,23 +1064,31 @@ function MaintenancePanel({ property, canLog, onReport }: { property: PropertyDe
           <IconPlus size={14} className="mr-1.5" /> Report an issue
         </Button>
       )}
-      {requests.map((req) => (
-        <Card key={req.id} className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex flex-col gap-1">
-              <p className="text-body-primary text-slate-900">{req.title}</p>
-              <p className="text-desc-secondary">
-                Reported {formatPropertyDate(req.reportedAt)}
-                {req.reportedBy ? ` by ${req.reportedBy}` : ""}
+      <Card className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+        <div className="hidden sm:grid grid-cols-[1.8fr_1fr_auto_auto] gap-3 px-5 py-2.5 border-b border-slate-100 label-caps text-slate-400">
+          <span>Issue</span>
+          <span>Reported</span>
+          <span>Priority</span>
+          <span>Status</span>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {requests.map((req) => (
+            <div key={req.id} className="grid grid-cols-1 sm:grid-cols-[1.8fr_1fr_auto_auto] gap-1.5 sm:gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
+              <p className="text-body-primary text-slate-900 truncate sm:self-center">{req.title}</p>
+              <p className="text-body-regular text-slate-500 sm:self-center">
+                {formatPropertyDate(req.reportedAt)}
+                {req.reportedBy ? ` · ${req.reportedBy}` : ""}
               </p>
+              <div className="sm:self-center">
+                <PriorityPill priority={req.priority} />
+              </div>
+              <div className="sm:self-center">
+                <MaintenanceStatusPill status={req.status} />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <PriorityPill priority={req.priority} />
-              <MaintenanceStatusPill status={req.status} />
-            </div>
-          </div>
-        </Card>
-      ))}
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }

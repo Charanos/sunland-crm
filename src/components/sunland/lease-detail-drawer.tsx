@@ -5,10 +5,12 @@ import Link from "next/link";
 import {
   IconCalendar,
   IconClock,
+  IconEdit,
   IconEye,
   IconMail,
   IconMapPin,
   IconPhone,
+  IconRefresh,
   IconShield,
   IconTrash,
   IconBuildingCommunity,
@@ -61,6 +63,8 @@ export function LeaseDetailDrawer({
   onClose,
   canManage,
   onTerminate,
+  onEdit,
+  onRenew,
 }: {
   lease: Lease | null;
   open: boolean;
@@ -68,6 +72,8 @@ export function LeaseDetailDrawer({
   onClose: () => void;
   canManage: boolean;
   onTerminate: (id: string) => Promise<void> | void;
+  onEdit?: (lease: Lease) => void;
+  onRenew?: (lease: Lease) => void;
 }) {
   const [pendingTerminate, setPendingTerminate] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -120,18 +126,32 @@ export function LeaseDetailDrawer({
         title="Lease Details"
         width="32rem"
         footer={
-          <div className="flex items-center gap-2">
-            <Link href={`/admin/leases/${lease.id}`} className="flex-1">
-              <Button size="sm" className="w-full bg-[#151936] text-white hover:bg-[#151936]/90 h-9">
-                <IconEye size={14} />
-                Full View
-              </Button>
-            </Link>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Link href={`/admin/leases/${lease.id}`} className="flex-1">
+                <Button size="sm" className="w-full bg-[#151936] text-white hover:bg-[#151936]/90 h-9">
+                  <IconEye size={14} />
+                  Full View
+                </Button>
+              </Link>
+              {canManage && (
+                <Button variant="secondary" size="sm" onClick={() => onEdit?.(lease)} className="flex-1 h-9">
+                  <IconEdit size={14} />
+                  Edit
+                </Button>
+              )}
+            </div>
             {canManage && lease.isActive && (
-              <Button variant="danger" size="sm" onClick={() => setPendingTerminate(true)} className="flex-1 h-9 border-red-100 hover:border-red-200">
-                <IconTrash size={14} />
-                Terminate
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="secondary" size="sm" onClick={() => onRenew?.(lease)} className="flex-1 h-9">
+                  <IconRefresh size={14} />
+                  Renew
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => setPendingTerminate(true)} className="flex-1 h-9 border-red-100 hover:border-red-200">
+                  <IconTrash size={14} />
+                  Terminate
+                </Button>
+              </div>
             )}
           </div>
         }
@@ -170,7 +190,7 @@ export function LeaseDetailDrawer({
               <span className="mono-data text-slate-600 text-lg">
                 {lease.depositKes ? formatCompactKES(parseFloat(lease.depositKes)) : "N/A"}
               </span>
-              <p className="label-caps text-slate-400 mt-0.5">Deposit Held</p>
+              <p className="label-caps text-slate-400 mt-0.5">Deposit Held — refundable liability</p>
             </div>
           </div>
 

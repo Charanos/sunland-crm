@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { entities, timestamps, users } from "@/db/schema/platform";
 import { contacts } from "@/db/schema/crm";
-import { properties } from "@/db/schema/properties";
+import { properties, leases } from "@/db/schema/properties";
 
 export const documentType = pgEnum("document_type", [
   "mandate_letter",
@@ -38,6 +38,10 @@ export const documents = pgTable(
     // title deed or lease agreement belongs to one. Lets the property full
     // view list exactly its own documents instead of everything the owner has.
     propertyId: uuid("property_id").references(() => properties.id),
+    // Nullable — scopes lease-specific paperwork (the executed agreement,
+    // rent receipts) to one tenancy so renewing a lease doesn't drag the old
+    // tenancy's documents onto the new lease record.
+    leaseId: uuid("lease_id").references(() => leases.id),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
     ...timestamps,
   },
@@ -45,6 +49,7 @@ export const documents = pgTable(
     entityIdx: index("documents_entity_idx").on(table.entityId),
     ownerContactIdx: index("documents_owner_contact_idx").on(table.ownerContactId),
     propertyIdx: index("documents_property_idx").on(table.propertyId),
+    leaseIdx: index("documents_lease_idx").on(table.leaseId),
     typeIdx: index("documents_type_idx").on(table.type),
   }),
 );
