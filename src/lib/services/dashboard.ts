@@ -46,6 +46,16 @@ function toNumber(value: string | null): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
+function getParsedDate(val: unknown): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) return val;
+  try {
+    const d = new Date(val as string | number);
+    return isNaN(d.getTime()) ? null : d;
+  } catch {}
+  return null;
+}
+
 /** Sunland's own earned revenue for a set of transactions - never gross rent collected. */
 function computeIncome(rows: TransactionRow[]): number {
   return rows.reduce((sum, t) => {
@@ -72,7 +82,9 @@ function inRange<T extends { occurredAt: Date } | { createdAt: Date }>(
   end?: Date,
 ): T[] {
   return rows.filter((r) => {
-    const value = (r as unknown as Record<string, Date>)[field];
+    const rawVal = (r as unknown as Record<string, unknown>)[field];
+    const value = getParsedDate(rawVal);
+    if (!value) return false;
     return value >= start && (!end || value < end);
   });
 }
@@ -171,10 +183,14 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
   const totalProperties = allProperties.length;
   const occupiedProperties = allProperties.filter((p) => p.status === "occupied").length;
   const occupancyRate = totalProperties > 0 ? Math.round((occupiedProperties / totalProperties) * 100) : 0;
-  const propertiesThisMonth = allProperties.filter((p) => p.createdAt >= startOfThisMonth).length;
-  const propertiesLastMonth = allProperties.filter(
-    (p) => p.createdAt >= startOfLastMonth && p.createdAt < startOfThisMonth,
-  ).length;
+  const propertiesThisMonth = allProperties.filter((p) => {
+    const d = getParsedDate(p.createdAt);
+    return d ? d >= startOfThisMonth : false;
+  }).length;
+  const propertiesLastMonth = allProperties.filter((p) => {
+    const d = getParsedDate(p.createdAt);
+    return d ? d >= startOfLastMonth && d < startOfThisMonth : false;
+  }).length;
   const totalPropertiesTrend = percentChange(propertiesThisMonth, propertiesLastMonth);
 
   let rentPool = 0;
@@ -192,16 +208,27 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
 
   // ── CRM / Pipeline (leads) ──
   const closedWon = allLeads.filter((l) => l.stage === "closed_won");
-  const closedWonThisMonth = closedWon.filter((l) => l.closedAt && l.closedAt >= startOfThisMonth);
-  const closedWonLastMonth = closedWon.filter(
-    (l) => l.closedAt && l.closedAt >= startOfLastMonth && l.closedAt < startOfThisMonth,
-  );
+  const closedWonThisMonth = closedWon.filter((l) => {
+    const d = getParsedDate(l.closedAt);
+    return d ? d >= startOfThisMonth : false;
+  });
+  const closedWonLastMonth = closedWon.filter((l) => {
+    const d = getParsedDate(l.closedAt);
+    return d ? d >= startOfLastMonth && d < startOfThisMonth : false;
+  });
   const activePipeline = allLeads.filter((l) => l.stage !== "closed_won" && l.stage !== "closed_lost");
-  const newLeadsThisMonth = allLeads.filter((l) => l.createdAt >= startOfThisMonth);
-  const newLeadsLastMonth = allLeads.filter(
-    (l) => l.createdAt >= startOfLastMonth && l.createdAt < startOfThisMonth,
-  );
-  const propertyInquiriesThisWeek = allLeads.filter((l) => l.createdAt >= startOfThisWeek);
+  const newLeadsThisMonth = allLeads.filter((l) => {
+    const d = getParsedDate(l.createdAt);
+    return d ? d >= startOfThisMonth : false;
+  });
+  const newLeadsLastMonth = allLeads.filter((l) => {
+    const d = getParsedDate(l.createdAt);
+    return d ? d >= startOfLastMonth && d < startOfThisMonth : false;
+  });
+  const propertyInquiriesThisWeek = allLeads.filter((l) => {
+    const d = getParsedDate(l.createdAt);
+    return d ? d >= startOfThisWeek : false;
+  });
   const conversionRate = allLeads.length > 0 ? Math.round((closedWon.length / allLeads.length) * 1000) / 10 : 0;
 
   // ── Department stats (Internal Structure & Scheduler panel) ──
@@ -213,7 +240,10 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
   ).length;
   const activeLeaseCount = allLeases.filter((l) => l.isActive).length;
   const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const expiringLeases30d = allLeases.filter((l) => l.isActive && l.endsAt >= now && l.endsAt <= in30Days).length;
+  const expiringLeases30d = allLeases.filter((l) => {
+    const ends = getParsedDate(l.endsAt);
+    return l.isActive && ends && ends >= now && ends <= in30Days;
+  }).length;
   const departmentStats = {
     sales: activePipeline.length,
     ops: openMaintenanceCount,
