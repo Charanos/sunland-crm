@@ -434,7 +434,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconBuilding size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Active Mandates</span>
+            <span className="text-slate-400 label-caps">Active Mandates</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
@@ -453,7 +453,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
               <IconCoins size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Management Fees</span>
+            <span className="text-slate-400 label-caps">Management Fees</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-indigo-700 text-3xl">
@@ -472,7 +472,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconReportMoney size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Remittance Payout</span>
+            <span className="text-slate-400 label-caps">Remittance Payout</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-emerald-700 text-3xl">
@@ -491,7 +491,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
               <IconScale size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Pending Payout</span>
+            <span className="text-slate-400 label-caps">Pending Payout</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-amber-700 text-3xl">
@@ -510,7 +510,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <p className="mt-1 leading-relaxed text-desc-secondary">Summary of how collected rent is split between company management fees, utility/maintenance deductions, and net landlord disbursements.</p>
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="rounded-xl border border-slate-200/60 bg-gradient-to-b from-slate-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-slate-300">
-                <span className="text-slate-500 label-caps">Total Collected Rent</span>
+                <span className="text-slate-400 label-caps">Total Collected Rent</span>
                 <p className="tracking-tight text-slate-900 mt-2 mono-stat">KES {financialSplitTotals.collected.toLocaleString()}</p>
               </div>
               <div className="rounded-xl border border-indigo-200/60 bg-gradient-to-b from-indigo-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-indigo-300">
@@ -634,7 +634,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                             "px-5 py-3.5 text-right font-mono text-sm font-medium",
                             deductions > 0 ? "text-amber-700 bg-amber-50/30" : "text-slate-400"
                           )}>
-                            {deductions > 0 ? `KES ${deductions.toLocaleString()}` : "—"}
+                            {deductions > 0 ? `KES ${deductions.toLocaleString()}` : "-"}
                           </td>
                         )}
                         {activeTab !== "draft" && (
@@ -884,7 +884,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             {/* Split statistics */}
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <h4 className="font-medium text-slate-800 mb-2 leading-tight text-label">{selectedMandate.propertyName}</h4>
-              <p className="text-slate-500 uppercase tracking-wide mono-data">Owner: {selectedMandate.landlordName}</p>
+              <p className="text-slate-400 uppercase tracking-wide mono-data">Owner: {selectedMandate.landlordName}</p>
 
               <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-sm">
                 <div className="flex justify-between py-1 border-b border-slate-100/60">
@@ -955,8 +955,8 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
                   <span className="font-medium text-slate-800">{selectedMandate.landlordName}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-slate-500">{selectedMandate.landlordPhone}</span>
-                  <span className="text-slate-500">{selectedMandate.landlordEmail}</span>
+                  <span className="font-mono text-sm text-slate-400">{selectedMandate.landlordPhone}</span>
+                  <span className="text-slate-400">{selectedMandate.landlordEmail}</span>
                 </div>
               </div>
             </div>

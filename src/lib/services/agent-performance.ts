@@ -24,7 +24,7 @@ export type AgentPerformanceRow = {
   conversionRate: number;
 };
 
-/** Same visibility as the CRM board itself — crm.lead.read is already the coarse, team-wide grant. */
+/** Same visibility as the CRM board itself - crm.lead.read is already the coarse, team-wide grant. */
 export async function getAgentPerformance(ctx: CallerContext): Promise<AgentPerformanceRow[]> {
   const entityId = await resolveEntityId(ctx.entityId || "group");
   await authorize(ctx, "crm.lead.read", entityId);

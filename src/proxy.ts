@@ -1,5 +1,5 @@
 /**
- * Next.js 16 Edge Proxy — Route Guards
+ * Next.js 16 Edge Proxy - Route Guards
  *
  * This file (proxy.ts) is the Next.js 16 successor to middleware.ts.
  * In Next.js 16.2+, `proxy.ts` replaces `middleware.ts` as the edge

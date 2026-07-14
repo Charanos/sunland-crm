@@ -109,13 +109,13 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
     Promise.resolve().then(() => {
       loadProjects();
       // Assignee picker is scoped to group-level staff (department heads and
-      // above) — the realistic owners of a cross-department initiative.
+      // above) - the realistic owners of a cross-department initiative.
       fetch(`/api/identity/users?entityId=group`)
         .then((r) => r.json())
         .then((data) => {
           if (Array.isArray(data.users)) setStaff(data.users);
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [loadProjects]);
 
@@ -205,7 +205,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
       <BoardHeader
         eyebrow={<Badge tone="data">Operations</Badge>}
         title="Projects"
-        description="Cross-department initiatives — recruitment drives, escrow clearances, safety audits, and everything else that spans more than one desk."
+        description="Cross-department initiatives - recruitment drives, escrow clearances, safety audits, and everything else that spans more than one desk."
         actions={
           <Button size="sm" onClick={openCreateModal}>
             <IconPlus size={14} /> New Project
@@ -235,7 +235,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
           </Link>
           <Link
             href="/admin/events"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Events</span>
           </Link>
@@ -255,7 +255,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
           onClick={() => setDepartmentFilter("all")}
           className={cn(
             "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all",
-            departmentFilter === "all" ? "bg-[#151936] text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200/60",
+            departmentFilter === "all" ? "bg-[#151936] text-white shadow-sm" : "bg-slate-100 text-slate-400 hover:bg-slate-200/60",
           )}
         >
           All
@@ -267,7 +267,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
             onClick={() => setDepartmentFilter(d.value)}
             className={cn(
               "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all",
-              departmentFilter === d.value ? "bg-[#151936] text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200/60",
+              departmentFilter === d.value ? "bg-[#151936] text-white shadow-sm" : "bg-slate-100 text-slate-400 hover:bg-slate-200/60",
             )}
           >
             {d.label}
@@ -300,7 +300,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
                   <div className="min-w-0">
                     <h3 className="text-body-primary text-slate-900 truncate">{project.title}</h3>
                     {project.description && (
-                      <p className="text-body-regular text-slate-500 mt-1 line-clamp-2">{project.description}</p>
+                      <p className="text-body-regular text-slate-400 mt-1 line-clamp-2">{project.description}</p>
                     )}
                   </div>
                   <button
@@ -356,7 +356,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
       >
         <div className="space-y-4">
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Title</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Title</label>
             <input
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.title}
@@ -366,7 +366,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Description</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Description</label>
             <textarea
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 resize-none h-20 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.description}
@@ -377,7 +377,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Department</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Department</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                 value={form.department}
@@ -389,7 +389,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
               </select>
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Status</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Status</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                 value={form.status}
@@ -404,7 +404,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Progress % (if in progress)</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Progress % (if in progress)</label>
               <input
                 type="number"
                 min={0}
@@ -415,7 +415,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
               />
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Due Date</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Due Date</label>
               <input
                 type="date"
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
@@ -426,7 +426,7 @@ export function ProjectsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Assignees</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Assignees</label>
             <div className="flex flex-wrap gap-1.5">
               {staff.map((user) => {
                 const selected = form.assigneeIds.includes(user.id);

@@ -12,7 +12,7 @@ import {
  * SUNLAND_BACKEND_ARCHITECTURE_MASTER.md §5.3 ("align property_type to
  * Sunland.co.ke designations"). `propertyType` on the API payload is kept as
  * `string` in the Property type below so legacy/unaligned rows don't break
- * rendering — the table falls back to the raw string as a label if it
+ * rendering - the table falls back to the raw string as a label if it
  * doesn't match one of these five.
  */
 export type PropertyType = "Apartment" | "Commercial" | "House" | "Land" | "Villa";
@@ -24,6 +24,30 @@ export const PROPERTY_TYPES: PropertyType[] = [
   "Land",
   "Villa",
 ];
+
+export const AMENITIES_LIST = [
+  "Swimming Pool",
+  "Gym / Fitness Center",
+  "Backup Generator",
+  "Borehole Water Supply",
+  "High-Speed Elevators",
+  "24/7 Security",
+  "CCTV Surveillance",
+  "Ample Parking",
+  "Children's Play Area",
+  "Clubhouse",
+  "Fitted Kitchen",
+  "Balcony",
+  "Electric Fence",
+  "Servant Quarters (DSQ)",
+  "Solar Water Heating",
+  "Internet / Fiber Ready",
+  "Garden / Landscaping",
+  "Paved Driveway",
+  "Commercial Zoning",
+  "Office Partitioning",
+  "Boundary Wall",
+] as const;
 
 export const PROPERTY_TYPE_ICON: Record<
   PropertyType,
@@ -65,7 +89,7 @@ export const STATUS_ORDER: PropertyStatus[] = [
 
 /**
  * Colors are drawn only from the Terrain Identity semantic palette
- * (TERRAIN_IDENTITY_FOUNDATION.md) — emerald/rose/amber/slate. No new
+ * (TERRAIN_IDENTITY_FOUNDATION.md) - emerald/rose/amber/slate. No new
  * module-specific color is introduced, per that doc's explicit rule.
  */
 export const STATUS_CONFIG: Record<
@@ -74,14 +98,14 @@ export const STATUS_CONFIG: Record<
 > = {
   available: {
     label: "Available",
-    dot: "bg-slate-400",
-    pill: "bg-slate-100 text-slate-600 border-slate-200",
+    dot: "bg-emerald-500",
+    pill: "bg-emerald-500/12 text-emerald-800 border-emerald-300/60",
     description: "Vacant and ready to market",
   },
   occupied: {
     label: "Occupied",
-    dot: "bg-emerald-500",
-    pill: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60",
+    dot: "bg-slate-900",
+    pill: "bg-white text-slate-900 border-slate-200 shadow-[0_2px_8px_rgb(0,0,0,0.08)]",
     description: "Under an active lease or sale agreement",
   },
   under_offer: {
@@ -108,7 +132,7 @@ export type MandateStatus = "draft" | "pending_approval" | "active" | "terminate
 
 /**
  * Colors mirror STATUS_CONFIG's semantic palette. Labels are the generic
- * glance-able form ("Pending") — the full-view board's own MandateStatusPill
+ * glance-able form ("Pending") - the full-view board's own MandateStatusPill
  * overrides "Pending" with the approver-specific "Pending GM"/"Pending CEO"
  * where it has that extra data.
  */
@@ -131,16 +155,30 @@ export type Property = {
   status: PropertyStatus;
   location: string;
   ownerContactId: string | null;
-  /** Optional joined display name — falls back to ownerContactId, then "Unassigned". */
+  /** Optional joined display name - falls back to ownerContactId, then "Unassigned". */
   ownerName?: string | null;
-  owner?: { name?: string | null; phone?: string | null; email?: string | null } | null;
+  owner?: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    company?: string | null;
+    idNumber?: string | null;
+    verifiedAt?: string | null;
+    clientSince?: string | null;
+  } | null;
   askingPriceKes: string | null;
   monthlyRentKes: string | null;
   bedrooms: number | null;
   bathrooms: number | null;
   sizeSqft: number | null;
+  landAreaSqft?: number | null;
+  yearBuilt?: number | null;
+  parkingSpaces?: number | null;
+  amenities?: string[] | null;
+  description?: string | null;
+  unitBreakdown?: Array<{ unitType: string; count: number; monthlyRentKes?: string | null }> | null;
   /**
-   * Optional — only rendered if present. Maps to property_mandates.status
+   * Optional - only rendered if present. Maps to property_mandates.status
    * (SUNLAND_ERP_IMPLEMENTATION_SPEC.md §5.4) once a landlord mandate is
    * linked. Absent/undefined means "not under a Sunland management mandate"
    * and the field is simply not shown.
@@ -153,9 +191,9 @@ export type Property = {
 };
 
 export function formatPropertyDate(value?: string | null): string {
-  if (!value) return "—";
+  if (!value) return "-";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "-";
   return new Intl.DateTimeFormat("en-KE", {
     day: "2-digit",
     month: "short",

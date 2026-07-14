@@ -130,7 +130,7 @@ export function LandlordNav() {
             <button
               type="button"
               onClick={() => setIsAccountOpen((v) => !v)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-slate-500 text-base hover:bg-slate-50 hover:text-slate-700 transition-colors"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-slate-400 text-base hover:bg-slate-50 hover:text-slate-700 transition-colors"
             >
               <IconUserCircle size={17} stroke={1.5} className="text-slate-400 shrink-0" />
               <span className="flex-1 text-left">Account</span>
@@ -152,7 +152,7 @@ export function LandlordNav() {
                         "flex h-9 items-center gap-2.5 rounded-lg px-3 text-base transition-colors",
                         isActive
                           ? "bg-slate-100 text-slate-900"
-                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-800",
+                          : "text-slate-400 hover:bg-slate-50 hover:text-slate-800",
                       )}
                     >
                       <ItemIcon size={15} stroke={1.5} className="shrink-0 opacity-60" aria-hidden />
@@ -179,7 +179,7 @@ export function LandlordNav() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-base text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-base text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
           >
             <IconLogout size={14} aria-hidden />
             Sign out
@@ -200,7 +200,7 @@ export function LandlordNav() {
         <button
           type="button"
           onClick={() => setIsAccountOpen((v) => !v)}
-          className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+          className="flex size-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
           aria-label="Account menu"
         >
           <IconUserCircle size={20} />

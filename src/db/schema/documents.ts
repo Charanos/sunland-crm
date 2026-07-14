@@ -18,7 +18,7 @@ export const documentType = pgEnum("document_type", [
   "statement",
   "title_deed",
   "identification",
-  // Landlord-side offer-letter equivalent (ADR 014 §14.1) — uploadable today
+  // Landlord-side offer-letter equivalent (ADR 014 §14.1) - uploadable today
   // via the generic documents API even though the Front Office workflow that
   // would normally formalize/track it isn't built.
   "offer_letter",
@@ -34,11 +34,11 @@ export const documents = pgTable(
     fileUrl: text("file_url").notNull(),
     uploadedById: uuid("uploaded_by_id").references(() => users.id).notNull(),
     ownerContactId: uuid("owner_contact_id").references(() => contacts.id),
-    // Nullable — owner-level paperwork (ID, statements) has no property; a
+    // Nullable - owner-level paperwork (ID, statements) has no property; a
     // title deed or lease agreement belongs to one. Lets the property full
     // view list exactly its own documents instead of everything the owner has.
     propertyId: uuid("property_id").references(() => properties.id),
-    // Nullable — scopes lease-specific paperwork (the executed agreement,
+    // Nullable - scopes lease-specific paperwork (the executed agreement,
     // rent receipts) to one tenancy so renewing a lease doesn't drag the old
     // tenancy's documents onto the new lease record.
     leaseId: uuid("lease_id").references(() => leases.id),

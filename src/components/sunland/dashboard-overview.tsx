@@ -366,7 +366,7 @@ export function DashboardOverview({
 
   // PropertyFormModal now owns its own POST/PATCH call for both create and
   // edit (previously this component made a *second*, redundant PATCH on
-  // every edit — the modal itself always POSTed regardless of mode, so
+  // every edit - the modal itself always POSTed regardless of mode, so
   // editing a property silently created a duplicate via POST while this
   // handler separately PATCHed the original). This is just the post-success
   // refresh now.
@@ -449,7 +449,7 @@ export function DashboardOverview({
               onClick={handleRefresh}
               disabled={isRefreshing}
               className={cn(
-                "flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow",
+                "flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-slate-800 transition-colors bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow",
                 isRefreshing && "opacity-60",
               )}
               aria-label="Refresh dashboard"
@@ -502,7 +502,7 @@ export function DashboardOverview({
               ? "Residential Portfolio Command"
               : "Real Estate Management Command"}
         </h1>
-        <p className="text-base text-slate-500 max-w-3xl leading-relaxed mt-1">
+        <p className="text-base text-slate-400 max-w-3xl leading-relaxed mt-1">
           Monitor transactional metrics, manage dynamic property listings,
           evaluate sales analytics pipelines, and coordinate operational tasks
           from this unified command center.
@@ -887,7 +887,7 @@ export function DashboardOverview({
         <h2 className="title-serif text-slate-900">
           Operational Analytics & Insights
         </h2>
-        <p className="text-base text-slate-500 font-medium tracking-wide mt-1">
+        <p className="text-base text-slate-400 font-medium tracking-wide mt-1">
           Deep-dive into revenue trends and core performance metrics.
         </p>
       </div>
@@ -914,7 +914,7 @@ export function DashboardOverview({
                         "body-sm px-3.5 py-1.5 rounded-lg transition-all capitalize",
                         chartPeriod === p
                           ? "bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] text-slate-900"
-                          : "text-slate-500 hover:text-slate-700",
+                          : "text-slate-400 hover:text-slate-700",
                       )}
                     >
                       This {p}
@@ -932,7 +932,7 @@ export function DashboardOverview({
                           "body-sm px-4 py-1.5 rounded-lg transition-all",
                           chartFilter === f
                             ? "bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] text-slate-900"
-                            : "text-slate-500 hover:text-slate-700",
+                            : "text-slate-400 hover:text-slate-700",
                         )}
                       >
                         {f === "all" ? "All" : f}
@@ -1047,7 +1047,7 @@ export function DashboardOverview({
 
         {/* Stats Column */}
         <div className="xl:col-span-4 flex flex-col gap-4 gsap-stagger">
-          {/* Sales Statistic — KES */}
+          {/* Sales Statistic - KES */}
           <Link href="/fin" className="block flex-1 group/card">
             <div className="p-6 bg-white rounded-[24px] sm:rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 h-full relative overflow-hidden min-h-[140px]">
               <div className="absolute top-0 right-0 p-6 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 translate-x-2 group-hover/card:translate-x-0 group-hover/card:-translate-y-1">
@@ -1103,7 +1103,7 @@ export function DashboardOverview({
             </div>
           </Link>
 
-          {/* Site Inquiries — CRM Relevant */}
+          {/* Site Inquiries - CRM Relevant */}
           <div className="p-6 bg-white rounded-[24px] sm:rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 flex-1 min-h-[140px] group/card relative overflow-hidden">
             <div className="flex items-center justify-between mb-4 relative z-10">
               <h3 className="text-title-primary">Site Inquiries</h3>
@@ -1129,7 +1129,7 @@ export function DashboardOverview({
             </div>
           </div>
 
-          {/* New Leads — CRM Relevant */}
+          {/* New Leads - CRM Relevant */}
           <Link href="/admin/pipeline" className="block flex-1 group/card">
             <div className="p-6 bg-white rounded-[24px] sm:rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col justify-between hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 h-full relative overflow-hidden min-h-[140px]">
               <div className="flex items-center justify-between mb-4 relative z-10">
@@ -1214,7 +1214,7 @@ export function DashboardOverview({
                           "body-sm px-3.5 py-1.5 rounded-md transition-all tracking-wide capitalize",
                           activeTab === tab
                             ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-slate-800 font-medium"
-                            : "text-slate-500 hover:text-slate-700",
+                            : "text-slate-400 hover:text-slate-700",
                         )}
                       >
                         {tab === "activity"
@@ -1344,10 +1344,10 @@ export function DashboardOverview({
                                   {listing.name}
                                 </button>
                               </td>
-                              <td className="py-3 px-2 text-slate-500 font-medium text-base">
+                              <td className="py-3 px-2 text-slate-400 font-medium text-base">
                                 {listing.location}
                               </td>
-                              <td className="py-3 px-2 text-slate-500 font-medium text-base">
+                              <td className="py-3 px-2 text-slate-400 font-medium text-base">
                                 {listing.type}
                               </td>
                               <td className="py-3 px-2">
@@ -1435,7 +1435,7 @@ export function DashboardOverview({
                                   size={28}
                                   className="text-slate-300"
                                 />
-                                <p className="text-base text-slate-500 font-medium">
+                                <p className="text-base text-slate-400 font-medium">
                                   No properties match your search.
                                 </p>
                                 <button
@@ -1523,7 +1523,7 @@ export function DashboardOverview({
                                   setPropertyModalMode("edit");
                                   setPropertyModalOpen(true);
                                 }}
-                                className="text-xs text-slate-500 hover:text-slate-700 border border-slate-200 p-1.5 rounded-lg transition-colors"
+                                className="text-xs text-slate-400 hover:text-slate-700 border border-slate-200 p-1.5 rounded-lg transition-colors"
                                 aria-label="Edit"
                               >
                                 <IconEdit size={14} />
@@ -1547,7 +1547,7 @@ export function DashboardOverview({
                           size={28}
                           className="text-slate-300 mx-auto mb-2"
                         />
-                        <p className="text-sm text-slate-500 font-medium">
+                        <p className="text-sm text-slate-400 font-medium">
                           No properties match your search.
                         </p>
                       </div>
@@ -1571,7 +1571,7 @@ export function DashboardOverview({
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="size-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       aria-label="Previous page"
                     >
                       <IconChevronLeft size={16} />
@@ -1585,7 +1585,7 @@ export function DashboardOverview({
                             "size-8 flex items-center justify-center rounded-lg text-base font-medium transition-colors",
                             p === currentPage
                               ? "bg-[#151936] text-white"
-                              : "text-slate-500 hover:bg-slate-100",
+                              : "text-slate-400 hover:bg-slate-100",
                           )}
                         >
                           {p}
@@ -1597,7 +1597,7 @@ export function DashboardOverview({
                         setCurrentPage((p) => Math.min(totalPages, p + 1))
                       }
                       disabled={currentPage === totalPages}
-                      className="size-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       aria-label="Next page"
                     >
                       <IconChevronRight size={16} />
@@ -1627,7 +1627,7 @@ export function DashboardOverview({
                       {i < (stats?.activityLogs || []).length - 1 && (
                         <div className="absolute left-[15px] top-[36px] bottom-0 w-px bg-slate-100" />
                       )}
-                      <div className="size-[30px] rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 z-10 text-slate-500 shadow-sm">
+                      <div className="size-[30px] rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 z-10 text-slate-400 shadow-sm">
                         <LogIcon size={14} stroke={2} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1644,7 +1644,7 @@ export function DashboardOverview({
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <IconActivity size={28} className="text-slate-300 mb-2" />
-                  <p className="text-base text-slate-500 font-medium">
+                  <p className="text-base text-slate-400 font-medium">
                     No recent logs recorded.
                   </p>
                 </div>
@@ -1689,7 +1689,7 @@ export function DashboardOverview({
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <IconReceipt size={28} className="text-slate-300 mb-2" />
-                  <p className="text-base text-slate-500 font-medium">
+                  <p className="text-base text-slate-400 font-medium">
                     No recent transactions.
                   </p>
                 </div>
@@ -1839,7 +1839,7 @@ export function DashboardOverview({
                     </div>
                   </div>
                   <div className="pt-5 border-t border-white/10">
-                    <p className="label-caps text-slate-500 mb-2.5">
+                    <p className="label-caps text-slate-400 mb-2.5">
                       Last Threshold Update
                     </p>
                     <div className="flex items-center gap-2 text-slate-300 text-xs uppercase tracking-wider mono-data bg-white/5 px-3 py-1.5 rounded-md border border-white/5 w-fit">
@@ -1957,7 +1957,7 @@ export function DashboardOverview({
         onClose={() => setDrawerProperty(null)}
         // Map the dashboard-local PropertyListing shape to the drawer's Property contract.
         // The drawer accesses: id, name, location, propertyType, listingType, status, isFeatured, media.
-        // PropertyListing only carries {id,name,location,type,status,roi,price,imageUrl} — we
+        // PropertyListing only carries {id,name,location,type,status,roi,price,imageUrl} - we
         // shim the rest with safe defaults so nothing renders broken.
         property={drawerProperty ? {
           id: drawerProperty.id,

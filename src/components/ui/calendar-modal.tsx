@@ -37,7 +37,7 @@ const EVENT_COLORS: Record<string, { dot: string; border: string; text: string; 
 
 // This widget's own type vocabulary (meeting/viewing/deadline/other) is more
 // generic than the real calendar_events enum (internal/external/legal/
-// maintenance) — mapped 1:1 to the closest real member rather than
+// maintenance) - mapped 1:1 to the closest real member rather than
 // redesigning the quick-add form. The full Events page offers the real
 // vocabulary directly.
 type QuickEventType = "meeting" | "viewing" | "deadline" | "other";
@@ -328,7 +328,7 @@ export function CalendarModal({
                           <p className="body-sm text-slate-400 mt-1 mono-data">
                             {format(new Date(ev.startsAt), "h:mm a")}
                           </p>
-                          {ev.description && <p className="body-sm text-slate-500 mt-2 bg-slate-50 p-2 rounded-lg border border-slate-100/50">{ev.description}</p>}
+                          {ev.description && <p className="body-sm text-slate-400 mt-2 bg-slate-50 p-2 rounded-lg border border-slate-100/50">{ev.description}</p>}
                         </div>
                         <IconButton size="sm" className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-50 hover:text-red-600 transition shrink-0 ml-2" onClick={() => handleDeleteEvent(ev.id)}>
                           <IconTrash size={16} />

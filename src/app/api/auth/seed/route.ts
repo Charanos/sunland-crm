@@ -249,12 +249,12 @@ export async function POST() {
       ])
       .returning();
 
-    // 5b. Create pipeline leads — mirrors src/db/seed.ts (see comment there).
+    // 5b. Create pipeline leads - mirrors src/db/seed.ts (see comment there).
     const daysAgo = (n: number) => new Date(Date.now() - n * 86400000);
     await db.insert(leads).values([
       {
         entityId: groupEntity.id,
-        title: "3BR Apartment Inquiry — Kilimani",
+        title: "3BR Apartment Inquiry - Kilimani",
         stage: "inquiry",
         assignedToId: lineManagerUser.id,
         expectedValueKes: "14000000.00",
@@ -263,7 +263,7 @@ export async function POST() {
       },
       {
         entityId: groupEntity.id,
-        title: "Office Space Lease — Westlands",
+        title: "Office Space Lease - Westlands",
         stage: "qualification",
         propertyId: propComm.id,
         assignedToId: lineManagerUser.id,
@@ -273,7 +273,7 @@ export async function POST() {
       },
       {
         entityId: groupEntity.id,
-        title: "Villa Purchase — Karen",
+        title: "Villa Purchase - Karen",
         stage: "viewing",
         assignedToId: lineManagerUser.id,
         expectedValueKes: "62000000.00",
@@ -282,7 +282,7 @@ export async function POST() {
       },
       {
         entityId: groupEntity.id,
-        title: "Retail Unit — CBD",
+        title: "Retail Unit - CBD",
         stage: "offer",
         assignedToId: lineManagerUser.id,
         expectedValueKes: "9500000.00",
@@ -291,7 +291,7 @@ export async function POST() {
       },
       {
         entityId: groupEntity.id,
-        title: "Land Sale — Ruiru",
+        title: "Land Sale - Ruiru",
         stage: "negotiation",
         assignedToId: lineManagerUser.id,
         expectedValueKes: "18000000.00",

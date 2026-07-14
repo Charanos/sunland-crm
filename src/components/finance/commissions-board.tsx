@@ -598,7 +598,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
         {/* Right Column: 2x2 KPI Grid */}
         <div className="grid grid-cols-2 gap-3">
           <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-emerald-250 bg-gradient-to-b from-white to-emerald-50/10">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-slate-400">
               <IconCoins size={15} className="text-emerald-500" />
               <span className="body-sm font-medium uppercase tracking-wider">Closed Deals</span>
             </div>
@@ -611,7 +611,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
           </BoardPanel>
 
           <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-amber-250 bg-gradient-to-b from-white to-amber-50/10">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-slate-400">
               <IconReceipt2 size={15} className="text-amber-500" />
               <span className="body-sm font-medium uppercase tracking-wider">Accrued WHT</span>
             </div>
@@ -624,7 +624,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
           </BoardPanel>
 
           <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-indigo-250 bg-gradient-to-b from-white to-indigo-50/10">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-slate-400">
               <IconTimeline size={15} className="text-indigo-500" />
               <span className="body-sm font-medium uppercase tracking-wider">AHL Compliance</span>
             </div>
@@ -637,7 +637,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
           </BoardPanel>
 
           <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-teal-250 bg-gradient-to-b from-white to-teal-50/10">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-slate-400">
               <IconCoins size={15} className="text-teal-600" />
               <span className="body-sm font-medium uppercase tracking-wider">Total Commissions</span>
             </div>
@@ -732,7 +732,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                         <h4 className="body-md font-medium text-slate-900 leading-snug truncate">
                           {deal.propertyName}
                         </h4>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
                           <IconUser size={13} className="text-slate-405" />
                           <span>{deal.agentName}</span>
                           <span className="text-slate-300">•</span>
@@ -965,7 +965,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
         {selectedDeal && (
           <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/50">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100/50">
                 <IconCoins size={20} />
               </div>
               <div>
@@ -991,7 +991,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                   <p className="font-mono text-4xl font-normal text-slate-900 leading-none mt-1">
                     {formatMoney(selectedDeal.netPayout)}
                   </p>
-                  <p className="body-sm text-slate-500 font-mono mt-1">Accrued from Gross: {formatMoney(selectedDeal.grossPayout)}</p>
+                  <p className="body-sm text-slate-400 font-mono mt-1">Accrued from Gross: {formatMoney(selectedDeal.grossPayout)}</p>
                 </div>
 
                 <div className="space-y-2 border-t border-slate-200/50 pt-3 body-sm text-slate-550 font-sans">
@@ -1063,7 +1063,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                 <span className="body-sm text-slate-400 uppercase tracking-wider font-medium font-sans">Deal Filing Logs</span>
                 <div className="mt-2 space-y-2 font-mono body-sm">
                   {selectedDeal.activityLog.map((log, idx) => (
-                    <div key={idx} className="flex gap-2 text-slate-500 leading-normal">
+                    <div key={idx} className="flex gap-2 text-slate-400 leading-normal">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
                       <p>{log}</p>
                     </div>
@@ -1199,7 +1199,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                 <span className="body-sm text-slate-400 uppercase tracking-wider font-medium">Activity Logs</span>
                 <div className="mt-2 space-y-2 font-mono body-sm">
                   {selectedWht.activityLog.map((log, idx) => (
-                    <div key={idx} className="flex gap-2 text-slate-500 leading-normal">
+                    <div key={idx} className="flex gap-2 text-slate-400 leading-normal">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
                       <p>{log}</p>
                     </div>
@@ -1344,7 +1344,7 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
                 <span className="body-sm text-slate-400 uppercase tracking-wider font-medium">Activity Logs</span>
                 <div className="mt-2 space-y-2 font-mono body-sm">
                   {selectedLevy.activityLog.map((log, idx) => (
-                    <div key={idx} className="flex gap-2 text-slate-500 leading-normal">
+                    <div key={idx} className="flex gap-2 text-slate-400 leading-normal">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
                       <p>{log}</p>
                     </div>

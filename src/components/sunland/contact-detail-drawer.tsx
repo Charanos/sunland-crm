@@ -81,7 +81,7 @@ export function ContactDetailDrawer({
       case "email": return <IconMail size={14} className="text-purple-500" />;
       case "meeting": return <IconCalendarEvent size={14} className="text-amber-500" />;
       case "message": return <IconMessageCircle size={14} className="text-emerald-500" />;
-      default: return <IconActivity size={14} className="text-slate-500" />;
+      default: return <IconActivity size={14} className="text-slate-400" />;
     }
   };
 
@@ -168,14 +168,14 @@ export function ContactDetailDrawer({
               "p-3 rounded-xl border",
               contactData.financials.arrears > 0 ? "bg-rose-50/40 border-rose-100" : "bg-slate-50/50 border-slate-100"
             )}>
-              <span className={cn("text-sm font-medium block mb-1", contactData.financials.arrears > 0 ? "text-rose-700" : "text-slate-500")}>Arrears (KES)</span>
+              <span className={cn("text-sm font-medium block mb-1", contactData.financials.arrears > 0 ? "text-rose-700" : "text-slate-400")}>Arrears (KES)</span>
               <span className={cn("text-[18px] font-medium font-mono tracking-tight leading-none", contactData.financials.arrears > 0 ? "text-rose-800" : "text-slate-700")}>
                 {formatKES(contactData.financials.arrears)}
               </span>
             </div>
           </div>
           <div className="mt-3 bg-slate-50 border border-slate-100 rounded-xl p-3 flex justify-between items-center body-sm">
-            <span className="text-slate-500 font-medium">Estimated Portfolio Value</span>
+            <span className="text-slate-400 font-medium">Estimated Portfolio Value</span>
             <span className="font-mono font-medium text-slate-800">
               {formatKES(contactData.financials.portfolioValue || 0)}
             </span>
@@ -253,7 +253,7 @@ export function ContactDetailDrawer({
                       <span className="text-sm  text-slate-400 font-mono">{log.date}</span>
                     </div>
                     {log.details && (
-                      <p className="text-base text-slate-500 leading-relaxed mt-1">
+                      <p className="text-base text-slate-400 leading-relaxed mt-1">
                         {log.details}
                       </p>
                     )}

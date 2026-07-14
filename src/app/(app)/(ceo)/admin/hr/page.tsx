@@ -61,7 +61,7 @@ export default function HRPortalPage() {
         <div>
           <p className="label-caps text-[var(--on-surface-dim)] mb-1">People Operations</p>
           <h1 className="title-serif mt-2 text-slate-900">HR Portal</h1>
-          <p className="body-sm text-slate-500 mt-1">Manage your workforce, payroll, attendance, and HR operations.</p>
+          <p className="body-sm text-slate-400 mt-1">Manage your workforce, payroll, attendance, and HR operations.</p>
         </div>
         <button type="button"
           className="flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-caption text-[var(--on-primary)] shadow-sm hover:brightness-95 transition-all">
@@ -87,14 +87,14 @@ export default function HRPortalPage() {
                 const LinkIcon = link.icon;
                 return (
                   <Link key={link.href} href={link.href} className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3 hover:border-slate-200 hover:bg-slate-50/50 transition-all">
-                    <div className="size-9 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[var(--sidebar)] group-hover:text-white transition-all">
+                    <div className="size-9 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-[var(--sidebar)] group-hover:text-white transition-all">
                       <LinkIcon size={16} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-caption text-slate-800 group-hover:text-slate-900">{link.label}</p>
                       <p className="text-tiny text-slate-400">{link.desc}</p>
                     </div>
-                    <IconChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    <IconChevronRight size={14} className="text-slate-300 group-hover:text-slate-400 transition-colors" />
                   </Link>
                 );
               })}

@@ -124,7 +124,7 @@ function formatThresholdValue(key: string, value: string): string {
   const isRate = key.includes("rate") || key.includes("pct") || key.includes("percent");
   const isKes = key.includes("kes") || key.includes("limit") || key.includes("amount") || key.includes("payout");
   const meta = THRESHOLD_META[key] ?? { unit: isKes ? "KES" : isRate ? "%" : "" };
-  
+
   const num = parseFloat(value);
   if (isNaN(num)) return value;
 
@@ -197,7 +197,7 @@ function GrantAccessModal({
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h2 className="text-heading-primary">Grant System Access</h2>
-            <p className="mt-0.5 text-slate-500 text-base">Create a staff login linked to a system role.</p>
+            <p className="mt-0.5 text-slate-400 text-base">Create a staff login linked to a system role.</p>
           </div>
           <button
             type="button"
@@ -218,7 +218,7 @@ function GrantAccessModal({
           )}
 
           <div className="space-y-1.5">
-            <label htmlFor="grant-name" className="label-caps text-slate-500">Full Name</label>
+            <label htmlFor="grant-name" className="label-caps text-slate-400">Full Name</label>
             <input
               id="grant-name"
               type="text"
@@ -230,7 +230,7 @@ function GrantAccessModal({
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="grant-email" className="label-caps text-slate-500">Work Email</label>
+            <label htmlFor="grant-email" className="label-caps text-slate-400">Work Email</label>
             <input
               id="grant-email"
               type="email"
@@ -242,7 +242,7 @@ function GrantAccessModal({
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="grant-role" className="label-caps text-slate-500">System Role</label>
+            <label htmlFor="grant-role" className="label-caps text-slate-400">System Role</label>
             <select
               id="grant-role"
               value={form.role}
@@ -328,7 +328,7 @@ function UsersRolesTab() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-heading-primary">Staff Accounts</h2>
-            <p className="mt-0.5 text-slate-500 text-base">All system users, roles, and access status.</p>
+            <p className="mt-0.5 text-slate-400 text-base">All system users, roles, and access status.</p>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 min-w-[200px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
@@ -378,7 +378,7 @@ function UsersRolesTab() {
                     <tr key={user.id} className="transition-colors hover:bg-slate-50/80">
                       <td className="px-2 py-3">
                         <p className="text-title-primary">{user.name}</p>
-                        <p className="text-slate-500 text-base">{user.email}</p>
+                        <p className="text-slate-400 text-base">{user.email}</p>
                       </td>
                       <td className="px-2 py-3">
                         <Badge tone={roleTone(user.role)}>{user.role.replace(/_/g, " ")}</Badge>
@@ -484,8 +484,8 @@ function ThresholdsTab() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-heading-primary">Approval Authority Thresholds</h2>
-            <p className="mt-0.5 text-slate-500 text-base">
-              Operational limits stored as data — no code deploy required. Every save is logged to the Audit Log.
+            <p className="mt-0.5 text-slate-400 text-base">
+              Operational limits stored as data - no code deploy required. Every save is logged to the Audit Log.
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={loadThresholds}>
@@ -500,17 +500,17 @@ function ThresholdsTab() {
             {thresholds.map((t) => {
               const isRate = t.key.includes("rate") || t.key.includes("pct") || t.key.includes("percent");
               const isKes = t.key.includes("kes") || t.key.includes("limit") || t.key.includes("amount") || t.key.includes("payout");
-              const meta = THRESHOLD_META[t.key] ?? { 
-                label: formatKeyToLabel(t.key), 
-                description: "System configuration parameter.", 
-                unit: isKes ? "KES" : isRate ? "%" : "" 
+              const meta = THRESHOLD_META[t.key] ?? {
+                label: formatKeyToLabel(t.key),
+                description: "System configuration parameter.",
+                unit: isKes ? "KES" : isRate ? "%" : ""
               };
               const isEditing = editing === t.key;
               return (
                 <div key={t.key} className="flex flex-wrap items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
                   <div className="flex-1 min-w-0">
                     <p className="text-title-primary">{meta.label}</p>
-                    <p className="mt-0.5 text-slate-500 text-base max-w-md">{meta.description}</p>
+                    <p className="mt-0.5 text-slate-400 text-base max-w-md">{meta.description}</p>
                     {t.updatedAt && (
                       <p className="mt-1 text-slate-400 text-sm">
                         Last updated: {new Date(t.updatedAt).toLocaleDateString("en-KE")}
@@ -523,7 +523,7 @@ function ThresholdsTab() {
                       <>
                         <div className="flex items-center gap-1.5">
                           {meta.unit === "%" && (
-                            <span className="text-slate-500 text-base">%</span>
+                            <span className="text-slate-400 text-base">%</span>
                           )}
                           <input
                             type="number"
@@ -533,7 +533,7 @@ function ThresholdsTab() {
                             autoFocus
                           />
                           {meta.unit === "KES" && (
-                            <span className="text-slate-500 text-base">KES</span>
+                            <span className="text-slate-400 text-base">KES</span>
                           )}
                         </div>
                         <button
@@ -633,7 +633,7 @@ function AuditLogTab() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-heading-primary">Consolidated Audit Log</h2>
-            <p className="mt-0.5 text-slate-500 text-base">
+            <p className="mt-0.5 text-slate-400 text-base">
               Cross-module record of every significant system action. CEO-exclusive view.
             </p>
           </div>
@@ -678,7 +678,7 @@ function AuditLogTab() {
                 <tbody className="divide-y divide-slate-100">
                   {visible.map((entry) => (
                     <tr key={entry.id} className="transition-colors hover:bg-slate-50/80">
-                      <td className="px-2 py-3 text-slate-500 mono-data whitespace-nowrap">
+                      <td className="px-2 py-3 text-slate-400 mono-data whitespace-nowrap">
                         {new Date(entry.createdAt).toLocaleString("en-KE")}
                       </td>
                       <td className="px-2 py-3">
@@ -686,8 +686,8 @@ function AuditLogTab() {
                       </td>
                       <td className="px-2 py-3 text-slate-700 text-base">{entry.action}</td>
                       <td className="px-2 py-3 text-slate-600 text-base">{entry.resourceType}</td>
-                      <td className="px-2 py-3 text-slate-500 text-base max-w-xs truncate">
-                        {entry.description ?? "—"}
+                      <td className="px-2 py-3 text-slate-400 text-base max-w-xs truncate">
+                        {entry.description ?? "-"}
                       </td>
                     </tr>
                   ))}
@@ -723,7 +723,7 @@ function EntitiesTab() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-heading-primary">Entities & Divisions</h2>
-            <p className="mt-0.5 text-slate-500 text-base">
+            <p className="mt-0.5 text-slate-400 text-base">
               Structural entities that define the scope of all ERP data. Edit surface coming in P2.
             </p>
           </div>
@@ -736,7 +736,7 @@ function EntitiesTab() {
             <div key={entity.id} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
               <div>
                 <p className="text-title-primary">{entity.name}</p>
-                <p className="mt-0.5 text-slate-500 text-base">{entity.subtitle}</p>
+                <p className="mt-0.5 text-slate-400 text-base">{entity.subtitle}</p>
               </div>
               <div className="flex items-center gap-3">
                 {entity.id === "group" && <Badge tone="data">Consolidated</Badge>}
@@ -756,7 +756,7 @@ function SystemSettingsTab() {
   const SETTINGS_SECTIONS = [
     {
       title: "Statutory Rates",
-      description: "PAYE bands, NSSF, SHIF, and Affordable Housing Levy rates. Read by Finance Payroll — changes take effect on the next payroll run.",
+      description: "PAYE bands, NSSF, SHIF, and Affordable Housing Levy rates. Read by Finance Payroll - changes take effect on the next payroll run.",
       items: [
         { label: "NSSF Employee Rate", value: "6% of gross (capped KES 2,160)", status: "Seeded" },
         { label: "SHIF Rate", value: "2.75% of gross", status: "Seeded" },
@@ -780,7 +780,7 @@ function SystemSettingsTab() {
         <BoardPanel key={section.title} className="space-y-4">
           <div>
             <h2 className="text-heading-primary">{section.title}</h2>
-            <p className="mt-0.5 text-slate-500 text-base max-w-2xl">{section.description}</p>
+            <p className="mt-0.5 text-slate-400 text-base max-w-2xl">{section.description}</p>
           </div>
           <div className="divide-y divide-slate-100">
             {section.items.map((item) => (
@@ -837,26 +837,26 @@ export function SystemAdminBoard() {
           <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
             <Link
               href="/admin/approvals"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Approvals</span>
               <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full text-meta-muted-strong">Queue</span>
             </Link>
             <Link
               href="/admin/hr/complaints"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Complaints</span>
             </Link>
             <Link
               href="/admin/support"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Support Tickets</span>
             </Link>
             <Link
               href="/admin/reports"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Reports Center</span>
             </Link>
@@ -884,7 +884,7 @@ export function SystemAdminBoard() {
                   "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm transition-all duration-200 font-medium",
                   isActive
                     ? "bg-[#151936] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-800",
+                    : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-800",
                 )}
               >
                 <TabIcon size={15} aria-hidden />

@@ -119,7 +119,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
         .then((data) => {
           if (Array.isArray(data.projects)) setProjects(data.projects);
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [loadEvents, entityId]);
 
@@ -228,7 +228,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
       <BoardHeader
         eyebrow={<Badge tone="data">Operations</Badge>}
         title="Events"
-        description="Every scheduled meeting, viewing, legal deadline, and inspection across the org — the full record behind the Executive Scheduler."
+        description="Every scheduled meeting, viewing, legal deadline, and inspection across the org - the full record behind the Executive Scheduler."
         actions={
           <Button size="sm" onClick={openCreateModal}>
             <IconPlus size={14} /> Schedule Event
@@ -251,7 +251,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
         <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
           <Link
             href="/admin/projects"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Projects</span>
           </Link>
@@ -278,7 +278,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
           onClick={() => setTypeFilter("all")}
           className={cn(
             "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all",
-            typeFilter === "all" ? "bg-[#151936] text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200/60",
+            typeFilter === "all" ? "bg-[#151936] text-white shadow-sm" : "bg-slate-100 text-slate-400 hover:bg-slate-200/60",
           )}
         >
           All Types
@@ -290,7 +290,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
             onClick={() => setTypeFilter(t)}
             className={cn(
               "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all",
-              typeFilter === t ? "bg-[#151936] text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200/60",
+              typeFilter === t ? "bg-[#151936] text-white shadow-sm" : "bg-slate-100 text-slate-400 hover:bg-slate-200/60",
             )}
           >
             {TYPE_META[t].label}
@@ -301,7 +301,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
           onClick={() => setDispositionOnly((v) => !v)}
           className={cn(
             "ml-auto px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all border",
-            dispositionOnly ? "bg-rose-50 text-rose-600 border-rose-200" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300",
+            dispositionOnly ? "bg-rose-50 text-rose-600 border-rose-200" : "bg-white text-slate-400 border-slate-200 hover:border-slate-300",
           )}
         >
           Needs Disposition Only
@@ -343,7 +343,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <h4 className="text-body-primary text-slate-900 truncate">{event.title}</h4>
-                              {event.description && <p className="text-body-regular text-slate-500 mt-0.5">{event.description}</p>}
+                              {event.description && <p className="text-body-regular text-slate-400 mt-0.5">{event.description}</p>}
                             </div>
                             <button
                               type="button"
@@ -403,18 +403,18 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
       >
         <div className="space-y-4">
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Title</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Title</label>
             <input
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              placeholder="e.g. Escrow signing — Muthaiga Estate"
+              placeholder="e.g. Escrow signing - Muthaiga Estate"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Date</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Date</label>
               <input
                 type="date"
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
@@ -423,7 +423,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
               />
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Start</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Start</label>
               <input
                 type="time"
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base mono-data text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
@@ -432,7 +432,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
               />
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">End</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">End</label>
               <input
                 type="time"
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base mono-data text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
@@ -443,7 +443,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Type</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Type</label>
             <div className="flex flex-wrap gap-2">
               {(Object.keys(TYPE_META) as EventType[]).map((t) => (
                 <button
@@ -452,7 +452,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
                   onClick={() => setForm((f) => ({ ...f, type: t }))}
                   className={cn(
                     "px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-all",
-                    form.type === t ? "bg-[#151936] text-white border-[#151936]" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300",
+                    form.type === t ? "bg-[#151936] text-white border-[#151936]" : "bg-white text-slate-400 border-slate-200 hover:border-slate-300",
                   )}
                 >
                   {TYPE_META[t].label}
@@ -463,7 +463,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Location</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Location</label>
               <input
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                 value={form.location}
@@ -472,7 +472,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
               />
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Linked Project</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Linked Project</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                 value={form.projectId}
@@ -487,7 +487,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Attendees</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Attendees</label>
             <input
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.attendeeNames}
@@ -497,7 +497,7 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Notes</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Notes</label>
             <textarea
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 resize-none h-20 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.description}

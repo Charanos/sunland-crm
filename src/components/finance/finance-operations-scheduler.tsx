@@ -290,7 +290,7 @@ export function FinanceOperationsScheduler({
                     <div className="size-7 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shadow-sm border border-blue-200/50">
                       <IconWallet size={14} stroke={2.5} />
                     </div>
-                    <span className="text-slate-500 label-caps">Treasury</span>
+                    <span className="text-slate-400 label-caps">Treasury</span>
                   </div>
                   <div className="flex items-center gap-1.5 bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100 text-blue-700 font-normal label-caps">
                     <span className="size-1.5 rounded-full bg-blue-500 animate-pulse" /> Reconciled
@@ -315,7 +315,7 @@ export function FinanceOperationsScheduler({
                     <div className="size-7 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
                       <IconBuildingBank size={14} stroke={2.5} />
                     </div>
-                    <span className="text-slate-500 label-caps">Revenue</span>
+                    <span className="text-slate-400 label-caps">Revenue</span>
                   </div>
                   <div className="flex items-center gap-1.5 bg-emerald-50/80 px-2 py-0.5 rounded-md border border-emerald-100 text-emerald-700 font-normal label-caps">
                     <span className="size-1.5 rounded-full bg-emerald-500" /> Active
@@ -340,7 +340,7 @@ export function FinanceOperationsScheduler({
                     <div className="size-7 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100/50 text-purple-600 flex items-center justify-center shadow-sm border border-purple-200/50">
                       <IconScale size={14} stroke={2.5} />
                     </div>
-                    <span className="text-slate-500 label-caps">Assurance</span>
+                    <span className="text-slate-400 label-caps">Assurance</span>
                   </div>
                   <div className="flex items-center gap-1.5 bg-purple-50/80 px-2 py-0.5 rounded-md border border-purple-100 text-purple-700 font-normal label-caps">
                     Balanced
@@ -390,7 +390,7 @@ export function FinanceOperationsScheduler({
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h4 className="text-title-primary group-hover:text-blue-600 transition-colors">{w.title}</h4>
-                          <p className="text-sm text-slate-500 mt-1">{w.desc}</p>
+                          <p className="text-sm text-slate-400 mt-1">{w.desc}</p>
                         </div>
                         <span className="bg-white border border-slate-200 text-slate-450 px-2 py-0.5 rounded shadow-sm font-mono label-caps text-xs">{w.type}</span>
                       </div>

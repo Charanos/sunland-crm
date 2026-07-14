@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-// Type-only import — erased at compile time, doesn't participate in the
+// Type-only import - erased at compile time, doesn't participate in the
 // dynamic-import-to-bypass-ES-hoisting concern below (there's no runtime code).
 import type { UserRole } from "../src/types";
 
@@ -120,7 +120,7 @@ async function run() {
   console.log("\n5. Cataloging signed Mandate Agreement PDF...");
   const document = await createDocument(ctx, {
     type: "mandate_letter",
-    title: "Signed Property Management Mandate — Block A",
+    title: "Signed Property Management Mandate - Block A",
     fileUrl: "https://cloudinary.com/sunland/docs/signed_mandate_munge_blocka.pdf",
     ownerContactId: landlord.id,
     metadata: { unitCount: 1, rate: 0.1 },

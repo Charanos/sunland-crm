@@ -22,7 +22,7 @@ export function getAblyRest() {
 
 /**
  * Capability is scoped to exactly this user's own notification channel plus
- * the conversations they're actually a participant in at mint time — never
+ * the conversations they're actually a participant in at mint time - never
  * a blanket grant. Without this, any authenticated user could subscribe to
  * any guessed `conversation-{id}` channel name, since Ably channel names
  * aren't secret on their own.
@@ -50,7 +50,7 @@ export async function getAblyToken(userId: string) {
 }
 
 /**
- * Server-side publish only — clients never publish directly. The DB row
+ * Server-side publish only - clients never publish directly. The DB row
  * inserted by the caller is the source of truth; this is a best-effort push
  * so an open tab updates live. Silently no-ops if Ably isn't configured,
  * since realtime delivery is a convenience layered on top of real persistence.

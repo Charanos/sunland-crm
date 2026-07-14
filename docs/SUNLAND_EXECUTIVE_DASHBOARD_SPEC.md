@@ -1,4 +1,4 @@
-# Sunland Executive Dashboard — Comprehensive Functional Spec (CEO & GM)
+# Sunland Executive Dashboard - Comprehensive Functional Spec (CEO & GM)
 
 **Document status:** Drill-down of `SUNLAND_ERP_IMPLEMENTATION_SPEC.md` Section 9, expanded to the depth of `SUNLAND_FINANCE_DASHBOARD_SPEC.md`, `SUNLAND_HR_DASHBOARD_SPEC.md`, `SUNLAND_BD_DASHBOARD_SPEC.md`, and `SUNLAND_FRONT_OFFICE_DASHBOARD_SPEC.md`, with one structural difference from all four: this is the smallest net-new build of the five, because the dashboard shell already exists and is locked.
 **Relationship to other documents:** CEO and GM share one Executive Overview today, and this document keeps it that way rather than splitting it into two dashboards. What it adds is precision: exactly where GM's authority ends and CEO's super-admin tier begins, spelled out as a single rule (Section 6) and a single table (Section 6.2), instead of the scattered GM/CEO references each department doc had to make on its own.
@@ -257,7 +257,7 @@ Deliberately not built on the Board layout (Section 3). A settings panel laid ou
 #### Users & Roles (default)
 
 - Table: every system user, assigned role (the full role list spanning every department spec: CEO, GM, Finance Head, Finance Officer, Rentals & Mandates Officer, Payroll Officer, HR Head, HR Officer, Line Manager, BD Agent, Front Office Head, Front Office Admin, Driver, Operations Lead, Valuer, Auditor/Compliance), entity/division scope, status (active/suspended).
-- **Modal — Grant System Access:** links an existing HR employee record (Section 6.3) to a login and a role. Does not create a new employee; that path stays in HR.
+- **Modal - Grant System Access:** links an existing HR employee record (Section 6.3) to a login and a role. Does not create a new employee; that path stays in HR.
 - **Row actions:** Suspend/Reactivate, Change Role, both logged to the Audit Log with the prior and new value.
 
 #### Approval Thresholds

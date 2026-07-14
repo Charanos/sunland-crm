@@ -1,0 +1,3 @@
+ALTER TABLE "property_mandates" ADD COLUMN "assigned_pm_id" uuid;--> statement-breakpoint
+ALTER TABLE "property_mandates" ADD CONSTRAINT "property_mandates_assigned_pm_id_users_id_fk" FOREIGN KEY ("assigned_pm_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "property_mandates_assigned_pm_idx" ON "property_mandates" USING btree ("assigned_pm_id");

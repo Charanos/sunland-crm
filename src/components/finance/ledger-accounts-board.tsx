@@ -720,7 +720,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         KES 150,000
                       </span>
                     </div>
-                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                    <p className="text-sm text-slate-400 mt-1 leading-relaxed">
                       NCBA Operating Account debit balanced against Rent Payable (90%) and Management Fee Income (10%).
                     </p>
                     <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-sm  text-slate-400 font-medium">
@@ -750,7 +750,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         KES 50,000
                       </span>
                     </div>
-                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                    <p className="text-sm text-slate-400 mt-1 leading-relaxed">
                       Replenishing petty cash drawers from the NCBA Operating Account. Auto-logged for office administrative overhead.
                     </p>
                     <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-sm  text-slate-400 font-medium">
@@ -780,7 +780,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                         KES 200,000
                       </span>
                     </div>
-                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                    <p className="text-sm text-slate-400 mt-1 leading-relaxed">
                       Voided duplicate rental booking to restore Accounts Receivable and Management Fee accounts back to target values.
                     </p>
                     <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-sm  text-slate-400 font-medium">
@@ -999,7 +999,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                       "px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all",
                       coaTypeFilter === type
                         ? "bg-[#151936] text-white shadow-sm"
-                        : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-55"
+                        : "bg-white text-slate-400 border border-slate-200 hover:bg-slate-55"
                     )}
                   >
                     {type === "All" ? "All Classifications" : type}
@@ -1165,7 +1165,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
                     return (
                       <tr key={account.id} className="transition-colors hover:bg-slate-50/80">
-                        <td className="px-5 py-3 text-slate-500 mono-data">{account.id}</td>
+                        <td className="px-5 py-3 text-slate-400 mono-data">{account.id}</td>
                         <td className="px-5 py-3 text-slate-700 font-medium text-base">{account.name}</td>
                         <td className="px-5 py-3 text-right text-slate-700 mono-data">
                           {drAmt > 0 ? drAmt.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
@@ -1945,7 +1945,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 <h4 className="text-slate-400 mb-2 label-caps">Ledger Split Lines</h4>
                 <div className="border border-slate-200 rounded-xl overflow-hidden">
                   <table className="w-full text-left text-base">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 label-caps">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 label-caps">
                       <tr>
                         <th className="px-3 py-2 w-[60%]">Account</th>
                         <th className="px-3 py-2 text-right">Debit</th>
@@ -2050,7 +2050,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
               <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                 {selectedAccountTransactions.length > 0 ? (
                   <table className="w-full text-left text-base">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 label-caps">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 label-caps">
                       <tr>
                         <th className="px-3 py-2 w-[110px]">Date/Ref</th>
                         <th className="px-3 py-2">Details</th>
@@ -2150,7 +2150,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
             {/* Reconciliation Fields Form */}
             <div className="space-y-4">
               <div className="grid gap-1.5">
-                <label className="text-slate-500 label-caps">Bank Statement Ending Balance</label>
+                <label className="text-slate-400 label-caps">Bank Statement Ending Balance</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -2165,7 +2165,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
               {/* Transactions Match list */}
               <div>
-                <label className="text-slate-500 block mb-2 label-caps">Match Statement Postings</label>
+                <label className="text-slate-400 block mb-2 label-caps">Match Statement Postings</label>
                 <div className="border border-slate-150 rounded-xl overflow-hidden shadow-sm max-h-48 overflow-y-auto divide-y divide-slate-100 bg-white">
                   {journals.filter(j => j.status === "Posted" && j.lines.some(l => l.account === reconciliationAccount.name)).length > 0 ? (
                     journals.filter(j => j.status === "Posted" && j.lines.some(l => l.account === reconciliationAccount.name)).map(tx => {
@@ -2211,7 +2211,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
 
               {/* Reconciliation Notes */}
               <div className="grid gap-1.5">
-                <label className="text-slate-500 label-caps">Audit & Reconciliation Notes</label>
+                <label className="text-slate-400 label-caps">Audit & Reconciliation Notes</label>
                 <textarea
                   rows={3}
                   value={reconNotes}

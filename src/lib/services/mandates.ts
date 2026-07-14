@@ -12,7 +12,7 @@ import { createMandateSchema, terminateMandateSchema } from "@/lib/validation/ma
 import { parseInput } from "@/lib/validation/parse";
 
 // Mandates reuse the properties.property.* permission keys deliberately, same
-// rationale recorded in valuations.ts — same portfolio domain, no dedicated
+// rationale recorded in valuations.ts - same portfolio domain, no dedicated
 // properties.mandate.* keys until a standalone Rentals & Mandates portal
 // justifies the reseed risk.
 
@@ -21,7 +21,7 @@ const MANDATE_STATUS_VALUES = mandateStatus.enumValues;
 
 /**
  * Mirrors finance/approvals.ts's notifyRequiredApprovers rather than
- * importing it — kept local so this service stays self-contained and doesn't
+ * importing it - kept local so this service stays self-contained and doesn't
  * reach into another module's private (unexported) helper.
  */
 async function notifyMandateApprovers(
@@ -98,7 +98,7 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
   const landlordContactId = input.landlordContactId ?? property.ownerContactId;
   if (!landlordContactId) {
     throw new DomainValidationError(
-      "This property has no owner on record — set an owner before creating a mandate.",
+      "This property has no owner on record - set an owner before creating a mandate.",
     );
   }
   const [landlord] = await db.select().from(contacts).where(eq(contacts.id, landlordContactId));
@@ -137,24 +137,24 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
     ? Number(property.monthlyRentKes)
     : Array.isArray(property.unitBreakdown)
       ? property.unitBreakdown.reduce(
-          (sum, u) => sum + (u.monthlyRentKes ? Number(u.monthlyRentKes) * u.count : 0),
-          0,
-        )
+        (sum, u) => sum + (u.monthlyRentKes ? Number(u.monthlyRentKes) * u.count : 0),
+        0,
+      )
       : 0;
   const annualizedValueKes = monthlyValue * 12;
 
   // Mandate activation requires at least GM sign-off (no auto-approve tier
   // for non-executive creators); CEO sign-off is additionally required above
-  // either threshold — Executive Dashboard spec §6.2 row "Mandate activation".
+  // either threshold - Executive Dashboard spec §6.2 row "Mandate activation".
   // This is the *ceiling* the mandate needs to clear, not who necessarily has
-  // to clear it — see the self-approval check below (ADR 014 §14.2).
+  // to clear it - see the self-approval check below (ADR 014 §14.2).
   const ceoUnitThreshold = await getGroupSettingValue("mandate_activation_ceo_unit_threshold", 10);
   const ceoAnnualThreshold = await getGroupSettingValue("mandate_activation_ceo_annual_value_kes", 5000000);
   const requiredTier: "gm" | "ceo" =
     unitCount > ceoUnitThreshold || annualizedValueKes > ceoAnnualThreshold ? "ceo" : "gm";
 
   // An actor whose own authority already meets or exceeds the required tier
-  // self-approves — the CEO never waits on anyone (nothing sits above him),
+  // self-approves - the CEO never waits on anyone (nothing sits above him),
   // and a GM doesn't wait on a *different* GM for a GM-tier mandate, only
   // escalating to CEO when the mandate itself crosses the CEO threshold.
   // Everyone else (Property Manager, Head of Strategy, ...) always needs at
@@ -234,7 +234,7 @@ export async function terminateMandate(ctx: CallerContext, mandateId: string, ra
   const input = parseInput(terminateMandateSchema, rawInput);
 
   // The mandate's own entity is the authorization scope, loaded first rather
-  // than trusted from client input — same reasoning as decideApprovalRequest.
+  // than trusted from client input - same reasoning as decideApprovalRequest.
   const [existing] = await db.select().from(propertyMandates).where(eq(propertyMandates.id, mandateId)).limit(1);
   if (!existing) throw new NotFoundError("Mandate not found");
 
@@ -259,7 +259,7 @@ export async function terminateMandate(ctx: CallerContext, mandateId: string, ra
         status: "rejected",
         decidedById: ctx.user.id,
         decidedAt: new Date(),
-        decisionNotes: "Withdrawn — mandate terminated before/without a decision.",
+        decisionNotes: "Withdrawn - mandate terminated before/without a decision.",
       })
       .where(
         and(

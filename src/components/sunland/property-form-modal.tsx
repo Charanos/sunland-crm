@@ -35,15 +35,21 @@ export interface PropertyFormData {
   bedrooms: number | null;
   bathrooms: number | null;
   sizeSqft: number | null;
+  landAreaSqft: number | null;
+  yearBuilt: number | null;
+  parkingSpaces: number | null;
+  amenities: string[];
   description: string;
   media: MediaEntry[];
   unitBreakdown: UnitBreakdownEntry[];
 }
 
+import { AMENITIES_LIST } from "./property-constants";
+
 const PROPERTY_TYPES = ["Apartment", "Commercial", "House", "Land", "Villa"];
 
 // Property types that plausibly consist of multiple sub-units rather than a
-// single dwelling — these trigger the unit-breakdown editor instead of a flat
+// single dwelling - these trigger the unit-breakdown editor instead of a flat
 // bedrooms/bathrooms count, since "3 bedrooms" doesn't describe an apartment
 // block with a mix of bedsitters and 1BRs.
 const MULTI_UNIT_TYPES = ["Apartment", "Commercial"];
@@ -62,7 +68,7 @@ const UNIT_TYPE_OPTIONS = [
 ];
 
 // Cloudinary is a declared dependency but not yet configured (cloud name +
-// upload preset are empty in .env.local) — the upload button only renders
+// upload preset are empty in .env.local) - the upload button only renders
 // once real credentials exist; a manual URL field is always available so
 // image capture never hard-depends on that configuration landing.
 const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -120,6 +126,10 @@ export function PropertyFormModal({
     bedrooms: (initialData?.bedrooms as number | undefined) ?? null,
     bathrooms: (initialData?.bathrooms as number | undefined) ?? null,
     sizeSqft: (initialData?.sizeSqft as number | undefined) ?? null,
+    landAreaSqft: (initialData?.landAreaSqft as number | undefined) ?? null,
+    yearBuilt: (initialData?.yearBuilt as number | undefined) ?? null,
+    parkingSpaces: (initialData?.parkingSpaces as number | undefined) ?? null,
+    amenities: (initialData?.amenities as string[] | undefined) ?? [],
     description: (initialData?.description as string | undefined) ?? "",
     media: (initialData?.media as MediaEntry[] | undefined) ?? [],
     unitBreakdown: (initialData?.unitBreakdown as UnitBreakdownEntry[] | undefined) ?? [],
@@ -144,7 +154,7 @@ export function PropertyFormModal({
     fetchLandlords();
   }, [open, activeEntityId]);
 
-  // Landlord documents (title deeds, ID) — scoped to the selected owner
+  // Landlord documents (title deeds, ID) - scoped to the selected owner
   // contact via the existing documents API, not tied to this specific
   // property, since the same landlord's title deed/ID is reused across
   // every property they own.
@@ -162,7 +172,7 @@ export function PropertyFormModal({
 
   useEffect(() => {
     // The documents section only renders when an owner is selected, so
-    // stale state while unselected is never shown — no need to clear it.
+    // stale state while unselected is never shown - no need to clear it.
     if (!open || !activeEntityId || !form.ownerContactId) return;
     const load = async () => {
       try {
@@ -213,6 +223,17 @@ export function PropertyFormModal({
     }
   };
 
+  // ─── Amenities ───────────────────────────────────────────────────────
+  const toggleAmenity = (amenity: string) => {
+    setForm((prev) => {
+      const current = prev.amenities || [];
+      if (current.includes(amenity)) {
+        return { ...prev, amenities: current.filter((a) => a !== amenity) };
+      }
+      return { ...prev, amenities: [...current, amenity] };
+    });
+  };
+
   // ─── Unit breakdown editor (multi-unit property types) ─────────────────
   const addUnitRow = () => {
     updateField("unitBreakdown", [...form.unitBreakdown, { unitType: UNIT_TYPE_OPTIONS[0], count: 1, monthlyRentKes: "" }]);
@@ -260,7 +281,7 @@ export function PropertyFormModal({
         newErrors.askingPriceKes = "Asking Price is required";
       }
     }
-    // Backend's validateUnitBreakdown rejects any row with count < 1 — catch
+    // Backend's validateUnitBreakdown rejects any row with count < 1 - catch
     // it here so the error is attributable to the offending row instead of a
     // generic "Failed to save" toast after a round-trip.
     if (isMultiUnit && form.unitBreakdown.some((row) => !row.count || row.count < 1)) {
@@ -275,7 +296,7 @@ export function PropertyFormModal({
     setIsSubmitting(true);
 
     try {
-      // Editing must PATCH the existing record — previously this always
+      // Editing must PATCH the existing record - previously this always
       // POSTed regardless of mode, silently creating a duplicate property
       // on every edit while a separate parent-level PATCH updated the
       // original. Fixed: one request, the right verb.
@@ -293,16 +314,20 @@ export function PropertyFormModal({
         bedrooms: isMultiUnit ? null : form.bedrooms,
         bathrooms: isMultiUnit ? null : form.bathrooms,
         sizeSqft: form.sizeSqft,
+        landAreaSqft: form.landAreaSqft,
+        yearBuilt: form.yearBuilt,
+        parkingSpaces: form.parkingSpaces,
+        amenities: form.amenities,
         description: form.description.trim() || null,
         media: form.media,
         // Empty per-unit rent is coerced to undefined rather than sent as a
-        // literal "" — consistent with how the top-level rent/price fields
+        // literal "" - consistent with how the top-level rent/price fields
         // use null for "not applicable" instead of an empty string.
         unitBreakdown: isMultiUnit
           ? form.unitBreakdown.map((row) => ({
-              ...row,
-              monthlyRentKes: row.monthlyRentKes?.trim() ? row.monthlyRentKes : undefined,
-            }))
+            ...row,
+            monthlyRentKes: row.monthlyRentKes?.trim() ? row.monthlyRentKes : undefined,
+          }))
           : [],
       };
 
@@ -367,13 +392,13 @@ export function PropertyFormModal({
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Core Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Property ID</label>
-              <div className="flex h-10 items-center px-3 rounded-lg border border-slate-200 bg-slate-100/50 text-slate-500 mono-data shadow-sm">
+              <label className="label-caps text-slate-400 mb-1.5 block">Property ID</label>
+              <div className="flex h-10 items-center px-3 rounded-lg border border-slate-200 bg-slate-100/50 text-slate-400 mono-data shadow-sm">
                 {mode === "create" ? "Auto-generated" : form.propertyCode}
               </div>
             </div>
             <div className="sm:col-span-2">
-              <label className="label-caps text-slate-500 mb-1.5 block">Property Name</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Property Name</label>
               <input
                 className={cn(
                   "w-full h-10 rounded-lg border bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
@@ -389,7 +414,7 @@ export function PropertyFormModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Location</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Location</label>
               <input
                 className={cn(
                   "w-full h-10 rounded-lg border bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
@@ -402,7 +427,7 @@ export function PropertyFormModal({
               {errors.location && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.location}</p>}
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Property Type</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Property Type</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 value={form.propertyType}
@@ -416,7 +441,7 @@ export function PropertyFormModal({
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Description</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Description</label>
             <textarea
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary resize-none h-20 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
               placeholder="Short marketing/context blurb shown on the property's full view…"
@@ -430,7 +455,7 @@ export function PropertyFormModal({
         <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Ownership & Legal</h3>
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Portfolio Owner (Landlord)</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Portfolio Owner (Landlord)</label>
             <select
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
               value={form.ownerContactId}
@@ -465,7 +490,7 @@ export function PropertyFormModal({
                       <span className="text-meta-muted shrink-0 bg-white px-2 py-0.5 rounded-md border border-slate-100">
                         {LANDLORD_DOCUMENT_TYPES.find((t) => t.value === doc.type)?.label ?? doc.type}
                       </span>
-                      <IconExternalLink size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
+                      <IconExternalLink size={14} className="text-slate-300 group-hover:text-slate-400 transition-colors shrink-0" />
                     </a>
                   ))}
                 </div>
@@ -512,7 +537,7 @@ export function PropertyFormModal({
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Financials & Listing</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Listing Type</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Listing Type</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 value={form.listingType}
@@ -527,7 +552,7 @@ export function PropertyFormModal({
               {form.listingType === "Rent" ? (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="label-caps text-slate-500">
+                    <label className="label-caps text-slate-400">
                       {isMultiUnit ? "Expected Total Monthly Rent (KES)" : "Monthly Rent (KES)"}
                     </label>
                     {isMultiUnit && (
@@ -538,7 +563,7 @@ export function PropertyFormModal({
                     className={cn(
                       "w-full h-10 rounded-lg border bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
                       errors.monthlyRentKes ? "border-red-300 bg-red-50/30" : "border-slate-200",
-                      isMultiUnit ? "bg-slate-100/50 text-slate-500 cursor-not-allowed" : ""
+                      isMultiUnit ? "bg-slate-100/50 text-slate-400 cursor-not-allowed" : ""
                     )}
                     placeholder="e.g. 85000"
                     value={displayRent}
@@ -550,7 +575,7 @@ export function PropertyFormModal({
               ) : (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="label-caps text-slate-500">
+                    <label className="label-caps text-slate-400">
                       {isMultiUnit ? "Expected Total Asking Price (KES)" : "Asking Price (KES)"}
                     </label>
                     {isMultiUnit && (
@@ -561,7 +586,7 @@ export function PropertyFormModal({
                     className={cn(
                       "w-full h-10 rounded-lg border bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
                       errors.askingPriceKes ? "border-red-300 bg-red-50/30" : "border-slate-200",
-                      isMultiUnit ? "bg-slate-100/50 text-slate-500 cursor-not-allowed" : ""
+                      isMultiUnit ? "bg-slate-100/50 text-slate-400 cursor-not-allowed" : ""
                     )}
                     placeholder="e.g. 15000000"
                     value={displayRent}
@@ -582,7 +607,7 @@ export function PropertyFormModal({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <label className="label-caps text-slate-500 block">Unit Mix</label>
+                  <label className="label-caps text-slate-400 block">Unit Mix</label>
                   <p className="text-meta-muted mt-1">
                     Capture each unit type this property is made up of. Total: <span className="mono-amount text-slate-600 px-1 py-0.5 bg-slate-200/50 rounded">{totalUnits}</span> unit{totalUnits === 1 ? "" : "s"}.
                   </p>
@@ -601,7 +626,7 @@ export function PropertyFormModal({
                   <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center mb-2 border border-slate-100">
                     <IconBuildingSkyscraper size={20} className="text-slate-400" />
                   </div>
-                  <p className="text-body-regular text-slate-500">No unit types added yet.</p>
+                  <p className="text-body-regular text-slate-400">No unit types added yet.</p>
                   <p className="text-meta-muted mt-1">Click &quot;Add Unit Type&quot; to break down this property.</p>
                 </div>
               ) : (
@@ -649,20 +674,54 @@ export function PropertyFormModal({
               )}
 
               <div className="mt-6 pt-4 border-t border-slate-200">
-                <label className="label-caps text-slate-500 mb-1.5 block">Total Size (SqFt)</label>
-                <input
-                  type="number"
-                  className="w-full sm:w-1/3 h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-                  placeholder="e.g. 12000"
-                  value={form.sizeSqft ?? ""}
-                  onChange={(e) => updateField("sizeSqft", e.target.value ? parseInt(e.target.value) : null)}
-                />
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Total Size (SqFt)</label>
+                    <input
+                      type="number"
+                      className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      placeholder="e.g. 12000"
+                      value={form.sizeSqft ?? ""}
+                      onChange={(e) => updateField("sizeSqft", e.target.value ? parseInt(e.target.value) : null)}
+                    />
+                  </div>
+                  <div>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Land Area (SqFt)</label>
+                    <input
+                      type="number"
+                      className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      placeholder="e.g. 5000"
+                      value={form.landAreaSqft ?? ""}
+                      onChange={(e) => updateField("landAreaSqft", e.target.value ? parseInt(e.target.value) : null)}
+                    />
+                  </div>
+                  <div>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Year Built</label>
+                    <input
+                      type="number"
+                      className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      placeholder="e.g. 2018"
+                      value={form.yearBuilt ?? ""}
+                      onChange={(e) => updateField("yearBuilt", e.target.value ? parseInt(e.target.value) : null)}
+                    />
+                  </div>
+                  <div>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Parking Spaces</label>
+                    <input
+                      type="number"
+                      className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      placeholder="e.g. 20"
+                      value={form.parkingSpaces ?? ""}
+                      onChange={(e) => updateField("parkingSpaces", e.target.value ? parseInt(e.target.value) : null)}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <label className="label-caps text-slate-500 mb-1.5 block">Bedrooms</label>
+                <label className="label-caps text-slate-400 mb-1.5 block">Bedrooms</label>
                 <input
                   type="number"
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -672,7 +731,7 @@ export function PropertyFormModal({
                 />
               </div>
               <div>
-                <label className="label-caps text-slate-500 mb-1.5 block">Bathrooms</label>
+                <label className="label-caps text-slate-400 mb-1.5 block">Bathrooms</label>
                 <input
                   type="number"
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -682,7 +741,7 @@ export function PropertyFormModal({
                 />
               </div>
               <div>
-                <label className="label-caps text-slate-500 mb-1.5 block">Size (SqFt)</label>
+                <label className="label-caps text-slate-400 mb-1.5 block">Size (SqFt)</label>
                 <input
                   type="number"
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -691,14 +750,69 @@ export function PropertyFormModal({
                   onChange={(e) => updateField("sizeSqft", e.target.value ? parseInt(e.target.value) : null)}
                 />
               </div>
+              <div>
+                <label className="label-caps text-slate-400 mb-1.5 block">Land Area (SqFt)</label>
+                <input
+                  type="number"
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                  placeholder="e.g. 5000"
+                  value={form.landAreaSqft ?? ""}
+                  onChange={(e) => updateField("landAreaSqft", e.target.value ? parseInt(e.target.value) : null)}
+                />
+              </div>
+              <div>
+                <label className="label-caps text-slate-400 mb-1.5 block">Year Built</label>
+                <input
+                  type="number"
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                  placeholder="e.g. 2018"
+                  value={form.yearBuilt ?? ""}
+                  onChange={(e) => updateField("yearBuilt", e.target.value ? parseInt(e.target.value) : null)}
+                />
+              </div>
+              <div>
+                <label className="label-caps text-slate-400 mb-1.5 block">Parking Spaces</label>
+                <input
+                  type="number"
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                  placeholder="e.g. 2"
+                  value={form.parkingSpaces ?? ""}
+                  onChange={(e) => updateField("parkingSpaces", e.target.value ? parseInt(e.target.value) : null)}
+                />
+              </div>
             </div>
           )}
+
+          {/* Amenities Selector */}
+          <div className="mt-6 pt-4 border-t border-slate-200">
+            <label className="label-caps text-slate-400 mb-2 block">Amenities & Features</label>
+            <div className="flex flex-wrap gap-2">
+              {AMENITIES_LIST.map((amenity) => {
+                const isSelected = form.amenities.includes(amenity);
+                return (
+                  <button
+                    key={amenity}
+                    type="button"
+                    onClick={() => toggleAmenity(amenity)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                      isSelected
+                        ? "bg-[#151936] border-[#151936] text-white"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                    )}
+                  >
+                    {amenity}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Section 5: Media */}
         <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Media Gallery</h3>
-          <label className="label-caps text-slate-500 mb-1.5 block">Photos</label>
+          <label className="label-caps text-slate-400 mb-1.5 block">Photos</label>
 
           {form.media.length > 0 ? (
             <div className="flex flex-wrap gap-3 mb-4">
@@ -721,7 +835,7 @@ export function PropertyFormModal({
               <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center mb-2 border border-slate-100">
                 <IconPhotoUp size={20} className="text-slate-400" />
               </div>
-              <p className="text-body-regular text-slate-500">No photos added yet.</p>
+              <p className="text-body-regular text-slate-400">No photos added yet.</p>
               <p className="text-meta-muted mt-1">Upload images to showcase the property.</p>
             </div>
           )}
@@ -756,7 +870,7 @@ export function PropertyFormModal({
               </CldUploadButton>
             ) : (
               <span
-                title="Cloudinary isn't configured yet (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME / NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) — paste an image URL instead."
+                title="Cloudinary isn't configured yet (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME / NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) - paste an image URL instead."
                 className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 text-body-primary text-slate-400 bg-slate-50 border border-slate-200 h-10 px-4 rounded-lg cursor-not-allowed"
               >
                 <IconPhotoUp size={16} /> Upload

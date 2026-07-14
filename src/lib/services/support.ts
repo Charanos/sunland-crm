@@ -35,7 +35,7 @@ async function notifyTicketManagers(
   }
 }
 
-/** Anyone can file their own ticket — no permission gate, same self-scoped pattern as scheduling. */
+/** Anyone can file their own ticket - no permission gate, same self-scoped pattern as scheduling. */
 export async function createSupportTicket(ctx: CallerContext, rawInput: unknown) {
   const input = parseInput(createSupportTicketSchema, rawInput);
   const entityId = await resolveEntityId(input.entityId);
@@ -97,7 +97,7 @@ export async function getSupportTicket(ctx: CallerContext, ticketId: string) {
   return ticket;
 }
 
-/** Status/assignment/resolution changes are CEO/GM-only — the filer can view but not self-resolve. */
+/** Status/assignment/resolution changes are CEO/GM-only - the filer can view but not self-resolve. */
 export async function updateSupportTicket(ctx: CallerContext, ticketId: string, rawInput: unknown) {
   const input = parseInput(updateSupportTicketSchema, rawInput);
   const [existing] = await db.select().from(supportTickets).where(eq(supportTickets.id, ticketId)).limit(1);

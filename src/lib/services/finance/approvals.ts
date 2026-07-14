@@ -17,7 +17,7 @@ const REAL_STATUS_VALUES = ["pending", "approved", "rejected", "escalated"] as c
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 // approval_approver_role is a tier (gm/ceo/department_head), not a specific
-// role — a request doesn't record which department it belongs to, so a
+// role - a request doesn't record which department it belongs to, so a
 // department_head-tier request notifies every department head at once
 // rather than guessing which one.
 async function notifyRequiredApprovers(
@@ -40,7 +40,7 @@ async function notifyRequiredApprovers(
       entityId,
       type: "approval.pending",
       title: "Approval request awaiting your decision",
-      body: `${request.requestType.replace(/_/g, " ")}${request.amountKes ? ` — KES ${Number(request.amountKes).toLocaleString()}` : ""}`,
+      body: `${request.requestType.replace(/_/g, " ")}${request.amountKes ? ` - KES ${Number(request.amountKes).toLocaleString()}` : ""}`,
       associatedType: "approval_request",
       associatedId: request.id,
       href: "/admin/approvals",
@@ -49,7 +49,7 @@ async function notifyRequiredApprovers(
 }
 
 /**
- * P0 reference service — the template every future module's service follows:
+ * P0 reference service - the template every future module's service follows:
  * authorize (action-level) → validate (Zod) → transaction → structured audit.
  * No business logic belongs in the route handler after this.
  */
@@ -59,7 +59,7 @@ async function notifyRequiredApprovers(
  * (no requireCallerContext, no authorize, no entity scoping, and `status as
  * any` forcing the UI's virtual "decided" tab straight into a real Postgres
  * enum column, which errors since "decided" isn't a member of
- * approval_status) — moved here to close that gap and match every other
+ * approval_status) - moved here to close that gap and match every other
  * service in this codebase.
  */
 export async function listApprovalRequests(
@@ -78,7 +78,7 @@ export async function listApprovalRequests(
     conditions.push(eq(approvalRequests.status, filters.status as (typeof REAL_STATUS_VALUES)[number]));
   }
   // Any other unrecognized status value is silently ignored rather than
-  // forwarded to Postgres — never trust a client-supplied string into an
+  // forwarded to Postgres - never trust a client-supplied string into an
   // enum-typed column.
 
   return db
@@ -140,8 +140,8 @@ export async function createApprovalRequest(ctx: CallerContext, rawInput: unknow
 export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknown) {
   const input = parseInput(decideApprovalRequestSchema, rawInput);
 
-  // The request's own entity is the authorization scope — never the client's
-  // say-so — which is only knowable after loading it.
+  // The request's own entity is the authorization scope - never the client's
+  // say-so - which is only knowable after loading it.
   const [existing] = await db
     .select()
     .from(approvalRequests)
@@ -173,7 +173,7 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
 
     // Mandate activation side-effect: a decided property_mandates request
     // flips the mandate itself, since the mandate has no independent
-    // decision UI of its own — this approval *is* its decision.
+    // decision UI of its own - this approval *is* its decision.
     if (existing.relatedTable === "property_mandates") {
       await tx
         .update(propertyMandates)
@@ -184,7 +184,7 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
         .where(and(eq(propertyMandates.id, existing.relatedId), eq(propertyMandates.status, "pending_approval")));
     }
 
-    // Disbursement side-effect on approval — will move onto the real ledger
+    // Disbursement side-effect on approval - will move onto the real ledger
     // posting recipe (finance ledger doc §5.3) once P1 lands; today's flat
     // transactions table is the only money-movement record that exists.
     if (input.status === "approved" && existing.amountKes) {
@@ -218,7 +218,7 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
       entityId: existing.entityId,
       type: "approval.decided",
       title: `Your request was ${input.status}`,
-      body: `${existing.requestType.replace(/_/g, " ")} — ${updated.decisionNotes ?? input.status}`,
+      body: `${existing.requestType.replace(/_/g, " ")} - ${updated.decisionNotes ?? input.status}`,
       associatedType: "approval_request",
       associatedId: updated.id,
       href: "/admin/approvals",

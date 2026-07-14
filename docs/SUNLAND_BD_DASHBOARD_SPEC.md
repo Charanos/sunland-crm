@@ -1,9 +1,9 @@
-# Sunland Business Development Dashboard — Comprehensive Functional Spec
+# Sunland Business Development Dashboard - Comprehensive Functional Spec
 
 **Document status:** Drill-down of `SUNLAND_ERP_IMPLEMENTATION_SPEC.md` Section 7, expanded to the depth required to build Business Development (Line Managers) as its own near-standalone relationship and pipeline management system inside the ERP shell, matching the rigor of `SUNLAND_FINANCE_DASHBOARD_SPEC.md` and `SUNLAND_HR_DASHBOARD_SPEC.md`.
 **Relationship to other documents:** Inherits the design system, entity context, locked components, and RBAC role list without modification. Where Finance's challenge was financial-logic integrity and HR's was access control, BD's is structural: almost nothing BD does is self-contained. A vehicle needs Front Office. A mandate needs Finance's sign-off. A commission needs Finance's fee engine. BD is a coordination layer more than an execution layer, and that shapes this document more than any single page within it.
 
-> **Updated 2026-07-08 — role names superseded, structure/flows unchanged (ADR 013):** "Line Manager" throughout this document no longer exists as a role. Its consolidated successor, `property_manager`, now reports to a new department head, **Head of Strategy** (`head_of_strategy`), rather than being the top of its own chain. Everywhere this doc says "Line Manager" as the senior/decision-making tier (territory ownership, team performance views, approvals), read "Head of Strategy"; everywhere it means the working agent, read "Property Manager." The page structure, territory model, and request-transparency principles below are otherwise unchanged and still the design to build against. Property Managers additionally now carry tenant-facing responsibility (complaints, arrears, misc charges — `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md`), not just the landlord/pipeline scope this document describes.
+> **Updated 2026-07-08 - role names superseded, structure/flows unchanged (ADR 013):** "Line Manager" throughout this document no longer exists as a role. Its consolidated successor, `property_manager`, now reports to a new department head, **Head of Strategy** (`head_of_strategy`), rather than being the top of its own chain. Everywhere this doc says "Line Manager" as the senior/decision-making tier (territory ownership, team performance views, approvals), read "Head of Strategy"; everywhere it means the working agent, read "Property Manager." The page structure, territory model, and request-transparency principles below are otherwise unchanged and still the design to build against. Property Managers additionally now carry tenant-facing responsibility (complaints, arrears, misc charges - `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md`), not just the landlord/pipeline scope this document describes.
 
 ---
 
@@ -229,7 +229,7 @@ Built last (Section 16), since it rolls up every other page, both BD's outgoing 
 - **Columns:** Landlord Name, Property/Properties, Division, Assigned Agent, Relationship Status (prospecting/active mandate/terminated).
 - **Filters:** division, mandate status. BD Agents see this filtered server-side to their assigned landlords by default.
 - **Row action:** opens the Landlord Drawer: contact details, properties, mandate summary (read-only, cross-linking to Finance for the financial detail), relationship history, Activity Log including any reassignment events (Section 6.1).
-- **Modal — New Landlord:** contact info, properties offered, division, assigned agent.
+- **Modal - New Landlord:** contact info, properties offered, division, assigned agent.
 
 #### Mandate Status
 
@@ -240,7 +240,7 @@ Built last (Section 16), since it rolls up every other page, both BD's outgoing 
 #### Prospecting
 
 - Landlords in active conversation before any mandate exists: stage (Initial Contact / Proposal Sent / Negotiating / Mandate Drafted), next action date, notes.
-- **Modal — New Prospecting Record.**
+- **Modal - New Prospecting Record.**
 - A prospecting record converts into the Mandate Status tab automatically once a mandate letter draft request is submitted (8.3), rather than requiring the data to be re-entered.
 
 ---
@@ -259,7 +259,7 @@ Built last (Section 16), since it rolls up every other page, both BD's outgoing 
 - **Kanban board** (Section 2): columns Lead → Viewing → Offer → Negotiation → Closed, cards showing lead name, property, value, assigned agent, days in current stage.
 - Drag-and-drop (or an equivalent explicit "Move to next stage" action for accessibility) moves a card between columns, which is a stage-change event, not a record recreation.
 - **Drawer (on card click):** full deal detail, contact info, viewing history, offer history, notes, Activity Log.
-- **Modal — New Lead.**
+- **Modal - New Lead.**
 
 #### Closed
 
@@ -277,17 +277,17 @@ Built last (Section 16), since it rolls up every other page, both BD's outgoing 
 #### Float (default)
 
 - One row per property/mandate float the viewer has access to: Property/Mandate, Current Balance (derived, Section 6.3), Last Top-Up, Status (healthy/low/depleted).
-- **Row action — "Request Top-Up":** Modal, amount requested, justification. Routes through the Approval Engine; small top-ups may auto-approve, larger ones require GM per a configurable threshold, the same pattern as every other threshold-gated action in this ERP (master spec 4.7).
+- **Row action - "Request Top-Up":** Modal, amount requested, justification. Routes through the Approval Engine; small top-ups may auto-approve, larger ones require GM per a configurable threshold, the same pattern as every other threshold-gated action in this ERP (master spec 4.7).
 
 #### Expenses
 
 - **Columns:** Date, Category, Amount, Logged By, Approval Status (auto_approved / pending_gm / approved / rejected), mirroring Finance's Mandate Expenses log (Finance spec 7.3) exactly, since this is the same underlying data viewed from the originating side.
-- **Modal — Log Expense:** property/mandate, category, amount, period, optional receipt upload. Submitting does not state whether it'll be auto-approved; that's determined server-side against the threshold and reflected in the resulting status, BD doesn't pre-judge the outcome in the UI.
+- **Modal - Log Expense:** property/mandate, category, amount, period, optional receipt upload. Submitting does not state whether it'll be auto-approved; that's determined server-side against the threshold and reflected in the resulting status, BD doesn't pre-judge the outcome in the UI.
 
 #### Reconciliation
 
 - A periodic (typically monthly) joint Line Manager and Finance confirmation that logged expenses match actual float depletion: opening balance, top-ups, expenses logged, expected closing balance, actual cash counted, variance.
-- **Action — "Submit Reconciliation":** Line Manager confirms the count; a variance beyond a small tolerance flags the period for Finance review rather than silently closing it out.
+- **Action - "Submit Reconciliation":** Line Manager confirms the count; a variance beyond a small tolerance flags the period for Finance review rather than silently closing it out.
 
 ---
 
@@ -300,7 +300,7 @@ The page that exists specifically to enforce Section 6.2. Every row on every tab
 #### Vehicle Requests (default)
 
 - **Columns:** Purpose, Date, Destination, Requested By, Status.
-- **Modal — New Vehicle Request:** purpose, date, destination, requested vehicle type. Submission and fulfillment both happen against Front Office's logistics records (Front Office spec, master spec 8.1); this page reads that status, it doesn't maintain a second copy of the assignment.
+- **Modal - New Vehicle Request:** purpose, date, destination, requested vehicle type. Submission and fulfillment both happen against Front Office's logistics records (Front Office spec, master spec 8.1); this page reads that status, it doesn't maintain a second copy of the assignment.
 - Status detail on click: if `Awaiting Approval`, shows whether it's waiting on Front Office capacity or a GM sign-off for external hire (master spec 4.1), so "awaiting approval" never reads as a dead end without explanation.
 
 #### Mandate Letters
@@ -322,7 +322,7 @@ The page that exists specifically to enforce Section 6.2. Every row on every tab
 #### Team Performance (default, Line Manager only)
 
 - **Table:** Agent, Deals Closed (period), Pipeline Value, Conversion Rate, Avg Time to Close, Goal Progress.
-- **Modal — Set Agent Goal:** target deals, target pipeline value, target conversion rate, period. Line Manager only, per Section 7.
+- **Modal - Set Agent Goal:** target deals, target pipeline value, target conversion rate, period. Line Manager only, per Section 7.
 
 #### My Performance (Agent view, self-scoped)
 

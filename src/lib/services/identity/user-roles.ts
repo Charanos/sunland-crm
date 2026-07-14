@@ -9,12 +9,12 @@ import type { CallerContext } from "@/lib/services/types";
 import { grantRoleSchema } from "@/lib/validation/identity";
 import { parseInput } from "@/lib/validation/parse";
 
-/** Grants a role to a user — the actual permission-escalation control surface. */
+/** Grants a role to a user - the actual permission-escalation control surface. */
 export async function grantUserRole(ctx: CallerContext, userId: string, rawInput: unknown) {
   const input = parseInput(grantRoleSchema, rawInput);
   const entityId = input.entityId ?? null;
 
-  // entityId may be deliberately null (a global grant) — never substitute
+  // entityId may be deliberately null (a global grant) - never substitute
   // ctx.entityId here, that would silently check the wrong scope.
   await authorize(ctx, "identity.role.write", entityId);
 

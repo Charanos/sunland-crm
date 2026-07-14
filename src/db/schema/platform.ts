@@ -132,7 +132,7 @@ export const roles = pgTable(
   "roles",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    slug: text("slug").notNull(), // "finance_head" — aligns with userRole where applicable
+    slug: text("slug").notNull(), // "finance_head" - aligns with userRole where applicable
     name: text("name").notNull(),
     isSystem: boolean("is_system").default(false).notNull(),
     scopeType: roleScopeType("scope_type").default("entity").notNull(),
@@ -181,14 +181,14 @@ export const userRoles = pgTable(
   }),
 );
 
-// ─── Sessions (revocation support — backend master §3.2) ──────────────────
+// ─── Sessions (revocation support - backend master §3.2) ──────────────────
 
 export const sessions = pgTable(
   "sessions",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-    // sha256 of the session JWT's jti — never store the raw token
+    // sha256 of the session JWT's jti - never store the raw token
     tokenHash: text("token_hash").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     ip: text("ip"),
@@ -202,7 +202,7 @@ export const sessions = pgTable(
   }),
 );
 
-// ─── Settings (thresholds/fees as data, never hardcoded — master doc §5.1) ─
+// ─── Settings (thresholds/fees as data, never hardcoded - master doc §5.1) ─
 
 export const settings = pgTable(
   "settings",
@@ -222,7 +222,7 @@ export const settings = pgTable(
   }),
 );
 
-// ─── Approvals (ADR 004 — generic, shared infrastructure) ──────────────────
+// ─── Approvals (ADR 004 - generic, shared infrastructure) ──────────────────
 
 export const approvalRequests = pgTable(
   "approval_requests",
@@ -291,7 +291,7 @@ export const notifications = pgTable(
   }),
 );
 
-// ─── Audit (activity_logs extended with structured before/after — audit A-6) ─
+// ─── Audit (activity_logs extended with structured before/after - audit A-6) ─
 
 export const activityLogs = pgTable(
   "activity_logs",

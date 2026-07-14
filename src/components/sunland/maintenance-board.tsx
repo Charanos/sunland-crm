@@ -96,7 +96,7 @@ const STATUS_META: Record<Status, { label: string; tone: "neutral" | "data" | "w
   closed: { label: "Closed", tone: "neutral" },
 };
 
-// Each active stage advances to exactly one next stage — a request never
+// Each active stage advances to exactly one next stage - a request never
 // needs to be told which status comes next.
 const NEXT_STAGE: Partial<Record<Status, { status: Status; label: string }>> = {
   open: { status: "in_progress", label: "Start Progress" },
@@ -115,7 +115,7 @@ const STATUS_FILTERS: Array<{ id: Status | "all"; label: string }> = [
 ];
 
 function fmtDate(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -168,12 +168,12 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
       fetch(`/api/contacts?entityId=${entityId}&type=contractor`)
         .then((r) => r.json())
         .then((d) => setContractors(Array.isArray(d.contacts) ? d.contacts : []))
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [loadRequests, entityId]);
 
   const contractorName = useCallback(
-    (id: string | null) => (id ? contractors.find((c) => c.id === id)?.displayName ?? "—" : "—"),
+    (id: string | null) => (id ? contractors.find((c) => c.id === id)?.displayName ?? "-" : "-"),
     [contractors],
   );
 
@@ -378,7 +378,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                     onClick={() => { setStatusFilter(f.id); setPage(1); }}
                     className={cn(
                       "px-3 py-1.5 body-sm font-medium rounded-lg transition-colors flex items-center gap-1.5",
-                      statusFilter === f.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700",
+                      statusFilter === f.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700",
                     )}
                   >
                     {f.label}
@@ -386,7 +386,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                       <span
                         className={cn(
                           "text-xs font-mono px-1.5 py-0.5 rounded-full",
-                          statusFilter === f.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-200/70 text-slate-500",
+                          statusFilter === f.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-200/70 text-slate-400",
                         )}
                       >
                         {count}
@@ -439,7 +439,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="size-11 shrink-0 rounded-xl border bg-slate-50 border-slate-200 text-slate-500 flex items-center justify-center">
+                        <div className="size-11 shrink-0 rounded-xl border bg-slate-50 border-slate-200 text-slate-400 flex items-center justify-center">
                           <IconTool size={18} />
                         </div>
                         <div className="min-w-0">
@@ -480,7 +480,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
             <div className="hidden lg:block overflow-x-auto custom-scrollbar pb-2">
               <table className="w-full min-w-[950px] text-left">
                 <thead>
-                  <tr className="border-b border-slate-100 label-caps text-slate-500 bg-slate-50/50">
+                  <tr className="border-b border-slate-100 label-caps text-slate-400 bg-slate-50/50">
                     <th className="px-4 py-3">Request</th>
                     <th className="px-4 py-3">Property</th>
                     <th className="px-4 py-3">Contractor</th>
@@ -504,7 +504,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                       >
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="size-9 shrink-0 rounded-lg border bg-slate-50 border-slate-200 text-slate-500 flex items-center justify-center">
+                            <div className="size-9 shrink-0 rounded-lg border bg-slate-50 border-slate-200 text-slate-400 flex items-center justify-center">
                               <IconTool size={16} />
                             </div>
                             <div className="min-w-0">
@@ -684,7 +684,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                   const c = contractors.find((x) => x.id === selected.assignedContractorId);
                   if (!c) return null;
                   return (
-                    <div className="flex items-center gap-3 mt-3 text-body-regular text-slate-500">
+                    <div className="flex items-center gap-3 mt-3 text-body-regular text-slate-400">
                       {c.phone && (
                         <a href={`tel:${c.phone}`} className="flex items-center gap-1.5 hover:text-[#122a20]">
                           <IconPhone size={13} /> {c.phone}

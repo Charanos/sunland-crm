@@ -1,10 +1,10 @@
-# Sunland Finance — Ledger & Accounting Architecture
+# Sunland Finance - Ledger & Accounting Architecture
 
 Date: 2026-06-29
 Status: **Design / implementation blueprint.** No code in this document is live yet. It operationalizes the intent in `SUNLAND_ERP_IMPLEMENTATION_SPEC.md` §5 into a concrete, migration-ready backend, and it is the authority for anything money-related.
 Companion: `SUNLAND_CURRENT_STATE_AUDIT.md` (why this is needed), `SUNLAND_BACKEND_ARCHITECTURE_MASTER.md` (how it fits the wider backend).
 
-> **The one rule that governs this entire document (ADR 002, restated):** No subsystem invents its own balance. There is exactly one source of financial truth — the general ledger (`journal_lines`). Rentals, mandates, payroll, AP/AR, cheques, fees, and commissions **write into** it and **query over** it. The balance sheet, trial balance, and cash-flow statement are *derived*, never separately maintained. Today's code violates this rule (balances are synthesized from a flat `transactions` table with hardcoded rules); this design restores it.
+> **The one rule that governs this entire document (ADR 002, restated):** No subsystem invents its own balance. There is exactly one source of financial truth - the general ledger (`journal_lines`). Rentals, mandates, payroll, AP/AR, cheques, fees, and commissions **write into** it and **query over** it. The balance sheet, trial balance, and cash-flow statement are *derived*, never separately maintained. Today's code violates this rule (balances are synthesized from a flat `transactions` table with hardcoded rules); this design restores it.
 
 ---
 
@@ -21,7 +21,7 @@ So a single rent receipt of KES 100,000 on a 10% mandate is not "KES 100,000 rev
 
 If that split is ever computed off `expected` rent instead of `collected` rent, or ever posted as gross revenue, the P&L, the landlord statements, and the tax position are all wrong. This is why the management fee is a **generated database column on collected amount**, not application arithmetic (spec §5.4).
 
-Double-entry keeps this honest: every economic event is one **journal entry** whose **lines** sum to zero (Σdebits = Σcredits). Balances are `SUM(debit) − SUM(credit)` grouped by account. If the journal balances, the books balance — provably, at any instant.
+Double-entry keeps this honest: every economic event is one **journal entry** whose **lines** sum to zero (Σdebits = Σcredits). Balances are `SUM(debit) − SUM(credit)` grouped by account. If the journal balances, the books balance - provably, at any instant.
 
 ---
 
@@ -52,28 +52,28 @@ export const accounts = pgTable("accounts", {
 }));
 ```
 
-### 2.1 Seed COA (starting point — the client's accountant should confirm codes)
+### 2.1 Seed COA (starting point - the client's accountant should confirm codes)
 
 The hardcoded 7 accounts in `ledger/route.ts` today are a good *start*; a real property-management agency needs more granularity. Recommended seed:
 
 | Code | Account | Type | Notes |
 |---|---|---|---|
 | 1000 | Operating Bank Account | asset | `isCash` |
-| 1010 | Client Trust / Rent Collection Account | asset | `isCash`; ideally a segregated trust account — landlord money is not Sunland money |
+| 1010 | Client Trust / Rent Collection Account | asset | `isCash`; ideally a segregated trust account - landlord money is not Sunland money |
 | 1100 | Accounts Receivable (fees) | asset | control acct for AR subledger |
 | 1200 | Rent Receivable / Arrears | asset | control acct for rental ledger arrears |
 | 1300 | Prepayments | asset | |
-| 2000 | Landlord Remittances Payable | liability | control acct — what we owe landlords |
+| 2000 | Landlord Remittances Payable | liability | control acct - what we owe landlords |
 | 2100 | Tenant Security Deposits Held | liability | must never be recognised as revenue |
 | 2200 | Accounts Payable (suppliers/contractors) | liability | control acct for AP subledger |
-| 2300 | Statutory Payable — PAYE | liability | |
-| 2310 | Statutory Payable — NSSF | liability | |
-| 2320 | Statutory Payable — SHIF (ex-NHIF) | liability | |
-| 2330 | Statutory Payable — Affordable Housing Levy | liability | 1.5% employer + 1.5% employee |
-| 2340 | Statutory Payable — WHT (KRA) | liability | 10% withheld on agent commissions |
+| 2300 | Statutory Payable - PAYE | liability | |
+| 2310 | Statutory Payable - NSSF | liability | |
+| 2320 | Statutory Payable - SHIF (ex-NHIF) | liability | |
+| 2330 | Statutory Payable - Affordable Housing Levy | liability | 1.5% employer + 1.5% employee |
+| 2340 | Statutory Payable - WHT (KRA) | liability | 10% withheld on agent commissions |
 | 2400 | Rent Received in Advance | liability | |
 | 3000 | Share Capital | equity | |
-| 3100 | Retained Earnings | equity | closed to at period end — never a magic constant |
+| 3100 | Retained Earnings | equity | closed to at period end - never a magic constant |
 | 4000 | Management Fee Revenue | revenue | the core P&L line |
 | 4100 | Letting / Lease Fee Revenue | revenue | |
 | 4200 | Sales Commission Revenue | revenue | |
@@ -199,7 +199,7 @@ These replace the hardcoded `if (tx.type === ...)` ladder currently in `ledger/r
 Money arrives in the trust/collection account; the obligation to the landlord and the fee are recognised at allocation.
 ```
 Dr 1010 Client Trust Account        100,000
-   Cr 2400 Rent Received in Advance          100,000     (if before due) — or straight to allocation
+   Cr 2400 Rent Received in Advance          100,000     (if before due) - or straight to allocation
 ```
 Then **allocation** (can be same entry when due):
 ```
@@ -230,9 +230,9 @@ Dr 2000 Landlord Remittances Payable  87,000    (90,000 − 3,000 approved expen
 Dr 1010 Client Trust Account          d
    Cr 2100 Tenant Security Deposits Held      d
 ```
-On lease end, either refunded (reverse) or applied to arrears/damages (reclassify) — never touches revenue while held.
+On lease end, either refunded (reverse) or applied to arrears/damages (reclassify) - never touches revenue while held.
 
-### 5.5 Banker's cheque — credited (spec §5.6: journal only on `credited`)
+### 5.5 Banker's cheque - credited (spec §5.6: journal only on `credited`)
 No journal entry on `deposited`. When status → `credited`:
 ```
 Dr 1000 Operating Bank Account        amount
@@ -247,10 +247,10 @@ Dr 1100 Accounts Receivable           gross_commission
    Cr 4200 Sales Commission Revenue           gross_commission
 On settlement with WHT withheld:
 Dr 1000 Operating Bank Account        gross × 0.90
-Dr 2340 Statutory Payable — WHT       gross × 0.10   (asset: WHT credit claimable / or receivable from KRA)
+Dr 2340 Statutory Payable - WHT       gross × 0.10   (asset: WHT credit claimable / or receivable from KRA)
    Cr 1100 Accounts Receivable                gross
 ```
-(Exact WHT treatment — withheld-by-payer vs withheld-by-Sunland-as-agent — must be confirmed with the client's tax advisor; the table supports both by choice of accounts.)
+(Exact WHT treatment - withheld-by-payer vs withheld-by-Sunland-as-agent - must be confirmed with the client's tax advisor; the table supports both by choice of accounts.)
 
 ### 5.7 Payroll run (spec §5.5, Kenyan statutory)
 Gross → net with statutory deductions, each to its payable account:
@@ -267,7 +267,7 @@ Dr 5000 Salaries & Wages (employer cost)  employer_contribs
 ```
 Statutory remittance (paying KRA/NSSF/SHIF) later debits the payable and credits bank.
 
-### 5.8 Service fee charged (late fee, letting fee — spec §5.7)
+### 5.8 Service fee charged (late fee, letting fee - spec §5.7)
 Rule-driven (`service_fee_rules`): create an AR + revenue entry when a charge is raised; clear AR when paid.
 
 ---
@@ -276,7 +276,7 @@ Rule-driven (`service_fee_rules`): create an AR + revenue entry when a charge is
 
 Each is a **subledger** reconciled to a **control account** in the COA. This is what lets the CEO drill from "we're owed KES 2.4M in arrears" down to the specific tenants.
 
-### 6.1 Property mandates (spec §5.4) — the agency agreement
+### 6.1 Property mandates (spec §5.4) - the agency agreement
 ```ts
 export const mandateStatus = pgEnum("mandate_status", ["draft","pending_approval","active","terminated"]);
 
@@ -292,7 +292,7 @@ export const propertyMandates = pgTable("property_mandates", {
 export const mandateCollections = pgTable("mandate_collections", {
   id, mandateId, period,                              // "2026-06"
   collectedAmount: numeric(14,2),
-  // GENERATED columns — DB enforces the business rule, not app code:
+  // GENERATED columns - DB enforces the business rule, not app code:
   managementFee: numeric GENERATED ALWAYS AS (collected_amount * mandate_rate),
   approvedExpenses: numeric(14,2).default(0),
   landlordRemittance: numeric GENERATED ALWAYS AS (collected_amount - management_fee - approved_expenses),
@@ -308,7 +308,7 @@ export const mandateExpenses = pgTable("mandate_expenses", {
 ```
 > **Build constraint (spec §5.4, load-bearing):** management fee = `collected × rate`, **never** `expected × rate`, enforced by the generated column. Do not let a future developer "fix" this into app arithmetic.
 
-### 6.2 Rental ledger (spec §5.3) — per unit, per period
+### 6.2 Rental ledger (spec §5.3) - per unit, per period
 ```ts
 export const rentalStatus = pgEnum("rental_status", ["current","vacant","partial","defaulted"]);
 export const rentalLedger = pgTable("rental_ledger", {
@@ -345,7 +345,7 @@ export const reportExports = pgTable("report_exports", {   // spec §5.9 QR veri
 
 ---
 
-## 7. Approval thresholds (enforced in the write path — fixes Gap A-5)
+## 7. Approval thresholds (enforced in the write path - fixes Gap A-5)
 
 The generic `approval_requests` engine (ADR 004) is **invoked by the posting/subsystem services**, server-side, before the consequential effect happens. From the Finance Revamp guide §4:
 
@@ -355,7 +355,7 @@ The generic `approval_requests` engine (ADR 004) is **invoked by the posting/sub
 | Property/office petty-cash expense | > KES 5,000 | `mandate_expense`/expense stays `pending_gm`; not netted against remittance until approved |
 | Mandate | portfolio > 10 units | mandate `pending_approval`; rental-ledger tracking locked until GM signs off |
 | Mandate rate | ≠ 10% | require `rateJustification`; route for approval |
-| Any GM/CEO rejection | — | mandatory justification note, written to the audit log |
+| Any GM/CEO rejection | - | mandatory justification note, written to the audit log |
 
 These checks live in the service functions, not the UI. The UI's amber "Pending Approval" badges become a *reflection* of server state, not the gate.
 
@@ -371,39 +371,39 @@ These checks live in the service functions, not the UI. The UI's amber "Pending 
 
 Every statement is a pure read over `journal_lines` + `accounts`. Cache with Upstash keyed by `(entity, period, as-of)` and invalidate on any post into that period.
 
-### 8.1 Downstream reconciliation — how one write shows up on every dashboard (added 2026-07-08, per client question)
+### 8.1 Downstream reconciliation - how one write shows up on every dashboard (added 2026-07-08, per client question)
 
-The question was: if the CEO adds a property, do the finances "match up downstream" across every dashboard — Finance, Property Manager, the CEO's own Overview? **Yes, automatically, because there is nowhere else for the number to come from.** There is no per-dashboard finance table, no cached snapshot copied into each portal, no batch job that "syncs" one dashboard to another. Every dashboard — CEO, GM, Finance, a Property Manager's scoped view, a landlord's remittance statement — runs the **same query** against the **same tables**, filtered only by `entityId` and the caller's permission scope. This is ADR 003 (entity scope is mandatory) and this doc's own §8 principle ("derived statements, never stored balances") applied at the cross-dashboard level, not just within Finance.
+The question was: if the CEO adds a property, do the finances "match up downstream" across every dashboard - Finance, Property Manager, the CEO's own Overview? **Yes, automatically, because there is nowhere else for the number to come from.** There is no per-dashboard finance table, no cached snapshot copied into each portal, no batch job that "syncs" one dashboard to another. Every dashboard - CEO, GM, Finance, a Property Manager's scoped view, a landlord's remittance statement - runs the **same query** against the **same tables**, filtered only by `entityId` and the caller's permission scope. This is ADR 003 (entity scope is mandatory) and this doc's own §8 principle ("derived statements, never stored balances") applied at the cross-dashboard level, not just within Finance.
 
-**Worked example, traced through the code that actually runs today** (the flat `transactions` table described in §9's migration path — this section will read identically once that migration to real `journal_lines` lands, only the SQL underneath changes):
+**Worked example, traced through the code that actually runs today** (the flat `transactions` table described in §9's migration path - this section will read identically once that migration to real `journal_lines` lands, only the SQL underneath changes):
 
-1. **A property is created.** `POST /api/properties` → `createProperty()` (`src/lib/services/properties.ts`) inserts one row into `properties`, scoped to an `entityId`. Nothing else happens yet — no income exists until someone actually rents it.
-2. **A lease is signed against it.** `createLease()` inserts into `leases`, referencing the property. Still no income — a lease is an agreement, not a receipt.
+1. **A property is created.** `POST /api/properties` → `createProperty()` (`src/lib/services/properties.ts`) inserts one row into `properties`, scoped to an `entityId`. Nothing else happens yet - no income exists until someone actually rents it.
+2. **A lease is signed against it.** `createLease()` inserts into `leases`, referencing the property. Still no income - a lease is an agreement, not a receipt.
 3. **Rent is collected.** A `transactions` row is inserted with `type: "rent"`, an `amountKes`, and the same `entityId`. This is the single event that creates real income.
-4. **Every dashboard that asks "what's our income" runs the same computation over that same row.** `getDashboardOverview()` (`src/lib/services/dashboard.ts`) — the function behind the CEO Overview, and the same function any other scoped dashboard would call — does:
+4. **Every dashboard that asks "what's our income" runs the same computation over that same row.** `getDashboardOverview()` (`src/lib/services/dashboard.ts`) - the function behind the CEO Overview, and the same function any other scoped dashboard would call - does:
    ```ts
    // computeIncome(): management fee = collected × MANAGEMENT_FEE_RATE (10%), never gross rent.
-   // Confirmed §6.1 of this doc — the exact mistake this architecture exists to prevent.
+   // Confirmed §6.1 of this doc - the exact mistake this architecture exists to prevent.
    if (t.type === "rent") return sum + amt * MANAGEMENT_FEE_RATE;
    ```
-   `incomeKes`, `rentPool`, `departmentStats.legal` (active lease count), and every trend figure on the Overview are computed **live, on read**, from `properties` + `leases` + `transactions` filtered by `entityId`. There is no `dashboard_snapshot` table, no cron that pre-computes these numbers — the query runs when the page loads.
+   `incomeKes`, `rentPool`, `departmentStats.legal` (active lease count), and every trend figure on the Overview are computed **live, on read**, from `properties` + `leases` + `transactions` filtered by `entityId`. There is no `dashboard_snapshot` table, no cron that pre-computes these numbers - the query runs when the page loads.
 5. **A Property Manager's scoped view runs the identical query, narrowed further.** Once PM-scoped dashboards exist (tenant/landlord portal doc, ADR 013 §13.2), "my properties' income" is the same `computeIncome()` logic with an additional `WHERE property.assignedTo = :pmId` (or equivalent), not a different calculation living in different code. If Finance's number and a PM's number ever disagree, that is a **bug** (a second source of truth leaking in), never an expected "each dashboard has its own view of the truth."
-6. **The landlord portal is the external-facing proof of the same principle** — see `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md` §6: a tenant payment posts once, and `rental_ledger`, the landlord's remittance statement, the Finance rentals board, and the Executive collection KPI all move together because they're all reading the same underlying rows, not four copies of a number.
+6. **The landlord portal is the external-facing proof of the same principle** - see `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md` §6: a tenant payment posts once, and `rental_ledger`, the landlord's remittance statement, the Finance rentals board, and the Executive collection KPI all move together because they're all reading the same underlying rows, not four copies of a number.
 
-**What this means for anyone building a new dashboard section:** never introduce a second place that stores or re-derives a financial figure already computable from `properties`/`leases`/`transactions` (or, post-migration, `journal_lines`). If a new view needs "total income for X," it calls the same computation (or a service function that wraps it) scoped to X — it does not duplicate the arithmetic. This is the concrete mechanism behind ADR 002 ("no department owns an independent money balance") and is already how every dashboard shipped this build works — see `src/lib/services/dashboard.ts` and `src/lib/services/agent-performance.ts` for two independently-scoped consumers of the exact same underlying rows.
+**What this means for anyone building a new dashboard section:** never introduce a second place that stores or re-derives a financial figure already computable from `properties`/`leases`/`transactions` (or, post-migration, `journal_lines`). If a new view needs "total income for X," it calls the same computation (or a service function that wraps it) scoped to X - it does not duplicate the arithmetic. This is the concrete mechanism behind ADR 002 ("no department owns an independent money balance") and is already how every dashboard shipped this build works - see `src/lib/services/dashboard.ts` and `src/lib/services/agent-performance.ts` for two independently-scoped consumers of the exact same underlying rows.
 
 ---
 
 ## 9. Migration path from today's code
 
-1. **Add tables** (COA, journal, subledgers, periods) alongside the existing `transactions` — do not drop `transactions` yet.
+1. **Add tables** (COA, journal, subledgers, periods) alongside the existing `transactions` - do not drop `transactions` yet.
 2. **Seed COA + open the current period.**
-3. **Backfill:** write a one-off script that replays existing `transactions` rows through the §5 posting recipes into real journal entries (the recipes already exist, in effect, inside `ledger/route.ts` — lift them out, correct the magic constants, and run once). Reconcile the resulting trial balance against expected opening balances with the client's accountant.
+3. **Backfill:** write a one-off script that replays existing `transactions` rows through the §5 posting recipes into real journal entries (the recipes already exist, in effect, inside `ledger/route.ts` - lift them out, correct the magic constants, and run once). Reconcile the resulting trial balance against expected opening balances with the client's accountant.
 4. **Cut the API over:** replace `finance/ledger/route.ts`'s synthesis with reads over the journal; delete the hardcoded COA and the `3485000` retained-earnings constant.
 5. **Demote `transactions`** to a raw bank-feed / receipt-capture staging table (input to posting), or retire it. It is no longer a source of balances.
 6. **Wire the boards:** point the finance board components at the real endpoints; remove inline demo constants.
 
-Do this **entity by entity** if needed, but the ledger must be all-or-nothing per entity — you cannot have half a period in the journal and half in `transactions`.
+Do this **entity by entity** if needed, but the ledger must be all-or-nothing per entity - you cannot have half a period in the journal and half in `transactions`.
 
 ---
 

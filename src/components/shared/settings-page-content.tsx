@@ -262,7 +262,7 @@ export function SettingsPageContent() {
               "inline-flex px-4 py-2 text-sm font-medium rounded-xl transition-all flex items-center gap-1.5",
               activeTab === tab.id
                 ? "bg-[#151936] text-white shadow-sm"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                : "text-slate-400 hover:bg-slate-50 hover:text-slate-900"
             )}>
             <tab.icon size={14} className="shrink-0" />
             <span>{tab.label}</span>
@@ -333,7 +333,7 @@ export function SettingsPageContent() {
                         "flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-all",
                         settings.display.theme === t.value
                           ? "border-[var(--sidebar)] bg-[var(--sidebar)]/5 text-[var(--sidebar)]"
-                          : "border-slate-200 text-slate-500 hover:border-slate-300"
+                          : "border-slate-200 text-slate-400 hover:border-slate-300"
                       )}>
                       <t.icon size={18} />
                       <span className="text-sm">{t.label}</span>
@@ -507,20 +507,20 @@ export function SettingsPageContent() {
                   </div>
                   <div>
                     <p className="text-label text-slate-900">Sunland ERP Platform</p>
-                    <p className="text-sm text-slate-500 mt-0.5">Version 2.1.0 · Build 20260627</p>
+                    <p className="text-sm text-slate-400 mt-0.5">Version 2.1.0 · Build 20260627</p>
                   </div>
                 </div>
 
                 {[
-                  { label: "Release Channel", value: "Production — Stable" },
-                  { label: "License", value: "Enterprise — Unlimited Users" },
+                  { label: "Release Channel", value: "Production - Stable" },
+                  { label: "License", value: "Enterprise - Unlimited Users" },
                   { label: "Data Region", value: "Africa (Nairobi, Kenya)" },
                   { label: "API Version", value: "v3.4.1" },
                   { label: "Last System Update", value: "June 26, 2026" },
                   { label: "Support Contact", value: "support@sunland.co.ke" },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
-                    <p className="text-sm text-slate-500">{item.label}</p>
+                    <p className="text-sm text-slate-400">{item.label}</p>
                     <p className="text-sm text-slate-800 font-mono">{item.value}</p>
                   </div>
                 ))}

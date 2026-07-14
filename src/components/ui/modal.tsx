@@ -84,7 +84,7 @@ export function Modal({
           <div>
             <h2 className="headline-md text-slate-900">{title}</h2>
             {description ? (
-              <p className="body-sm mt-1 text-slate-500">
+              <p className="body-sm mt-1 text-slate-400">
                 {description}
               </p>
             ) : null}

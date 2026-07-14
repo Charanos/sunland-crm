@@ -21,7 +21,7 @@ export type CreateNotificationInput = {
 /**
  * Internal helper other services call from inside their own transaction, so
  * the notification commits atomically with whatever triggered it (a ticket
- * assignment, a complaint escalation, etc.) — never a standalone mutation.
+ * assignment, a complaint escalation, etc.) - never a standalone mutation.
  * Ably publish is best-effort: a realtime outage must never roll back the
  * underlying business transaction that's already committed by the time this
  * runs, so failures are swallowed after the DB write succeeds.
@@ -51,7 +51,7 @@ export async function createNotification(tx: Tx, input: CreateNotificationInput)
       createdAt: notification.createdAt,
     });
   } catch {
-    // Realtime delivery is a convenience, not a guarantee — the row is the source of truth.
+    // Realtime delivery is a convenience, not a guarantee - the row is the source of truth.
   }
 
   return notification;

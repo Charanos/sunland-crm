@@ -77,8 +77,8 @@ export function MandateFormModal({
 
       const requiredApproverRole = data?.mandate?.requiredApproverRole as "gm" | "ceo" | null | undefined;
       if (!requiredApproverRole) {
-        // CEO/GM creating within their own authority self-approves — see
-        // ADR 014 §14.2 — so it's already active, no approval to wait on.
+        // CEO/GM creating within their own authority self-approves - see
+        // ADR 014 §14.2 - so it's already active, no approval to wait on.
         pushToast({ tone: "success", title: "Mandate activated", body: "Created and activated immediately under your authority." });
       } else {
         const approverLabel = requiredApproverRole === "ceo" ? "CEO" : "GM";
@@ -115,7 +115,7 @@ export function MandateFormModal({
             </div>
             <div>
               <h2 className="font-medium text-slate-900 tracking-tight text-lg">Create Management Mandate</h2>
-              <p className="body-sm text-slate-500 mt-0.5">{propertyName} · {landlordName}</p>
+              <p className="body-sm text-slate-400 mt-0.5">{propertyName} · {landlordName}</p>
             </div>
           </div>
           <button
@@ -139,7 +139,7 @@ export function MandateFormModal({
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Management Fee Rate (%)</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Management Fee Rate (%)</label>
               <input
                 required
                 type="number"
@@ -152,7 +152,7 @@ export function MandateFormModal({
               />
             </div>
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Unit Count</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Unit Count</label>
               <input
                 required
                 type="number"
@@ -167,7 +167,7 @@ export function MandateFormModal({
 
           {rateDiffersFromDefault && (
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Rate Justification</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Rate Justification</label>
               <textarea
                 required
                 rows={2}
@@ -181,7 +181,7 @@ export function MandateFormModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Start Date</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Start Date</label>
               <input
                 required
                 type="date"
@@ -191,7 +191,7 @@ export function MandateFormModal({
               />
             </div>
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">End Date (optional)</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">End Date (optional)</label>
               <input
                 type="date"
                 value={endDate}

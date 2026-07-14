@@ -40,7 +40,7 @@ export function ConfirmDialog({
 
   return (
     <Modal
-      onClose={isLoading ? () => {} : onClose}
+      onClose={isLoading ? () => { } : onClose}
       open={open}
       title={title}
       size="sm"
@@ -52,7 +52,7 @@ export function ConfirmDialog({
           <IconComponent aria-hidden size={22} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-slate-500 leading-relaxed text-base">
+          <p className="text-slate-400 leading-relaxed text-base">
             {description}
           </p>
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

@@ -108,7 +108,7 @@ export function ProjectDetailModal({
             </div>
             <h2 className="text-xl font-medium text-slate-900">{project.title}</h2>
             {project.description && (
-              <p className="text-body-regular text-slate-500 mt-2 max-w-xl">{project.description}</p>
+              <p className="text-body-regular text-slate-400 mt-2 max-w-xl">{project.description}</p>
             )}
           </div>
 
@@ -155,7 +155,7 @@ export function ProjectDetailModal({
         {/* Audit Log Section */}
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
           <div className="bg-slate-50/80 px-5 py-3 border-b border-slate-200/80 flex items-center gap-2">
-            <IconHistory size={18} className="text-slate-500" />
+            <IconHistory size={18} className="text-slate-400" />
             <h3 className="text-body-primary font-medium text-slate-800">Recent Activity & Audit Trail</h3>
           </div>
           <div className="p-5">
@@ -165,7 +165,7 @@ export function ProjectDetailModal({
                 <span className="text-sm">Fetching immutable logs...</span>
               </div>
             ) : logs.length === 0 ? (
-              <div className="text-center py-8 text-slate-500 text-body-regular">
+              <div className="text-center py-8 text-slate-400 text-body-regular">
                 No recorded activity found for this operational project.
               </div>
             ) : (
@@ -173,13 +173,13 @@ export function ProjectDetailModal({
                 {logs.map((log) => (
                   <div key={log.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                     {/* Icon marker */}
-                    <div className="flex items-center justify-center size-6 rounded-full border-2 border-white bg-slate-200 text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                    <div className="flex items-center justify-center size-6 rounded-full border-2 border-white bg-slate-200 text-slate-400 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                       <div className="size-2 rounded-full bg-slate-500" />
                     </div>
                     {/* Content */}
                     <div className="w-[calc(100%-3rem)] md:w-[calc(50%-1.5rem)] bg-white p-3 rounded border border-slate-200 shadow-sm">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 uppercase">
+                        <span className="text-xs text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 uppercase">
                           {log.action.split(".").pop()}
                         </span>
                         <span className="text-xs text-slate-400 mono-data">

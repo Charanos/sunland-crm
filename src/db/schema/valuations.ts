@@ -13,7 +13,7 @@ import { entities, timestamps, users } from "@/db/schema/platform";
 import { contacts } from "@/db/schema/crm";
 import { properties } from "@/db/schema/properties";
 
-// Valuation instruction lifecycle — a chargeable professional-service
+// Valuation instruction lifecycle - a chargeable professional-service
 // workflow, not a property attribute: requested by a client, scheduled for a
 // site visit, inspected, drafted, and delivered as a report with a fee.
 export const valuationStatus = pgEnum("valuation_status", [
@@ -39,7 +39,7 @@ export const valuations = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     entityId: uuid("entity_id").references(() => entities.id).notNull(),
     valuationCode: text("valuation_code").notNull(),
-    // Either a portfolio property or an external (off-portfolio) subject —
+    // Either a portfolio property or an external (off-portfolio) subject -
     // valuation is a service line, so instructions routinely arrive for
     // properties Sunland doesn't manage. Exactly one of the two is required,
     // enforced in the service layer.

@@ -10,7 +10,7 @@ export const conversations = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     entityId: uuid("entity_id").references(() => entities.id).notNull(),
     type: conversationType("type").notNull(),
-    // Only meaningful for channels — a dm's display name is derived
+    // Only meaningful for channels - a dm's display name is derived
     // client-side from the other participant.
     name: text("name"),
     description: text("description"),
@@ -22,7 +22,7 @@ export const conversations = pgTable(
   }),
 );
 
-// Access control for messaging is participancy, not a granted permission —
+// Access control for messaging is participancy, not a granted permission -
 // you see a conversation iff you have a row here for it.
 export const conversationParticipants = pgTable(
   "conversation_participants",
@@ -43,7 +43,7 @@ export const conversationParticipants = pgTable(
   }),
 );
 
-// Immutable log — no edit/soft-delete in this pass, so only createdAt, not
+// Immutable log - no edit/soft-delete in this pass, so only createdAt, not
 // the usual ...timestamps spread.
 export const messages = pgTable(
   "messages",

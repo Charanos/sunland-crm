@@ -1,4 +1,4 @@
-# Sunland ERP — Dashboard & Portal Architecture (Independence + Interconnection)
+# Sunland ERP - Dashboard & Portal Architecture (Independence + Interconnection)
 
 Date: 2026-06-29
 Status: **Design decision + build blueprint.** Supersedes the routing statements in ADR 005 and ADR 008 (see §7). Companion to `SUNLAND_BACKEND_ARCHITECTURE_MASTER.md` (§3 RBAC) and `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md`.
@@ -14,7 +14,7 @@ The codebase is caught mid-migration between two models (full analysis in the au
 - **Model A (specs, ADR 005/008):** departments under `/admin/*`; self-service (profile/settings/security/messages/notifications) hosted under `/admin` and whitelisted in `UNIVERSAL_PATHS`.
 - **Model B (what Finance actually became):** an independent route group `(fin)/fin/**` with its own shell and its own `fin/profile`, `fin/settings`, etc.
 
-Finance is Model B; HR, BD, and Front-Office are still Model A (under `(ceo)/admin/*`). Because `UNIVERSAL_PATHS` and ADR 008 declare self-service to live under `/admin`, navigation can route a Finance user to `/admin/profile` — dropping them out of the `/fin` shell into the CEO shell. That is the exact "in fin dashboard but profile routed via admin/profile" symptom.
+Finance is Model B; HR, BD, and Front-Office are still Model A (under `(ceo)/admin/*`). Because `UNIVERSAL_PATHS` and ADR 008 declare self-service to live under `/admin`, navigation can route a Finance user to `/admin/profile` - dropping them out of the `/fin` shell into the CEO shell. That is the exact "in fin dashboard but profile routed via admin/profile" symptom.
 
 **Decision: commit fully to Model B for every role. Retire Model A.** Each portal is self-contained; interconnection is through shared data + the approval/notification engines, not shared routes.
 
@@ -52,7 +52,7 @@ Every portal has, under its own root:
 
 ## 3. Self-service is portal-local (the actual bug fix)
 
-There is **no** global `/admin/profile`. Each portal renders its own profile/settings/etc. **within its own shell**. The pages can (and should) share the same underlying components and API — the *route* is portal-local, the *implementation* is shared.
+There is **no** global `/admin/profile`. Each portal renders its own profile/settings/etc. **within its own shell**. The pages can (and should) share the same underlying components and API - the *route* is portal-local, the *implementation* is shared.
 
 ```
 src/components/self-service/profile-page.tsx   ← one implementation
@@ -96,8 +96,8 @@ Each portal `layout.tsx` also provides a `PortalContext` (portal id, home root, 
 
 Two layers, both required (see backend master §3):
 
-1. **Edge route guard (`proxy.ts`)** — coarse: "may this user load any page under this portal root?" Resolves the user's permitted portals from `user_roles`/`role_permissions`, redirects to their default portal otherwise. Also: **remove the blanket dev auth bypass** default (`SUNLAND_AUTH_BYPASS` should default to enforcing, opt-*out* explicitly), so RBAC is actually exercised in dev.
-2. **Action-level authorization in services** — fine: `authorize(ctx, "finance.remittance.approve")`. The page loading is necessary but not sufficient; the *action* is gated in the service. This is what lets a Finance Officer open the remittances page (view) but not approve a payout (Finance Head only).
+1. **Edge route guard (`proxy.ts`)** - coarse: "may this user load any page under this portal root?" Resolves the user's permitted portals from `user_roles`/`role_permissions`, redirects to their default portal otherwise. Also: **remove the blanket dev auth bypass** default (`SUNLAND_AUTH_BYPASS` should default to enforcing, opt-*out* explicitly), so RBAC is actually exercised in dev.
+2. **Action-level authorization in services** - fine: `authorize(ctx, "finance.remittance.approve")`. The page loading is necessary but not sufficient; the *action* is gated in the service. This is what lets a Finance Officer open the remittances page (view) but not approve a payout (Finance Head only).
 
 Navigation itself is **permission-driven**: the sidebar renders only the items whose governing permission the user holds, so users don't see doors they can't open. Nav config is a declarative list `{ href, label, icon, permission }` filtered by `can()`.
 
@@ -109,11 +109,11 @@ Per the Executive spec (§6 "One Dashboard, Two Tiers"; §8.3 "System Administra
 
 Design:
 
-- **CEO holds every permission** (seeded explicitly, not a code bypass — backend master §3.1). GM holds all **except** CEO-only System Administration and the highest-threshold overrides.
-- **The executive portal is oversight-first, not a duplicate of every department screen.** It presents: cross-department KPIs (derived from the ledger, rental ledger, pipeline — not mock; **not built yet, that's P8**), the **approvals queue** (everything escalated to GM/CEO; `approval_requests` + the P0 reference service exist, a dedicated escalated-to-me view doesn't yet), the **reports center** (P5, not built), and **System Administration** — user/role/permission management, entity config, thresholds in `settings`, session revocation, audit-log explorer.
-- **System Administration is now real backend surface, not just this design paragraph** — built 2026-07-08, ahead of P1 at the client's explicit direction ("CEO backend... guide going forward"). Full detail: backend master §3.4. Summary: `src/lib/services/identity/{users,roles,user-roles,sessions,access}.ts` + `src/lib/services/settings.ts` + `src/lib/services/audit-log.ts`, exposed under `/api/identity/*`, `/api/settings`, `/api/audit`. `isLastSuperAdmin()` is the concrete mechanism behind "real dominion... not accidentally locked out" below — it blocks deactivating or role-stripping the sole remaining active CEO account, checked inline before the action, not bolted on after.
-- **Top-down CRUD via impersonation/deep-link, logged loudly (§6.4 "the override, used rarely and logged loudly").** When the CEO needs to act *inside* a department, they do it through the department's own screens/services (so the same authorization, validation, and audit apply) — either by navigating there (they have access to every portal) or via an explicit, audited "act as" that records the override in the audit log with a reason. The CEO does **not** get a parallel set of god-mode endpoints that bypass the service layer; they get *all permissions* flowing through the *same* services. This keeps oversight and action on one auditable rail. **Not yet built**: the explicit "act as" impersonation mechanism itself — today the CEO acts through their own identity only (which already carries every permission); a logged impersonation flow is a distinct, smaller follow-up if the client asks for it specifically.
-- **Auditor/Compliance** is read-everywhere, write-nothing (a permission set, not a bypass) — implemented as `allReadKeys()` in `catalog.ts` (every permission key ending `.read`), verified to hold 0 write-class permissions.
+- **CEO holds every permission** (seeded explicitly, not a code bypass - backend master §3.1). GM holds all **except** CEO-only System Administration and the highest-threshold overrides.
+- **The executive portal is oversight-first, not a duplicate of every department screen.** It presents: cross-department KPIs (derived from the ledger, rental ledger, pipeline - not mock; **not built yet, that's P8**), the **approvals queue** (everything escalated to GM/CEO; `approval_requests` + the P0 reference service exist, a dedicated escalated-to-me view doesn't yet), the **reports center** (P5, not built), and **System Administration** - user/role/permission management, entity config, thresholds in `settings`, session revocation, audit-log explorer.
+- **System Administration is now real backend surface, not just this design paragraph** - built 2026-07-08, ahead of P1 at the client's explicit direction ("CEO backend... guide going forward"). Full detail: backend master §3.4. Summary: `src/lib/services/identity/{users,roles,user-roles,sessions,access}.ts` + `src/lib/services/settings.ts` + `src/lib/services/audit-log.ts`, exposed under `/api/identity/*`, `/api/settings`, `/api/audit`. `isLastSuperAdmin()` is the concrete mechanism behind "real dominion... not accidentally locked out" below - it blocks deactivating or role-stripping the sole remaining active CEO account, checked inline before the action, not bolted on after.
+- **Top-down CRUD via impersonation/deep-link, logged loudly (§6.4 "the override, used rarely and logged loudly").** When the CEO needs to act *inside* a department, they do it through the department's own screens/services (so the same authorization, validation, and audit apply) - either by navigating there (they have access to every portal) or via an explicit, audited "act as" that records the override in the audit log with a reason. The CEO does **not** get a parallel set of god-mode endpoints that bypass the service layer; they get *all permissions* flowing through the *same* services. This keeps oversight and action on one auditable rail. **Not yet built**: the explicit "act as" impersonation mechanism itself - today the CEO acts through their own identity only (which already carries every permission); a logged impersonation flow is a distinct, smaller follow-up if the client asks for it specifically.
+- **Auditor/Compliance** is read-everywhere, write-nothing (a permission set, not a bypass) - implemented as `allReadKeys()` in `catalog.ts` (every permission key ending `.read`), verified to hold 0 write-class permissions.
 
 This mirrors Andishi's super_admin (all permissions, data-driven, no code bypass) but adds the executive oversight surface (approvals + reports + system admin) the real-estate business needs.
 
@@ -123,9 +123,9 @@ This mirrors Andishi's super_admin (all permissions, data-driven, no code bypass
 
 - **ADR 009 (supersedes ADR 005):** Portals are independent route groups, each with its own root and shell (`/exec`, `/fin`, `/hr`, `/bd`, `/front`, `/ops`, `/landlord`, `/tenant`). No department's functionality lives under another portal's root. `/admin/*` as a catch-all is retired.
 - **ADR 010 (supersedes ADR 008):** Self-service (profile/settings/security/notifications/messages) is portal-local: rendered within each portal's shell from shared components, never hosted under a single global root. `UNIVERSAL_PATHS` is removed; self-service segments are permitted under any portal root the user can access.
-- **ADR 011 (extends ADR 004):** Authorization is permission-based and enforced at two layers — edge route guard (portal access) and service-level `authorize()` (action). Route-prefix gating alone is retired.
+- **ADR 011 (extends ADR 004):** Authorization is permission-based and enforced at two layers - edge route guard (portal access) and service-level `authorize()` (action). Route-prefix gating alone is retired.
 
-(The originals stay in the file as history, marked superseded — do not delete the paper trail.)
+(The originals stay in the file as history, marked superseded - do not delete the paper trail.)
 
 ---
 
@@ -135,7 +135,7 @@ Independence is about *routing and shell*, not *data silos*. Coherence comes fro
 
 1. **One database, entity-scoped.** Every portal reads/writes the same tables through the same services; there are no per-portal copies of data.
 2. **The ledger is shared truth.** Finance posts; the landlord portal reads its slice (`journal_lines` dimensioned to `landlordId`); the executive portal reads aggregates. Same numbers everywhere, by construction.
-3. **The approval engine spans portals.** A Line-Manager's mandate expense (BD portal) surfaces in the Finance approvals list and the Executive approvals queue — one `approval_requests` row, many views.
+3. **The approval engine spans portals.** A Line-Manager's mandate expense (BD portal) surfaces in the Finance approvals list and the Executive approvals queue - one `approval_requests` row, many views.
 4. **Notifications are cross-portal.** A rent default (Finance) notifies the owning Line-Manager (BD); a maintenance complaint (Tenant) notifies Front Office/Ops.
 5. **Shared component library + Terrain Identity** keep every portal visually and behaviorally consistent (`erp-primitives`, `Drawer`, `Modal`, `ConfirmDialog`, `PaginationControls`, `formatCompactKES`).
 

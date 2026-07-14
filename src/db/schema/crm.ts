@@ -44,7 +44,7 @@ export const contacts = pgTable(
     phone: text("phone"),
     source: text("source"),
     assignedToId: uuid("assigned_to_id").references(() => users.id),
-    // National ID/passport number — ADR 014 §14.4, generic to any contact
+    // National ID/passport number - ADR 014 §14.4, generic to any contact
     // (not landlord-specific), backing the "Confirm Landlord" verification
     // action.
     idNumber: text("id_number"),

@@ -1,4 +1,4 @@
-// Shared display metadata for the Valuations module — used by the list
+// Shared display metadata for the Valuations module - used by the list
 // board, the create/edit and complete modals, and the full-view page, so all
 // four read the same vocabulary rather than drifting independently.
 
@@ -22,7 +22,7 @@ export const STATUS_META: Record<ValuationStatus, { label: string; tone: "neutra
   cancelled: { label: "Cancelled", tone: "risk" },
 };
 
-// The workflow ladder — each active stage advances to exactly one next stage;
+// The workflow ladder - each active stage advances to exactly one next stage;
 // completion goes through the record-values modal instead of a blind advance.
 export const NEXT_STAGE: Partial<Record<ValuationStatus, { status: ValuationStatus; label: string }>> = {
   requested: { status: "scheduled", label: "Mark Site Visit Booked" },
@@ -31,7 +31,7 @@ export const NEXT_STAGE: Partial<Record<ValuationStatus, { status: ValuationStat
 };
 
 export function fmtDate(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
 

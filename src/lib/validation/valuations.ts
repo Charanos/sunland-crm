@@ -17,7 +17,7 @@ const valuationStatusSchema = z.enum([
   "cancelled",
 ]);
 
-// Dates arrive as datetime-local strings from the form — kept as strings here
+// Dates arrive as datetime-local strings from the form - kept as strings here
 // and converted with explicit null handling in the service, since
 // z.coerce.date() turns null into 1970-01-01 silently.
 export const createValuationSchema = z.object({

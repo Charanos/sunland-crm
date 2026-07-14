@@ -74,7 +74,7 @@ export function LeadDetailDrawer({
       case "email": return <IconMail size={14} className="text-purple-500" />;
       case "meeting": return <IconCalendarEvent size={14} className="text-amber-500" />;
       case "message": return <IconMessageCircle size={14} className="text-emerald-500" />;
-      default: return <IconActivity size={14} className="text-slate-500" />;
+      default: return <IconActivity size={14} className="text-slate-400" />;
     }
   };
 
@@ -247,7 +247,7 @@ export function LeadDetailDrawer({
                       <span className="text-sm  text-slate-400 font-mono">{log.date}</span>
                     </div>
                     {log.details && (
-                      <p className="text-base text-slate-500 leading-relaxed mt-1">
+                      <p className="text-base text-slate-400 leading-relaxed mt-1">
                         {log.details}
                       </p>
                     )}

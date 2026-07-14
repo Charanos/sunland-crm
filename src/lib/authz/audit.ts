@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { activityLogs } from "@/db/schema";
 import type { CallerContext } from "@/lib/authz/context";
 
-// The transaction object's type, inferred rather than typed as `typeof db` —
+// The transaction object's type, inferred rather than typed as `typeof db` -
 // db.transaction()'s callback parameter is a distinct (structurally similar
 // but not assignable) type from the top-level NeonDatabase client.
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -16,7 +16,7 @@ export type WriteAuditInput = {
    * Required, deliberately no fallback to `ctx.entityId`: a service that has
    * resolved the *real* entity for this action (from the request body or the
    * loaded resource) must pass it explicitly. Trusting ctx.entityId here was
-   * the root cause of a real bug — routes without a natural entity build ctx
+   * the root cause of a real bug - routes without a natural entity build ctx
    * with a placeholder, and several services relied on ctx.entityId instead
    * of the value they'd already resolved, crashing the uuid column. Pass
    * `null` explicitly for genuinely entity-independent actions (role/session

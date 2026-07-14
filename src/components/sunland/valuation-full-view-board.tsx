@@ -195,7 +195,7 @@ export function ValuationFullViewBoard({
   const nextStage = NEXT_STAGE[valuation.status];
   const isPortfolio = !!valuation.propertyId;
   const subjectName = isPortfolio ? valuation.propertyName ?? "Portfolio property" : valuation.externalPropertyName ?? "Unknown subject";
-  const subjectLocation = isPortfolio ? valuation.propertyLocation ?? "—" : valuation.externalLocation ?? "—";
+  const subjectLocation = isPortfolio ? valuation.propertyLocation ?? "-" : valuation.externalLocation ?? "-";
   const validity = validityInfo(valuation.validUntil);
 
   const patchValuation = async (patch: Record<string, unknown>, successBody: string) => {
@@ -286,8 +286,8 @@ export function ValuationFullViewBoard({
                 "inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs uppercase tracking-wider",
                 status.tone === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                   : status.tone === "risk" ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                  : status.tone === "warning" ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                  : "border-white/10 bg-white/5 text-slate-300",
+                    : status.tone === "warning" ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                      : "border-white/10 bg-white/5 text-slate-300",
               )}>
                 {status.label}
               </span>
@@ -376,19 +376,19 @@ export function ValuationFullViewBoard({
               <div className="flex flex-col gap-2 p-6 rounded-2xl bg-slate-50 border border-slate-100">
                 <p className="label-caps text-slate-400">Open Market Value</p>
                 <p className="mono-amount text-3xl text-slate-900 tracking-tight">
-                  {valuation.marketValueKes ? formatCompactKES(parseFloat(valuation.marketValueKes)) : "—"}
+                  {valuation.marketValueKes ? formatCompactKES(parseFloat(valuation.marketValueKes)) : "-"}
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-6 rounded-2xl bg-slate-50 border border-slate-100">
                 <p className="label-caps text-slate-400">Forced Sale Value</p>
                 <p className="mono-amount text-3xl text-slate-900 tracking-tight">
-                  {valuation.forcedSaleValueKes ? formatCompactKES(parseFloat(valuation.forcedSaleValueKes)) : "—"}
+                  {valuation.forcedSaleValueKes ? formatCompactKES(parseFloat(valuation.forcedSaleValueKes)) : "-"}
                 </p>
               </div>
               <div className="flex flex-col gap-2 p-6 rounded-2xl bg-slate-50 border border-slate-100">
                 <p className="label-caps text-slate-400">Insurance Value</p>
                 <p className="mono-amount text-3xl text-slate-900 tracking-tight">
-                  {valuation.insuranceValueKes ? formatCompactKES(parseFloat(valuation.insuranceValueKes)) : "—"}
+                  {valuation.insuranceValueKes ? formatCompactKES(parseFloat(valuation.insuranceValueKes)) : "-"}
                 </p>
               </div>
             </div>
@@ -414,8 +414,8 @@ export function ValuationFullViewBoard({
                   "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 label-caps",
                   validity.tone === "success" ? "bg-emerald-500/15 text-emerald-700 border-emerald-300/60"
                     : validity.tone === "warning" ? "bg-amber-500/15 text-amber-700 border-amber-300/60"
-                    : validity.tone === "risk" ? "bg-rose-500/15 text-rose-700 border-rose-300/60"
-                    : "bg-slate-100 text-slate-600 border-slate-200",
+                      : validity.tone === "risk" ? "bg-rose-500/15 text-rose-700 border-rose-300/60"
+                        : "bg-slate-100 text-slate-600 border-slate-200",
                 )}
               >
                 <IconClock size={12} /> {validity.label}
@@ -423,18 +423,18 @@ export function ValuationFullViewBoard({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="size-11 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 shrink-0">
+                <div className="size-11 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 shrink-0">
                   <IconCash size={20} stroke={1.5} />
                 </div>
                 <div>
-                  <p className="mono-amount text-slate-900 text-lg">{valuation.feeKes ? formatCompactKES(parseFloat(valuation.feeKes)) : "—"}</p>
+                  <p className="mono-amount text-slate-900 text-lg">{valuation.feeKes ? formatCompactKES(parseFloat(valuation.feeKes)) : "-"}</p>
                   <p className="label-caps text-slate-400 mt-0.5">
                     Professional Fee {valuation.feeKes && (valuation.feePaid ? "· Collected" : "· Outstanding")}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="size-11 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 shrink-0">
+                <div className="size-11 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 shrink-0">
                   <IconCalendarEvent size={20} stroke={1.5} />
                 </div>
                 <div>
@@ -467,7 +467,7 @@ export function ValuationFullViewBoard({
                 <LoadingSpinner size="md" />
               </div>
             ) : !activityLog || activityLog.length === 0 ? (
-              <p className="text-slate-500 text-center py-12 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No recorded activity yet.</p>
+              <p className="text-slate-400 text-center py-12 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No recorded activity yet.</p>
             ) : (
               <div className="space-y-0 pl-2">
                 {activityLog.map((entry, i) => (
@@ -500,12 +500,12 @@ export function ValuationFullViewBoard({
               <div className="flex flex-col gap-2">
                 <p className="text-body-primary text-slate-900">{valuation.clientName}</p>
                 {valuation.clientPhone && (
-                  <a href={`tel:${valuation.clientPhone}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                  <a href={`tel:${valuation.clientPhone}`} className="text-body-regular text-slate-400 hover:text-[#122a20] flex items-center gap-2 transition-colors">
                     <IconPhone size={14} className="shrink-0" /> {valuation.clientPhone}
                   </a>
                 )}
                 {valuation.clientEmail && (
-                  <a href={`mailto:${valuation.clientEmail}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                  <a href={`mailto:${valuation.clientEmail}`} className="text-body-regular text-slate-400 hover:text-[#122a20] flex items-center gap-2 transition-colors">
                     <IconMail size={14} className="shrink-0" /> {valuation.clientEmail}
                   </a>
                 )}
@@ -523,7 +523,7 @@ export function ValuationFullViewBoard({
               <div className="flex flex-col gap-2">
                 <p className="text-body-primary text-slate-900">{valuation.valuerName}</p>
                 {valuation.valuerEmail && (
-                  <a href={`mailto:${valuation.valuerEmail}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                  <a href={`mailto:${valuation.valuerEmail}`} className="text-body-regular text-slate-400 hover:text-[#122a20] flex items-center gap-2 transition-colors">
                     <IconMail size={14} className="shrink-0" /> {valuation.valuerEmail}
                   </a>
                 )}
@@ -539,7 +539,7 @@ export function ValuationFullViewBoard({
                 <IconBuildingCommunity size={14} /> Portfolio Property
               </h3>
               <p className="text-body-primary text-slate-900 mb-1">{valuation.propertyName}</p>
-              <p className="mono-data text-xs text-slate-500 mb-4">{valuation.propertyCode}</p>
+              <p className="mono-data text-xs text-slate-400 mb-4">{valuation.propertyCode}</p>
               <Link
                 href={`/admin/properties/${valuation.propertyId}`}
                 className="text-sm text-[#151936] flex items-center justify-center gap-2 bg-slate-50 border border-slate-100 rounded-xl py-3 transition-colors hover:bg-slate-100"

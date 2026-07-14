@@ -1,10 +1,8 @@
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
+import { Pool, neonConfig, neon } from "@neondatabase/serverless";
+import { drizzle as drizzleServerless } from "drizzle-orm/neon-serverless";
+import { drizzle as drizzleHttp } from "drizzle-orm/neon-http";
 import * as schema from "@/db/schema";
 import * as relations from "@/db/relations";
-
-neonConfig.webSocketConstructor = ws;
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -12,8 +10,22 @@ if (!databaseUrl && process.env.NODE_ENV === "production") {
   throw new Error("DATABASE_URL is required in production");
 }
 
-const pool = new Pool({
-  connectionString: databaseUrl ?? "postgresql://local:local@localhost:5432/sunland",
-});
+let dbInstance;
 
-export const db = drizzle(pool, { schema: { ...schema, ...relations } });
+if (process.env.NODE_ENV === "production") {
+  // Use stateless neon HTTP client in production for serverless speed,
+  // connection pooling, and robustness against websocket exhaustion.
+  const sql = neon(databaseUrl!);
+  dbInstance = drizzleHttp(sql, { schema: { ...schema, ...relations } });
+} else {
+  // Use websocket pool for local development and scripts
+  const ws = require("ws");
+  neonConfig.webSocketConstructor = ws;
+  const pool = new Pool({
+    connectionString: databaseUrl ?? "postgresql://local:local@localhost:5432/sunland",
+  });
+  dbInstance = drizzleServerless(pool, { schema: { ...schema, ...relations } });
+}
+
+export const db = dbInstance;
+

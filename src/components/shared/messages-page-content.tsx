@@ -20,7 +20,7 @@ import { useAblyChannel } from "@/hooks/use-ably-channel";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 // Matches the real /api/messaging/* response shapes (conversations/messages
-// tables) — no attachments, calling, typing-broadcast, or per-conversation
+// tables) - no attachments, calling, typing-broadcast, or per-conversation
 // mute exist in the schema, so this page doesn't pretend they work.
 
 interface Conversation {
@@ -171,7 +171,7 @@ function ConversationItem({ convo, active, onClick }: { convo: Conversation; act
         <div
           className={cn(
             "size-9 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border",
-            active ? "bg-[#151936] text-[#f3df27] border-[#151936] shadow-xs" : "bg-slate-100 text-slate-500 border-slate-150"
+            active ? "bg-[#151936] text-[#f3df27] border-[#151936] shadow-xs" : "bg-slate-100 text-slate-400 border-slate-150"
           )}
         >
           <IconHash size={15} />
@@ -251,8 +251,8 @@ export function MessagesPageContent({ entityId = "group" }: { entityId?: string 
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      fetch("/api/auth/me").then((r) => r.json()).then((d) => { if (d?.user) setCurrentUserId(d.user.id); }).catch(() => {});
-      fetch(`/api/identity/users?entityId=${entityId}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.users)) setUsers(d.users); }).catch(() => {});
+      fetch("/api/auth/me").then((r) => r.json()).then((d) => { if (d?.user) setCurrentUserId(d.user.id); }).catch(() => { });
+      fetch(`/api/identity/users?entityId=${entityId}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.users)) setUsers(d.users); }).catch(() => { });
       loadConversations();
     });
   }, [loadConversations, entityId]);
@@ -279,7 +279,7 @@ export function MessagesPageContent({ entityId = "group" }: { entityId?: string 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load messages");
       setMessages(data.messages ?? []);
-      fetch(`/api/messaging/conversations/${conversationId}/read`, { method: "POST" }).then(() => loadConversations()).catch(() => {});
+      fetch(`/api/messaging/conversations/${conversationId}/read`, { method: "POST" }).then(() => loadConversations()).catch(() => { });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load messages";
       pushToast({ tone: "error", title: "Error", body: message });
@@ -455,7 +455,7 @@ export function MessagesPageContent({ entityId = "group" }: { entityId?: string 
             <button
               type="button"
               onClick={() => setMode("dm")}
-              className={cn("px-3 py-1 text-caption rounded-lg transition-all duration-200 font-medium relative", mode === "dm" ? "bg-[#151936] text-white shadow-xs" : "text-slate-500 hover:text-slate-800")}
+              className={cn("px-3 py-1 text-caption rounded-lg transition-all duration-200 font-medium relative", mode === "dm" ? "bg-[#151936] text-white shadow-xs" : "text-slate-400 hover:text-slate-800")}
             >
               Direct
               {dmUnread > 0 && <span className="ml-1.5 px-1.5 py-0.5 text-tiny font-mono rounded-full bg-[#f3df27] text-[#151936] font-medium">{dmUnread}</span>}
@@ -463,7 +463,7 @@ export function MessagesPageContent({ entityId = "group" }: { entityId?: string 
             <button
               type="button"
               onClick={() => setMode("channel")}
-              className={cn("px-3 py-1 text-caption rounded-lg transition-all duration-200 font-medium relative", mode === "channel" ? "bg-[#151936] text-white shadow-xs" : "text-slate-500 hover:text-slate-800")}
+              className={cn("px-3 py-1 text-caption rounded-lg transition-all duration-200 font-medium relative", mode === "channel" ? "bg-[#151936] text-white shadow-xs" : "text-slate-400 hover:text-slate-800")}
             >
               Channels
               {channelUnread > 0 && <span className="ml-1.5 px-1.5 py-0.5 text-tiny font-mono rounded-full bg-[#f3df27] text-[#151936] font-medium">{channelUnread}</span>}
@@ -514,7 +514,7 @@ export function MessagesPageContent({ entityId = "group" }: { entityId?: string 
             <>
               <div className="flex items-center justify-between px-6 py-4 bg-white shrink-0 relative z-10 shadow-[0_1px_0_rgba(0,0,0,0.01)]">
                 <div className="flex items-center gap-3.5 min-w-0">
-                  <button type="button" onClick={() => setMobileShowChat(false)} className="md:hidden p-1.5 -ml-1 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors" aria-label="Back to messages list">
+                  <button type="button" onClick={() => setMobileShowChat(false)} className="md:hidden p-1.5 -ml-1 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors" aria-label="Back to messages list">
                     <IconArrowLeft size={18} />
                   </button>
 

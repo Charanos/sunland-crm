@@ -5,7 +5,7 @@ import { requireCallerContext } from "@/lib/services/types";
 
 export async function POST(request: Request) {
   try {
-    // ctx.entityId is a placeholder — decideApprovalRequest derives the real
+    // ctx.entityId is a placeholder - decideApprovalRequest derives the real
     // scope from the target approval request's own entityId, not from input.
     const ctx = await requireCallerContext(undefined, request);
     const body = await request.json();

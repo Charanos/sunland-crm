@@ -24,7 +24,7 @@ export function buildCallerContext(
  * handleRouteError) instead of every route repeating the null-check.
  * `entityId` defaults to `null` ("no specific entity yet") for calls that
  * resolve/override the real scope from the request body or target resource
- * (see approvals service for why) — never a placeholder empty string, which
+ * (see approvals service for why) - never a placeholder empty string, which
  * crashes uuid-typed columns the moment a service trusts it unresolved.
  */
 export async function requireCallerContext(

@@ -101,7 +101,7 @@ export async function getContact(ctx: CallerContext, contactId: string) {
 }
 
 /**
- * "Confirm Landlord" (ADR 014 §14.4) — records/edits the ID number and marks
+ * "Confirm Landlord" (ADR 014 §14.4) - records/edits the ID number and marks
  * the contact identity-verified in one step. Generic to any contact, not
  * landlord-specific, though the property full-view's Owner card is the only
  * caller today.

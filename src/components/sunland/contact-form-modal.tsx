@@ -168,7 +168,7 @@ function ContactFormModalContent({
               <h2 className="font-medium text-slate-900 tracking-tight text-lg">
                 {initialData ? "Modify Contact Profile" : "Enlist New Contact"}
               </h2>
-              <p className="text-base text-slate-500 mt-0.5">Define CRM metadata, relations, and financials.</p>
+              <p className="text-base text-slate-400 mt-0.5">Define CRM metadata, relations, and financials.</p>
             </div>
           </div>
           <button
@@ -185,7 +185,7 @@ function ContactFormModalContent({
           {/* Main info */}
           <div className="space-y-4">
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Full Name / Organization</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Full Name / Organization</label>
               <input
                 required
                 type="text"
@@ -198,7 +198,7 @@ function ContactFormModalContent({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Contact Type</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Contact Type</label>
                 <select
                   value={formData.type}
                   onChange={e => setFormData({ ...formData, type: e.target.value })}
@@ -208,7 +208,7 @@ function ContactFormModalContent({
                 </select>
               </div>
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Lead Source</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Lead Source</label>
                 <select
                   value={formData.source}
                   onChange={e => setFormData({ ...formData, source: e.target.value })}
@@ -221,7 +221,7 @@ function ContactFormModalContent({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Status</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Status</label>
                 <select
                   value={formData.status}
                   onChange={e => setFormData({ ...formData, status: e.target.value })}
@@ -231,7 +231,7 @@ function ContactFormModalContent({
                 </select>
               </div>
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Assigned Agent</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Assigned Agent</label>
                 <select
                   value={formData.assignedAgent}
                   onChange={e => setFormData({ ...formData, assignedAgent: e.target.value })}
@@ -246,7 +246,7 @@ function ContactFormModalContent({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Email Address</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Email Address</label>
                 <input
                   required
                   type="email"
@@ -257,7 +257,7 @@ function ContactFormModalContent({
                 />
               </div>
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Phone Number</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Phone Number</label>
                 <input
                   required
                   type="tel"
@@ -271,7 +271,7 @@ function ContactFormModalContent({
 
             {/* Property Associations Input */}
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Associated Properties (Comma-separated)</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Associated Properties (Comma-separated)</label>
               <input
                 type="text"
                 placeholder="e.g. Karen Ridge House, Runda Grove Villa"

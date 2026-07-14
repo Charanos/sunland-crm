@@ -31,7 +31,7 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
         {data.map((item, idx) => (
           <div key={item.label} className="animate-fade-in-up" style={{ animationDelay: `${idx * 80}ms` }}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-500 label-caps tracking-wide">{item.label}</span>
+              <span className="text-xs font-medium text-slate-400 label-caps tracking-wide">{item.label}</span>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono text-slate-400 border border-slate-100/60 px-2 py-0.5 rounded bg-slate-50/50 shadow-sm">{item.target}</span>
                 <span className="text-sm font-mono text-slate-900 font-medium mono-data">{item.value}</span>

@@ -129,7 +129,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     {toast.title}
                   </p>
                   {toast.body ? (
-                    <p className="mt-0.5 text-base text-slate-500 leading-relaxed">
+                    <p className="mt-0.5 text-base text-slate-400 leading-relaxed">
                       {toast.body}
                     </p>
                   ) : null}

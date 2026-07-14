@@ -493,7 +493,7 @@ export function FinanceOverviewScaffold() {
     const alertText = isPending ? `awaiting dual approval` : `marked as credited`;
 
     setActivity((prev) => [
-      { id: `act-${Date.now()}`, time: "Just now", text: `Cheque CHQ-${chqNum} logged (${chqPayer}) — ${alertText}`, user: "System", type: "cheque" },
+      { id: `act-${Date.now()}`, time: "Just now", text: `Cheque CHQ-${chqNum} logged (${chqPayer}) - ${alertText}`, user: "System", type: "cheque" },
       ...prev,
     ]);
 
@@ -708,7 +708,7 @@ export function FinanceOverviewScaffold() {
                   onClick={() => setActivePeriod(p.value)}
                   className={`rounded-lg px-3 py-1.5 text-caption transition-all ${activePeriod === p.value
                     ? "bg-[var(--sidebar)] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                    : "text-slate-400 hover:bg-slate-50 hover:text-slate-700"
                     }`}
                 >
                   {p.label}
@@ -937,7 +937,7 @@ export function FinanceOverviewScaffold() {
                       <h3 className={cn("headline-md text-slate-800 leading-snug transition-colors", titleHoverClass)}>
                         {item.title}
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed font-normal truncate">
+                      <p className="text-xs text-slate-400 mt-0.5 leading-relaxed font-normal truncate">
                         {item.desc}
                       </p>
                     </div>
@@ -1057,7 +1057,7 @@ export function FinanceOverviewScaffold() {
                     <td className="py-2.5 text-right font-mono text-slate-700 font-medium">
                       KES {m.monthlyCollect.toLocaleString()}
                     </td>
-                    <td className="py-2.5 text-center text-slate-500 font-mono">{m.units}</td>
+                    <td className="py-2.5 text-center text-slate-400 font-mono">{m.units}</td>
                     <td className="py-2.5 text-right">
                       <Badge tone="success" className="py-0.5 px-2 font-medium">Active</Badge>
                     </td>
@@ -1096,7 +1096,7 @@ export function FinanceOverviewScaffold() {
             </div>
             <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
               {["This Month", "Last Month", "Q3"].map((period, i) => (
-                <button key={period} className={cn("text-xs px-3 py-1.5 rounded-md font-medium transition-all", i === 0 ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700")}>
+                <button key={period} className={cn("text-xs px-3 py-1.5 rounded-md font-medium transition-all", i === 0 ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-700")}>
                   {period}
                 </button>
               ))}
@@ -1290,7 +1290,7 @@ export function FinanceOverviewScaffold() {
               <div className="size-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-650 shadow-sm">
                 <IconUsersGroup size={16} stroke={2.5} />
               </div>
-              <span className="text-slate-500 label-caps text-xs">Human Resources</span>
+              <span className="text-slate-400 label-caps text-xs">Human Resources</span>
             </div>
             <Badge tone="primary" className="py-0.5 px-2 font-medium">Staff Ledger</Badge>
           </div>
@@ -1319,7 +1319,7 @@ export function FinanceOverviewScaffold() {
               <div className="size-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shadow-sm">
                 <IconCoins size={16} stroke={2.5} />
               </div>
-              <span className="text-slate-500 label-caps text-xs">Business Dev</span>
+              <span className="text-slate-400 label-caps text-xs">Business Dev</span>
             </div>
             <Badge tone="success" className="py-0.5 px-2 font-medium">Revenue Queue</Badge>
           </div>
@@ -1348,7 +1348,7 @@ export function FinanceOverviewScaffold() {
               <div className="size-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shadow-sm">
                 <IconWallet size={16} stroke={2.5} />
               </div>
-              <span className="text-slate-500 label-caps text-xs">Front Office</span>
+              <span className="text-slate-400 label-caps text-xs">Front Office</span>
             </div>
             <Badge tone="data" className="py-0.5 px-2 font-medium">Operating Float</Badge>
           </div>
@@ -1548,7 +1548,7 @@ export function FinanceOverviewScaffold() {
         <form onSubmit={handleChequeSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <label className="text-slate-500 label-caps text-xs">Cheque Number</label>
+              <label className="text-slate-400 label-caps text-xs">Cheque Number</label>
               <input
                 type="text"
                 required
@@ -1559,7 +1559,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5">
-              <label className="text-slate-500 label-caps text-xs">Payer Account / Landlord</label>
+              <label className="text-slate-400 label-caps text-xs">Payer Account / Landlord</label>
               <input
                 type="text"
                 required
@@ -1573,7 +1573,7 @@ export function FinanceOverviewScaffold() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <label className="text-slate-500 label-caps text-xs">Amount (KES)</label>
+              <label className="text-slate-400 label-caps text-xs">Amount (KES)</label>
               <input
                 type="number"
                 required
@@ -1584,7 +1584,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5">
-              <label className="text-slate-500 label-caps text-xs">Deposited Date</label>
+              <label className="text-slate-400 label-caps text-xs">Deposited Date</label>
               <input
                 type="date"
                 required
@@ -1638,7 +1638,7 @@ export function FinanceOverviewScaffold() {
         <form onSubmit={handleMandateSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <label className="text-slate-500 label-caps text-xs">Landlord Account</label>
+              <label className="text-slate-400 label-caps text-xs">Landlord Account</label>
               <input
                 type="text"
                 required
@@ -1649,7 +1649,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5">
-              <label className="text-slate-500 label-caps text-xs">Property Name</label>
+              <label className="text-slate-400 label-caps text-xs">Property Name</label>
               <input
                 type="text"
                 required
@@ -1663,7 +1663,7 @@ export function FinanceOverviewScaffold() {
 
           <div className="grid grid-cols-3 gap-4">
             <div className="grid gap-1.5 col-span-1">
-              <label className="text-slate-500 label-caps text-xs">Unit Count</label>
+              <label className="text-slate-400 label-caps text-xs">Unit Count</label>
               <input
                 type="number"
                 min={1}
@@ -1674,7 +1674,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5 col-span-1">
-              <label className="text-slate-500 label-caps text-xs">Rate (%)</label>
+              <label className="text-slate-400 label-caps text-xs">Rate (%)</label>
               <input
                 type="number"
                 min={1}
@@ -1686,7 +1686,7 @@ export function FinanceOverviewScaffold() {
               />
             </div>
             <div className="grid gap-1.5 col-span-1">
-              <label className="text-slate-500 label-caps text-xs">Start Date</label>
+              <label className="text-slate-400 label-caps text-xs">Start Date</label>
               <input
                 type="date"
                 required
@@ -1776,19 +1776,19 @@ export function FinanceOverviewScaffold() {
                 <span className="text-value-mono">{formatCompactKES(payrollSummary.gross)}</span>
               </div>
               <div className="space-y-1.5 pl-3 border-l-2 border-slate-200">
-                <div className="flex justify-between text-slate-500 text-xs">
+                <div className="flex justify-between text-slate-400 text-xs">
                   <span>PAYE Income Tax (KRA)</span>
                   <span className="font-mono text-slate-700">{formatCompactKES(payrollSummary.paye)}</span>
                 </div>
-                <div className="flex justify-between text-slate-500 text-xs">
+                <div className="flex justify-between text-slate-400 text-xs">
                   <span>NSSF Deductions</span>
                   <span className="font-mono text-slate-700">{formatCompactKES(payrollSummary.nssf)}</span>
                 </div>
-                <div className="flex justify-between text-slate-500 text-xs">
+                <div className="flex justify-between text-slate-400 text-xs">
                   <span>SHIF Healthcare Contribution</span>
                   <span className="font-mono text-slate-700">{formatCompactKES(payrollSummary.shif)}</span>
                 </div>
-                <div className="flex justify-between text-slate-500 text-xs">
+                <div className="flex justify-between text-slate-400 text-xs">
                   <span>Affordable Housing Levy (1.5%)</span>
                   <span className="font-mono text-slate-700">{formatCompactKES(payrollSummary.housingLevy)}</span>
                 </div>

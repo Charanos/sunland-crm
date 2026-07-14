@@ -127,7 +127,7 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
               <h2 className="font-medium text-slate-900 tracking-tight text-lg">
                 Report Maintenance Issue
               </h2>
-              {propertyName && <p className="body-sm text-slate-500 mt-0.5">{propertyName}</p>}
+              {propertyName && <p className="body-sm text-slate-400 mt-0.5">{propertyName}</p>}
             </div>
           </div>
           <button
@@ -142,7 +142,7 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
           {!propertyId && (
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Property</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Property</label>
               <select
                 required
                 value={selectedPropertyId}
@@ -160,7 +160,7 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
           )}
 
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">Issue Summary / Title</label>
+            <label className="block text-slate-400 mb-1.5 label-caps">Issue Summary / Title</label>
             <input
               required
               type="text"
@@ -173,7 +173,7 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Priority Rating</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Priority Rating</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
@@ -186,7 +186,7 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
               </select>
             </div>
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Due Date (optional)</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Due Date (optional)</label>
               <input
                 type="date"
                 value={dueAt}
@@ -197,7 +197,7 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
           </div>
 
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">Assign Contractor (optional)</label>
+            <label className="block text-slate-400 mb-1.5 label-caps">Assign Contractor (optional)</label>
             <select
               value={contractorId}
               onChange={(e) => setContractorId(e.target.value)}
@@ -213,7 +213,7 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
           </div>
 
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">Detailed Description</label>
+            <label className="block text-slate-400 mb-1.5 label-caps">Detailed Description</label>
             <textarea
               required
               rows={4}

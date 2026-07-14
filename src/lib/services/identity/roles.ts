@@ -11,7 +11,7 @@ import {
 } from "@/lib/validation/identity";
 import { parseInput } from "@/lib/validation/parse";
 
-/** Roles/permissions are global catalog data, not entity-scoped rows — `null`
+/** Roles/permissions are global catalog data, not entity-scoped rows - `null`
  * means "check if the caller holds this permission in any capacity, anywhere"
  * (resolve.ts's ANY_SCOPE), the correct semantic for a resource with no entity. */
 export async function listRoles(ctx: CallerContext) {
@@ -33,7 +33,7 @@ export async function listRolePermissions(ctx: CallerContext, roleId: string) {
     .where(eq(rolePermissions.roleId, roleId));
 }
 
-/** Custom (non-system) roles only — system roles are declarative, seeded from catalog.ts. */
+/** Custom (non-system) roles only - system roles are declarative, seeded from catalog.ts. */
 export async function createRole(ctx: CallerContext, rawInput: unknown) {
   const input = parseInput(createRoleSchema, rawInput);
   await authorize(ctx, "identity.role.write", null);
@@ -73,7 +73,7 @@ async function loadEditableRole(roleId: string) {
   if (!role) throw new NotFoundError("Role not found");
   if (role.isSystem) {
     // seedPermissionCatalog() fully replaces role_permissions for system
-    // roles on every reseed — an API-side edit here would silently vanish
+    // roles on every reseed - an API-side edit here would silently vanish
     // on the next deploy, so it's rejected outright rather than pretending to work.
     throw new ConflictError("System roles are managed by the seeded permission catalog, not the API");
   }
@@ -118,7 +118,7 @@ export async function deleteRole(ctx: CallerContext, roleId: string) {
   const role = await loadEditableRole(roleId);
   await authorize(ctx, "identity.role.write", null);
 
-  // userRoles.roleId cascades on delete — block first rather than silently
+  // userRoles.roleId cascades on delete - block first rather than silently
   // stripping the role from everyone still holding it.
   const grants = await db.select().from(userRoles).where(eq(userRoles.roleId, roleId));
   if (grants.length > 0) {

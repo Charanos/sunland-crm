@@ -111,7 +111,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
         .then((data) => {
           if (Array.isArray(data.users)) setUsers(data.users);
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [loadComplaints, entityId]);
 
@@ -230,7 +230,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
       <BoardHeader
         eyebrow={<Badge tone="warning">HR</Badge>}
         title="Complaints"
-        description="Confidential complaint intake and escalation — HR Head, GM, and CEO tiers only. Content stays out of the general audit log."
+        description="Confidential complaint intake and escalation - HR Head, GM, and CEO tiers only. Content stays out of the general audit log."
         actions={
           <Button size="sm" onClick={openCreateModal}>
             <IconPlus size={14} /> File Complaint
@@ -261,7 +261,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
           <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
             <Link
               href="/admin/approvals"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Approvals</span>
               <span className="bg-slate-200 text-slate-650 px-1.5 py-0.2 rounded-full text-meta-muted-strong">Queue</span>
@@ -275,21 +275,21 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
             </Link>
             <Link
               href="/admin/support"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <IconLifebuoy size={14} />
               <span>Support Tickets</span>
             </Link>
             <Link
               href="/admin/reports"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <IconReportAnalytics size={14} />
               <span>Reports Center</span>
             </Link>
             <Link
               href="/admin/system"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <IconDatabase size={14} />
               <span>System & Roles</span>
@@ -311,7 +311,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
                   "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-1.5 text-body-primary transition-all duration-200",
                   isActive
                     ? "bg-[#151936] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-800",
+                    : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-800",
                 )}
               >
                 {tab.label}
@@ -349,7 +349,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
                       <h4 className="text-body-primary text-slate-900 truncate">{c.subject}</h4>
                       <span className="text-meta-muted whitespace-nowrap">{new Date(c.createdAt).toLocaleDateString("en-KE")}</span>
                     </div>
-                    <p className="text-body-regular text-slate-500 mt-0.5 line-clamp-1">{c.description}</p>
+                    <p className="text-body-regular text-slate-400 mt-0.5 line-clamp-1">{c.description}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       <Badge tone={meta.tone}>{meta.label}</Badge>
                       {c.isAnonymous && (
@@ -372,10 +372,10 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
       </BoardPanel>
 
       {/* File Complaint Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="File Complaint" description="Confidential — routed to the correct tier automatically" size="md">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="File Complaint" description="Confidential - routed to the correct tier automatically" size="md">
         <div className="space-y-4">
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Subject</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Subject</label>
             <input
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.subject}
@@ -385,7 +385,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Category</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Category</label>
             <div className="flex flex-wrap gap-2">
               {(Object.keys(CATEGORY_META) as ComplaintCategory[]).map((cat) => (
                 <button
@@ -394,7 +394,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
                   onClick={() => setForm((f) => ({ ...f, category: cat }))}
                   className={cn(
                     "px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-all",
-                    form.category === cat ? "bg-[#151936] text-white border-[#151936]" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300",
+                    form.category === cat ? "bg-[#151936] text-white border-[#151936]" : "bg-white text-slate-400 border-slate-200 hover:border-slate-300",
                   )}
                 >
                   {CATEGORY_META[cat].label}
@@ -404,7 +404,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Names Someone (optional)</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Names Someone (optional)</label>
             <select
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.namedPersonId}
@@ -418,7 +418,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Description</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Description</label>
             <textarea
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-800 resize-none h-28 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.description}
@@ -488,7 +488,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
             ) : (
               <>
                 <div>
-                  <label className="label-caps text-slate-500 mb-1.5 block">Add Note</label>
+                  <label className="label-caps text-slate-400 mb-1.5 block">Add Note</label>
                   <div className="flex gap-2">
                     <input
                       className="flex-1 h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40"
@@ -504,7 +504,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
                   <div>
-                    <label className="label-caps text-slate-500 mb-1.5 block">Escalate</label>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Escalate</label>
                     <textarea
                       className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 resize-none h-20 focus:outline-none focus:border-[#151936]/40"
                       value={escalateReason}
@@ -516,7 +516,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
                     </Button>
                   </div>
                   <div>
-                    <label className="label-caps text-slate-500 mb-1.5 block">Resolve</label>
+                    <label className="label-caps text-slate-400 mb-1.5 block">Resolve</label>
                     <textarea
                       className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 resize-none h-20 focus:outline-none focus:border-[#151936]/40"
                       value={resolutionSummary}

@@ -18,7 +18,7 @@ type CalendarEventRow = typeof calendarEvents.$inferSelect;
 
 /**
  * No cron/background-job infrastructure exists in this codebase, and "did it
- * actually happen vs. no-show" can't be inferred automatically anyway — so
+ * actually happen vs. no-show" can't be inferred automatically anyway - so
  * "archived once the day passes" is this computed flag, not a scheduled
  * write. The Events page uses it to surface/filter events whose day has
  * passed without a resolved outcome (HR spec-adjacent principle: derive,
@@ -30,7 +30,7 @@ function withDisposition<T extends CalendarEventRow>(event: T): T & { needsDispo
 
 /**
  * Self-scoped "my calendar" (organizer or attendee) needs no permission at
- * all — the same pattern as sessions self-management. `scope: "all"` (org-wide
+ * all - the same pattern as sessions self-management. `scope: "all"` (org-wide
  * visibility) requires scheduling.event.read, granted to department heads.
  */
 export async function listCalendarEvents(
@@ -54,10 +54,10 @@ export async function listCalendarEvents(
   const scoped = wantsAll
     ? rows
     : rows.filter((event) => {
-        if (event.organizerId === ctx.user.id) return true;
-        const attendees = (event.attendees as AttendeeEntry[] | null) ?? [];
-        return attendees.some((a) => a.userId === ctx.user.id);
-      });
+      if (event.organizerId === ctx.user.id) return true;
+      const attendees = (event.attendees as AttendeeEntry[] | null) ?? [];
+      return attendees.some((a) => a.userId === ctx.user.id);
+    });
 
   return scoped.map(withDisposition);
 }
@@ -65,7 +65,7 @@ export async function listCalendarEvents(
 export async function createCalendarEvent(ctx: CallerContext, rawInput: unknown) {
   const input = parseInput(createCalendarEventSchema, rawInput);
   const entityId = await resolveEntityId(input.entityId);
-  // No permission gate — scheduling your own event is always allowed;
+  // No permission gate - scheduling your own event is always allowed;
   // org-wide visibility is what's gated, not the ability to create one.
 
   if (new Date(input.endsAt) <= new Date(input.startsAt)) {
@@ -119,7 +119,7 @@ export async function updateCalendarEvent(ctx: CallerContext, eventId: string, r
     throw new DomainValidationError("endsAt must be after startsAt");
   }
 
-  // Explicitly whitelisted, not a spread of raw input — see updateProperty's
+  // Explicitly whitelisted, not a spread of raw input - see updateProperty's
   // fix for exactly why (an unresolved entityId or unexpected field silently
   // landing in .set() breaks the write in a way that's hard to trace back).
   return db.transaction(async (tx) => {
@@ -153,7 +153,7 @@ export async function updateCalendarEvent(ctx: CallerContext, eventId: string, r
   });
 }
 
-/** Resolves an event's post-event disposition — organizer or scheduling.event.write, same gate as updateCalendarEvent. */
+/** Resolves an event's post-event disposition - organizer or scheduling.event.write, same gate as updateCalendarEvent. */
 export async function setEventOutcome(ctx: CallerContext, eventId: string, rawInput: unknown) {
   const input = parseInput(setEventOutcomeSchema, rawInput);
   const [existing] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, eventId)).limit(1);

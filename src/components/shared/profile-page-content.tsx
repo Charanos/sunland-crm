@@ -44,7 +44,7 @@ interface UserProfile {
   name: string;
   email: string;
   title: string | null;
-  // No `phone` column exists on `users` — kept null rather than a fabricated
+  // No `phone` column exists on `users` - kept null rather than a fabricated
   // value; displayed as "Not set" and not offered as an editable field.
   phone: string | null;
   department: string;
@@ -113,11 +113,11 @@ const INITIAL_PROFILE: UserProfile = {
   title: null,
   phone: null,
   department: "Executive Management",
-  joinDate: "—",
+  joinDate: "-",
   role: "ceo",
   avatarUrl: null,
   status: "online",
-  accessLevel: "Full Access — All modules",
+  accessLevel: "Full Access - All modules",
   modules: [
     "Finance Command",
     "Operations",
@@ -562,7 +562,7 @@ function SecurityHealthCard({
       <div className="flex items-center justify-between mb-4">
         <h2 className="title-serif text-slate-900">Security Health</h2>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm text-slate-500">{score}/100</span>
+          <span className="font-mono text-sm text-slate-400">{score}/100</span>
           <div className="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
             <div
               className={cn("h-full rounded-full transition-all", scoreTone)}
@@ -586,13 +586,13 @@ function SecurityHealthCard({
                     ? "bg-amber-50 text-amber-500"
                     : item.tone === "success"
                       ? "bg-emerald-50 text-emerald-600"
-                      : "bg-slate-100 text-slate-500"
+                      : "bg-slate-100 text-slate-400"
               )}
             >
               <item.icon size={13} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-slate-500 leading-none mb-0.5">
+              <p className="text-sm text-slate-400 leading-none mb-0.5">
                 {item.label}
               </p>
               <p
@@ -877,7 +877,7 @@ function ActivityTimeline({ activityLog }: { activityLog: ActivityItem[] }) {
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200">
           <IconCalendar size={12} className="text-slate-400" />
-          <span className="text-sm text-slate-500">Last 30 days</span>
+          <span className="text-sm text-slate-400">Last 30 days</span>
         </div>
       </div>
 
@@ -968,11 +968,11 @@ export function ProfilePageContent({
   const { pushToast } = useToast();
 
   // `phone` has no backing column and `department`/`accessLevel`/`modules` are
-  // computed from the real role, not stored — kept separate from the fields
+  // computed from the real role, not stored - kept separate from the fields
   // that genuinely round-trip to the database (name/title/avatarUrl).
   function deriveRoleDisplay(role: string) {
     if (role === "ceo" || role === "general_manager") {
-      return { department: "Executive Management", accessLevel: "Full Access — All modules", modules: ["Finance Command", "Operations", "HR Portal", "Properties & Portfolio", "Reports & Audit", "Security & Admin"] };
+      return { department: "Executive Management", accessLevel: "Full Access - All modules", modules: ["Finance Command", "Operations", "HR Portal", "Properties & Portfolio", "Reports & Audit", "Security & Admin"] };
     }
     if (role.startsWith("finance") || role.startsWith("accounts") || role.startsWith("payroll")) {
       return { department: "Finance & Accounts", accessLevel: "Ledgers, Approvals & Cash flows", modules: ["Finance Command", "Reports & Audit"] };
@@ -1010,7 +1010,7 @@ export function ProfilePageContent({
         department,
         joinDate: user.createdAt
           ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
-          : "—",
+          : "-",
         role: user.role,
         avatarUrl: user.avatarUrl,
         status: "online",
@@ -1031,7 +1031,7 @@ export function ProfilePageContent({
         // The frontend has no way to know which listed session is *this*
         // request's own session (that would require exposing the session id
         // from getCurrentUser(), which only returns id/email/name/role today)
-        // — the most-recently-created active session is used as a reasonable
+        // - the most-recently-created active session is used as a reasonable
         // "current device" approximation rather than guessing further.
         const mostRecentId = active.length
           ? [...active].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0].id
@@ -1043,7 +1043,7 @@ export function ProfilePageContent({
               id: s.id,
               device,
               browser,
-              ip: s.ip ?? "—",
+              ip: s.ip ?? "-",
               lastActive: formatActivityTime(s.createdAt),
               current: s.id === mostRecentId,
             };
@@ -1102,7 +1102,7 @@ export function ProfilePageContent({
   };
 
   // No avatar upload endpoint exists yet (would need Cloudinary widget wiring
-  // like the property-image uploader) — this stays a local preview only, and
+  // like the property-image uploader) - this stays a local preview only, and
   // says so, rather than claiming a save that doesn't happen.
   const handleAvatarChange = (url: string) => {
     setProfile((p) => ({ ...p, avatarUrl: url }));
@@ -1195,7 +1195,7 @@ export function ProfilePageContent({
                 <span className="font-mono text-white text-sm">
                   {profile.modules.length}
                 </span>
-                <span className="text-slate-500 text-sm">modules</span>
+                <span className="text-slate-400 text-sm">modules</span>
               </div>
 
               <div className="h-3 w-px bg-white/10" />
@@ -1207,7 +1207,7 @@ export function ProfilePageContent({
                 <span className="font-mono text-white text-sm">
                   {sessions.length}
                 </span>
-                <span className="text-slate-500 text-sm">sessions</span>
+                <span className="text-slate-400 text-sm">sessions</span>
               </div>
 
               <div className="h-3 w-px bg-white/10" />
@@ -1239,7 +1239,7 @@ export function ProfilePageContent({
 
               <div className="h-3 w-px bg-white/10" />
 
-              <div className="flex items-center gap-1.5 text-sm text-slate-500">
+              <div className="flex items-center gap-1.5 text-sm text-slate-400">
                 <IconCalendar size={11} />
                 <span>Since {profile.joinDate}</span>
               </div>
@@ -1512,7 +1512,7 @@ export function ProfilePageContent({
                       href={item.href || ""}
                       className="group flex items-center gap-3 rounded-xl p-3 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[#151936] group-hover:text-white transition-all">
+                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-[#151936] group-hover:text-white transition-all">
                         <item.icon size={14} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1521,7 +1521,7 @@ export function ProfilePageContent({
                       </div>
                       <IconChevronRight
                         size={12}
-                        className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0"
+                        className="text-slate-300 group-hover:text-slate-400 transition-colors shrink-0"
                       />
                     </Link>
                   ) : (
@@ -1531,7 +1531,7 @@ export function ProfilePageContent({
                       onClick={() => setActiveTab(item.tab!)}
                       className="group flex w-full items-center gap-3 rounded-xl p-3 hover:bg-slate-50 transition-colors text-left"
                     >
-                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[#151936] group-hover:text-white transition-all">
+                      <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-[#151936] group-hover:text-white transition-all">
                         <item.icon size={14} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1540,7 +1540,7 @@ export function ProfilePageContent({
                       </div>
                       <IconChevronRight
                         size={12}
-                        className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0"
+                        className="text-slate-300 group-hover:text-slate-400 transition-colors shrink-0"
                       />
                     </button>
                   )
@@ -1605,7 +1605,7 @@ export function ProfilePageContent({
                       "size-11 shrink-0 rounded-xl flex items-center justify-center",
                       session.current
                         ? "bg-emerald-100 text-emerald-600"
-                        : "bg-slate-100 text-slate-500"
+                        : "bg-slate-100 text-slate-400"
                     )}
                   >
                     <DevIcon size={20} />
@@ -1621,7 +1621,7 @@ export function ProfilePageContent({
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400">
                       <span className="flex items-center gap-1">
                         <BrowserIcon size={11} />
                         {session.browser}

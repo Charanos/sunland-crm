@@ -27,7 +27,7 @@ import { CalendarModal } from "@/components/ui/calendar-modal";
 import { cn } from "@/lib/utils/cn";
 
 // Matches the real /api/scheduling/events response shape (calendar_events
-// table) — startsAt/endsAt are full ISO timestamps, not separate date/time
+// table) - startsAt/endsAt are full ISO timestamps, not separate date/time
 // strings, and attendees is a list, not a headcount.
 interface Event {
   id: string;
@@ -85,7 +85,7 @@ export function InternalOperationsBoard({
 }: {
   entityId?: string;
   // The parent (dashboard-overview.tsx) already fetches the full
-  // /api/dashboard/overview payload on mount — receiving this as a prop
+  // /api/dashboard/overview payload on mount - receiving this as a prop
   // avoids a second, redundant full-dashboard-aggregation round-trip just
   // to read one field off it.
   departmentStats?: { sales: number; ops: number; legal: number };
@@ -104,7 +104,7 @@ export function InternalOperationsBoard({
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const loadEvents = useCallback(() => {
-    // scope=all: this is an org-wide executive view, not "my calendar" — the
+    // scope=all: this is an org-wide executive view, not "my calendar" - the
     // default "mine" scope would hide every event organized by someone else.
     fetch(`/api/scheduling/events?entityId=${entityId}&scope=all`)
       .then((r) => r.json())
@@ -161,7 +161,7 @@ export function InternalOperationsBoard({
     return match[2] === "h" ? value * 60 : value;
   }
 
-  // Inverse of parseDurationMinutes — snaps an event's real startsAt/endsAt
+  // Inverse of parseDurationMinutes - snaps an event's real startsAt/endsAt
   // gap to the closest option in the duration select, so editing an event
   // pre-fills its actual length instead of silently defaulting to 1h and
   // truncating/extending it on save if the user doesn't touch the field.
@@ -242,7 +242,7 @@ export function InternalOperationsBoard({
 
   const handleSetOutcome = async (eventId: string, outcome: "completed" | "cancelled") => {
     try {
-      // Outcome is a dedicated action, not a generic field update — updateCalendarEventSchema
+      // Outcome is a dedicated action, not a generic field update - updateCalendarEventSchema
       // has no `outcome` field, so PATCHing the update endpoint silently strips it (Zod
       // drops unrecognized keys) and the DB row never changes. This is the real endpoint.
       const res = await fetch(`/api/scheduling/events/${eventId}/outcome`, {
@@ -392,7 +392,7 @@ export function InternalOperationsBoard({
                     </div>
                     <span className="text-sm font-medium text-slate-700">Legal</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs text-slate-500 shadow-sm">
+                  <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs text-slate-400 shadow-sm">
                     <span className="label-caps">Processing</span>
                   </div>
                 </div>
@@ -449,7 +449,7 @@ export function InternalOperationsBoard({
                           <div>
                             <h4 className="text-body-primary text-slate-900">{project.title}</h4>
                             {project.description && (
-                              <p className="text-body-regular text-slate-500 mt-1">{project.description}</p>
+                              <p className="text-body-regular text-slate-400 mt-1">{project.description}</p>
                             )}
                           </div>
                           <span className="bg-slate-50 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md shadow-sm label-caps capitalize">
@@ -482,7 +482,7 @@ export function InternalOperationsBoard({
                           </div>
                         )}
                         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                          <Link href={`/admin/projects`} className="p-1.5 bg-white border border-slate-200 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-50 shadow-sm transition-colors" title="Edit">
+                          <Link href={`/admin/projects`} className="p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-50 shadow-sm transition-colors" title="Edit">
                             <IconBriefcase size={16} />
                           </Link>
                           <button
@@ -514,25 +514,25 @@ export function InternalOperationsBoard({
             <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href="/admin/events"
-                className="body-sm text-slate-500 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow"
+                className="body-sm text-slate-400 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow"
               >
                 View All
               </Link>
               <button
                 onClick={() => setCalendarModalOpen(true)}
-                className="text-slate-500 hover:text-slate-900 bg-white p-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow transition-all"
+                className="text-slate-400 hover:text-slate-900 bg-white p-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow transition-all"
                 title="Expand"
               >
                 <IconArrowsMaximize size={16} stroke={2} />
               </button>
               <div className="flex items-center gap-1 bg-slate-50 rounded-lg border border-slate-200 p-1 shadow-sm">
-                <button onClick={prevMonth} className="text-slate-500 hover:text-slate-900 hover:bg-white p-1 rounded-md transition-all">
+                <button onClick={prevMonth} className="text-slate-400 hover:text-slate-900 hover:bg-white p-1 rounded-md transition-all">
                   <IconChevronLeft size={16} stroke={2} />
                 </button>
                 <span className="body-sm text-slate-800 w-24 sm:w-32 text-center truncate font-medium">
                   {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                 </span>
-                <button onClick={nextMonth} className="text-slate-500 hover:text-slate-900 hover:bg-white p-1 rounded-md transition-all">
+                <button onClick={nextMonth} className="text-slate-400 hover:text-slate-900 hover:bg-white p-1 rounded-md transition-all">
                   <IconChevronRight size={16} stroke={2} />
                 </button>
               </div>
@@ -623,12 +623,12 @@ export function InternalOperationsBoard({
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <h5 className="text-body-primary text-slate-900 truncate mb-1.5">{evt.title}</h5>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <div className="flex items-center gap-1.5 body-sm text-slate-500">
+                        <div className="flex items-center gap-1.5 body-sm text-slate-400">
                           <IconClock size={14} className={style.iconColor} />
                           <span>{formatEventTime(evt.endsAt)}</span>
                         </div>
                         <span className="text-slate-300">•</span>
-                        <div className="flex items-center gap-1.5 body-sm text-slate-500">
+                        <div className="flex items-center gap-1.5 body-sm text-slate-400">
                           <style.icon size={14} className={style.iconColor} />
                           <span className="capitalize">{evt.type}</span>
                         </div>
@@ -659,7 +659,7 @@ export function InternalOperationsBoard({
                         )}
                         <button
                           onClick={() => setEventForEdit(evt)}
-                          className="p-1.5 bg-slate-50 border border-slate-200 rounded text-slate-500 hover:text-slate-800 hover:bg-white shadow-sm transition-colors"
+                          className="p-1.5 bg-slate-50 border border-slate-200 rounded text-slate-400 hover:text-slate-800 hover:bg-white shadow-sm transition-colors"
                           title="Edit"
                         >
                           <IconCalendarEvent size={14} />

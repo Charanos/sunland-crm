@@ -7,6 +7,8 @@ import {
   IconBath,
   IconBed,
   IconBuildingSkyscraper,
+  IconCalendarEvent,
+  IconCar,
   IconClock,
   IconEdit,
   IconEye,
@@ -258,7 +260,7 @@ export function PropertyDetailDrawer({
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[#151936] tracking-tight leading-none mono-stat">{priceVal}</p>
-              <div className="flex items-center gap-1.5 mt-2 text-slate-500">
+              <div className="flex items-center gap-1.5 mt-2 text-slate-400">
                 <IconMapPin size={13} stroke={2} />
                 <span className="body-sm">{property.location}</span>
               </div>
@@ -291,16 +293,35 @@ export function PropertyDetailDrawer({
                     : "—",
               },
               {
+                icon: IconCalendarEvent,
+                label: "Year Built",
+                value: property.yearBuilt != null ? String(property.yearBuilt) : "—",
+              },
+              {
+                icon: IconCar,
+                label: "Parking Spaces",
+                value: property.parkingSpaces != null ? String(property.parkingSpaces) : "—",
+              },
+              {
+                icon: IconRuler,
+                label: "Land Area",
+                value:
+                  property.landAreaSqft != null
+                    ? `${property.landAreaSqft.toLocaleString()} sqft`
+                    : "—",
+              },
+              {
                 icon: IconTag,
                 label: "Listing Type",
-                value: LISTING_TYPE_LABEL[property.listingType] ?? "—",
+                value: LISTING_TYPE_LABEL[property.listingType as keyof typeof LISTING_TYPE_LABEL]
+                  ?? (property.listingType?.toLowerCase() === "sale" ? "For Sale" : property.listingType || "—"),
               },
-            ].map((tile) => (
+            ].map((tile, idx) => (
               <div
-                key={tile.label}
+                key={tile.label + idx}
                 className="bg-slate-50/70 border border-slate-100 rounded-xl p-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors"
               >
-                <div className="size-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-500 shadow-sm shrink-0">
+                <div className="size-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm shrink-0">
                   <tile.icon size={16} stroke={1.5} />
                 </div>
                 <div>
@@ -311,12 +332,29 @@ export function PropertyDetailDrawer({
             ))}
           </div>
 
+          {/* ── Amenities ── */}
+          {property.amenities && property.amenities.length > 0 && (
+            <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+              <p className="label-caps text-slate-400 mb-3">Amenities & Features</p>
+              <div className="flex flex-wrap gap-2">
+                {property.amenities.map((amenity: string) => (
+                  <span
+                    key={amenity}
+                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 body-sm shadow-sm"
+                  >
+                    {amenity}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ── Property Owner ── */}
           {ownerHasName && (
             <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
               <p className="label-caps text-slate-400 mb-3">Property Owner</p>
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-white border border-slate-200 shadow-sm shrink-0 flex items-center justify-center text-slate-500">
+                <div className="size-10 rounded-full bg-white border border-slate-200 shadow-sm shrink-0 flex items-center justify-center text-slate-400">
                   {ownerName.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -327,7 +365,7 @@ export function PropertyDetailDrawer({
                   {contact?.phone && (
                     <a
                       href={`tel:${contact.phone}`}
-                      className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
+                      className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
                       aria-label="Call owner"
                     >
                       <IconPhone size={14} stroke={2} />
@@ -336,7 +374,7 @@ export function PropertyDetailDrawer({
                   {contact?.email && (
                     <a
                       href={`mailto:${contact.email}`}
-                      className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
+                      className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
                       aria-label="Email owner"
                     >
                       <IconMail size={14} stroke={2} />

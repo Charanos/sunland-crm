@@ -8,7 +8,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const entityId = searchParams.get("entityId");
-    
+
     const ctx = await requireCallerContext(entityId, request);
     const lease = await getLeaseById(ctx, id);
 
@@ -23,7 +23,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = await request.json();
     const entityId = body.entityId ?? null;
-    // Default to "terminate" for backward compatibility — every existing
+    // Default to "terminate" for backward compatibility - every existing
     // caller sends only { entityId } and expects the old terminate-only behavior.
     const action = body.action ?? "terminate";
 

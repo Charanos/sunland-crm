@@ -87,7 +87,7 @@ export function FinanceSubNav() {
                   "px-3.5 py-1.5 text-sm  font-medium rounded-lg transition-all flex items-center gap-1.5",
                   isActive
                     ? "bg-[#151936] text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-900 hover:bg-white/45"
+                    : "text-slate-400 hover:text-slate-900 hover:bg-white/45"
                 )}
               >
                 <span>{tab.label}</span>

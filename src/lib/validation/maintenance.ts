@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Accepts the DB enum values plus the two aliases the original inline route
-// established ("medium"→"normal", "urgent"→"critical") — kept for backward
+// established ("medium"→"normal", "urgent"→"critical") - kept for backward
 // compatibility with any caller still sending the old vocabulary.
 const priorityInput = z
   .enum(["low", "normal", "medium", "high", "critical", "urgent"])

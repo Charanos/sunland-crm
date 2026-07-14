@@ -25,7 +25,7 @@ export function LeaseRenewModal({
   open: boolean;
   lease: LeaseRenewTarget | null;
   onClose: () => void;
-  /** Called with the newly-created lease id — the renewed term replaces the old one. */
+  /** Called with the newly-created lease id - the renewed term replaces the old one. */
   onRenewed: (newLeaseId: string) => void;
 }) {
   const { pushToast } = useToast();
@@ -38,7 +38,7 @@ export function LeaseRenewModal({
   useEffect(() => {
     if (!open || !lease) return;
     Promise.resolve().then(() => {
-      // Default the new term to one year past the old expiry — a sensible
+      // Default the new term to one year past the old expiry - a sensible
       // starting point the user can adjust, not a hard rule.
       const oneYearOn = new Date(lease.endsAt);
       oneYearOn.setFullYear(oneYearOn.getFullYear() + 1);
@@ -89,14 +89,14 @@ export function LeaseRenewModal({
   return (
     <Modal
       open={open}
-      onClose={isSubmitting ? () => {} : onClose}
+      onClose={isSubmitting ? () => { } : onClose}
       title="Renew Lease"
-      description={`${lease.tenantName} — ${lease.propertyName}. The current term ends ${new Date(lease.endsAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}; the new term starts immediately after.`}
+      description={`${lease.tenantName} - ${lease.propertyName}. The current term ends ${new Date(lease.endsAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}; the new term starts immediately after.`}
       size="md"
     >
       <div className="space-y-4">
         <div>
-          <label className="label-caps text-slate-500 mb-1.5 block">New Lease End Date</label>
+          <label className="label-caps text-slate-400 mb-1.5 block">New Lease End Date</label>
           <input
             type="date"
             className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -106,7 +106,7 @@ export function LeaseRenewModal({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Rent Rate (KES / month)</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Rent Rate (KES / month)</label>
             <input
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
               value={monthlyRentKes}
@@ -114,7 +114,7 @@ export function LeaseRenewModal({
             />
           </div>
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Deposit Held (KES)</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Deposit Held (KES)</label>
             <input
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
               value={depositKes}

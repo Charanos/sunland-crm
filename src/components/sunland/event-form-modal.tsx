@@ -31,7 +31,7 @@ export function EventFormModal({
 }: {
   open: boolean;
   onClose: () => void;
-  // Resolves to whether the save actually succeeded — the caller owns the
+  // Resolves to whether the save actually succeeded - the caller owns the
   // real API call and its own success/error toast, since only it knows the
   // true result. The modal must not announce success it hasn't confirmed.
   onSubmit: (data: EventFormData) => Promise<boolean>;
@@ -74,7 +74,7 @@ export function EventFormModal({
     setIsSubmitting(true);
     const succeeded = await onSubmit(form);
     setIsSubmitting(false);
-    // Only close on confirmed success — the caller already showed its own
+    // Only close on confirmed success - the caller already showed its own
     // success/error toast, since it's the one that knows the real result.
     if (succeeded) onClose();
   };
@@ -108,7 +108,7 @@ export function EventFormModal({
           <h4 className="text-meta-muted-strong mb-3 border-b border-slate-200 pb-2">Schedule Details</h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-body-regular text-slate-500 mb-1.5 block">Date</label>
+              <label className="text-body-regular text-slate-400 mb-1.5 block">Date</label>
               <input
                 type="date"
                 min={new Date().toISOString().split("T")[0]}
@@ -122,7 +122,7 @@ export function EventFormModal({
               {errors.date && <p className="text-xs text-red-500 mt-1">{errors.date}</p>}
             </div>
             <div>
-              <label className="text-body-regular text-slate-500 mb-1.5 block">Time</label>
+              <label className="text-body-regular text-slate-400 mb-1.5 block">Time</label>
               <input
                 type="time"
                 className={cn(
@@ -134,7 +134,7 @@ export function EventFormModal({
               />
             </div>
             <div>
-              <label className="text-body-regular text-slate-500 mb-1.5 block">Duration</label>
+              <label className="text-body-regular text-slate-400 mb-1.5 block">Duration</label>
               <select
                 className="w-full h-11 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all shadow-sm"
                 value={form.duration}
@@ -161,7 +161,7 @@ export function EventFormModal({
                   "px-4 py-2.5 rounded-lg text-body-primary border transition-all text-left flex items-center justify-between",
                   form.type === t.value
                     ? cn(t.color, "shadow-sm ring-1 ring-offset-1 ring-slate-100")
-                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                    : "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
                 )}
               >
                 <span>{t.label}</span>
@@ -184,16 +184,16 @@ export function EventFormModal({
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-          <button 
-            className="px-5 py-2.5 rounded-xl text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-700 transition-all shadow-sm" 
-            onClick={onClose} 
+          <button
+            className="px-5 py-2.5 rounded-xl text-slate-400 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-700 transition-all shadow-sm"
+            onClick={onClose}
             disabled={isSubmitting}
           >
             Cancel
           </button>
-          <button 
+          <button
             className="px-6 py-2.5 rounded-xl bg-[#151936] text-white shadow-md hover:bg-slate-800 transition-all flex items-center gap-2"
-            onClick={handleSubmit} 
+            onClick={handleSubmit}
             disabled={isSubmitting}
           >
             {isSubmitting ? (

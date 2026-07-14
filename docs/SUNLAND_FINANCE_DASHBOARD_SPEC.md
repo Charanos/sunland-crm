@@ -1,4 +1,4 @@
-# Sunland Finance Dashboard — Comprehensive Functional Spec
+# Sunland Finance Dashboard - Comprehensive Functional Spec
 
 **Document status:** Drill-down of `SUNLAND_ERP_IMPLEMENTATION_SPEC.md` Section 5, expanded to the depth required to build Finance as its own near-standalone financial management system inside the ERP shell.
 **Relationship to other documents:** This does not redefine the design system, the entity context, or the locked components. Where this document says "page," "modal," or "drawer," it means an instance of the existing, established components. It also does not re-litigate RBAC roles, which are inherited from the master spec (Section 3.2) and only narrowed here to Finance-specific actions (Section 6).
@@ -257,12 +257,12 @@ The page a Finance Head opens first every day. Built last in the implementation 
 - **Columns:** Date, Reference, Memo, Total Debit, Total Credit, Entered By, Status (`posted` / `draft` / `void`).
 - **Filters:** date range, account, entity (inherited from global context).
 - **Row action:** opens the Journal Entry Drawer (full line items, entered-by, timestamps, an Activity Log subsection per Section 8.4) with a "Void Entry" action restricted to Finance Head, behind a Confirm Dialog, which posts a reversing entry rather than deleting the original. Posted entries are never deleted; this is a hard rule, not a style preference.
-- **Modal — New Journal Entry:** dynamic line rows (account selector, debit, credit, memo per line). Submit is blocked client-side and server-side unless `SUM(debits) === SUM(credits)`, enforced by a Zod `.refine()` on the client and a re-check in the API route, since a client-only check can be bypassed by a direct API call. On success: toast "Journal entry JE-0042 posted" with a "View" link, modal closes, table re-fetches via the `journal_entry.posted` Pusher event rather than a manual refetch call, so other Finance users watching the same page update live too.
+- **Modal - New Journal Entry:** dynamic line rows (account selector, debit, credit, memo per line). Submit is blocked client-side and server-side unless `SUM(debits) === SUM(credits)`, enforced by a Zod `.refine()` on the client and a re-check in the API route, since a client-only check can be bypassed by a direct API call. On success: toast "Journal entry JE-0042 posted" with a "View" link, modal closes, table re-fetches via the `journal_entry.posted` Pusher event rather than a manual refetch call, so other Finance users watching the same page update live too.
 
 #### Chart of Accounts
 
 - Tree-style table grouped by type (Asset / Liability / Equity / Revenue / Expense), each row showing its current derived balance.
-- **Modal — New Account:** Finance Head only, fields: name, type, subtype (e.g. `cash`, `landlord_payable`), parent account (optional, for sub-accounts).
+- **Modal - New Account:** Finance Head only, fields: name, type, subtype (e.g. `cash`, `landlord_payable`), parent account (optional, for sub-accounts).
 - **Drawer:** transaction history for that account, a filtered view of `journal_lines`, with the same date-range filter as the main Journal Entries tab.
 
 #### Trial Balance
@@ -290,7 +290,7 @@ The page a Finance Head opens first every day. Built last in the implementation 
 - **Columns:** Unit, Tenant, Period, Expected, Collected, Status.
 - **Filters:** property, period, status, division.
 - **Bulk action:** "Mark Period Reconciled" for a multi-select of rows once manual entries for a period are confirmed against bank statements.
-- **Modal — Log Manual Collection:** unit, period, amount, payment method, reference, optional receipt upload placeholder. There is no automated bank feed in this version of the spec; every collection is logged manually or imported in bulk, and that constraint is stated here so it isn't quietly assumed away during implementation.
+- **Modal - Log Manual Collection:** unit, period, amount, payment method, reference, optional receipt upload placeholder. There is no automated bank feed in this version of the spec; every collection is logged manually or imported in bulk, and that constraint is stated here so it isn't quietly assumed away during implementation.
 
 #### Deficits
 
@@ -299,13 +299,13 @@ The page a Finance Head opens first every day. Built last in the implementation 
 #### Vacancies
 
 - Vacant units, days-vacant counter per row, a small historical vacancy-trend chart at the top of the tab.
-- **Row action — "Notify Line Manager":** writes a flagged item onto the relevant Line Manager's Business Development dashboard (master spec Section 7), not a generic notification, this is explicit cross-department task creation.
+- **Row action - "Notify Line Manager":** writes a flagged item onto the relevant Line Manager's Business Development dashboard (master spec Section 7), not a generic notification, this is explicit cross-department task creation.
 
 #### Defaulters
 
 - Tenants in arrears, aging buckets: current, 1–30, 31–60, 61–90, 90+ days.
-- **Row action — "Escalate to Line Manager":** same cross-department mechanism as Vacancies, appearing on the Line Manager's "Collections Follow-up" widget.
-- **Modal — Log Payment Plan:** records an agreed repayment schedule against the tenant; this does not touch the ledger by itself, it only changes what's expected going forward; the ledger only moves when an actual collection is logged against it later.
+- **Row action - "Escalate to Line Manager":** same cross-department mechanism as Vacancies, appearing on the Line Manager's "Collections Follow-up" widget.
+- **Modal - Log Payment Plan:** records an agreed repayment schedule against the tenant; this does not touch the ledger by itself, it only changes what's expected going forward; the ledger only moves when an actual collection is logged against it later.
 
 **Drawer (any row, any tab):** unit and tenant detail, full payment timeline, linked mandate reference, contact details, and tab-appropriate action buttons.
 
@@ -333,9 +333,9 @@ Sections, in order:
 5. **Documents:** link to the mandate letter PDF (produced by Front Office, master spec 8.4).
 6. **Activity Log:** every state change on this mandate, actor and timestamp, per Section 8.4.
 
-**Modal — New Mandate:** landlord selector, property/unit selector, mandate rate (defaults to 10%, editable only with the deviation-reason rule above), start date. On submit, status is set to `draft` or `pending_approval` automatically based on the unit-count/value thresholds in master spec 4.7, the user does not choose this manually. Toast and redirect into the new Mandate Detail.
+**Modal - New Mandate:** landlord selector, property/unit selector, mandate rate (defaults to 10%, editable only with the deviation-reason rule above), start date. On submit, status is set to `draft` or `pending_approval` automatically based on the unit-count/value thresholds in master spec 4.7, the user does not choose this manually. Toast and redirect into the new Mandate Detail.
 
-**Modal — Log Mandate Expense:** category, amount, period, optional receipt upload. Routes to `auto_approved` or `pending_gm` automatically based on the threshold table in master spec 4.7.
+**Modal - Log Mandate Expense:** category, amount, period, optional receipt upload. Routes to `auto_approved` or `pending_gm` automatically based on the threshold table in master spec 4.7.
 
 **Downstream coordination:** activating a mandate unlocks rental-ledger tracking for its units (7.2). Expense decisions notify the originating Line Manager (toast plus a status update on their own petty-cash view, master spec 7.3). Marking a remittance as paid is the signal Front Office/Accounts uses to close out that period for the landlord.
 
@@ -349,7 +349,7 @@ Sections, in order:
 
 - **Columns:** Period, Total Gross, Total Net, Total Statutory, Status (`draft` / `pending_gm` / `approved` / `disbursed`).
 - **Row action:** opens a Drawer with the full breakdown by department, a "Submit for Approval" button for the Payroll Officer, and an "Approve & Disburse" button visible only to GM, behind a Confirm Dialog. This is the one Finance action that always requires GM sign-off regardless of amount (master spec 4.7); there is no auto-approve path here, by design.
-- **Modal — New Payroll Run:** pulls aggregated `time_logs` from HR for the selected period as a read-only preview before the run is created. Hours are not editable from Finance; HR is the source of truth for hours (master spec 4.2), and Finance editing them here would create two conflicting versions of the truth.
+- **Modal - New Payroll Run:** pulls aggregated `time_logs` from HR for the selected period as a read-only preview before the run is created. Hours are not editable from Finance; HR is the source of truth for hours (master spec 4.2), and Finance editing them here would create two conflicting versions of the truth.
 
 #### Payslips
 
@@ -381,8 +381,8 @@ Sections, in order:
 **Tabs:** Deposited · Credited · Returned
 
 - **Columns:** Cheque #, Payer, Amount, Deposited Date, Credited Date (if applicable), Status.
-- **Row action — "Mark Credited":** if amount is at or below KES 500,000, this completes immediately and is the single action on this entire page that posts a journal entry (master spec 4.6); above that threshold, it instead writes an `approval_requests` row requiring dual sign-off from Finance Head and GM (master spec 4.7), and the row shows the amber awaiting-approval badge until both have signed.
-- **Row action — "Mark Returned":** requires a reason, triggers a debtor follow-up task rather than any ledger entry.
+- **Row action - "Mark Credited":** if amount is at or below KES 500,000, this completes immediately and is the single action on this entire page that posts a journal entry (master spec 4.6); above that threshold, it instead writes an `approval_requests` row requiring dual sign-off from Finance Head and GM (master spec 4.7), and the row shows the amber awaiting-approval badge until both have signed.
+- **Row action - "Mark Returned":** requires a reason, triggers a debtor follow-up task rather than any ledger entry.
 
 This page is the clearest place in the whole Finance module to see the deposited-versus-credited rule in action: a cheque can sit at `deposited` indefinitely with zero financial-statement impact, exactly as intended.
 

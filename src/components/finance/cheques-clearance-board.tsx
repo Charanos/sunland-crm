@@ -656,7 +656,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 opacity-0 group-hover/item:opacity-100 transition-opacity" />
                 <div className={cn(
                   "flex size-11 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover/item:scale-110 shadow-sm",
-                  item.status === "Returned" ? "bg-rose-50 text-rose-600 group-hover/item:bg-rose-100" : item.approvalStatus ? "bg-amber-50 text-amber-600 group-hover/item:bg-amber-100" : "bg-slate-100/80 text-slate-500 group-hover/item:bg-indigo-50 group-hover/item:text-indigo-600"
+                  item.status === "Returned" ? "bg-rose-50 text-rose-600 group-hover/item:bg-rose-100" : item.approvalStatus ? "bg-amber-50 text-amber-600 group-hover/item:bg-amber-100" : "bg-slate-100/80 text-slate-400 group-hover/item:bg-indigo-50 group-hover/item:text-indigo-600"
                 )}>
                   {item.status === "Returned" ? <IconAlertTriangle size={20} stroke={2} /> : <IconBuildingBank size={20} stroke={2} />}
                 </div>
@@ -692,7 +692,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
             <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
               <IconBuildingBank size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps text-xs">Awaiting Clearance</span>
+            <span className="text-slate-400 label-caps text-xs">Awaiting Clearance</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
@@ -711,7 +711,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconCheck size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps text-xs">Cleared & Posted</span>
+            <span className="text-slate-400 label-caps text-xs">Cleared & Posted</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
@@ -730,7 +730,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
             <div className="size-8 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-200/50">
               <IconAlertTriangle size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps text-xs">Returned Cheques</span>
+            <span className="text-slate-400 label-caps text-xs">Returned Cheques</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-rose-700 text-3xl">
@@ -749,11 +749,11 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
             <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
               <IconClock size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps text-xs">Average Clear Time</span>
+            <span className="text-slate-400 label-caps text-xs">Average Clear Time</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
-              3.5 <span className="text-slate-500 text-lg">Biz Days</span>
+              3.5 <span className="text-slate-400 text-lg">Biz Days</span>
             </span>
             <span className="mt-1 text-desc-secondary">Performance target (3.0d)</span>
           </div>
@@ -1153,7 +1153,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
           <div className="space-y-6 text-slate-700 text-sm">
             {/* Header context */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm border border-slate-100/50">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm border border-slate-100/50">
                 <IconBuildingBank size={20} />
               </div>
               <div>
@@ -1174,7 +1174,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
 
                 <div className="flex justify-between items-start text-slate-400 font-mono text-sm">
                   <div className="flex items-center gap-1">
-                    <IconBuildingBank size={14} className="text-slate-500" />
+                    <IconBuildingBank size={14} className="text-slate-400" />
                     <span className="font-normal text-slate-700 tracking-wider">{selectedCheque.bankName}</span>
                   </div>
                   <span>CHEQUE NO: {selectedCheque.chequeNumber.replace("CHQ-", "")}</span>
@@ -1204,7 +1204,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                 </div>
 
                 {/* MICR Code lines */}
-                <div className="text-center tracking-[0.25em] font-mono text-slate-500/80 mt-1 select-none pointer-events-none text-sm">
+                <div className="text-center tracking-[0.25em] font-mono text-slate-400/80 mt-1 select-none pointer-events-none text-sm">
                   ⑈ {selectedCheque.chequeNumber.replace("CHQ-", "")} ⑈   01109288211 ⑈   0123849920 ⑈
                 </div>
               </div>
@@ -1351,7 +1351,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                       )}>
                         {((i === 0 && logStep !== "form") || (i === 1 && logStep === "qr")) ? <IconCheck size={10} stroke={3} /> : i + 1}
                       </div>
-                      <span className="text-tiny text-slate-500 hidden sm:inline">{s}</span>
+                      <span className="text-tiny text-slate-400 hidden sm:inline">{s}</span>
                       {i < 2 && <IconArrowRight size={11} className="text-slate-300" />}
                     </div>
                   ))}
@@ -1365,7 +1365,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
               {logStep === "form" && (
                 <form onSubmit={handleLogSubmit} className="p-6 space-y-4">
                   <h2 className="headline-md text-slate-900 mb-1">Log New Cheque</h2>
-                  <p className="text-tiny text-slate-500 mb-4">Enter cheque details then attach a photo.</p>
+                  <p className="text-tiny text-slate-400 mb-4">Enter cheque details then attach a photo.</p>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -1444,7 +1444,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
               {logStep === "photo" && (
                 <div className="p-6 space-y-4">
                   <h2 className="headline-md text-slate-900">Attach Cheque Photo</h2>
-                  <p className="text-tiny text-slate-500">Capture or upload a photo of the physical cheque for audit trail.</p>
+                  <p className="text-tiny text-slate-400">Capture or upload a photo of the physical cheque for audit trail.</p>
 
                   {/* Camera/Photo area */}
                   <div className="relative rounded-2xl border-2 border-dashed border-slate-200 overflow-hidden bg-slate-50 min-h-[220px] flex items-center justify-center">
@@ -1520,7 +1520,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                   <div className="flex items-start justify-between">
                     <div>
                       <h2 className="headline-md text-slate-900">Cheque QR Generated</h2>
-                      <p className="text-tiny text-slate-500 mt-0.5">{logGenerated.chequeNumber} · {logGenerated.bankName}</p>
+                      <p className="text-tiny text-slate-400 mt-0.5">{logGenerated.chequeNumber} · {logGenerated.bankName}</p>
                     </div>
                     <span className="badge-pill badge-tone-success">Logged</span>
                   </div>
@@ -1540,7 +1540,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                         <QRCodeSVG
                           value={JSON.stringify({
                             ref: logGenerated.chequeNumber,
-                            type: "Banker's Cheque — Clearance Record",
+                            type: "Banker's Cheque - Clearance Record",
                             entity: logGenerated.payerName,
                             bank: logGenerated.bankName,
                             amount: logGenerated.amount,

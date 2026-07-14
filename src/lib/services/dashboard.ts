@@ -16,7 +16,7 @@ import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
 import type { UserRole } from "@/types";
 
-// Confirmed: docs/SUNLAND_FINANCE_LEDGER_ARCHITECTURE.md §6.1 — mandateRate
+// Confirmed: docs/SUNLAND_FINANCE_LEDGER_ARCHITECTURE.md §6.1 - mandateRate
 // defaults to 0.1000 (10%), management fee = collected x rate, never off
 // expected rent. Real per-mandate rates land in P1/P2 (property_mandates);
 // this is the correct interim assumption rather than treating gross rent
@@ -25,7 +25,7 @@ import type { UserRole } from "@/types";
 const MANAGEMENT_FEE_RATE = 0.1;
 
 // Approvals spec §4.1/§8.1: "Awaiting My Decision" is scoped to whichever
-// step tier is the viewer's own — approval_requests.requiredApproverRole is
+// step tier is the viewer's own - approval_requests.requiredApproverRole is
 // one of gm/ceo/department_head, not a specific role, so every role maps to
 // at most one tier. Roles with no tier (everyone below head-level) simply
 // never have anything awaiting their decision on Overview.
@@ -46,7 +46,7 @@ function toNumber(value: string | null): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
-/** Sunland's own earned revenue for a set of transactions — never gross rent collected. */
+/** Sunland's own earned revenue for a set of transactions - never gross rent collected. */
 function computeIncome(rows: TransactionRow[]): number {
   return rows.reduce((sum, t) => {
     const amt = toNumber(t.amountKes);
@@ -180,7 +180,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
   let rentPool = 0;
   for (const p of allProperties) rentPool += toNumber(p.monthlyRentKes);
 
-  // ── Revenue (real, management-fee-aware — never gross rent collected) ──
+  // ── Revenue (real, management-fee-aware - never gross rent collected) ──
   const txnsThisMonth = inRange(recentTransactions, "occurredAt", startOfThisMonth);
   const txnsLastMonth = inRange(recentTransactions, "occurredAt", startOfLastMonth, startOfThisMonth);
   const incomeThisMonth = computeIncome(txnsThisMonth);
@@ -205,7 +205,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
   const conversionRate = allLeads.length > 0 ? Math.round((closedWon.length / allLeads.length) * 1000) / 10 : 0;
 
   // ── Department stats (Internal Structure & Scheduler panel) ──
-  // Real, relevant counts tied to what each card actually links to — not
+  // Real, relevant counts tied to what each card actually links to - not
   // literal headcounts, since no HR employee/headcount table exists yet:
   // Sales -> active pipeline, Ops -> open maintenance work, Legal -> active leases.
   const openMaintenanceCount = allMaintenanceRequests.filter((m) =>
@@ -220,7 +220,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
     legal: activeLeaseCount,
   };
 
-  // ── Awaiting My Decision (spec §8.1) — pending approvals at the viewer's own tier ──
+  // ── Awaiting My Decision (spec §8.1) - pending approvals at the viewer's own tier ──
   const approvalTier = ROLE_APPROVAL_TIER[ctx.user.role as UserRole];
   let awaitingMyDecision: {
     count: number;
@@ -252,7 +252,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
     };
   }
 
-  // ── System Health (spec §8.1/§4.1 — CEO-only, absent for GM and everyone else) ──
+  // ── System Health (spec §8.1/§4.1 - CEO-only, absent for GM and everyone else) ──
   let systemHealth: { activeUserCount: number; lastThresholdChangeAt: Date | null } | null = null;
   if (ctx.user.role === "ceo") {
     const [activeUsers, allSettings] = await Promise.all([

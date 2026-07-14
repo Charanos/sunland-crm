@@ -19,7 +19,7 @@ import type { UserRole } from "@/types";
 type ComplaintRow = typeof complaints.$inferSelect;
 type ComplaintTier = "hr_head" | "gm" | "ceo";
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-// The users.role column's own inferred literal union — deliberately not the
+// The users.role column's own inferred literal union - deliberately not the
 // broader `@/types` UserRole (which also carries retired prototype aliases
 // like "rentals_officer" that were never real DB enum members), so this map
 // stays assignable to eq(users.role, ...) without a cast.
@@ -27,7 +27,7 @@ type DbUserRole = (typeof users.$inferSelect)["role"];
 
 /**
  * Complaint routing/visibility is hardcoded logic, never a granted RBAC
- * permission (HR spec §6.4) — a future change to the general permission
+ * permission (HR spec §6.4) - a future change to the general permission
  * matrix must not be able to accidentally widen who sees a complaint.
  */
 const COMPLAINT_TIER_BY_ROLE: Partial<Record<UserRole, ComplaintTier>> = {
@@ -50,12 +50,12 @@ const NEXT_TIER: Record<ComplaintTier, ComplaintTier | null> = {
 
 /**
  * HR spec §6.4: a complaint naming a Department Head (Finance/HR/Front
- * Office Head) escalates straight to GM at file time — this is how a
+ * Office Head) escalates straight to GM at file time - this is how a
  * complaint against HR Head itself is kept out of HR's own hands, since
  * HR Head is a Department Head like any other for this purpose. Naming the
  * GM escalates to CEO. Naming CEO has nowhere higher to go, so it stays
  * visible to CEO (a documented edge case, not left undefined). Everything
- * else — including a complaint naming a rank-and-file HR Officer — stays
+ * else - including a complaint naming a rank-and-file HR Officer - stays
  * with HR Head, the same as any other department's non-head staff.
  */
 async function computeInitialOwner(
@@ -75,7 +75,7 @@ async function computeInitialOwner(
   return { ownerRole: "hr_head", initialStatus: "open" };
 }
 
-/** Content-free by design (HR spec §8.8) — never names the complainant, subject, or category. */
+/** Content-free by design (HR spec §8.8) - never names the complainant, subject, or category. */
 async function notifyOwnerTier(tx: Tx, complaint: ComplaintRow) {
   const targetRole = TIER_TO_USER_ROLE[complaint.currentOwnerRole as ComplaintTier];
   const recipients = await tx.select().from(users).where(eq(users.role, targetRole));
@@ -97,13 +97,13 @@ async function notifyOwnerTier(tx: Tx, complaint: ComplaintRow) {
 function assertCurrentOwner(ctx: CallerContext, complaint: ComplaintRow) {
   const tier = COMPLAINT_TIER_BY_ROLE[ctx.user.role as UserRole];
   if (!tier || tier !== complaint.currentOwnerRole) {
-    // Never ForbiddenError here — existence itself must not be confirmable (HR spec §6.2).
+    // Never ForbiddenError here - existence itself must not be confirmable (HR spec §6.2).
     throw new NotFoundError("Complaint not found");
   }
 }
 
 /**
- * True anonymity, not just a display convention — when the toggle is used,
+ * True anonymity, not just a display convention - when the toggle is used,
  * identity is withheld from every viewer but the filer themselves, current
  * owner included. This is what makes "Request Input" (a scoped question to
  * a third party without revealing identity) meaningfully anonymous rather
@@ -115,7 +115,7 @@ function sanitizeForViewer(complaint: ComplaintRow, viewerId: string) {
   return { ...complaint, filedById: null as unknown as string };
 }
 
-/** Anyone can file — no permission gate, same self-scoped pattern as scheduling and support tickets. */
+/** Anyone can file - no permission gate, same self-scoped pattern as scheduling and support tickets. */
 export async function createComplaint(ctx: CallerContext, rawInput: unknown) {
   const input = parseInput(createComplaintSchema, rawInput);
   const entityId = await resolveEntityId(input.entityId);
@@ -137,7 +137,7 @@ export async function createComplaint(ctx: CallerContext, rawInput: unknown) {
       })
       .returning();
 
-    // Redacted deliberately — content/identity must never surface in the
+    // Redacted deliberately - content/identity must never surface in the
     // general audit log (HR spec §8.8), which anyone with audit.log.read
     // (including finance_head, auditor_compliance) can browse.
     await writeAudit(tx, ctx, {
@@ -155,9 +155,9 @@ export async function createComplaint(ctx: CallerContext, rawInput: unknown) {
 }
 
 /**
- * Tab views are HR Head's/GM's/CEO's own working queues — matches HR spec
+ * Tab views are HR Head's/GM's/CEO's own working queues - matches HR spec
  * §8.8 exactly (My Queue / Escalated / Resolved & Closed). A role with no
- * complaint tier gets an empty list, not an error — absence, not restriction.
+ * complaint tier gets an empty list, not an error - absence, not restriction.
  */
 export async function listComplaints(
   ctx: CallerContext,
@@ -190,7 +190,7 @@ export async function listComplaints(
   return rows.map((row) => sanitizeForViewer(row, ctx.user.id));
 }
 
-/** 404s (never 403s) for anyone who isn't the filer and doesn't tier-match — existence itself is need-to-know. */
+/** 404s (never 403s) for anyone who isn't the filer and doesn't tier-match - existence itself is need-to-know. */
 export async function getComplaint(ctx: CallerContext, complaintId: string) {
   const [complaint] = await db.select().from(complaints).where(eq(complaints.id, complaintId)).limit(1);
   if (!complaint) throw new NotFoundError("Complaint not found");
@@ -268,7 +268,7 @@ export async function resolveComplaint(ctx: CallerContext, complaintId: string, 
       entityId: existing.entityId,
     });
 
-    // Safe to include real content here — the filer already knows their own complaint.
+    // Safe to include real content here - the filer already knows their own complaint.
     await createNotification(tx, {
       userId: existing.filedById,
       entityId: existing.entityId,

@@ -754,7 +754,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         {/* Right Column: 2x2 KPI Grid */}
         <div className="grid grid-cols-2 gap-3">
           <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-indigo-200 bg-gradient-to-b from-white to-indigo-50/10">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-slate-400">
               <IconUser size={15} className="text-indigo-600" />
               <span className="body-sm font-medium uppercase tracking-wider">Active Employees</span>
             </div>
@@ -767,7 +767,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
           </BoardPanel>
 
           <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-amber-250 bg-gradient-to-b from-white to-amber-50/10">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-slate-400">
               <IconClock size={15} className="text-amber-500" />
               <span className="body-sm font-medium uppercase tracking-wider">Pending Runs</span>
             </div>
@@ -780,7 +780,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
           </BoardPanel>
 
           <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-emerald-250 bg-gradient-to-b from-white to-emerald-50/10">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-slate-400">
               <IconCoins size={15} className="text-emerald-600" />
               <span className="body-sm font-medium uppercase tracking-wider">MTD Disbursed</span>
             </div>
@@ -793,7 +793,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
           </BoardPanel>
 
           <BoardPanel className="p-4 flex flex-col justify-between h-[120px] relative overflow-hidden group transition-all duration-300 hover:shadow-md hover:border-rose-250 bg-gradient-to-b from-white to-rose-50/10">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-slate-400">
               <IconBuildingBank size={15} className="text-rose-600" />
               <span className="body-sm font-medium uppercase tracking-wider">Unpaid Remittance</span>
             </div>
@@ -907,7 +907,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                           <td className="px-3 py-3 text-right text-slate-900 mono-data">
                             {formatMoney((row as PayrollRun).grossPay)}
                           </td>
-                          <td className="px-3 py-3 text-right text-slate-500 mono-data">
+                          <td className="px-3 py-3 text-right text-slate-400 mono-data">
                             {formatMoney((row as PayrollRun).deductions)}
                           </td>
                           <td className="px-3 py-3 text-right text-indigo-700 mono-data">
@@ -934,9 +934,9 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                             {(row as EmployeePayslip).payslipCode}
                           </td>
                           <td className="px-3 py-3 text-slate-800 font-medium">{(row as EmployeePayslip).employeeName}</td>
-                          <td className="px-3 py-3 text-slate-500">{(row as EmployeePayslip).department}</td>
-                          <td className="px-3 py-3 text-slate-500">{(row as EmployeePayslip).period}</td>
-                          <td className="px-3 py-3 text-right text-slate-500 mono-data">
+                          <td className="px-3 py-3 text-slate-400">{(row as EmployeePayslip).department}</td>
+                          <td className="px-3 py-3 text-slate-400">{(row as EmployeePayslip).period}</td>
+                          <td className="px-3 py-3 text-right text-slate-400 mono-data">
                             {formatMoney((row as EmployeePayslip).grossPay)}
                           </td>
                           <td className="px-3 py-3 text-right text-slate-800 mono-data">
@@ -963,11 +963,11 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                             {(row as StatutoryRemittance).remittanceCode}
                           </td>
                           <td className="px-3 py-3 text-slate-800 font-medium">{(row as StatutoryRemittance).statutoryBody}</td>
-                          <td className="px-3 py-3 text-slate-500">{(row as StatutoryRemittance).period}</td>
+                          <td className="px-3 py-3 text-slate-400">{(row as StatutoryRemittance).period}</td>
                           <td className="px-3 py-3 text-right text-slate-900 mono-data">
                             {formatMoney((row as StatutoryRemittance).amount)}
                           </td>
-                          <td className="px-3 py-3 text-slate-500 mono-data">{(row as StatutoryRemittance).dueDate}</td>
+                          <td className="px-3 py-3 text-slate-400 mono-data">{(row as StatutoryRemittance).dueDate}</td>
                           <td className="px-3 py-3">
                             <Badge
                               tone={
@@ -986,7 +986,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                       <td className="px-3 py-3 text-right">
                         <button
                           type="button"
-                          className="inline-flex size-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                          className="inline-flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-900"
                         >
                           <IconDotsVertical size={15} />
                         </button>
@@ -1053,7 +1053,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         {selectedRun && (
           <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm border border-slate-100/50">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm border border-slate-100/50">
                 <IconCoins size={20} />
               </div>
               <div>
@@ -1136,7 +1136,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                 <span className="text-slate-400 label-caps">Process Audit Logs</span>
                 <div className="mt-2 space-y-2 max-h-[140px] overflow-y-auto pr-1">
                   {selectedRun.activityLog.map((log, idx) => (
-                    <div key={idx} className="flex gap-2 text-slate-500 leading-normal font-sans">
+                    <div key={idx} className="flex gap-2 text-slate-400 leading-normal font-sans">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
                       <p className="text-sm">{log}</p>
                     </div>
@@ -1180,7 +1180,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         {selectedPayslip && (
           <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/50">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100/50">
                 <IconUser size={20} />
               </div>
               <div>
@@ -1224,7 +1224,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                   <div className="h-px bg-slate-250 my-1" />
 
                   {/* Deductions segment */}
-                  <div className="space-y-1 text-slate-500 pl-2 text-sm">
+                  <div className="space-y-1 text-slate-400 pl-2 text-sm">
                     <div className="flex justify-between">
                       <span className="font-sans">PAYE (KRA)</span>
                       <span>-{formatMoney(selectedPayslip.paye)}</span>
@@ -1262,7 +1262,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                           <span>Pensionable Gross Pay</span>
                           <span className="font-mono">{formatMoney(calc.gross)}</span>
                         </div>
-                        <div className="flex justify-between text-slate-500">
+                        <div className="flex justify-between text-slate-400">
                           <span>NSSF Exemption (6% up to 36k)</span>
                           <span className="font-mono">-{formatMoney(calc.nssf)}</span>
                         </div>
@@ -1271,11 +1271,11 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                           <span className="font-mono">{formatMoney(calc.taxablePay)}</span>
                         </div>
                         <div className="h-px bg-slate-200/50 my-1" />
-                        <div className="flex justify-between text-slate-500">
+                        <div className="flex justify-between text-slate-400">
                           <span>PAYE (Progressive Tax Brackets)</span>
                           <span className="font-mono">{formatMoney(calc.payeBeforeRelief)}</span>
                         </div>
-                        <div className="space-y-1 pl-3 text-xs text-slate-500 border-l border-slate-200">
+                        <div className="space-y-1 pl-3 text-xs text-slate-400 border-l border-slate-200">
                           <div className="flex justify-between">
                             <span>Personal Relief (Monthly)</span>
                             <span className="font-mono">-{formatMoney(calc.personalRelief)}</span>
@@ -1313,7 +1313,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                 <span className="text-slate-400 label-caps">Audit History</span>
                 <div className="mt-2 space-y-2">
                   {selectedPayslip.activityLog.map((log, idx) => (
-                    <div key={idx} className="flex gap-2 text-slate-500 leading-normal font-sans">
+                    <div key={idx} className="flex gap-2 text-slate-400 leading-normal font-sans">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
                       <p className="text-sm">{log}</p>
                     </div>
@@ -1354,7 +1354,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
         {selectedRemittance && (
           <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/50">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100/50">
                 <IconBuildingBank size={20} />
               </div>
               <div>
@@ -1382,7 +1382,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                   </p>
                 </div>
 
-                <div className="space-y-2 border-t border-slate-200/50 pt-3 text-slate-500 font-sans text-sm">
+                <div className="space-y-2 border-t border-slate-200/50 pt-3 text-slate-400 font-sans text-sm">
                   <div className="flex justify-between">
                     <span>Beneficiary Body</span>
                     <span className="font-mono font-medium text-slate-700">{selectedRemittance.statutoryBody}</span>
@@ -1472,7 +1472,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                 <span className="text-slate-400 label-caps">Obligation Timeline</span>
                 <div className="mt-2 space-y-2">
                   {selectedRemittance.activityLog.map((log, idx) => (
-                    <div key={idx} className="flex gap-2 text-slate-500 leading-normal font-sans">
+                    <div key={idx} className="flex gap-2 text-slate-400 leading-normal font-sans">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
                       <p className="text-sm">{log}</p>
                     </div>

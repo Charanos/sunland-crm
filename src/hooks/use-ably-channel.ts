@@ -3,12 +3,12 @@
 import { useEffect, useRef } from "react";
 import * as Ably from "ably";
 
-// One shared connection per tab rather than one per subscribing component —
+// One shared connection per tab rather than one per subscribing component -
 // each open chat panel/widget would otherwise open its own websocket.
 let sharedClient: Ably.Realtime | null = null;
 function getClient(): Ably.Realtime {
   if (!sharedClient) {
-    // Token-auth only — the server (src/lib/realtime/ably.ts) mints a
+    // Token-auth only - the server (src/lib/realtime/ably.ts) mints a
     // capability scoped to this user's own channels; the client never holds
     // the API key.
     sharedClient = new Ably.Realtime({ authUrl: "/api/realtime/token" });
@@ -20,7 +20,7 @@ function getClient(): Ably.Realtime {
  * Subscribes to a single Ably event on a channel for the component's
  * lifetime. Realtime delivery here is additive convenience layered on top of
  * REST-persisted data (per the server-side publish comment in
- * src/lib/realtime/ably.ts) — a subscription failure (e.g. ABLY_API_KEY
+ * src/lib/realtime/ably.ts) - a subscription failure (e.g. ABLY_API_KEY
  * unset) degrades to "no live updates," never a thrown error.
  */
 export function useAblyChannel<T = unknown>(
@@ -44,7 +44,7 @@ export function useAblyChannel<T = unknown>(
       channel = client.channels.get(channelName);
       channel.subscribe(eventName, handler);
     } catch {
-      // No live updates for this session — REST fetches remain correct.
+      // No live updates for this session - REST fetches remain correct.
     }
 
     return () => {

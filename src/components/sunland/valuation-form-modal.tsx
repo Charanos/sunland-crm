@@ -109,7 +109,7 @@ export function ValuationFormModal({
           setProperties(d.properties.map((p: { id: string; name: string; location: string }) => ({ id: p.id, name: p.name, location: p.location })));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     fetch(`/api/contacts?entityId=${entityId}`)
       .then((r) => r.json())
       .then((d) => {
@@ -117,13 +117,13 @@ export function ValuationFormModal({
           setContacts(d.contacts.map((c: { id: string; displayName: string }) => ({ id: c.id, displayName: c.displayName })));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     fetch(`/api/identity/users?entityId=${entityId}`)
       .then((r) => r.json())
       .then((d) => {
         if (Array.isArray(d.users)) setStaff(d.users.map((u: { id: string; name: string }) => ({ id: u.id, name: u.name })));
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [open, entityId]);
 
   const handleSubmit = async () => {
@@ -150,7 +150,7 @@ export function ValuationFormModal({
         siteVisitAt: form.siteVisitAt ? new Date(form.siteVisitAt).toISOString() : null,
         notes: form.notes.trim() || null,
       };
-      // Create rejects nulls for optional fields it treats as absent — strip them.
+      // Create rejects nulls for optional fields it treats as absent - strip them.
       const createPayload = Object.fromEntries(Object.entries(payload).filter(([, v]) => v !== null));
 
       const res = await fetch(isEdit ? `/api/valuations/${valuation!.id}` : "/api/valuations", {
@@ -197,7 +197,7 @@ export function ValuationFormModal({
                   onClick={() => setForm((f) => ({ ...f, subjectMode: m }))}
                   className={cn(
                     "px-3 py-1 text-sm font-medium rounded-md transition-colors capitalize",
-                    form.subjectMode === m ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700",
+                    form.subjectMode === m ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700",
                   )}
                 >
                   {m === "portfolio" ? "Portfolio" : "External"}
@@ -208,7 +208,7 @@ export function ValuationFormModal({
 
           {form.subjectMode === "portfolio" ? (
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Portfolio Property</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Portfolio Property</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 value={form.propertyId}
@@ -223,7 +223,7 @@ export function ValuationFormModal({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="label-caps text-slate-500 mb-1.5 block">Property Name</label>
+                <label className="label-caps text-slate-400 mb-1.5 block">Property Name</label>
                 <input
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                   placeholder="e.g. Riverside Grove Office Park"
@@ -232,7 +232,7 @@ export function ValuationFormModal({
                 />
               </div>
               <div>
-                <label className="label-caps text-slate-500 mb-1.5 block">Location</label>
+                <label className="label-caps text-slate-400 mb-1.5 block">Location</label>
                 <input
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                   placeholder="e.g. Riverside Drive, Nairobi"
@@ -249,7 +249,7 @@ export function ValuationFormModal({
           <h3 className="text-title-primary border-b border-slate-200 pb-2">Instruction Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Valuation Type</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Valuation Type</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 value={form.type}
@@ -261,7 +261,7 @@ export function ValuationFormModal({
               </select>
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Client</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Client</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 value={form.clientContactId}
@@ -274,7 +274,7 @@ export function ValuationFormModal({
               </select>
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Assigned Valuer</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Assigned Valuer</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 value={form.valuerId}
@@ -287,7 +287,7 @@ export function ValuationFormModal({
               </select>
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Professional Fee (KES)</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Professional Fee (KES)</label>
               <input
                 type="number"
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -297,7 +297,7 @@ export function ValuationFormModal({
               />
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Site Visit</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Site Visit</label>
               <input
                 type="datetime-local"
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -306,7 +306,7 @@ export function ValuationFormModal({
               />
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Purpose</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Purpose</label>
               <input
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 placeholder="e.g. Mortgage security for facility renewal"
@@ -316,7 +316,7 @@ export function ValuationFormModal({
             </div>
           </div>
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Notes</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Notes</label>
             <textarea
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary resize-none h-20 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
               placeholder="Access arrangements, comparables, internal context…"

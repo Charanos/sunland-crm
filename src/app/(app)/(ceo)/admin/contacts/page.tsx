@@ -12,7 +12,7 @@ export default function ContactsPage() {
         <h1 className="title-serif mt-2 text-slate-900">
           Directory & Relationships
         </h1>
-        <p className="text-slate-500 max-w-2xl">
+        <p className="text-slate-400 max-w-2xl">
           Manage landlords, tenants, contractors, and partners across the organization.
         </p>
       </div>

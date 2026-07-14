@@ -15,11 +15,11 @@ function generateVerificationToken(): string {
 }
 
 /**
- * Routine transaction logging (rent collection, cheque deposit, etc.) —
+ * Routine transaction logging (rent collection, cheque deposit, etc.) -
  * distinct from the approvals-gated disbursement path in finance/approvals.ts,
  * which is for consequential/threshold-crossing money movements. Recording a
  * rent receipt additionally generates a QR-verifiable report_exports snapshot
- * (ERP spec §5.9) — this was a real, confirmed gap: the verification schema
+ * (ERP spec §5.9) - this was a real, confirmed gap: the verification schema
  * and read endpoint existed with nothing anywhere writing to report_exports.
  */
 export async function recordTransaction(ctx: CallerContext, rawInput: unknown) {

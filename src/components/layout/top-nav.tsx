@@ -75,8 +75,8 @@ interface QuickAction {
 const INITIAL_NOTIFICATIONS: Notification[] = [
   { id: "1", tone: "info", title: "New lead assigned", body: "James Kariuki interested in Unit 4B, Westlands", time: "2 min ago", read: false },
   { id: "2", tone: "warning", title: "Lease expiring soon", body: "Acacia Court Unit 12 expires in 14 days", time: "1 hr ago", read: false },
-  { id: "3", tone: "success", title: "Payment received", body: "KES 95,000 from Esther Howard — Ref #TXN-4821", time: "3 hr ago", read: true },
-  { id: "4", tone: "info", title: "Maintenance request", body: "Unit 7A — Plumbing issue reported by tenant", time: "Yesterday", read: true },
+  { id: "3", tone: "success", title: "Payment received", body: "KES 95,000 from Esther Howard - Ref #TXN-4821", time: "3 hr ago", read: true },
+  { id: "4", tone: "info", title: "Maintenance request", body: "Unit 7A - Plumbing issue reported by tenant", time: "Yesterday", read: true },
 ];
 
 const QUICK_ACTIONS: QuickAction[] = [
@@ -99,7 +99,7 @@ const EVENT_LABEL_COLORS: Record<CalendarEvent["type"], string> = {
   meeting: "text-[var(--tertiary)]",
   viewing: "text-[var(--warning)]",
   deadline: "text-[var(--error)]",
-  other: "text-slate-500",
+  other: "text-slate-400",
 };
 
 // ─── Hook: panel (click-outside + escape) ─────────────────────────────────────
@@ -202,7 +202,7 @@ function NavActionBtn({
         "focus-ring relative flex size-9 items-center justify-center rounded-xl transition-colors",
         active
           ? "bg-slate-100 text-slate-800"
-          : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-700",
+          : "text-slate-400 hover:bg-slate-100/80 hover:text-slate-700",
       )}
     >
       {children}
@@ -238,7 +238,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => setItems((p) => p.map((n) => ({ ...n, read: true })))}
-              className="text-caption rounded-lg px-2 py-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="text-caption rounded-lg px-2 py-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
             >
               Mark all read
             </button>
@@ -277,7 +277,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
                 <p className={cn("text-caption leading-snug", n.read ? "text-slate-600 font-medium" : "text-slate-900 font-medium")}>
                   {n.title}
                 </p>
-                <p className="text-tiny mt-0.5 text-slate-500 line-clamp-2 leading-relaxed">{n.body}</p>
+                <p className="text-tiny mt-0.5 text-slate-400 line-clamp-2 leading-relaxed">{n.body}</p>
                 <p className="text-[10px] mt-1.5 flex items-center gap-1 text-slate-400 font-mono">
                   <IconClockHour4 size={10} aria-hidden />
                   {n.time}
@@ -310,7 +310,7 @@ function QuickCreatePanel({ onClose }: { onClose: () => void }) {
     <PanelShell width="w-60" align="right">
       <div className="border-b border-slate-100 px-4 py-3">
         <p className="text-label text-slate-800">Quick Create</p>
-        <p className="text-caption text-slate-500">Start something new</p>
+        <p className="text-caption text-slate-400">Start something new</p>
       </div>
       <div className="p-1.5">
         {QUICK_ACTIONS.map((action) => (
@@ -372,7 +372,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
         <div className="flex items-center gap-2">
-          <IconCalendar size={15} className="text-slate-500" aria-hidden />
+          <IconCalendar size={15} className="text-slate-400" aria-hidden />
           <span className="text-label text-slate-800">Schedule</span>
         </div>
         <button
@@ -386,7 +386,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="flex">
-        {/* Left — mini calendar */}
+        {/* Left - mini calendar */}
         <div className="w-[56%] border-r border-slate-100 px-5 py-4">
           {/* Month nav */}
           <div className="mb-4 flex items-center justify-between">
@@ -394,7 +394,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
               type="button"
               aria-label="Previous month"
               onClick={() => setMonth(subMonths(month, 1))}
-              className="flex size-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="flex size-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
             >
               <IconChevronLeft size={14} aria-hidden />
             </button>
@@ -405,7 +405,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
               type="button"
               aria-label="Next month"
               onClick={() => setMonth(addMonths(month, 1))}
-              className="flex size-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="flex size-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
             >
               <IconChevronRight size={14} aria-hidden />
             </button>
@@ -470,14 +470,14 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Right — events for selected day */}
+        {/* Right - events for selected day */}
         <div className="flex w-[44%] flex-col px-4 py-4">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-label text-slate-800">
                 {format(selected, "EEE, MMM d")}
               </p>
-              <p className="text-caption text-slate-500">
+              <p className="text-caption text-slate-400">
                 {dayEvents.length === 0 ? "No events" : `${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""}`}
               </p>
             </div>
@@ -510,7 +510,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   <div className="min-w-0 flex-1">
                     <p className="text-label text-slate-800">{ev.title}</p>
                     {ev.time && (
-                      <p className="text-tiny mt-0.5 flex items-center gap-1 text-slate-500">
+                      <p className="text-tiny mt-0.5 flex items-center gap-1 text-slate-400">
                         <IconClockHour4 size={9} aria-hidden />
                         {ev.time}
                       </p>
@@ -646,7 +646,7 @@ function SearchBar() {
         aria-hidden
         size={13}
         stroke={1.8}
-        className={cn("shrink-0 transition-colors", focused ? "text-slate-500" : "text-slate-400")}
+        className={cn("shrink-0 transition-colors", focused ? "text-slate-400" : "text-slate-400")}
       />
       <input
         ref={inputRef}
@@ -819,7 +819,7 @@ export function TopNav() {
             href={`${portalPrefix}/settings`}
             aria-label="Settings"
             onClick={closeAll}
-            className="focus-ring relative flex size-9 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100/80 hover:text-slate-700"
+            className="focus-ring relative flex size-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100/80 hover:text-slate-700"
           >
             <IconSettings size={18} stroke={1.5} aria-hidden />
           </Link>
@@ -842,7 +842,7 @@ export function TopNav() {
           {/* Divider */}
           <div className="mx-2 h-5 w-px bg-slate-200/80" aria-hidden />
 
-          {/* User dropdown menu — role-aware */}
+          {/* User dropdown menu - role-aware */}
           <DropdownMenu
             align="right"
             label="User menu"
@@ -856,7 +856,7 @@ export function TopNav() {
                 />
                 <div className="hidden flex-col leading-tight xl:flex text-left">
                   <span className="text-label text-slate-800">{currentUser.name}</span>
-                  <span className="text-tiny text-slate-500">{formatRole(currentUser.role)}</span>
+                  <span className="text-tiny text-slate-400">{formatRole(currentUser.role)}</span>
                 </div>
                 <IconChevronDown size={14} className="text-slate-400 ml-1 hidden xl:block" />
               </div>
@@ -867,15 +867,15 @@ export function TopNav() {
               <p className="text-sm  text-slate-450 truncate mt-0.5">{formatRole(currentUser.role)}</p>
             </div>
             <DropdownItem onClick={() => window.location.href = `${portalPrefix}/profile`}>
-              <IconUser size={15} stroke={1.8} className="text-slate-500" />
+              <IconUser size={15} stroke={1.8} className="text-slate-400" />
               <span>My Profile</span>
             </DropdownItem>
             <DropdownItem onClick={() => window.location.href = `${portalPrefix}/settings`}>
-              <IconSettings size={15} stroke={1.8} className="text-slate-500" />
+              <IconSettings size={15} stroke={1.8} className="text-slate-400" />
               <span>System Settings</span>
             </DropdownItem>
             <DropdownItem onClick={() => window.location.href = `${portalPrefix}/security`}>
-              <IconShieldLock size={15} stroke={1.8} className="text-slate-500" />
+              <IconShieldLock size={15} stroke={1.8} className="text-slate-400" />
               <span>Security & Keys</span>
             </DropdownItem>
             <div className="my-1 border-t border-slate-100" />
@@ -917,12 +917,12 @@ export function TopNav() {
           />
         </label>
 
-        {/* Mobile notifications — navigates to notifications page */}
+        {/* Mobile notifications - navigates to notifications page */}
         <button
           type="button"
           aria-label="Notifications"
           onClick={() => { closeAll(); router.push(`${portalPrefix}/notifications`); }}
-          className="relative flex size-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100"
+          className="relative flex size-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100"
         >
           <IconBell size={18} stroke={1.5} aria-hidden />
           {unreadCount > 0 && (
@@ -930,7 +930,7 @@ export function TopNav() {
           )}
         </button>
 
-        {/* Mobile profile avatar — navigates to profile page */}
+        {/* Mobile profile avatar - navigates to profile page */}
         <Link
           href={`${portalPrefix}/profile`}
           aria-label="My profile"

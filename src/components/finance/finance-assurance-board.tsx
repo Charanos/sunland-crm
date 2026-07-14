@@ -129,7 +129,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
   const [compiledToken, setCompiledToken] = useState("");
 
   // Search & Pagination: Library
-  const [libraryQuery, ] = useState("");
+  const [libraryQuery,] = useState("");
   const [page, setPage] = useState(1);
 
   // Verification tab state
@@ -318,7 +318,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
                             "flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all duration-300",
                             isActive
                               ? "border-slate-800 bg-slate-50 text-slate-900 shadow-sm"
-                              : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:text-slate-700"
+                              : "border-slate-100 bg-white text-slate-400 hover:border-slate-200 hover:text-slate-700"
                           )}
                         >
                           <span
@@ -392,7 +392,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
               <IconTerminal2 size={120} className="text-emerald-400" />
             </div>
 
-            <div className="flex items-center gap-2 border-b border-slate-900 pb-3 text-slate-500 font-mono">
+            <div className="flex items-center gap-2 border-b border-slate-900 pb-3 text-slate-400 font-mono">
               <span className="size-2.5 rounded-full bg-red-500/80" />
               <span className="size-2.5 rounded-full bg-yellow-500/80" />
               <span className="size-2.5 rounded-full bg-green-500/80" />
@@ -422,7 +422,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
                     <IconShieldCheck size={14} />
                     Verified Genuine Artifact
                   </p>
-                  <p className="text-slate-500 mt-1.5 label-caps">TOKEN: {compiledToken}</p>
+                  <p className="text-slate-400 mt-1.5 label-caps">TOKEN: {compiledToken}</p>
                 </div>
                 <Badge tone="success" className="h-5 px-2">SIGNED</Badge>
               </div>
@@ -447,7 +447,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
 
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
-                    <div className="size-10 rounded-xl bg-slate-50 group-hover:bg-slate-100 border border-slate-100 flex items-center justify-center text-slate-500 transition-colors">
+                    <div className="size-10 rounded-xl bg-slate-50 group-hover:bg-slate-100 border border-slate-100 flex items-center justify-center text-slate-400 transition-colors">
                       <IconFolder size={20} />
                     </div>
                     <Badge tone="success" className="tracking-wide uppercase px-2 font-mono h-5 text-sm">Verified</Badge>
@@ -711,7 +711,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
         {selectedReport && (
           <div className="space-y-6 text-slate-700 text-sm">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4 font-sans">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/50">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100/50">
                 <IconFolder size={20} />
               </div>
               <div>
@@ -769,7 +769,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
                 <span className="text-slate-400 label-caps">Audit logs</span>
                 <div className="mt-2 space-y-2">
                   {selectedReport.activityLog.map((log, idx) => (
-                    <div key={idx} className="flex gap-2 text-slate-500 leading-normal font-sans">
+                    <div key={idx} className="flex gap-2 text-slate-400 leading-normal font-sans">
                       <span className="size-1.5 rounded-full bg-slate-350 shrink-0 mt-1.5" />
                       <p className="text-sm">{log}</p>
                     </div>

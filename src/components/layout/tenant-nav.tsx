@@ -123,7 +123,7 @@ export function TenantNav() {
                     "flex h-9 items-center gap-3 rounded-xl px-3 text-base transition-colors",
                     isActive
                       ? "bg-slate-100 text-slate-900"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800",
+                      : "text-slate-400 hover:bg-slate-50 hover:text-slate-800",
                   )}
                 >
                   <ItemIcon size={15} stroke={1.5} className="shrink-0 opacity-60" aria-hidden />
@@ -148,7 +148,7 @@ export function TenantNav() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-base text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-base text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
           >
             <IconLogout size={14} aria-hidden />
             Sign out
@@ -167,10 +167,10 @@ export function TenantNav() {
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Link href="/tenant/notifications" className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
+          <Link href="/tenant/notifications" className="flex size-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
             <IconBell size={18} />
           </Link>
-          <Link href="/tenant/profile" className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
+          <Link href="/tenant/profile" className="flex size-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
             <IconUserCircle size={20} />
           </Link>
         </div>

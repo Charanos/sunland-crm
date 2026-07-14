@@ -87,7 +87,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
   const [busy, setBusy] = useState(false);
   // Org-wide triage (scope=all) requires support.ticket.manage (CEO/GM). Any
   // other authenticated staff member can still reach this page to file and
-  // track their own tickets ("admin is the main support endpoint" — the
+  // track their own tickets ("admin is the main support endpoint" - the
   // backend scopes them to scope=mine automatically), so a 403 on the
   // org-wide query falls back to the caller's own queue rather than erroring.
   const [scope, setScope] = useState<"all" | "mine">("all");
@@ -250,14 +250,14 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
           <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
             <Link
               href="/admin/approvals"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Approvals</span>
               <span className="bg-slate-200 text-slate-650 px-1.5 py-0.2 rounded-full text-meta-muted-strong">Queue</span>
             </Link>
             <Link
               href="/admin/hr/complaints"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <IconAlertTriangle size={14} />
               <span>Complaints</span>
@@ -271,14 +271,14 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
             </Link>
             <Link
               href="/admin/reports"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <IconReportAnalytics size={14} />
               <span>Reports Center</span>
             </Link>
             <Link
               href="/admin/system"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <IconDatabase size={14} />
               <span>System & Roles</span>
@@ -300,7 +300,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
                   "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-1.5 text-body-primary transition-all duration-200",
                   isActive
                     ? "bg-[#151936] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-800",
+                    : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-800",
                 )}
               >
                 {tab.label}
@@ -345,7 +345,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
                       <h4 className="text-body-primary text-slate-900 truncate">{t.subject}</h4>
                       <span className="text-meta-muted whitespace-nowrap">{new Date(t.createdAt).toLocaleDateString("en-KE")}</span>
                     </div>
-                    <p className="text-body-regular text-slate-500 mt-0.5 line-clamp-1">{t.description}</p>
+                    <p className="text-body-regular text-slate-400 mt-0.5 line-clamp-1">{t.description}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       <Badge tone={catMeta.tone}>{catMeta.label}</Badge>
                       <Badge tone={prioMeta.tone}>{prioMeta.label} Priority</Badge>
@@ -366,7 +366,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="File Support Ticket" description="File a technical issue or request help with the ERP portal" size="md">
         <div className="space-y-4">
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Subject</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Subject</label>
             <input
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
               value={form.subject}
@@ -376,7 +376,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Category</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Category</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                 value={form.category}
@@ -389,7 +389,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
               </select>
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Priority</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Priority</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                 value={form.priority}
@@ -403,7 +403,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
             </div>
           </div>
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Description</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Description</label>
             <textarea
               rows={4}
               className="w-full rounded-lg border border-slate-200 bg-white p-3 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors resize-none"
@@ -438,7 +438,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="label-caps text-slate-500 mb-1.5 block">Status</label>
+                <label className="label-caps text-slate-400 mb-1.5 block">Status</label>
                 <select
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                   value={editStatus}
@@ -452,7 +452,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
               </div>
 
               <div>
-                <label className="label-caps text-slate-500 mb-1.5 block">Priority</label>
+                <label className="label-caps text-slate-400 mb-1.5 block">Priority</label>
                 <select
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                   value={editPriority}
@@ -466,7 +466,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
               </div>
 
               <div className="md:col-span-2">
-                <label className="label-caps text-slate-500 mb-1.5 block">Assign To Staff</label>
+                <label className="label-caps text-slate-400 mb-1.5 block">Assign To Staff</label>
                 <select
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-2 text-base text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors"
                   value={editAssignedToId}
@@ -483,7 +483,7 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
             </div>
 
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">
+              <label className="label-caps text-slate-400 mb-1.5 block">
                 Resolution Notes {editStatus === "resolved" && <span className="text-rose-600">*</span>}
               </label>
               <textarea

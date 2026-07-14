@@ -192,7 +192,7 @@ export default function LoginPage() {
             <h1 className="title-serif font-normal text-[#151936] mt-4">
               Welcome back to Sunland
             </h1>
-            <p className="body-sm text-slate-500">
+            <p className="body-sm text-slate-400">
               Sign in to your internal operations workspace.
             </p>
           </div>
@@ -253,7 +253,7 @@ export default function LoginPage() {
               </span>
             </label>
 
-            <div className="flex items-center justify-between text-slate-500 text-sm">
+            <div className="flex items-center justify-between text-slate-400 text-sm">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   className="size-4 rounded border-slate-300 accent-[#f3df27] focus:ring-[#f3df27] disabled:opacity-50"
@@ -293,7 +293,7 @@ export default function LoginPage() {
                 Authorized Workspace Portals
               </h2>
             </div>
-            <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">
+            <p className="mt-1.5 text-sm text-slate-400 leading-relaxed">
               Select an approved operational profile below to verify direct portal routing and role-based permissions.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">

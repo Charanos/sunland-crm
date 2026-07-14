@@ -48,6 +48,8 @@ import {
   conversations,
   conversationParticipants,
   messages,
+  valuations,
+  propertyMandates,
 } from "@/db/schema";
 import { hashPassword } from "@/lib/auth/password";
 import { grantUserRole, seedPermissionCatalog } from "@/lib/authz/seed";
@@ -81,6 +83,8 @@ async function runSeed() {
     await db.delete(leases);
     await db.delete(maintenanceRequests);
     await db.delete(leads);
+    await db.delete(valuations);
+    await db.delete(propertyMandates);
     await db.delete(properties);
     await db.delete(contacts);
     await db.delete(users);
@@ -244,7 +248,7 @@ async function runSeed() {
       { userId: lineManagerUser.id, roleSlug: "property_manager", entityId: resEntity.id },
       { userId: frontOfficeUser.id, roleSlug: "front_office_head", entityId: null },
       // These five were seeded for department-stat/headcount variety but
-      // never granted a role — left them able to log in but unable to do
+      // never granted a role - left them able to log in but unable to do
       // anything (zero permissions), since RBAC checks user_roles, not the
       // users.role column alone.
       { userId: propertyManager1User.id, roleSlug: "property_manager", entityId: commEntity.id },
@@ -264,57 +268,57 @@ async function runSeed() {
     // 4. Create Contacts (Landlords and Tenants)
     console.log("Step 4: Creating client and partner records...");
     const contactsToInsert: (typeof contacts.$inferInsert)[] = [
-        {
-          entityId: groupEntity.id,
-          type: "landlord",
-          displayName: "Kariuki Holdings",
-          companyName: "Kariuki Real Estate Investments Ltd",
-          email: "investments@kariuki.co.ke",
-          phone: "+254722000111",
-          source: "Direct Referral",
-          assignedToId: ceoUser.id,
-        },
-        {
-          entityId: groupEntity.id,
-          type: "landlord",
-          displayName: "Margaret Wambui",
-          email: "margaret@wambui.me",
-          phone: "+254733111222",
-          source: "Marketing Campaign",
-          assignedToId: pmUser.id,
-        },
-        {
-          entityId: groupEntity.id,
-          type: "tenant",
-          displayName: "Nexus Tech Solutions",
-          companyName: "Nexus Technology Solutions Ltd",
-          email: "office@nexustech.co.ke",
-          phone: "+254711222333",
-          source: "Listing Portal",
-          assignedToId: financeOfficerUser.id,
-        },
-        {
-          entityId: groupEntity.id,
-          type: "tenant",
-          displayName: "Alice Odhiambo",
-          email: "alice@odhiambo.co.ke",
-          phone: "+254700333444",
-          source: "Walk-in Client",
-          assignedToId: pmUser.id,
-        },
+      {
+        entityId: groupEntity.id,
+        type: "landlord",
+        displayName: "Kariuki Holdings",
+        companyName: "Kariuki Real Estate Investments Ltd",
+        email: "investments@kariuki.co.ke",
+        phone: "+254722000111",
+        source: "Direct Referral",
+        assignedToId: ceoUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "landlord",
+        displayName: "Margaret Wambui",
+        email: "margaret@wambui.me",
+        phone: "+254733111222",
+        source: "Marketing Campaign",
+        assignedToId: pmUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "tenant",
+        displayName: "Nexus Tech Solutions",
+        companyName: "Nexus Technology Solutions Ltd",
+        email: "office@nexustech.co.ke",
+        phone: "+254711222333",
+        source: "Listing Portal",
+        assignedToId: financeOfficerUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "tenant",
+        displayName: "Alice Odhiambo",
+        email: "alice@odhiambo.co.ke",
+        phone: "+254700333444",
+        source: "Walk-in Client",
+        assignedToId: pmUser.id,
+      },
     ];
 
     for (let i = 5; i <= 20; i++) {
-        contactsToInsert.push({
-          entityId: groupEntity.id,
-          type: i % 2 === 0 ? "landlord" : "tenant",
-          displayName: i % 2 === 0 ? `Landlord Corp ${i}` : `Tenant Client ${i}`,
-          companyName: i % 3 === 0 ? `Company ${i} Ltd` : null as unknown as string,
-          email: `contact${i}@example.co.ke`,
-          phone: `+2547000000${i.toString().padStart(2, '0')}`,
-          source: i % 4 === 0 ? "Listing Portal" : "Direct Referral",
-          assignedToId: i % 2 === 0 ? pmUser.id : financeOfficerUser.id,
-        });
+      contactsToInsert.push({
+        entityId: groupEntity.id,
+        type: i % 2 === 0 ? "landlord" : "tenant",
+        displayName: i % 2 === 0 ? `Landlord Corp ${i}` : `Tenant Client ${i}`,
+        companyName: i % 3 === 0 ? `Company ${i} Ltd` : null as unknown as string,
+        email: `contact${i}@example.co.ke`,
+        phone: `+2547000000${i.toString().padStart(2, '0')}`,
+        source: i % 4 === 0 ? "Listing Portal" : "Direct Referral",
+        assignedToId: i % 2 === 0 ? pmUser.id : financeOfficerUser.id,
+      });
     }
 
     const [landlordA, landlordB, tenantA, tenantB] = await db
@@ -327,38 +331,46 @@ async function runSeed() {
     // 5. Create Properties
     console.log("Step 5: Logging managed properties...");
     const propsToInsert: (typeof properties.$inferInsert)[] = [
-        {
-          entityId: groupEntity.id,
-          propertyCode: "PROP-COMM-001",
-          name: "Nexus Office Plaza",
-          propertyType: "Commercial",
-          listingType: "Rental",
-          status: "occupied",
-          location: "Westlands, Nairobi",
-          ownerContactId: landlordA.id,
-          monthlyRentKes: "350000.00",
-          sizeSqft: 2400,
-          media: [
-            { url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", alt: "Office exterior", isPrimary: true },
-            { url: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80", alt: "Lobby" },
-          ]
-        },
-        {
-          entityId: groupEntity.id,
-          propertyCode: "PROP-RES-001",
-          name: "Lavington Heights Unit 4B",
-          propertyType: "Apartment",
-          listingType: "Rental",
-          status: "occupied",
-          location: "Lavington, Nairobi",
-          ownerContactId: landlordB.id,
-          monthlyRentKes: "95000.00",
-          sizeSqft: 1500,
-          media: [
-            { url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80", alt: "Living room", isPrimary: true },
-            { url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80", alt: "Bedroom" },
-          ]
-        },
+      {
+        entityId: groupEntity.id,
+        propertyCode: "PROP-COMM-001",
+        name: "Nexus Office Plaza",
+        propertyType: "Commercial",
+        listingType: "Rental",
+        status: "occupied",
+        location: "Westlands, Nairobi",
+        ownerContactId: landlordA.id,
+        monthlyRentKes: "350000.00",
+        sizeSqft: 2400,
+        yearBuilt: 2018,
+        parkingSpaces: 5,
+        amenities: ["Ample Parking", "Backup Generator", "High-Speed Elevators", "24/7 Security", "Internet / Fiber Ready", "CCTV Surveillance", "Commercial Zoning"],
+        description: "A premium commercial office suite situated in the heart of Westlands. Features full backup power, high-speed fiber connectivity, and dedicated basement parking.",
+        media: [
+          { url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", alt: "Office exterior", isPrimary: true },
+          { url: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80", alt: "Lobby" },
+        ]
+      },
+      {
+        entityId: groupEntity.id,
+        propertyCode: "PROP-RES-001",
+        name: "Lavington Heights Unit 4B",
+        propertyType: "Apartment",
+        listingType: "Rental",
+        status: "occupied",
+        location: "Lavington, Nairobi",
+        ownerContactId: landlordB.id,
+        monthlyRentKes: "95000.00",
+        sizeSqft: 1500,
+        yearBuilt: 2021,
+        parkingSpaces: 2,
+        amenities: ["Swimming Pool", "Gym / Fitness Center", "Balcony", "Fitted Kitchen", "Children's Play Area", "Borehole Water Supply"],
+        description: "Luxurious, sunlit residential apartment overlooking the Lavington valley. Modern fitted kitchen and exclusive access to the resident clubhouse and pool.",
+        media: [
+          { url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80", alt: "Living room", isPrimary: true },
+          { url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80", alt: "Bedroom" },
+        ]
+      },
     ];
 
     const propertyTypes = ["Apartment", "Commercial", "House", "Villa", "Land"];
@@ -395,40 +407,69 @@ async function runSeed() {
       "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80"
     ];
 
-    for (let i = 2; i <= 20; i++) {
-        const type = propertyTypes[i % propertyTypes.length];
-        const primaryImg = typeImages[type][i % typeImages[type].length];
-        const secImg = secondaryImages[i % secondaryImages.length];
+    for (let i = 2; i <= 60; i++) {
+      const type = propertyTypes[i % propertyTypes.length];
+      const primaryImg = typeImages[type][i % typeImages[type].length];
+      const secImg = secondaryImages[i % secondaryImages.length];
 
-        propsToInsert.push({
-          entityId: groupEntity.id,
-          propertyCode: `PROP-AUTO-${i.toString().padStart(3, '0')}`,
-          name: `Premium ${type} ${i}`,
-          propertyType: type,
-          listingType: i % 3 === 0 ? "Sale" : "Rental",
-          status: i % 4 === 0 ? "occupied" : "available",
-          location: i % 2 === 0 ? "Kilimani, Nairobi" : "Nairobi CBD",
-          ownerContactId: i % 2 === 0 ? landlordB.id : landlordA.id,
-          monthlyRentKes: (Math.floor(Math.random() * 20) * 10000 + 50000).toString() + ".00",
-          sizeSqft: Math.floor(Math.random() * 2000) + 1000,
-          media: [
-            { url: primaryImg, alt: `${type} exterior view`, isPrimary: true },
-            { url: secImg, alt: "Interior view" }
-          ]
-        });
+      const isLand = type === "Land";
+      const isCommercial = type === "Commercial";
+      const hasBuilding = !isLand;
+
+      const statuses = ["available", "occupied", "under_offer", "maintenance", "off_market"] as const;
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+
+      // Give them a random subset of amenities
+      const allAmenities = [
+        "Swimming Pool", "Gym / Fitness Center", "Backup Generator", "Borehole Water Supply",
+        "High-Speed Elevators", "24/7 Security", "CCTV Surveillance", "Ample Parking",
+        "Children's Play Area", "Clubhouse", "Fitted Kitchen", "Balcony",
+        "Electric Fence", "Servant Quarters (DSQ)", "Solar Water Heating", "Internet / Fiber Ready",
+        "Garden / Landscaping", "Paved Driveway", "Commercial Zoning", "Office Partitioning", "Boundary Wall"
+      ];
+      const propAmenities = [];
+      const numAmenities = Math.floor(Math.random() * 5) + (isLand ? 1 : 4);
+      const shuffled = [...allAmenities].sort(() => 0.5 - Math.random());
+      for (let j = 0; j < numAmenities; j++) {
+        propAmenities.push(shuffled[j]);
+      }
+
+      propsToInsert.push({
+        entityId: groupEntity.id,
+        propertyCode: `PROP-AUTO-${i.toString().padStart(3, '0')}`,
+        name: `Premium ${type} ${i}`,
+        propertyType: type,
+        listingType: i % 3 === 0 ? "sale" : "let",
+        status: randomStatus,
+        location: i % 2 === 0 ? "Kilimani, Nairobi" : "Nairobi CBD",
+        ownerContactId: i % 2 === 0 ? landlordB.id : landlordA.id,
+        monthlyRentKes: (Math.floor(Math.random() * 20) * 10000 + 50000).toString() + ".00",
+        bedrooms: hasBuilding && !isCommercial ? Math.floor(Math.random() * 5) + 1 : null,
+        bathrooms: hasBuilding && !isCommercial ? Math.floor(Math.random() * 4) + 1 : null,
+        sizeSqft: hasBuilding ? Math.floor(Math.random() * 2000) + 1000 : null,
+        landAreaSqft: isLand || type === "Villa" || type === "House" ? Math.floor(Math.random() * 10000) + 2000 : null,
+        yearBuilt: hasBuilding ? 2010 + Math.floor(Math.random() * 13) : null,
+        parkingSpaces: hasBuilding ? Math.floor(Math.random() * 10) : null,
+        amenities: propAmenities,
+        description: `This exceptional ${type.toLowerCase()} offers unparalleled value in a highly sought-after location. Ideal for discerning clients looking for premium real estate.`,
+        media: [
+          { url: primaryImg, alt: `${type} exterior view`, isPrimary: true },
+          { url: secImg, alt: "Interior view" }
+        ]
+      });
     }
 
     const insertedProps = await db
       .insert(properties)
       .values(propsToInsert)
       .returning();
-      
+
     const propComm = insertedProps[0];
     const propRes = insertedProps[1];
 
     console.log("Created 2 properties.");
 
-    // 5b. Create pipeline leads — spans this-week/this-month/last-month so the
+    // 5b. Create pipeline leads - spans this-week/this-month/last-month so the
     // executive overview's CRM metrics (closed deals, active pipeline, new
     // leads, conversion) have real, non-zero data to compute from instead of
     // showing an all-zero dashboard on a fresh seed.
@@ -437,7 +478,7 @@ async function runSeed() {
     await db.insert(leads).values([
       {
         entityId: groupEntity.id,
-        title: "3BR Apartment Inquiry — Kilimani",
+        title: "3BR Apartment Inquiry - Kilimani",
         stage: "inquiry",
         assignedToId: lineManagerUser.id,
         expectedValueKes: "14000000.00",
@@ -446,7 +487,7 @@ async function runSeed() {
       },
       {
         entityId: groupEntity.id,
-        title: "Office Space Lease — Westlands",
+        title: "Office Space Lease - Westlands",
         stage: "qualification",
         propertyId: propComm.id,
         assignedToId: lineManagerUser.id,
@@ -456,7 +497,7 @@ async function runSeed() {
       },
       {
         entityId: groupEntity.id,
-        title: "Villa Purchase — Karen",
+        title: "Villa Purchase - Karen",
         stage: "viewing",
         assignedToId: lineManagerUser.id,
         expectedValueKes: "62000000.00",
@@ -465,7 +506,7 @@ async function runSeed() {
       },
       {
         entityId: groupEntity.id,
-        title: "Retail Unit — CBD",
+        title: "Retail Unit - CBD",
         stage: "offer",
         assignedToId: lineManagerUser.id,
         expectedValueKes: "9500000.00",
@@ -474,7 +515,7 @@ async function runSeed() {
       },
       {
         entityId: groupEntity.id,
-        title: "Land Sale — Ruiru",
+        title: "Land Sale - Ruiru",
         stage: "negotiation",
         assignedToId: lineManagerUser.id,
         expectedValueKes: "18000000.00",
@@ -649,7 +690,7 @@ async function runSeed() {
       },
     ]);
 
-    // 10. Cross-Department Projects — real rows behind the Overview's
+    // 10. Cross-Department Projects - real rows behind the Overview's
     // "Cross-Department Operations" panel and the /admin/projects page,
     // replacing what used to be hardcoded example JSX.
     console.log("Step 10: Populating cross-department projects...");
@@ -715,7 +756,7 @@ async function runSeed() {
 
     console.log("Created 5 cross-department projects.");
 
-    // 11. Calendar Events — real cross-department schedules, some linked to
+    // 11. Calendar Events - real cross-department schedules, some linked to
     // the projects above, spanning every event type, plus one already-past
     // event left at outcome="pending" so the disposition flow has something
     // real to surface on first load.
@@ -737,7 +778,7 @@ async function runSeed() {
       },
       {
         entityId: groupEntity.id,
-        title: "Client Viewing — Muthaiga Estate",
+        title: "Client Viewing - Muthaiga Estate",
         description: "Walkthrough with the incoming buyer's counsel.",
         type: "external",
         startsAt: new Date(now.getTime() + 2 * 86_400_000),
@@ -749,7 +790,7 @@ async function runSeed() {
       },
       {
         entityId: groupEntity.id,
-        title: "Escrow Signing — Muthaiga Estate",
+        title: "Escrow Signing - Muthaiga Estate",
         description: "Deed transfer signature and tax documentation handoff.",
         type: "legal",
         startsAt: new Date(now.getTime() + 5 * 86_400_000),
@@ -761,7 +802,7 @@ async function runSeed() {
       },
       {
         entityId: groupEntity.id,
-        title: "Site Inspection — Westlands Plaza",
+        title: "Site Inspection - Westlands Plaza",
         description: "Routine safety audit walkthrough.",
         type: "maintenance",
         startsAt: new Date(now.getTime() + 3 * 86_400_000),
@@ -773,12 +814,12 @@ async function runSeed() {
       },
       {
         entityId: groupEntity.id,
-        title: "Recruitment Panel — Commercial Sector",
+        title: "Recruitment Panel - Commercial Sector",
         description: "Second-round interviews for the Q3 broker drive.",
         type: "internal",
         startsAt: new Date(now.getTime() + 4 * 86_400_000),
         endsAt: new Date(now.getTime() + 4 * 86_400_000 + 7_200_000),
-        location: "HQ — Interview Room 2",
+        location: "HQ - Interview Room 2",
         organizerId: gmUser.id,
         attendees: [{ name: salesAgent2User.name, userId: salesAgent2User.id }],
         projectId: recruitmentProject.id,
@@ -799,7 +840,7 @@ async function runSeed() {
       {
         entityId: groupEntity.id,
         title: "Onboarding Playbook Kickoff",
-        description: "Initial scoping session — since deferred pending Q3 headcount plan.",
+        description: "Initial scoping session - since deferred pending Q3 headcount plan.",
         type: "internal",
         startsAt: eventDaysAgo(2),
         endsAt: new Date(eventDaysAgo(2).getTime() + 3_600_000),
@@ -807,7 +848,7 @@ async function runSeed() {
         organizerId: hrHeadUser.id,
         attendees: [],
         projectId: onboardingProject.id,
-        // Deliberately left at the default "pending" outcome — this is the
+        // Deliberately left at the default "pending" outcome - this is the
         // seeded example of an event whose day has passed without a
         // resolution, so needsDisposition renders true on first load.
       },
@@ -825,7 +866,7 @@ async function runSeed() {
 }
 
 // drizzle-orm/neon-serverless's Pool keeps a WebSocket connection open (unlike
-// the old neon-http transport, which was stateless per-request) — the process
+// the old neon-http transport, which was stateless per-request) - the process
 // won't exit on its own once runSeed() resolves, so this script must do it.
 runSeed()
   .then(() => process.exit(0))

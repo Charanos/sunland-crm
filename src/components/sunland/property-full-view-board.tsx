@@ -52,10 +52,21 @@ import type { ActivityLogEntry, PropertyDetail, PropertyDocumentSummary } from "
 type TabKey = "overview" | "financials" | "tenancy" | "maintenance" | "activity";
 
 // Hides scrollbars on the mobile tab strip / pipeline stepper while staying scrollable
-// by touch, trackpad, or keyboard — cross-browser via one Tailwind arbitrary variant
+// by touch, trackpad, or keyboard - cross-browser via one Tailwind arbitrary variant
 // plus the two non-standard scrollbar properties inline.
 const SCROLL_HIDDEN_CLASS = "[&::-webkit-scrollbar]:hidden";
 const scrollHiddenStyle: React.CSSProperties = { scrollbarWidth: "none", msOverflowStyle: "none" };
+
+// Dark-hero recast of STATUS_CONFIG's light pill tones - same semantic hue
+// per status (emerald/amber/rose/slate, Terrain Identity palette), just
+// legible against the majestic gradient header instead of a white card.
+const STATUS_HERO_TONE: Record<PropertyStatus, string> = {
+  available: "border-white/10 bg-white/5 text-slate-300",
+  occupied: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+  under_offer: "border-amber-500/30 bg-amber-500/10 text-amber-400",
+  maintenance: "border-rose-500/30 bg-rose-500/10 text-rose-400",
+  off_market: "border-white/10 bg-white/5 text-slate-400",
+};
 
 export function PropertyFullViewBoard({
   entityId,
@@ -288,29 +299,33 @@ export function PropertyFullViewBoard({
 
   return (
     <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
-      {/* ── Breadcrumb + title + actions ── */}
-      <div className="flex flex-col gap-4 border-b border-slate-200/60 pb-6">
-        <div className="flex items-center gap-2">
-          <Link href="/admin/properties" className="text-slate-400 hover:text-slate-600 transition-colors" aria-label="Back to Properties">
-            <IconChevronLeft size={20} stroke={2} />
-          </Link>
-          <Link href="/" className="text-desc-secondary hover:text-slate-800">
-            Dashboard
-          </Link>
-          <span className="text-slate-300">/</span>
-          <Link href="/admin/properties" className="text-desc-secondary hover:text-slate-800">
-            Properties
-          </Link>
-          <span className="text-slate-300">/</span>
-          <span className="text-meta-muted-strong truncate max-w-[40vw]">{property.name}</span>
-        </div>
+      {/* ── Breadcrumb ── */}
+      <div className="flex items-center gap-2">
+        <Link href="/admin/properties" className="text-slate-400 hover:text-slate-600 transition-colors" aria-label="Back to Properties">
+          <IconChevronLeft size={20} stroke={2} />
+        </Link>
+        <Link href="/" className="text-desc-secondary hover:text-slate-800">
+          Dashboard
+        </Link>
+        <span className="text-slate-300">/</span>
+        <Link href="/admin/properties" className="text-desc-secondary hover:text-slate-800">
+          Properties
+        </Link>
+        <span className="text-slate-300">/</span>
+        <span className="text-meta-muted-strong truncate max-w-[40vw]">{property.name}</span>
+      </div>
 
-        <div className="flex items-start justify-between flex-wrap gap-4">
-          <div className="flex flex-col gap-3 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              {canManage ? (
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 label-caps ${statusConfig.pill}`}>
-                  <span className={`size-1.5 rounded-full ${statusConfig.dot}`} aria-hidden="true" />
+      {/* ── Majestic Header ── */}
+      <div className="bg-tertiary-gradient text-white rounded-[24px] shadow-2xl relative overflow-hidden group border border-[#151936] p-8 lg:p-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute right-0 bottom-0 size-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/20 transition-colors duration-700" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+          <div className="flex flex-col gap-4 min-w-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className={cn("inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs uppercase tracking-wider", STATUS_HERO_TONE[property.status as PropertyStatus])}>
+                <span className={cn("size-2 rounded-full shadow-sm", statusConfig.dot)} aria-hidden="true" />
+                {canManage ? (
                   <select
                     value={property.status}
                     onChange={(e) => handleStatusChange(e.target.value as PropertyStatus)}
@@ -323,70 +338,83 @@ export function PropertyFullViewBoard({
                       </option>
                     ))}
                   </select>
-                </span>
-              ) : (
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 label-caps ${statusConfig.pill}`}>
-                  <span className={`size-1.5 rounded-full ${statusConfig.dot}`} aria-hidden="true" />
-                  {statusConfig.label}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 label-caps text-slate-600">
-                <TypeIcon size={12} aria-hidden="true" />
+                ) : (
+                  statusConfig.label
+                )}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-wider text-slate-300 backdrop-blur-sm">
+                <TypeIcon size={14} aria-hidden="true" />
                 {property.propertyType}
               </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 label-caps text-slate-600">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-wider text-slate-300 backdrop-blur-sm">
                 {LISTING_TYPE_LABEL[property.listingType as keyof typeof LISTING_TYPE_LABEL] || property.listingType}
               </span>
               {property.isFeatured && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 label-caps text-amber-700">
-                  <IconStarFilled size={11} aria-hidden="true" /> Featured
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1 text-xs uppercase tracking-wider text-amber-400">
+                  <IconStarFilled size={12} aria-hidden="true" /> Featured
                 </span>
               )}
             </div>
-            <h1 className="title-serif text-slate-900 truncate">{property.name}</h1>
-            <div className="flex items-center gap-1.5 text-desc-secondary min-w-0">
-              <IconMapPin size={15} className="shrink-0" aria-hidden="true" />
-              <span className="truncate">{property.location}</span>
-              <span className="text-slate-300 shrink-0">·</span>
-              <span className="mono-data shrink-0">{property.propertyCode}</span>
+
+            <h1 className="text-4xl lg:text-5xl font-serif tracking-tight text-white drop-shadow-sm truncate">{property.name}</h1>
+
+            <div className="flex items-center gap-3 text-slate-400 min-w-0">
+              <span className="flex items-center gap-1.5 font-medium min-w-0">
+                <IconMapPin size={16} className="shrink-0" aria-hidden="true" />
+                <span className="truncate">{property.location}</span>
+              </span>
+              <span className="text-slate-600 shrink-0">|</span>
+              <span className="font-mono text-slate-300 bg-white/5 px-2 py-0.5 rounded text-sm shrink-0">{property.propertyCode}</span>
             </div>
           </div>
 
           {canManage && (
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="secondary"
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <button
+                type="button"
                 onClick={handleToggleFeature}
                 aria-label={property.isFeatured ? "Unfeature property" : "Feature property"}
-                className={cn(property.isFeatured && "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100")}
+                className={cn(
+                  "inline-flex items-center gap-2 px-5 py-1.5 text-sm rounded-xl border transition-all font-medium shadow-sm backdrop-blur-sm",
+                  property.isFeatured
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
+                    : "bg-white/5 border-white/10 text-slate-200 hover:bg-white/10 hover:border-white/20"
+                )}
               >
-                {property.isFeatured ? <IconStarFilled size={16} className="sm:mr-1.5" /> : <IconStar size={16} className="sm:mr-1.5" />}
-                <span className="hidden sm:inline">{property.isFeatured ? "Featured" : "Feature"}</span>
-              </Button>
+                {property.isFeatured ? <IconStarFilled size={14} /> : <IconStar size={14} />} {property.isFeatured ? "Featured" : "Feature"}
+              </button>
               {canLogMaintenance && (
-                <Button variant="secondary" onClick={() => setReportIssueOpen(true)} aria-label="Report an issue">
-                  <IconPlus size={16} className="sm:mr-1.5" />
-                  <span className="hidden sm:inline">Report Issue</span>
-                </Button>
+                <button
+                  type="button"
+                  onClick={() => setReportIssueOpen(true)}
+                  aria-label="Report an issue"
+                  className="inline-flex items-center gap-2 px-5 py-1.5 text-sm rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all font-medium shadow-sm backdrop-blur-sm"
+                >
+                  <IconPlus size={14} /> Report Issue
+                </button>
               )}
-              <Button variant="secondary" onClick={() => setEditModalOpen(true)} aria-label="Edit property">
-                <IconEdit size={16} className="sm:mr-1.5" />
-                <span className="hidden sm:inline">Edit</span>
-              </Button>
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(true)}
+                aria-label="Edit property"
+                className="inline-flex items-center gap-2 px-5 py-1.5 text-sm rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all font-medium shadow-sm backdrop-blur-sm"
+              >
+                <IconEdit size={14} /> Edit
+              </button>
               <button
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
                 aria-label="Delete property"
-                className="inline-flex min-w-11 min-h-11 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-1.5 text-sm rounded-xl bg-white/5 border border-white/10 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-300 transition-all font-medium shadow-sm backdrop-blur-sm"
               >
-                <IconTrash size={16} />
+                <IconTrash size={14} /> Delete
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Gallery (only when there's actually media — no fake hero for empty listings) ── */}
+      {/* ── Gallery (only when there's actually media - no fake hero for empty listings) ── */}
       {mediaList.length > 0 && (
         <div className="flex flex-col gap-2">
           <div className="relative aspect-[21/9] md:aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 bg-tertiary-emerald">
@@ -418,9 +446,9 @@ export function PropertyFullViewBoard({
 
       {/* ── Adaptive metrics row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricTile icon={IconBed} label="Bedrooms" value={property.bedrooms ?? "—"} />
-        <MetricTile icon={IconBath} label="Bathrooms" value={property.bathrooms ?? "—"} />
-        <MetricTile icon={IconRuler} label="Size (Sqft)" value={property.sizeSqft ? property.sizeSqft.toLocaleString() : "—"} />
+        <MetricTile icon={IconBed} label="Bedrooms" value={property.bedrooms ?? "-"} />
+        <MetricTile icon={IconBath} label="Bathrooms" value={property.bathrooms ?? "-"} />
+        <MetricTile icon={IconRuler} label="Size (Sqft)" value={property.sizeSqft ? property.sizeSqft.toLocaleString() : "-"} />
         <MetricTile icon={adaptiveMetric.icon} label={adaptiveMetric.label} value={adaptiveMetric.value} />
       </div>
 
@@ -450,7 +478,7 @@ export function PropertyFullViewBoard({
                 }}
                 className={cn(
                   "body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap",
-                  activeTab === tab.key ? "bg-[#151936] text-white shadow-sm" : "text-slate-500 hover:text-slate-900 hover:bg-white/45"
+                  activeTab === tab.key ? "bg-[#151936] text-white shadow-sm" : "text-slate-400 hover:text-slate-900 hover:bg-white/45"
                 )}
               >
                 <tab.icon size={14} aria-hidden="true" />
@@ -492,19 +520,19 @@ export function PropertyFullViewBoard({
                   <div className="flex flex-col gap-2 min-w-0">
                     <p className="text-body-primary text-slate-900 truncate">{property.owner.name || "Unknown"}</p>
                     {property.owner.phone && (
-                      <a href={`tel:${property.owner.phone}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                      <a href={`tel:${property.owner.phone}`} className="text-body-regular text-slate-400 hover:text-[#122a20] flex items-center gap-2 transition-colors">
                         <IconPhone size={14} className="shrink-0" aria-hidden="true" />
                         <span className="truncate">{property.owner.phone}</span>
                       </a>
                     )}
                     {property.owner.email && (
-                      <a href={`mailto:${property.owner.email}`} className="text-body-regular text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                      <a href={`mailto:${property.owner.email}`} className="text-body-regular text-slate-400 hover:text-[#122a20] flex items-center gap-2 transition-colors">
                         <IconMail size={14} className="shrink-0" aria-hidden="true" />
                         <span className="truncate">{property.owner.email}</span>
                       </a>
                     )}
                     {property.owner.idNumber && (
-                      <span className="text-body-regular text-slate-500 mono-data">ID {property.owner.idNumber}</span>
+                      <span className="text-body-regular text-slate-400 mono-data">ID {property.owner.idNumber}</span>
                     )}
                   </div>
                 </div>
@@ -691,7 +719,7 @@ function getAdaptiveMetric(property: PropertyDetail): {
         value: formatCompactKES(parseFloat(property.askingPriceKes) / property.sizeSqft),
       };
     }
-    return { icon: IconReceipt2, label: "Price / Sqft", value: "—" };
+    return { icon: IconReceipt2, label: "Price / Sqft", value: "-" };
   }
   if (property.status === "occupied") {
     const activeLeaseList = property.leases || [];
@@ -702,13 +730,13 @@ function getAdaptiveMetric(property: PropertyDetail): {
       const days = Math.ceil((new Date(soonestEnd.endDate).getTime() - Date.now()) / 86_400_000);
       return { icon: IconCalendarEvent, label: "Lease Ends", value: days > 0 ? `${days} days` : "Overdue" };
     }
-    return { icon: IconCalendarEvent, label: "Lease Ends", value: "—" };
+    return { icon: IconCalendarEvent, label: "Lease Ends", value: "-" };
   }
   if (property.vacantSince) {
     const days = Math.ceil((Date.now() - new Date(property.vacantSince).getTime()) / 86_400_000);
-    return { icon: IconCalendarEvent, label: "Days Vacant", value: days >= 0 ? `${days} days` : "—" };
+    return { icon: IconCalendarEvent, label: "Days Vacant", value: days >= 0 ? `${days} days` : "-" };
   }
-  return { icon: IconCalendarEvent, label: "Days Vacant", value: "—" };
+  return { icon: IconCalendarEvent, label: "Days Vacant", value: "-" };
 }
 
 // ── Local presentational pieces ──
@@ -860,7 +888,7 @@ function FinancialsPanel({ property }: { property: PropertyDetail }) {
       {property.collections && property.collections.length > 0 ? (
         <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <div className="mb-6">
-            <h3 className="text-title-primary">Collections — Expected vs Collected</h3>
+            <h3 className="text-title-primary">Collections - Expected vs Collected</h3>
             <p className="text-desc-secondary mt-1">Recent rental ledger periods for this property.</p>
           </div>
           <div className="h-[280px] w-full">
@@ -973,7 +1001,7 @@ function LeaseStatusPill({ status }: { status: "active" | "expiring" | "ended" |
     active: { label: "Active", className: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60" },
     expiring: { label: "Expiring soon", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
     pending_renewal: { label: "Pending renewal", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
-    ended: { label: "Ended", className: "bg-slate-100 text-slate-500 border-slate-200" },
+    ended: { label: "Ended", className: "bg-slate-100 text-slate-400 border-slate-200" },
   };
   const c = config[status];
   return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.className}`}>{c.label}</span>;
@@ -1028,10 +1056,10 @@ function PipelinePanel({ property }: { property: PropertyDetail }) {
         ))}
       </div>
       <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
-        <FactRow label="Lead" value={pipeline.leadName ?? "—"} />
+        <FactRow label="Lead" value={pipeline.leadName ?? "-"} />
         <FactRow label="Agent" value={pipeline.agentName ?? "Unassigned"} />
         {pipeline.offerAmountKes != null && <FactRow label="Offer amount" value={formatCompactKES(parseFloat(pipeline.offerAmountKes))} />}
-        <FactRow label="Last activity" value={pipeline.lastActivityAt ? formatPropertyDate(pipeline.lastActivityAt) : "—"} />
+        <FactRow label="Last activity" value={pipeline.lastActivityAt ? formatPropertyDate(pipeline.lastActivityAt) : "-"} />
       </div>
     </Card>
   );
@@ -1075,7 +1103,7 @@ function MaintenancePanel({ property, canLog, onReport }: { property: PropertyDe
           {requests.map((req) => (
             <div key={req.id} className="grid grid-cols-1 sm:grid-cols-[1.8fr_1fr_auto_auto] gap-1.5 sm:gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
               <p className="text-body-primary text-slate-900 truncate sm:self-center">{req.title}</p>
-              <p className="text-body-regular text-slate-500 sm:self-center">
+              <p className="text-body-regular text-slate-400 sm:self-center">
                 {formatPropertyDate(req.reportedAt)}
                 {req.reportedBy ? ` · ${req.reportedBy}` : ""}
               </p>
@@ -1096,12 +1124,12 @@ function MaintenancePanel({ property, canLog, onReport }: { property: PropertyDe
 function PriorityPill({ priority }: { priority: string }) {
   const normalized = priority === "normal" ? "medium" : priority === "critical" ? "urgent" : priority;
   const config: Record<string, string> = {
-    low: "bg-slate-100 text-slate-500 border-slate-200",
+    low: "bg-slate-100 text-slate-400 border-slate-200",
     medium: "bg-amber-500/15 text-amber-700 border-amber-300/60",
     high: "bg-rose-500/15 text-rose-700 border-rose-300/60",
     urgent: "bg-rose-500/20 text-rose-700 border-rose-400/60",
   };
-  const style = config[normalized] || "bg-slate-100 text-slate-500 border-slate-200";
+  const style = config[normalized] || "bg-slate-100 text-slate-400 border-slate-200";
   return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${style}`}>{normalized}</span>;
 }
 
@@ -1188,7 +1216,7 @@ function ActivityPanel({
 
 function DocumentStatusPill({ status }: { status: "draft" | "awaiting_signature" | "signed" }) {
   const config: Record<typeof status, { label: string; className: string }> = {
-    draft: { label: "Draft", className: "bg-slate-100 text-slate-500 border-slate-200" },
+    draft: { label: "Draft", className: "bg-slate-100 text-slate-400 border-slate-200" },
     awaiting_signature: { label: "Awaiting signature", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
     signed: { label: "Signed", className: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60" },
   };

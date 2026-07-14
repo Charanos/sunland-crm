@@ -24,7 +24,7 @@ export async function listProperties(
   }
 
   // Left join scoped to at-most-one in-flight mandate per property (the
-  // partial unique index on property_mandates guarantees no fan-out here) —
+  // partial unique index on property_mandates guarantees no fan-out here) -
   // surfaces mandateStatus on the board without a second round trip.
   // Owner contact is also left-joined here so the board/quick-view never has
   // to fall back to a raw ownerContactId label.
@@ -35,6 +35,10 @@ export async function listProperties(
       ownerName: contacts.displayName,
       ownerPhone: contacts.phone,
       ownerEmail: contacts.email,
+      ownerCompany: contacts.companyName,
+      ownerIdNumber: contacts.idNumber,
+      ownerVerifiedAt: contacts.verifiedAt,
+      ownerClientSince: contacts.createdAt,
     })
     .from(properties)
     .leftJoin(
@@ -47,10 +51,20 @@ export async function listProperties(
     .leftJoin(contacts, eq(contacts.id, properties.ownerContactId))
     .where(conditions);
 
-  return rows.map(({ ownerName, ownerPhone, ownerEmail, ...rest }) => ({
+  return rows.map(({ ownerName, ownerPhone, ownerEmail, ownerCompany, ownerIdNumber, ownerVerifiedAt, ownerClientSince, ...rest }) => ({
     ...rest,
     ownerName,
-    owner: rest.ownerContactId ? { name: ownerName, phone: ownerPhone, email: ownerEmail } : null,
+    owner: rest.ownerContactId
+      ? {
+        name: ownerName,
+        phone: ownerPhone,
+        email: ownerEmail,
+        company: ownerCompany,
+        idNumber: ownerIdNumber,
+        verifiedAt: ownerVerifiedAt?.toISOString() ?? null,
+        clientSince: ownerClientSince?.toISOString() ?? null,
+      }
+      : null,
   }));
 }
 
@@ -99,6 +113,10 @@ export async function createProperty(
     bedrooms?: number | null;
     bathrooms?: number | null;
     sizeSqft?: number | null;
+    landAreaSqft?: number | null;
+    yearBuilt?: number | null;
+    parkingSpaces?: number | null;
+    amenities?: string[] | null;
     description?: string | null;
     media?: MediaEntry[];
     unitBreakdown?: UnitBreakdownEntry[];
@@ -129,6 +147,10 @@ export async function createProperty(
         bedrooms: input.bedrooms ?? null,
         bathrooms: input.bathrooms ?? null,
         sizeSqft: input.sizeSqft ?? null,
+        landAreaSqft: input.landAreaSqft ?? null,
+        yearBuilt: input.yearBuilt ?? null,
+        parkingSpaces: input.parkingSpaces ?? null,
+        amenities: input.amenities ?? [],
         description: input.description ?? null,
         media: input.media ?? [],
         unitBreakdown,
@@ -165,6 +187,10 @@ export async function updateProperty(
     bedrooms: number | null;
     bathrooms: number | null;
     sizeSqft: number | null;
+    landAreaSqft: number | null;
+    yearBuilt: number | null;
+    parkingSpaces: number | null;
+    amenities: string[] | null;
     description: string | null;
     status: "available" | "occupied" | "under_offer" | "off_market" | "maintenance";
     media: MediaEntry[];
@@ -186,7 +212,7 @@ export async function updateProperty(
     validateUnitBreakdown(input.unitBreakdown);
   }
 
-  // Explicitly whitelisted rather than spreading `input` — the route forwards
+  // Explicitly whitelisted rather than spreading `input` - the route forwards
   // the raw request body, which routinely carries an `entityId` (a slug like
   // "group", used only for scoping) that is NOT a real column value; blindly
   // spreading it into .set() wrote that literal string into the entity_id
@@ -205,6 +231,10 @@ export async function updateProperty(
     bedrooms: input.bedrooms,
     bathrooms: input.bathrooms,
     sizeSqft: input.sizeSqft,
+    landAreaSqft: input.landAreaSqft,
+    yearBuilt: input.yearBuilt,
+    parkingSpaces: input.parkingSpaces,
+    amenities: input.amenities,
     description: input.description,
     status: input.status,
     media: input.media,
@@ -293,8 +323,8 @@ export async function deleteProperty(ctx: CallerContext, propertyId: string) {
 /**
  * Assembles the full-view page's data contract (property-detail-types.ts's
  * PropertyDetail) in one call. Every derived figure (collections, arrears,
- * vacantSince, lease status) is computed live from the base tables on read —
- * never stored — per the ledger doc §8.1 single-source-of-truth rule.
+ * vacantSince, lease status) is computed live from the base tables on read -
+ * never stored - per the ledger doc §8.1 single-source-of-truth rule.
  */
 export async function getPropertyWithDetails(ctx: CallerContext, propertyId: string) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
@@ -314,19 +344,19 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   const [ownerRows, leaseRows, maintenanceRows, documentRows, rentTxRows, leadRows, mandateRows] = await Promise.all([
     prop.ownerContactId
       ? db
-          .select({
-            id: contacts.id,
-            displayName: contacts.displayName,
-            email: contacts.email,
-            phone: contacts.phone,
-            idNumber: contacts.idNumber,
-            verifiedAt: contacts.verifiedAt,
-            verifiedByName: users.name,
-          })
-          .from(contacts)
-          .leftJoin(users, eq(contacts.verifiedById, users.id))
-          .where(eq(contacts.id, prop.ownerContactId))
-          .limit(1)
+        .select({
+          id: contacts.id,
+          displayName: contacts.displayName,
+          email: contacts.email,
+          phone: contacts.phone,
+          idNumber: contacts.idNumber,
+          verifiedAt: contacts.verifiedAt,
+          verifiedByName: users.name,
+        })
+        .from(contacts)
+        .leftJoin(users, eq(contacts.verifiedById, users.id))
+        .where(eq(contacts.id, prop.ownerContactId))
+        .limit(1)
       : Promise.resolve([]),
     db
       .select({
@@ -360,7 +390,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       .select()
       .from(documents)
       // Property-scoped docs (title deeds, leases) plus the owner's own
-      // documents (ID, mandate letter) — the property form modal saves the
+      // documents (ID, mandate letter) - the property form modal saves the
       // latter with only ownerContactId set, since one landlord's ID/title
       // deed applies across every property they own (ADR 014 §14.4).
       .where(
@@ -403,19 +433,19 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       .limit(1),
   ]);
 
-  // Owner mapped to the frontend's OwnerInfo shape — the board reads
+  // Owner mapped to the frontend's OwnerInfo shape - the board reads
   // owner.name, not the contacts table's displayName.
   const ownerRow = ownerRows[0];
   const owner = ownerRow
     ? {
-        id: ownerRow.id,
-        name: ownerRow.displayName,
-        email: ownerRow.email,
-        phone: ownerRow.phone,
-        idNumber: ownerRow.idNumber,
-        verifiedAt: ownerRow.verifiedAt?.toISOString() ?? null,
-        verifiedByName: ownerRow.verifiedByName,
-      }
+      id: ownerRow.id,
+      name: ownerRow.displayName,
+      email: ownerRow.email,
+      phone: ownerRow.phone,
+      idNumber: ownerRow.idNumber,
+      verifiedAt: ownerRow.verifiedAt?.toISOString() ?? null,
+      verifiedByName: ownerRow.verifiedByName,
+    }
     : null;
 
   const activeLeaseRows = leaseRows.filter((l) => l.isActive);
@@ -436,7 +466,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   }));
 
   // Expected monthly rent: sum of active leases, falling back to the listed
-  // rate — expected must reflect the contracted amount when a tenancy exists.
+  // rate - expected must reflect the contracted amount when a tenancy exists.
   const expectedMonthly = activeLeaseRows.length > 0
     ? activeLeaseRows.reduce((sum, l) => sum + parseFloat(l.monthlyRentKes), 0)
     : prop.monthlyRentKes
@@ -459,7 +489,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     };
   });
 
-  // Arrears reads the current month's bucket — only meaningful with a tenancy.
+  // Arrears reads the current month's bucket - only meaningful with a tenancy.
   const currentMonth = collections[collections.length - 1];
   let arrears: { status: "current" | "partial" | "defaulted"; amount: number; daysInArrears: number } | null = null;
   if (activeLeaseRows.length > 0 && expectedMonthly > 0) {
@@ -475,9 +505,9 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   const vacantSince =
     prop.status !== "occupied" && activeLeaseRows.length === 0
       ? leaseRows
-          .filter((l) => !l.isActive && l.endsAt)
-          .reduce<Date | null>((latest, l) => (!latest || l.endsAt > latest ? l.endsAt : latest), null)
-          ?.toISOString() ?? null
+        .filter((l) => !l.isActive && l.endsAt)
+        .reduce<Date | null>((latest, l) => (!latest || l.endsAt > latest ? l.endsAt : latest), null)
+        ?.toISOString() ?? null
       : null;
 
   // The full CRM pipeline stages collapse into the board's four display
@@ -485,18 +515,18 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   const leadRow = leadRows[0];
   const salesPipeline = leadRow && leadRow.stage !== "closed_lost"
     ? {
-        stage:
-          leadRow.stage === "closed_won"
-            ? ("sale" as const)
-            : leadRow.stage === "offer" || leadRow.stage === "negotiation"
-              ? ("offer" as const)
-              : leadRow.stage === "viewing"
-                ? ("viewing" as const)
-                : ("lead" as const),
-        leadName: leadRow.leadName,
-        offerAmountKes: leadRow.expectedValueKes,
-        lastActivityAt: leadRow.updatedAt.toISOString(),
-      }
+      stage:
+        leadRow.stage === "closed_won"
+          ? ("sale" as const)
+          : leadRow.stage === "offer" || leadRow.stage === "negotiation"
+            ? ("offer" as const)
+            : leadRow.stage === "viewing"
+              ? ("viewing" as const)
+              : ("lead" as const),
+      leadName: leadRow.leadName,
+      offerAmountKes: leadRow.expectedValueKes,
+      lastActivityAt: leadRow.updatedAt.toISOString(),
+    }
     : null;
 
   const documentSummaries = documentRows.map((d) => ({
@@ -507,8 +537,8 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     type: d.type,
   }));
 
-  // A pending mandate's own status doesn't say who it's waiting on — that
-  // lives on its approval_requests row — so the rail card can show "Pending
+  // A pending mandate's own status doesn't say who it's waiting on - that
+  // lives on its approval_requests row - so the rail card can show "Pending
   // GM" vs "Pending CEO" rather than a generic "Pending".
   const mandateRow = mandateRows[0];
   let pendingApproverRole: "gm" | "ceo" | "department_head" | null = null;
@@ -528,27 +558,27 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   }
   const mandateRate = mandateRow ? parseFloat(mandateRow.mandateRate) : 0;
   // Current-period snapshot derived live from this month's collections
-  // bucket — no periodic ledger exists yet (mandate_collections/expenses is
+  // bucket - no periodic ledger exists yet (mandate_collections/expenses is
   // a deferred finance-ledger phase), so this is deliberately just the two
   // figures that are honestly computable today rather than a full remittance
   // statement.
   const currentPeriod =
     mandateRow && mandateRow.status === "active"
       ? {
-          collectedAmount: currentMonth.collected,
-          managementFee: currentMonth.collected * mandateRate,
-          landlordRemittance: currentMonth.collected - currentMonth.collected * mandateRate,
-        }
+        collectedAmount: currentMonth.collected,
+        managementFee: currentMonth.collected * mandateRate,
+        landlordRemittance: currentMonth.collected - currentMonth.collected * mandateRate,
+      }
       : undefined;
   const mandate = mandateRow
     ? {
-        id: mandateRow.id,
-        status: mandateRow.status,
-        mandateRate,
-        startDate: mandateRow.startDate.toISOString(),
-        pendingApproverRole,
-        currentPeriod,
-      }
+      id: mandateRow.id,
+      status: mandateRow.status,
+      mandateRate,
+      startDate: mandateRow.startDate.toISOString(),
+      pendingApproverRole,
+      currentPeriod,
+    }
     : null;
 
   return {
@@ -732,7 +762,7 @@ export async function createLease(
       })
       .returning();
 
-    // 3. Flip unit status to occupied — guarded by status != occupied so a
+    // 3. Flip unit status to occupied - guarded by status != occupied so a
     // concurrent lease on the same property can't both succeed (closes the
     // race between the check above and this write, same pattern used in
     // decideApprovalRequest).
@@ -781,7 +811,7 @@ export async function updateLease(
     .limit(1);
   if (!existing) throw new NotFoundError("Lease not found");
 
-  // Explicit whitelist — property/tenant are fixed for the life of a lease;
+  // Explicit whitelist - property/tenant are fixed for the life of a lease;
   // reassigning either is a new lease (or a renewal), not an edit.
   const updatable: Partial<typeof leases.$inferInsert> = {};
   if (input.startsAt !== undefined) updatable.startsAt = new Date(input.startsAt);
@@ -834,7 +864,7 @@ export async function renewLease(
   return db.transaction(async (tx) => {
     await tx.update(leases).set({ isActive: false, updatedAt: new Date() }).where(eq(leases.id, leaseId));
 
-    // New term picks up exactly where the old one ends — carries the same
+    // New term picks up exactly where the old one ends - carries the same
     // property/tenant, and the property never leaves "occupied" since one
     // active lease is replaced by another in the same transaction (skips
     // createLease's availability guard, which would otherwise reject a
@@ -857,7 +887,7 @@ export async function renewLease(
       action: "properties.lease.renew",
       associatedType: "lease",
       associatedId: renewed.id,
-      summary: `Renewed lease — new term starts ${existing.endsAt.toISOString().slice(0, 10)}`,
+      summary: `Renewed lease - new term starts ${existing.endsAt.toISOString().slice(0, 10)}`,
       entityId,
       before: existing,
       after: renewed,

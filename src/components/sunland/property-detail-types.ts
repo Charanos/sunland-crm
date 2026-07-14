@@ -22,7 +22,7 @@ export interface ManagementMandate {
   mandateRate: number;
   startDate: string;
   currentPeriod?: MandatePeriod;
-  /** Only set while status is "pending_approval" — who the decision is awaiting. */
+  /** Only set while status is "pending_approval" - who the decision is awaiting. */
   pendingApproverRole?: "gm" | "ceo" | "department_head" | null;
 }
 
@@ -50,7 +50,7 @@ export interface LeaseSummary {
 }
 
 // Priority/status mirror the DB enums (maintenance_priority /
-// maintenance_status in src/db/schema/properties.ts) — the earlier
+// maintenance_status in src/db/schema/properties.ts) - the earlier
 // medium/urgent/cancelled vocabulary never existed server-side.
 export interface MaintenanceRequestSummary {
   id: string;

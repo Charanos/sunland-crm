@@ -127,7 +127,7 @@ export const navSections: NavSection[] = [
   },
 
   // ─── EXECUTIVE / CEO PORTAL sections (shown on /admin routes) ──────────────
-  // Section IDs all start with "exec-" — none start with "fin-".
+  // Section IDs all start with "exec-" - none start with "fin-".
 
   // ── Executive: Command (single flat link) ─────────────────────────────────
   {
@@ -146,7 +146,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/admin/approvals", label: "Approvals Queue", icon: IconChecklist, badge: "9" },
       { href: "/admin/hr/complaints", label: "Complaints", icon: IconAlertTriangle },
-      // Triage function, not personal self-service — the admin dashboard is the
+      // Triage function, not personal self-service - the admin dashboard is the
       // main technical-support endpoint, so ticket triage lives with the rest
       // of executive oversight, not under Account & System.
       { href: "/admin/support", label: "Support Tickets", icon: IconLifebuoy },
@@ -156,7 +156,7 @@ export const navSections: NavSection[] = [
   },
 
   // ── Executive: Property Portfolio ─────────────────────────────────────────
-  // Properties, Leases, Maintenance, and Valuations are one ecosystem — the
+  // Properties, Leases, Maintenance, and Valuations are one ecosystem - the
   // same portfolio viewed as inventory, tenancy, upkeep, and advisory value.
   // Previously split across two groups (Portfolio / Operations); merged since
   // four closely-related items don't need two accordions to hold them.
@@ -208,7 +208,7 @@ export const navSections: NavSection[] = [
     ],
   },
 
-  // ── Executive: Account & System (self-service — kept for non-fin /admin routes) ──
+  // ── Executive: Account & System (self-service - kept for non-fin /admin routes) ──
   // NOTE: Self-service links in the nav remain here for the CEO/admin portal.
   // Finance portal self-service is handled exclusively by the profile footer popup.
   {

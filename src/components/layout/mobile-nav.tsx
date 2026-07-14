@@ -104,7 +104,7 @@ export function MobileBottomNav() {
           >
             <CenterIcon size={25} stroke={1.5} />
           </Link>
-          <span className="absolute top-[72px] text-xs font-medium text-slate-500">
+          <span className="absolute top-[72px] text-xs font-medium text-slate-400">
             {centerItem.label}
           </span>
         </div>

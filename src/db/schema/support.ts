@@ -22,7 +22,7 @@ export const supportTicketStatus = pgEnum("support_ticket_status", [
   "closed",
 ]);
 
-// "Admin is the main support endpoint" — any technical difficulty a staff
+// "Admin is the main support endpoint" - any technical difficulty a staff
 // member hits with the ERP itself gets filed here and surfaces on the
 // CEO/GM dashboard, regardless of which portal the filer works in.
 export const supportTickets = pgTable(

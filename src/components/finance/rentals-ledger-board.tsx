@@ -457,7 +457,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconCoins size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Collection Rate</span>
+            <span className="text-slate-400 label-caps">Collection Rate</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
@@ -475,7 +475,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
               <IconHome size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Expected Rent</span>
+            <span className="text-slate-400 label-caps">Expected Rent</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-indigo-700 text-3xl">
@@ -493,7 +493,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
               <IconAlertTriangle size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Total Deficits</span>
+            <span className="text-slate-400 label-caps">Total Deficits</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-amber-700 text-3xl">
@@ -513,7 +513,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
             <div className="size-8 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-200/50">
               <IconClock size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Vacancies / Defaulters</span>
+            <span className="text-slate-400 label-caps">Vacancies / Defaulters</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
@@ -529,7 +529,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-heading-primary">Rent Performance Trends</h3>
-            <p className="text-base text-slate-500">Expected monthly rental projections compared with committed collections.</p>
+            <p className="text-base text-slate-400">Expected monthly rental projections compared with committed collections.</p>
           </div>
           <div className="flex items-center gap-4 font-medium text-sm">
             <span className="flex items-center gap-1.5 text-indigo-600">
@@ -640,7 +640,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                           "px-5 py-3.5 text-right font-mono text-sm font-medium",
                           row.deficit > 0 ? "text-rose-600 bg-rose-50/30" : "text-slate-400"
                         )}>
-                          {row.deficit > 0 ? `KES ${row.deficit.toLocaleString()}` : "—"}
+                          {row.deficit > 0 ? `KES ${row.deficit.toLocaleString()}` : "-"}
                         </td>
                       )}
                       {activeTab === "defaulters" && (
@@ -942,7 +942,7 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="leading-snug text-title-primary">{selectedUnit.property}</h4>
-                  <p className="text-base text-slate-500 mt-1 flex items-center gap-1">
+                  <p className="text-base text-slate-400 mt-1 flex items-center gap-1">
                     <IconMapPin size={12} /> {selectedUnit.location}
                   </p>
                 </div>
@@ -991,10 +991,10 @@ export function RentalsLedgerBoard({ tabId = "collections" }: { tabId: string })
                     <p className="text-sm text-slate-400 leading-none">Active Leaseholder</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button className="size-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition">
+                    <button className="size-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition">
                       <IconPhone size={13} />
                     </button>
-                    <button className="size-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition">
+                    <button className="size-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition">
                       <IconMail size={13} />
                     </button>
                   </div>

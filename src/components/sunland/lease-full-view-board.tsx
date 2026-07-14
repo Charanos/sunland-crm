@@ -72,7 +72,7 @@ interface AuditEntry {
 }
 
 function leaseTermLabel(lease: Lease): string {
-  if (!lease.isActive) return "—";
+  if (!lease.isActive) return "-";
   const days = Math.ceil((new Date(lease.endsAt).getTime() - Date.now()) / 86_400_000);
   if (days < 0) return "Overdue";
   if (days === 0) return "Ends today";
@@ -381,7 +381,7 @@ export function LeaseFullViewBoard({
                 }}
                 className={cn(
                   "body-sm px-4 py-2 rounded-[10px] transition-all flex items-center gap-2 font-medium",
-                  activeTab === tab.key ? "bg-white text-slate-900 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  activeTab === tab.key ? "bg-white text-slate-900 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
                 )}
               >
                 <tab.icon size={16} aria-hidden="true" />
@@ -411,7 +411,7 @@ export function LeaseFullViewBoard({
                       <p className="label-caps text-indigo-400 flex items-center gap-1.5">
                         <IconShield size={14} /> Deposit Held
                       </p>
-                      <p className="mono-amount headline-md text-indigo-900">{lease.depositKes ? formatCompactKES(parseFloat(lease.depositKes)) : "—"}</p>
+                      <p className="mono-amount headline-md text-indigo-900">{lease.depositKes ? formatCompactKES(parseFloat(lease.depositKes)) : "-"}</p>
                     </div>
                     <div className="flex flex-col gap-2 p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
                       <p className="label-caps text-slate-400 flex items-center gap-1.5">
@@ -442,7 +442,7 @@ export function LeaseFullViewBoard({
                       <IconFileText size={40} stroke={1.5} className="text-slate-300" aria-hidden="true" />
                     </div>
                     <h3 className="text-xl font-serif text-slate-900">No attached documents</h3>
-                    <p className="text-slate-500 max-w-sm text-sm">Lease agreements, ID copies, and references will appear here once attached.</p>
+                    <p className="text-slate-400 max-w-sm text-sm">Lease agreements, ID copies, and references will appear here once attached.</p>
                   </Card>
                 ) : (
                   <Card className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
@@ -481,7 +481,7 @@ export function LeaseFullViewBoard({
                     <LoadingSpinner size="md" />
                   </div>
                 ) : !activityLog || activityLog.length === 0 ? (
-                  <p className="text-slate-500 text-center py-12 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No recorded activity yet.</p>
+                  <p className="text-slate-400 text-center py-12 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No recorded activity yet.</p>
                 ) : (
                   <div className="space-y-0 pl-2">
                     {activityLog.map((entry, i) => (
@@ -520,13 +520,13 @@ export function LeaseFullViewBoard({
                 <p className="text-lg font-serif text-slate-900 truncate mb-1">{lease.tenantName}</p>
                 <div className="flex flex-col gap-1.5">
                   {lease.tenantPhone && (
-                    <a href={`tel:${lease.tenantPhone}`} className="text-sm text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
+                    <a href={`tel:${lease.tenantPhone}`} className="text-sm text-slate-400 hover:text-slate-900 flex items-center gap-2 transition-colors">
                       <IconPhone size={14} className="shrink-0" />
                       <span className="truncate">{lease.tenantPhone}</span>
                     </a>
                   )}
                   {lease.tenantEmail && (
-                    <a href={`mailto:${lease.tenantEmail}`} className="text-sm text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
+                    <a href={`mailto:${lease.tenantEmail}`} className="text-sm text-slate-400 hover:text-slate-900 flex items-center gap-2 transition-colors">
                       <IconMail size={14} className="shrink-0" />
                       <span className="truncate">{lease.tenantEmail}</span>
                     </a>
@@ -567,11 +567,11 @@ export function LeaseFullViewBoard({
             </h3>
             <div className="flex items-center gap-4">
               <div className="size-14 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 shadow-sm flex items-center justify-center shrink-0">
-                <PropIcon size={24} className="text-slate-500" stroke={1.5} />
+                <PropIcon size={24} className="text-slate-400" stroke={1.5} />
               </div>
               <div className="min-w-0">
                 <p className="text-base  text-slate-900 truncate">{lease.propertyName}</p>
-                <p className="text-xs font-mono text-slate-500 mt-1.5 bg-slate-100 px-2 py-0.5 rounded inline-block">UNIT {lease.propertyCode}</p>
+                <p className="text-xs font-mono text-slate-400 mt-1.5 bg-slate-100 px-2 py-0.5 rounded inline-block">UNIT {lease.propertyCode}</p>
               </div>
             </div>
             <Link href={`/admin/properties/${lease.propertyId}`} className="text-sm  text-[#151936] flex items-center justify-center gap-2 hover:text-[#151936] bg-slate-50 border border-slate-100 rounded-xl py-3 transition-colors hover:bg-slate-100 mt-2">

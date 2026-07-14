@@ -3,13 +3,13 @@ import { db } from "@/db";
 import { permissions, rolePermissions, roles, userRoles } from "@/db/schema";
 import type { CallerContext } from "@/lib/authz/context";
 
-// Keyed on the ctx object reference itself, which is created once per request —
+// Keyed on the ctx object reference itself, which is created once per request -
 // this gives real per-request caching (multiple authorize() calls in one
 // handler share a query) without risking stale entitlements leaking across
 // requests/warm serverless instances the way a module-level Map keyed by
 // user id would. Nested by scope key because a single request can legitimately
 // authorize against more than one entity scope (e.g. deciding an approval
-// scoped to the *resource's* entity, which is only known after it's loaded —
+// scoped to the *resource's* entity, which is only known after it's loaded -
 // never trust a client-supplied entity_id, per backend master §4).
 const permissionCache = new WeakMap<CallerContext, Map<string, Set<string>>>();
 const ANY_SCOPE = "__any__";
@@ -20,7 +20,7 @@ const ANY_SCOPE = "__any__";
  * - `null` → **no entity filter at all**: does this user hold the permission
  *   in ANY capacity, anywhere. Correct for genuinely entity-independent
  *   actions (browsing the role/permission catalog, managing your own
- *   sessions) where the resource has no entity dimension to check against —
+ *   sessions) where the resource has no entity dimension to check against -
  *   passing a fake/empty string here previously crashed Postgres (a uuid
  *   column compared to `""`) and was the root cause of several P0 bugs only
  *   surfaced by real HTTP end-to-end testing, not direct service calls.

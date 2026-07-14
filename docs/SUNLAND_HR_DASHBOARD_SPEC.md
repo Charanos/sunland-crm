@@ -1,4 +1,4 @@
-# Sunland HR Dashboard — Comprehensive Functional Spec
+# Sunland HR Dashboard - Comprehensive Functional Spec
 
 **Document status:** Drill-down of `SUNLAND_ERP_IMPLEMENTATION_SPEC.md` Section 6, expanded to the depth required to build HR as its own near-standalone Human Resource Management system inside the ERP shell, matching the rigor of `SUNLAND_FINANCE_DASHBOARD_SPEC.md`.
 **Relationship to other documents:** Inherits the design system, entity context, and locked components from the master spec without modification. Inherits the RBAC role list from master spec Section 3.2, narrowed here to HR-specific actions (Section 7). Where Finance's challenge was financial-logic integrity, HR's challenge is access control: who is allowed to know what about whom. That distinction shapes this entire document and gets its own section (6) before the page-by-page spec, because every later page assumes it.
@@ -247,8 +247,8 @@ Built last (Section 16), since its KPI tier and Activity Feed are rollups of eve
 
 Sections: Personal Info, Employment History (timeline pulling from `role_change_requests`), Leave Balance summary, Credentials summary, recent Time & Attendance summary, Documents (contract, ID copy placeholders), Activity Log. **Medical, dependents, and insurance data are deliberately not shown here**, even as a summary, even to HR Head; they live only in the Medical & Insurance tab (8.7), reached by a separate, harder-gated path, because the viewer population for a general Employee Profile (Line Managers included) is wider than the viewer population for medical data, and bundling them would mean every future change to one page's access rules risks leaking into the other.
 
-- **Modal — New Employee:** personal info, department, role, line manager assignment, employment date, contract type. On submit, creates the user and employee records and triggers default leave balance allocation per policy.
-- **Row action — Initiate Offboarding:** Modal capturing exit date and reason, opens a checklist (credential/equipment return placeholder, a flag sent to Payroll Liaison for final pay processing). HR Head only. GM is notified for any exit; CEO is additionally notified for Head-level roles, mirroring the promotion/demotion sensitivity threshold in Section 7.
+- **Modal - New Employee:** personal info, department, role, line manager assignment, employment date, contract type. On submit, creates the user and employee records and triggers default leave balance allocation per policy.
+- **Row action - Initiate Offboarding:** Modal capturing exit date and reason, opens a checklist (credential/equipment return placeholder, a flag sent to Payroll Liaison for final pay processing). HR Head only. GM is notified for any exit; CEO is additionally notified for Head-level roles, mirroring the promotion/demotion sensitivity threshold in Section 7.
 
 #### Org Structure
 
@@ -269,12 +269,12 @@ Sections: Personal Info, Employment History (timeline pulling from `role_change_
 - **Columns:** Employee, Leave Type, Dates, Days, Status, Requested On.
 - **Filters:** department, status, leave type.
 - **Row action:** Drawer with full request detail, inline Approve/Reject. Line Manager is the primary approver for their own team; HR Head approves edge cases specifically (negative balance requests, disputed entitlement), per master spec 6.2. Rejection requires a notes field, same rule as everywhere else in the ERP.
-- **Modal — Log Leave Request:** the admin-entry path for an employee without device access or for backfilling. The primary path is self-service (Section 1, assumption 2); this modal exists so HR is never blocked by the self-service surface not existing yet.
+- **Modal - Log Leave Request:** the admin-entry path for an employee without device access or for backfilling. The primary path is self-service (Section 1, assumption 2); this modal exists so HR is never blocked by the self-service surface not existing yet.
 
 #### Balances
 
 - Per-employee balance by type (Annual, Sick, Maternity/Paternity, Compassionate), with the accrual rule stated next to each type rather than hidden in a tooltip.
-- **Modal — Adjust Balance:** HR Head only, reason required, logged in the employee's Activity Log.
+- **Modal - Adjust Balance:** HR Head only, reason required, logged in the employee's Activity Log.
 
 #### Calendar
 
@@ -305,8 +305,8 @@ The clock-in/out action itself happens outside this admin dashboard (Section 1, 
 #### Anomalies
 
 - **Definition, stated precisely rather than left implicit:** a log is anomalous if it has a clock-in with no clock-out past end of business day, a duration outside a configurable expected range, or, for field logs, a missing geo-stamp.
-- **Row action — Resolve:** HR adjusts or annotates the entry, a note is required, logged in the Activity Log, same rigor as Finance's manual-entry corrections.
-- **Modal — Log Manual Time Entry:** HR/Line Manager override for a missed clock event, reason required.
+- **Row action - Resolve:** HR adjusts or annotates the entry, a note is required, logged in the Activity Log, same rigor as Finance's manual-entry corrections.
+- **Modal - Log Manual Time Entry:** HR/Line Manager override for a missed clock event, reason required.
 
 ---
 
@@ -317,7 +317,7 @@ The clock-in/out action itself happens outside this admin dashboard (Section 1, 
 #### Candidates (default)
 
 - Staged pipeline view: Applied → Screening → Interview → Offer → Hired/Rejected. Columns: Name, Role Applied For, Current Stage, Date Applied.
-- **Modal — New Candidate.**
+- **Modal - New Candidate.**
 
 #### Interview Schedule
 
@@ -339,7 +339,7 @@ The clock-in/out action itself happens outside this admin dashboard (Section 1, 
 This is HR's equivalent of Finance's Mandates page: the highest-stakes, most approval-heavy workflow in the module, and the one place this spec introduces a genuinely multi-step approval rather than the single-decider pattern used everywhere else in the ERP so far.
 
 - **Columns:** Employee, Current Role/Band, Proposed Role/Band, Direction (promotion/demotion), Initiated By, Current Step, Overall Status.
-- **Modal — Propose Role Change:** HR Head only. Employee, new role/band, justification, salary change amount (KES, `font-mono`).
+- **Modal - Propose Role Change:** HR Head only. Employee, new role/band, justification, salary change amount (KES, `font-mono`).
 
 **The approval chain (master spec 4.5, modeled as `approval_steps`):**
 
@@ -370,7 +370,7 @@ Approved and Declined together form the audit-friendly historical record; a sepa
 **Tabs:** Active · Expiring (30/60/90 day windows) · Expired
 
 - **Columns:** Employee, Credential Type, Number, Issue Date, Expiry Date, Status.
-- **Modal — Add Credential**, **Renew Credential** (updates expiry, logs renewal in Activity Log).
+- **Modal - Add Credential**, **Renew Credential** (updates expiry, logs renewal in Activity Log).
 
 **Downstream coordination:** an expired Driving License on a Driver-role employee flags to Front Office (master spec 8.1), since that employee should not remain assignable to vehicle trips while expired. An expired Valuer license flags relevance to Sunland Valuers Ltd compliance tracking. Neither integration blocks the credential record itself from existing; it surfaces a warning on the other module's side.
 
@@ -385,7 +385,7 @@ Governed in full by Section 6. Not rendered in the sidebar, not reachable by dir
 - **Medical Records:** scheme enrollment, claims history if tracked, a conditions/notes field, treated as the most sensitive field in the entire ERP and a candidate for encryption at rest, flagged here as a build-time security decision rather than assumed.
 - **Dependents:** next-of-kin and family records, linked to insurance beneficiaries.
 - **Insurance Policies:** policy numbers, coverage type, beneficiary linkage to Dependents.
-- **Modal — Add Dependent**, **Update Medical Record** (HR Head only, reason logged, view of the change also logged per 6.3).
+- **Modal - Add Dependent**, **Update Medical Record** (HR Head only, reason logged, view of the change also logged per 6.3).
 
 ---
 
@@ -399,7 +399,7 @@ Governed in full by Section 6.4. Not rendered in the sidebar for any role outsid
 - **Escalated:** items currently sitting with GM or CEO per the hardcoded routing rule.
 - **Resolved & Closed:** archive.
 - **Drawer:** full detail, restricted to HR Head, the complainant, and, only if escalated, the specific GM or CEO it's escalated to. Not visible to other HR Officers unless HR Head explicitly delegates a specific case. Actions: Add Note, **Request Input** (a scoped fact-finding question sent to a named party without revealing the complainant's identity if anonymous), Escalate, Resolve (requires a resolution summary).
-- **Modal — Log Complaint:** self-service is the primary path; this exists for HR to log something reported verbally, with an Anonymous toggle.
+- **Modal - Log Complaint:** self-service is the primary path; this exists for HR to log something reported verbally, with an Anonymous toggle.
 
 **Activity feed exclusion, restated from 8.0:** nothing here ever appears by name or content anywhere outside this page and its Drawer, including the Overview Activity Feed, regardless of viewer.
 
@@ -414,7 +414,7 @@ Governed in full by Section 6.4. Not rendered in the sidebar for any role outsid
 #### Hours Ready (default)
 
 - Per period, aggregated and approved time logs (sourced from 8.3 Timesheets) ready for handoff.
-- **Action — Submit Period to Finance:** HR Head or Officer. Once submitted, the period becomes read-only on the HR side; HR cannot silently re-edit hours after handoff. If an error is found post-submission, the correction is requested through Finance (Finance spec 7.4), not re-entered here, preserving a single, traceable point-in-time handoff rather than two systems quietly disagreeing about the same period.
+- **Action - Submit Period to Finance:** HR Head or Officer. Once submitted, the period becomes read-only on the HR side; HR cannot silently re-edit hours after handoff. If an error is found post-submission, the correction is requested through Finance (Finance spec 7.4), not re-entered here, preserving a single, traceable point-in-time handoff rather than two systems quietly disagreeing about the same period.
 
 #### Statutory Summary
 

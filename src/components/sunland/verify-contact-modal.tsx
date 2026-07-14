@@ -69,7 +69,7 @@ export function VerifyContactModal({
             </div>
             <div>
               <h2 className="font-medium text-slate-900 tracking-tight text-lg">Confirm Landlord</h2>
-              <p className="body-sm text-slate-500 mt-0.5">{contactName}</p>
+              <p className="body-sm text-slate-400 mt-0.5">{contactName}</p>
             </div>
           </div>
           <button
@@ -82,7 +82,7 @@ export function VerifyContactModal({
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">National ID / Passport Number</label>
+            <label className="block text-slate-400 mb-1.5 label-caps">National ID / Passport Number</label>
             <input
               type="text"
               placeholder="e.g., 12345678"

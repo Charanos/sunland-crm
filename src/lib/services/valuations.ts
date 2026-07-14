@@ -10,7 +10,7 @@ import type { CallerContext } from "@/lib/services/types";
 import { createValuationSchema, updateValuationSchema } from "@/lib/validation/valuations";
 import { parseInput } from "@/lib/validation/parse";
 
-// Valuations reuse the properties.property.* permission keys deliberately —
+// Valuations reuse the properties.property.* permission keys deliberately -
 // they're the same portfolio domain and every role that manages properties
 // manages valuation instructions. Dedicated properties.valuation.* keys would
 // require a permission re-seed against the already-seeded dev DB (and a
@@ -77,7 +77,7 @@ export async function createValuation(ctx: CallerContext, rawInput: unknown) {
 
   if (!input.propertyId && !input.externalPropertyName) {
     throw new DomainValidationError(
-      "A valuation needs a subject — pick a portfolio property or name an external one.",
+      "A valuation needs a subject - pick a portfolio property or name an external one.",
     );
   }
 
@@ -145,7 +145,7 @@ export async function updateValuation(ctx: CallerContext, valuationId: string, r
     );
   }
 
-  // Explicit whitelist, same rationale as updateProperty — the route forwards
+  // Explicit whitelist, same rationale as updateProperty - the route forwards
   // the raw body, which carries the entityId scoping slug that must never be
   // spread into a .set().
   const updatable: Partial<typeof valuations.$inferInsert> = {};
@@ -170,7 +170,7 @@ export async function updateValuation(ctx: CallerContext, valuationId: string, r
   if (isCompleting) {
     updatable.completedAt = new Date();
     if (input.validUntil === undefined && !existing.validUntil) {
-      // Standard shelf life — lenders/insurers treat reports older than six
+      // Standard shelf life - lenders/insurers treat reports older than six
       // months as stale unless the instruction says otherwise.
       const validUntil = new Date();
       validUntil.setMonth(validUntil.getMonth() + 6);

@@ -1,6 +1,6 @@
 ---
 name: Project Workflow Fixes & Role Architecture
-description: Captures common IDE errors to avoid across agent sessions and documents the client-finalized role architecture (Head of Strategy, Admin/CEO's Assistant, Senior Accountant, Internal Auditor) — see ADR 013 for the full decision record.
+description: Captures common IDE errors to avoid across agent sessions and documents the client-finalized role architecture (Head of Strategy, Admin/CEO's Assistant, Senior Accountant, Internal Auditor) - see ADR 013 for the full decision record.
 ---
 
 # Common Project Workflow Bugs & Fixes
@@ -28,13 +28,13 @@ When working within the Sunland CRM Next.js codebase, please adhere to these gui
    - **USE SEMANTIC CSS** where a matching class exists in `globals.css`: `.headline-lg`, `.headline-md`, `.title-serif`, `.body-md`, `.body-sm`, `.label-caps`, `.text-heading-primary`, `.text-title-primary`, `.text-body-primary`, `.text-body-regular`, `.text-desc-secondary`, `.text-meta-muted`, `.text-meta-muted-strong`.
    - **NUMBERS USE MONO**: ALL numerals (KPIs, stats, prices) must utilize `.mono-stat`, `.mono-data`, or `.mono-amount` rather than generic font rendering.
 
-# Role Architecture (client-finalized, 2026 Q3 — full record in `docs/ARCHITECTURE_DECISIONS.md` ADR 013)
+# Role Architecture (client-finalized, 2026 Q3 - full record in `docs/ARCHITECTURE_DECISIONS.md` ADR 013)
 
 The business development and line management roles have been consolidated comprehensively into **Property Managers**. The two roles this file used to describe as "future sprint" placeholders are now specified by the client. Full roster:
 
 | Role | Slug | Scope | Reports to |
 |---|---|---|---|
-| CEO | `ceo` | global | — |
+| CEO | `ceo` | global | - |
 | General Manager | `general_manager` | global | CEO |
 | **Head of Strategy** | `head_of_strategy` | global | GM |
 | Property Manager | `property_manager` | entity | Head of Strategy |
@@ -44,29 +44,29 @@ The business development and line management roles have been consolidated compre
 | **Admin (CEO's Assistant)** | `admin_assistant` | global | CEO |
 | Head of HR | `hr_head` | global | GM |
 | Front Office Head | `front_office_head` | global | GM |
-| Landlord / Tenant | `landlord` / `tenant` | self | — (external portal, not yet built) |
+| Landlord / Tenant | `landlord` / `tenant` | self | - (external portal, not yet built) |
 
 1. **Head of Strategy**
-   - **Responsibility**: Department head over Property Managers, Line Managers, Sales, and Marketers — every commercial/BD-facing function reports through this one role, the same way Finance reports through Finance Head.
-   - **Permissions**: full CRM + Properties + Scheduling + Operations oversight (`...keysFor("crm"|"properties"|"scheduling"|"operations")`), plus `identity.user.read`, `settings.entity.read`, `audit.log.read` — mirrors Finance Head's shape. Global scope (department heads are always global — ADR 012 point 3).
+   - **Responsibility**: Department head over Property Managers, Line Managers, Sales, and Marketers - every commercial/BD-facing function reports through this one role, the same way Finance reports through Finance Head.
+   - **Permissions**: full CRM + Properties + Scheduling + Operations oversight (`...keysFor("crm"|"properties"|"scheduling"|"operations")`), plus `identity.user.read`, `settings.entity.read`, `audit.log.read` - mirrors Finance Head's shape. Global scope (department heads are always global - ADR 012 point 3).
    - Sits *above* `property_manager` in the reporting chain; does not merge into it.
 
-2. **Property Managers — confirmed dual scope**
+2. **Property Managers - confirmed dual scope**
    - Deal with **both** landlords (mandate side) and tenants (by extension, since landlords defer all property-management responsibility to Sunland).
-   - Tenant complaints, rent arrears, and miscellaneous charges (see below) are now a Property Manager concern, not Front Office/Ops — the client wants PMs able to **"handle this all dynamically"**, one working surface per property/tenant rather than three siloed pages. No new permissions needed (`property_manager` already holds `...keysFor("properties")`); this is a routing/UI change, documented in `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md`.
+   - Tenant complaints, rent arrears, and miscellaneous charges (see below) are now a Property Manager concern, not Front Office/Ops - the client wants PMs able to **"handle this all dynamically"**, one working surface per property/tenant rather than three siloed pages. No new permissions needed (`property_manager` already holds `...keysFor("properties")`); this is a routing/UI change, documented in `SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md`.
 
-3. **Senior Accountant** — the `finance_officer` role, relabeled. Same permission scope; the client's job title for what the system already models as day-to-day ledger/transaction work. Proposed mapping, not yet confirmed by the client.
+3. **Senior Accountant** - the `finance_officer` role, relabeled. Same permission scope; the client's job title for what the system already models as day-to-day ledger/transaction work. Proposed mapping, not yet confirmed by the client.
 
-4. **Internal Auditor** — the `auditor_compliance` role, relabeled, **plus a new time-gated access rule**: finance dashboard access activates only 90 days after the role is granted (everything else `auditor_compliance` already holds — org-wide read — is immediate). This is the first time-conditional permission in the system. Recommended mechanism: a `grantedAt` timestamp on `user_roles`, checked inside `authorize()` only for `finance.*` keys when the grant's role is `auditor_compliance` — not a general "probation period" primitive, scoped narrowly to this one case. **Not yet implemented** — decision + mechanism recorded, build is next-sprint.
+4. **Internal Auditor** - the `auditor_compliance` role, relabeled, **plus a new time-gated access rule**: finance dashboard access activates only 90 days after the role is granted (everything else `auditor_compliance` already holds - org-wide read - is immediate). This is the first time-conditional permission in the system. Recommended mechanism: a `grantedAt` timestamp on `user_roles`, checked inside `authorize()` only for `finance.*` keys when the grant's role is `auditor_compliance` - not a general "probation period" primitive, scoped narrowly to this one case. **Not yet implemented** - decision + mechanism recorded, build is next-sprint.
 
-5. **Admin (CEO's Assistant)** — client left the exact permissions open ("we'll figure how to auth this based on all other roles"), so this is a **proposed** design pending confirmation:
-   - **Granted**: `identity.user.read`, `settings.entity.read`, `audit.log.read`, `...keysFor("scheduling")`, `support.ticket.manage`, read-only CRM/Properties (`crm.contact.read`, `crm.lead.read`, `properties.property.read`, `properties.lease.read`, `properties.maintenance.read`) — enough to run the CEO's calendar, triage the support-ticket queue, and brief the CEO on anything.
-   - **Excluded**: any `finance.*` (no approval authority), `hr.complaint.manage` (complaints stay confidentiality-gated to HR Head/GM/CEO per HR spec §6.4 — assisting the CEO doesn't extend to complaint content, including ones escalated to the CEO), `identity.role.write`/System Administration (CEO-exclusive, ADR 012).
+5. **Admin (CEO's Assistant)** - client left the exact permissions open ("we'll figure how to auth this based on all other roles"), so this is a **proposed** design pending confirmation:
+   - **Granted**: `identity.user.read`, `settings.entity.read`, `audit.log.read`, `...keysFor("scheduling")`, `support.ticket.manage`, read-only CRM/Properties (`crm.contact.read`, `crm.lead.read`, `properties.property.read`, `properties.lease.read`, `properties.maintenance.read`) - enough to run the CEO's calendar, triage the support-ticket queue, and brief the CEO on anything.
+   - **Excluded**: any `finance.*` (no approval authority), `hr.complaint.manage` (complaints stay confidentiality-gated to HR Head/GM/CEO per HR spec §6.4 - assisting the CEO doesn't extend to complaint content, including ones escalated to the CEO), `identity.role.write`/System Administration (CEO-exclusive, ADR 012).
    - Global scope, reports to CEO.
 
-6. **Tenant/Landlord portal updates** (spec exists, portal not yet built): tenant complaints now route to the assigned Property Manager, not Front Office/Ops. New **Miscellaneous Charges** payment category — water, garbage — joins rent as a tenant-payable charge type. **Electricity is explicitly out of scope**, run on a prepaid token system entirely outside Sunland's ledger.
+6. **Tenant/Landlord portal updates** (spec exists, portal not yet built): tenant complaints now route to the assigned Property Manager, not Front Office/Ops. New **Miscellaneous Charges** payment category - water, garbage - joins rent as a tenant-payable charge type. **Electricity is explicitly out of scope**, run on a prepaid token system entirely outside Sunland's ledger.
 
-*Implemented (2026-07-10, ADR 014): `head_of_strategy` as a real catalog role (enum + `catalog.ts` permissions, no seed user yet) — became load-bearing for correct mandate-activation approval routing (a Property Manager or Head of Strategy always needs GM sign-off; a GM/CEO acting within their own authority self-approves, so nothing escalates above the CEO).*
+*Implemented (2026-07-10, ADR 014): `head_of_strategy` as a real catalog role (enum + `catalog.ts` permissions, no seed user yet) - became load-bearing for correct mandate-activation approval routing (a Property Manager or Head of Strategy always needs GM sign-off; a GM/CEO acting within their own authority self-approves, so nothing escalates above the CEO).*
 
 *Still not yet implemented: `admin_assistant` as a real catalog role/seed user, the `grantedAt` time-gate mechanism, the Property Manager unified complaint/arrears/misc-charges view, and the misc-charges schema itself. This file plus ADR 013/014 are the design record for when that build happens.*
 

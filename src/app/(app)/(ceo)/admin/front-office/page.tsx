@@ -54,7 +54,7 @@ export default function FrontOfficePage() {
         <div>
           <p className="label-caps text-[var(--on-surface-dim)] mb-1">Operations</p>
           <h1 className="title-serif mt-2 text-slate-900">Front Office</h1>
-          <p className="body-sm text-slate-500 mt-1">Manage daily front office operations, fleet logistics, and client reception.</p>
+          <p className="body-sm text-slate-400 mt-1">Manage daily front office operations, fleet logistics, and client reception.</p>
         </div>
         <Link href="/admin/front-office/logistics"
           className="flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-caption text-[var(--on-primary)] shadow-sm hover:brightness-95 transition-all">
@@ -86,14 +86,14 @@ export default function FrontOfficePage() {
                 const LinkIcon = link.icon;
                 return (
                   <Link key={link.href} href={link.href} className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3 hover:border-slate-200 hover:bg-slate-50/50 transition-all">
-                    <div className="size-9 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-[var(--sidebar)] group-hover:text-white transition-all">
+                    <div className="size-9 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-[var(--sidebar)] group-hover:text-white transition-all">
                       <LinkIcon size={16} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-caption text-slate-800">{link.label}</p>
                       <p className="text-tiny text-slate-400">{link.desc}</p>
                     </div>
-                    <IconChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    <IconChevronRight size={14} className="text-slate-300 group-hover:text-slate-400 transition-colors" />
                   </Link>
                 );
               })}
@@ -105,7 +105,7 @@ export default function FrontOfficePage() {
         <div className="lg:col-span-7">
           <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <h2 className="headline-md text-slate-900">Fleet Activity — Today</h2>
+              <h2 className="headline-md text-slate-900">Fleet Activity - Today</h2>
               <span className="label-caps text-slate-400">{new Date().toLocaleDateString("en-KE", { weekday: "short", month: "short", day: "numeric" })}</span>
             </div>
             <div className="divide-y divide-slate-100">
@@ -115,8 +115,8 @@ export default function FrontOfficePage() {
                     <IconCar size={15} className="text-[var(--sidebar)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-caption text-slate-800">{trip.vehicle} — {trip.driver}</p>
-                    <p className="text-tiny text-slate-500 mt-0.5 flex items-center gap-1">
+                    <p className="text-caption text-slate-800">{trip.vehicle} - {trip.driver}</p>
+                    <p className="text-tiny text-slate-400 mt-0.5 flex items-center gap-1">
                       <IconMapPin size={10} />
                       {trip.destination}
                     </p>

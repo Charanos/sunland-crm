@@ -23,10 +23,10 @@ export const complaints = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     entityId: uuid("entity_id").references(() => entities.id).notNull(),
     filedById: uuid("filed_by_id").references(() => users.id).notNull(),
-    // Identity is always captured (filedById above) — this only controls
+    // Identity is always captured (filedById above) - this only controls
     // display-layer masking for anyone other than the current owner.
     isAnonymous: boolean("is_anonymous").default(false).notNull(),
-    // The person the complaint is about, if any — drives the hardcoded
+    // The person the complaint is about, if any - drives the hardcoded
     // routing rule (HR spec §6.4). Null for complaints not naming anyone.
     namedPersonId: uuid("named_person_id").references(() => users.id),
     category: complaintCategory("category").default("other").notNull(),
@@ -40,7 +40,7 @@ export const complaints = pgTable(
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),
     resolvedById: uuid("resolved_by_id").references(() => users.id),
     resolutionSummary: text("resolution_summary"),
-    // Lightweight "Add Note" support (HR spec §8.8 drawer action) — a full
+    // Lightweight "Add Note" support (HR spec §8.8 drawer action) - a full
     // notes table is unwarranted for what's currently a short internal log.
     internalNotes: jsonb("internal_notes")
       .$type<Array<{ authorId: string; note: string; at: string }>>()

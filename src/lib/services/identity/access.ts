@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { roles, userRoles, users } from "@/db/schema";
 
 /**
- * True if `userId` is the sole remaining active holder of the "ceo" role —
+ * True if `userId` is the sole remaining active holder of the "ceo" role -
  * the guard that keeps CEO dominion from being accidentally locked out
  * (portal doc §6: "CEO holds every permission... real dominion over
  * role/permission escalation"). Checked before deactivating an account or

@@ -3,7 +3,7 @@ import type { UserRole } from "@/types";
 // ─── Universal paths accessible by ALL authenticated users regardless of role ─
 // NOTE (ADR 010): Self-service is portal-local. Each portal renders its own
 // profile/settings/security/notifications/messages within its own shell.
-// UNIVERSAL_PATHS is kept minimal — only paths that genuinely need cross-portal
+// UNIVERSAL_PATHS is kept minimal - only paths that genuinely need cross-portal
 // reach (the fin portal self-service paths below). Once HR/BD/Front portals
 // get their own route groups, their entries are added here too.
 
@@ -14,7 +14,7 @@ export const UNIVERSAL_PATHS = [
   "/admin/security",
   "/admin/messages",
   // Any authenticated staff member can reach this to file a ticket, regardless
-  // of portal — "admin is the main support endpoint" (the backend naturally
+  // of portal - "admin is the main support endpoint" (the backend naturally
   // scopes non-CEO/GM callers to their own tickets via scope=mine).
   "/admin/support",
   "/fin/profile",
@@ -24,7 +24,7 @@ export const UNIVERSAL_PATHS = [
   "/fin/messages",
 ];
 
-// ─── CEO-exclusive paths (absent — not greyed — for any other role) ───────────
+// ─── CEO-exclusive paths (absent - not greyed - for any other role) ───────────
 // These are enforced in canAccess() with an early return, so nav filtering
 // via canAccess(role, href) will correctly exclude them from the sidebar.
 
@@ -32,10 +32,10 @@ const CEO_ONLY_PATHS = [
   "/admin/system",
 ];
 
-// ─── HR Complaints — absent, not greyed, for anyone outside this tier ─────────
+// ─── HR Complaints - absent, not greyed, for anyone outside this tier ─────────
 // HR spec §6.2/§6.4: HR Head, GM, and CEO only. GM/CEO's actual visibility is
 // further narrowed server-side to items escalated to them (src/lib/services/
-// complaints.ts) — this is only the coarse sidebar/route gate.
+// complaints.ts) - this is only the coarse sidebar/route gate.
 const COMPLAINTS_ACCESS_ROLES: UserRole[] = ["hr_head", "general_manager", "ceo"];
 
 // ─── Role → allowed path prefixes ─────────────────────────────────────────────
@@ -45,7 +45,7 @@ const roleAccess: Record<UserRole, string[]> = {
   ceo: ["/admin", "/ops", "/fin", "/hr"],
   general_manager: ["/admin", "/ops", "/fin", "/hr"],
 
-  // Head of Strategy (ADR 013 §13.1, ADR 014 §14.3) — global-scope BD/
+  // Head of Strategy (ADR 013 §13.1, ADR 014 §14.3) - global-scope BD/
   // property-management department head, sits above Property Manager.
   head_of_strategy: [
     "/admin/contacts",
@@ -146,7 +146,7 @@ const roleAccess: Record<UserRole, string[]> = {
   valuer: ["/admin/properties", "/admin/valuations"],
 
   // ── Audit / Compliance ───────────────────────────────────────────────────────
-  // Auditor has broad read access but no write paths — action-level authz
+  // Auditor has broad read access but no write paths - action-level authz
   // in the service layer enforces this; the portal access here is coarse.
   auditor: ["/admin", "/ops", "/fin", "/hr"],
   auditor_compliance: ["/admin", "/ops", "/fin", "/hr"],
@@ -179,16 +179,16 @@ export function isUniversalPath(pathname: string): boolean {
 }
 
 export function canAccess(role: UserRole, pathname: string): boolean {
-  // 1. Universal self-service paths — always accessible to any authenticated user
+  // 1. Universal self-service paths - always accessible to any authenticated user
   if (isUniversalPath(pathname)) return true;
 
-  // 2. CEO-only paths — explicitly absent (not greyed) for every other role.
+  // 2. CEO-only paths - explicitly absent (not greyed) for every other role.
   //    Per Executive spec §4.1 and ADR 012, System Administration is CEO-exclusive.
   if (CEO_ONLY_PATHS.some((p) => pathname.startsWith(p))) {
     return role === "ceo";
   }
 
-  // 2b. HR Complaints — absent for anyone outside HR Head/GM/CEO (HR spec §6.2/§6.4).
+  // 2b. HR Complaints - absent for anyone outside HR Head/GM/CEO (HR spec §6.2/§6.4).
   if (pathname.startsWith("/admin/hr/complaints")) {
     return COMPLAINTS_ACCESS_ROLES.includes(role);
   }
@@ -202,7 +202,7 @@ export function canAccess(role: UserRole, pathname: string): boolean {
   }
 
   // 4. Finance Overview exact-match (the /fin root is a dashboard landing page,
-  //    not just a path prefix — restrict who may land there)
+  //    not just a path prefix - restrict who may land there)
   if (pathname === "/fin") {
     return financeOverviewRoles.includes(role);
   }

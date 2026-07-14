@@ -47,7 +47,7 @@ function buildQrPayload(props: FinanceQrProofProps): string {
     verify: verificationUrl,
   };
 
-  // Compact JSON — scanners read this and can redirect to verify URL
+  // Compact JSON - scanners read this and can redirect to verify URL
   return JSON.stringify(payload);
 }
 
@@ -112,7 +112,7 @@ export function FinanceQrProof({
   const handleShare = async () => {
     const url = `${window.location.origin}${verificationPath}`;
     if (navigator.share) {
-      await navigator.share({ title: `Sunland QR — ${artifactRef}`, text: `Verify ${artifactType}: ${artifactRef}`, url });
+      await navigator.share({ title: `Sunland QR - ${artifactRef}`, text: `Verify ${artifactType}: ${artifactRef}`, url });
     } else {
       await handleCopy();
     }
@@ -189,7 +189,7 @@ export function FinanceQrProof({
           </div>
 
           <h3 className="title-serif mt-3.5 font-normal tracking-tight text-slate-900 leading-none">{artifactType}</h3>
-          <p className="mt-2 leading-relaxed text-slate-500 max-w-xl text-caption">
+          <p className="mt-2 leading-relaxed text-slate-400 max-w-xl text-caption">
             This document carries a cryptographically generated QR code ensuring its authenticity. Scan the code to verify this artifact against the central immutable registry.
           </p>
 

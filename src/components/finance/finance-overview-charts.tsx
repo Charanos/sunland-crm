@@ -199,7 +199,7 @@ export function FinanceOverviewCharts({ period }: FinanceOverviewChartsProps) {
       <BoardPanel className="lg:col-span-3 flex flex-col h-[380px]">
         <div className="mb-4">
           <h3 className="text-title-primary">Net Cash Position</h3>
-          <p className="text-meta-muted mt-0.5">{periodLabel} — cumulative</p>
+          <p className="text-meta-muted mt-0.5">{periodLabel} - cumulative</p>
         </div>
         <div className="flex-1 w-full min-h-0 -ml-4">
           <ResponsiveContainer width="100%" height="100%">

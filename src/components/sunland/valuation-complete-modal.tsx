@@ -102,7 +102,7 @@ export function ValuationCompleteModal({
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
-            <label className="label-caps text-slate-500 mb-1.5 block">Open Market Value (KES) <span className="text-rose-500">*</span></label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Open Market Value (KES) <span className="text-rose-500">*</span></label>
             <input
               type="number"
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -112,7 +112,7 @@ export function ValuationCompleteModal({
             />
           </div>
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Forced Sale Value (KES)</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Forced Sale Value (KES)</label>
             <input
               type="number"
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -122,7 +122,7 @@ export function ValuationCompleteModal({
             />
           </div>
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Insurance Value (KES)</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Insurance Value (KES)</label>
             <input
               type="number"
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -132,7 +132,7 @@ export function ValuationCompleteModal({
             />
           </div>
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Valid Until</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Valid Until</label>
             <input
               type="date"
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -142,7 +142,7 @@ export function ValuationCompleteModal({
             <p className="text-meta-muted mt-1">Defaults to 6 months if left blank.</p>
           </div>
           <div>
-            <label className="label-caps text-slate-500 mb-1.5 block">Report URL</label>
+            <label className="label-caps text-slate-400 mb-1.5 block">Report URL</label>
             <input
               className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
               placeholder="Link to the delivered report"

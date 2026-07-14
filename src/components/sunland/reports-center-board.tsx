@@ -66,7 +66,7 @@ export function ReportsCenterBoard() {
       <BoardHeader
         eyebrow={<Badge tone="data">Reports Center</Badge>}
         title="Reports Center"
-        description="The executive library of all generated reports across every department. Reports are generated from within each department's own module — this page aggregates and verifies them."
+        description="The executive library of all generated reports across every department. Reports are generated from within each department's own module - this page aggregates and verifies them."
         actions={
           <Button variant="secondary" size="sm" onClick={() => window.location.href = "/fin/reports/generate"}>
             <IconReportAnalytics size={14} />
@@ -92,20 +92,20 @@ export function ReportsCenterBoard() {
           <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
             <Link
               href="/admin/approvals"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Approvals</span>
               <span className="bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full text-meta-muted-strong">Queue</span>
             </Link>
             <Link
               href="/admin/hr/complaints"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Complaints</span>
             </Link>
             <Link
               href="/admin/support"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Support Tickets</span>
             </Link>
@@ -117,7 +117,7 @@ export function ReportsCenterBoard() {
             </Link>
             <Link
               href="/admin/system"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>System & Roles</span>
             </Link>
@@ -138,7 +138,7 @@ export function ReportsCenterBoard() {
                   "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm transition-all duration-200 font-medium",
                   isActive
                     ? "bg-[#151936] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-800",
+                    : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-800",
                 )}
               >
                 {tab.label}
@@ -153,7 +153,7 @@ export function ReportsCenterBoard() {
         <BoardPanel className="gsap-stagger space-y-4">
           <div>
             <h2 className="text-heading-primary">All Reports</h2>
-            <p className="mt-0.5 text-slate-500 text-base">
+            <p className="mt-0.5 text-slate-400 text-base">
               Newest first, across all departments. Generated from Finance, HR, and other modules.
             </p>
           </div>
@@ -180,7 +180,7 @@ export function ReportsCenterBoard() {
                         {dept.reportCount} reports
                       </span>
                     </div>
-                    <p className="mt-1 text-slate-500 text-base">{dept.description}</p>
+                    <p className="mt-1 text-slate-400 text-base">{dept.description}</p>
                   </div>
                 </div>
                 <EmptyState
@@ -201,8 +201,8 @@ export function ReportsCenterBoard() {
           <BoardPanel className="gsap-stagger space-y-3">
             <div>
               <h2 className="text-heading-primary">Document Verification</h2>
-              <p className="mt-0.5 text-slate-500 text-base">
-                Verify the authenticity of a QR-signed Sunland document. The same verification service Finance uses — exposed here for executive convenience.
+              <p className="mt-0.5 text-slate-400 text-base">
+                Verify the authenticity of a QR-signed Sunland document. The same verification service Finance uses - exposed here for executive convenience.
               </p>
             </div>
           </BoardPanel>

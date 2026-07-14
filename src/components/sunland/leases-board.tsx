@@ -145,7 +145,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       result = result.filter((l) => l.propertyType === typeFilter);
     }
 
-    // Apply expiry-window filter — active leases whose end date falls within
+    // Apply expiry-window filter - active leases whose end date falls within
     // the next N days (already past due doesn't count as "expiring soon").
     if (expiryFilter !== "all") {
       const windowDays = parseInt(expiryFilter, 10);
@@ -252,7 +252,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
             </div>
             <div className="flex items-end justify-between">
               <span className="font-mono text-4xl font-light text-white">{kpis.total}</span>
-              <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500 mb-1">ALL TIME</span>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-slate-400 mb-1">ALL TIME</span>
             </div>
           </div>
 
@@ -304,7 +304,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
               <span className="font-mono text-3xl font-light text-white tracking-tight">
                 {formatCompactKES(kpis.rentPool)}
               </span>
-              <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500 mt-2">CONTRACTED — ACTIVE ONLY</p>
+              <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400 mt-2">CONTRACTED - ACTIVE ONLY</p>
             </div>
           </div>
 
@@ -319,7 +319,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         >
           <IconAlertTriangle size={18} className="text-amber-500 shrink-0" aria-hidden="true" />
           <p className="text-body-regular text-amber-700">
-            {kpis.expiringSoon} lease{kpis.expiringSoon === 1 ? "" : "s"} expiring within 60 days — click to filter.
+            {kpis.expiringSoon} lease{kpis.expiringSoon === 1 ? "" : "s"} expiring within 60 days - click to filter.
           </p>
         </button>
       )}
@@ -408,7 +408,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
               <div className="size-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3">
                 <IconStarFilled size={24} className="opacity-40" />
               </div>
-              <p className="body-sm text-slate-500">No active leases currently.</p>
+              <p className="body-sm text-slate-400">No active leases currently.</p>
             </div>
           )}
         </div>
@@ -461,7 +461,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                     "px-3 py-1.5 body-sm rounded-lg transition-colors capitalize",
                     statusFilter === status
                       ? "bg-white text-slate-900 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
+                      : "text-slate-400 hover:text-slate-700"
                   )}
                 >
                   {status}
@@ -528,7 +528,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <button
                   type="button"
                   onClick={() => { setQuery(""); setStatusFilter("all"); setTypeFilter("all"); setExpiryFilter("all"); setPage(1); }}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 body-sm text-slate-500 hover:text-rose-600 transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 body-sm text-slate-400 hover:text-rose-600 transition-colors"
                 >
                   <IconX size={14} /> Clear All Filters
                 </button>
@@ -579,7 +579,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           </div>
                           <div>
                             <span className="body-md text-slate-900 block font-medium">{l.tenantName}</span>
-                            <span className="text-[11px] text-slate-400 block">{l.tenantEmail || l.tenantPhone || "—"}</span>
+                            <span className="text-[11px] text-slate-400 block">{l.tenantEmail || l.tenantPhone || "-"}</span>
                           </div>
                         </div>
                       </div>
@@ -648,7 +648,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                     return (
                       <tr key={l.id} className="transition-colors hover:bg-slate-50/40 group">
                         {/* ID */}
-                        <td className="px-3 py-4 font-mono text-slate-500 text-xs">
+                        <td className="px-3 py-4 font-mono text-slate-400 text-xs">
                           {l.id.slice(0, 8).toUpperCase()}
                         </td>
 
@@ -690,8 +690,8 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         <td className="px-3 py-4 text-right mono-stat text-slate-900 font-medium">
                           {formatCompactKES(parseFloat(l.monthlyRentKes))}
                         </td>
-                        <td className="px-3 py-4 text-right mono-stat text-slate-500">
-                          {l.depositKes ? formatCompactKES(parseFloat(l.depositKes)) : "—"}
+                        <td className="px-3 py-4 text-right mono-stat text-slate-400">
+                          {l.depositKes ? formatCompactKES(parseFloat(l.depositKes)) : "-"}
                         </td>
 
                         {/* Status */}

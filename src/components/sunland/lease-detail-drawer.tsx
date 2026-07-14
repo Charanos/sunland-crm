@@ -190,7 +190,7 @@ export function LeaseDetailDrawer({
               <span className="mono-data text-slate-600 text-lg">
                 {lease.depositKes ? formatCompactKES(parseFloat(lease.depositKes)) : "N/A"}
               </span>
-              <p className="label-caps text-slate-400 mt-0.5">Deposit Held — refundable liability</p>
+              <p className="label-caps text-slate-400 mt-0.5">Deposit Held - refundable liability</p>
             </div>
           </div>
 
@@ -222,7 +222,7 @@ export function LeaseDetailDrawer({
                 key={tile.label}
                 className="bg-slate-50/70 border border-slate-100 rounded-xl p-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors"
               >
-                <div className="size-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-500 shadow-sm shrink-0">
+                <div className="size-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm shrink-0">
                   <tile.icon size={16} stroke={1.5} />
                 </div>
                 <div>
@@ -237,7 +237,7 @@ export function LeaseDetailDrawer({
           <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
             <p className="label-caps text-slate-400 mb-3">Principal Tenant</p>
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-full bg-white border border-slate-200 shadow-sm shrink-0 flex items-center justify-center text-slate-500 font-medium">
+              <div className="size-10 rounded-full bg-white border border-slate-200 shadow-sm shrink-0 flex items-center justify-center text-slate-400 font-medium">
                 {getInitials(lease.tenantName)}
               </div>
               <div className="flex-1 min-w-0">
@@ -248,7 +248,7 @@ export function LeaseDetailDrawer({
                 {lease.tenantPhone && (
                   <a
                     href={`tel:${lease.tenantPhone}`}
-                    className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
+                    className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
                     aria-label="Call tenant"
                   >
                     <IconPhone size={14} stroke={2} />
@@ -257,7 +257,7 @@ export function LeaseDetailDrawer({
                 {lease.tenantEmail && (
                   <a
                     href={`mailto:${lease.tenantEmail}`}
-                    className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
+                    className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
                     aria-label="Email tenant"
                   >
                     <IconMail size={14} stroke={2} />

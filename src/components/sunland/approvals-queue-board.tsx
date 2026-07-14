@@ -147,8 +147,8 @@ function DecisionDialog({
             <h2 className="text-heading-primary">
               {isReject ? "Reject Request" : "Approve Request"}
             </h2>
-            <p className="mt-0.5 text-slate-500 text-base">
-              {request.requestType.replace(/_/g, " ")} — {request.requestedByName}
+            <p className="mt-0.5 text-slate-400 text-base">
+              {request.requestType.replace(/_/g, " ")} - {request.requestedByName}
             </p>
           </div>
           <button
@@ -179,7 +179,7 @@ function DecisionDialog({
           )}
 
           <div className="space-y-1.5">
-            <label htmlFor="decision-notes" className="label-caps text-slate-500">
+            <label htmlFor="decision-notes" className="label-caps text-slate-400">
               {isReject ? "Rejection Notes (required)" : "Decision Notes (optional)"}
             </label>
             <textarea
@@ -295,12 +295,12 @@ function ApprovalsTable({
                   {req.requiredApproverRole.replace(/_/g, " ")}
                 </td>
                 <td className="px-2 py-3 text-right mono-data text-slate-900">
-                  {req.amountKes ? formatCompactKES(parseFloat(req.amountKes)) : "—"}
+                  {req.amountKes ? formatCompactKES(parseFloat(req.amountKes)) : "-"}
                 </td>
                 <td className="px-2 py-3">
                   <Badge tone={statusTone(req.status)}>{req.status}</Badge>
                 </td>
-                <td className="px-2 py-3 text-slate-500 text-base whitespace-nowrap">
+                <td className="px-2 py-3 text-slate-400 text-base whitespace-nowrap">
                   {formatAge(req.requestedAt)}
                 </td>
                 {showDecisionButtons && (
@@ -387,7 +387,7 @@ export function ApprovalsQueueBoard() {
       <BoardHeader
         eyebrow={<Badge tone="warning">Approvals Queue</Badge>}
         title="Approvals"
-        description="Cross-department approval requests routed to GM and CEO. One row per request — decisions are final and audited."
+        description="Cross-department approval requests routed to GM and CEO. One row per request - decisions are final and audited."
         actions={
           <Button variant="secondary" size="sm" onClick={() => loadRequests(currentTab.statusParam)}>
             <IconRefresh size={14} /> Refresh
@@ -419,25 +419,25 @@ export function ApprovalsQueueBoard() {
             </Link>
             <Link
               href="/admin/hr/complaints"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Complaints</span>
             </Link>
             <Link
               href="/admin/support"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Support Tickets</span>
             </Link>
             <Link
               href="/admin/reports"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Reports Center</span>
             </Link>
             <Link
               href="/admin/system"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>System & Roles</span>
             </Link>
@@ -458,7 +458,7 @@ export function ApprovalsQueueBoard() {
                   "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm transition-all duration-200 font-medium",
                   isActive
                     ? "bg-[#151936] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-800",
+                    : "text-slate-400 hover:bg-slate-200/50 hover:text-slate-800",
                 )}
               >
                 {tab.label}
@@ -479,7 +479,7 @@ export function ApprovalsQueueBoard() {
         <KpiCard
           icon={IconClock}
           label="Total Value Pending"
-          value={totalAmount > 0 ? formatCompactKES(totalAmount) : "—"}
+          value={totalAmount > 0 ? formatCompactKES(totalAmount) : "-"}
           tone="data"
         />
         <KpiCard
@@ -491,7 +491,7 @@ export function ApprovalsQueueBoard() {
         <KpiCard
           icon={IconCheck}
           label="Resolved (all time)"
-          value="—"
+          value="-"
           tone="neutral"
         />
       </div>
@@ -504,7 +504,7 @@ export function ApprovalsQueueBoard() {
           <h2 className="text-heading-primary">
             {currentTab.label} Approvals
           </h2>
-          <p className="mt-0.5 text-slate-500 text-base">
+          <p className="mt-0.5 text-slate-400 text-base">
             {activeTab === "pending" && "Items awaiting a decision at your step. Approve or reject inline."}
             {activeTab === "escalated" && "Items you have escalated upward. Track their progress here."}
             {activeTab === "resolved" && "Full historical record of approved and rejected requests."}

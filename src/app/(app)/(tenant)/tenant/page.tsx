@@ -13,7 +13,7 @@ import { BoardPanel, KpiCard, Badge } from "@/components/ui/erp-primitives";
 import { formatCompactKES } from "@/lib/utils/format";
 import { PageTransition } from "@/components/shared/page-transition";
 
-// Mock scaffold — will connect to /api/tenant/* once P2 rental_ledger + P7 external identity land
+// Mock scaffold - will connect to /api/tenant/* once P2 rental_ledger + P7 external identity land
 const MOCK_TENANT = {
   unit: "Unit 4B, Park View Apartments, Westlands",
   balance: 0,
@@ -44,7 +44,7 @@ export default function TenantOverviewPage() {
     <PageTransition className="mx-auto max-w-2xl space-y-5">
       {/* Welcome */}
       <div className="rounded-2xl bg-[#151936] px-5 py-5 text-white">
-        <p className="label-caps text-white/40">Sunland ERP — Tenant Portal</p>
+        <p className="label-caps text-white/40">Sunland ERP - Tenant Portal</p>
         <h1 className="mt-1 text-xl text-white" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 500 }}>
           Welcome back
         </h1>
@@ -65,7 +65,7 @@ export default function TenantOverviewPage() {
               </p>
             </div>
             <p className={`mt-1 text-sm ${t.status === "current" ? "text-emerald-600" : "text-rose-600"}`}>
-              Balance: {t.balance === 0 ? "KES 0 — Fully Paid" : formatCompactKES(t.balance)}
+              Balance: {t.balance === 0 ? "KES 0 - Fully Paid" : formatCompactKES(t.balance)}
             </p>
           </div>
           <div className="text-right">
@@ -108,7 +108,7 @@ export default function TenantOverviewPage() {
       <BoardPanel className="gsap-stagger space-y-4">
         <div>
           <h2 className="text-heading-primary">Recent Payments</h2>
-          <p className="mt-0.5 text-slate-500 text-base">Your confirmed rent payment history.</p>
+          <p className="mt-0.5 text-slate-400 text-base">Your confirmed rent payment history.</p>
         </div>
         <div className="divide-y divide-slate-100">
           {MOCK_RECENT_PAYMENTS.map((payment) => (

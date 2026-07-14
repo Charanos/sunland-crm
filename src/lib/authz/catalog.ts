@@ -1,11 +1,11 @@
 import type { UserRole } from "@/types";
 
 /**
- * Permission catalog — P0 scope only. Keys follow `<module>.<resource>.<action>`
+ * Permission catalog - P0 scope only. Keys follow `<module>.<resource>.<action>`
  * (backend master §3.1). Grounded in the modules that have a real data model
  * today (finance/approvals on approval_requests, properties/leases/maintenance,
  * crm contacts/leads, identity users/roles). HR/BD/Front/Ops get real module
- * permissions once their own phase builds their tables — see master doc §7;
+ * permissions once their own phase builds their tables - see master doc §7;
  * inventing keys for tables that don't exist yet would just be code that lies.
  */
 export type PermissionDefinition = {
@@ -30,7 +30,7 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
   perm("identity.session.read", "List active sessions"),
   perm("identity.session.revoke", "Revoke a session"),
 
-  // Settings (thresholds/fees as data — never hardcoded)
+  // Settings (thresholds/fees as data - never hardcoded)
   perm("settings.entity.read", "View entity settings/thresholds"),
   perm("settings.entity.write", "Edit entity settings/thresholds"),
 
@@ -58,23 +58,23 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
   perm("finance.approval.create", "Raise an approval request"),
   perm("finance.approval.decide", "Approve or reject an approval request"),
 
-  // Scheduling — self-scoped "my calendar" (organizer or attendee) never
+  // Scheduling - self-scoped "my calendar" (organizer or attendee) never
   // needs a permission at all; these gate org-wide visibility/creation only.
   perm("scheduling.event.read", "View every calendar event across the org, not just your own"),
   perm("scheduling.event.write", "Create/edit/delete calendar events on behalf of the org"),
 
-  // Support — anyone can file their own ticket with no grant at all (same
+  // Support - anyone can file their own ticket with no grant at all (same
   // self-scoped pattern as scheduling); this is the literal "admin is the
   // main support endpoint" permission, restricted to CEO/GM only.
   perm("support.ticket.manage", "View and manage every support ticket across the org, not just your own"),
 
-  // HR Complaints — HR Head's working-queue grant. GM/CEO visibility into
+  // HR Complaints - HR Head's working-queue grant. GM/CEO visibility into
   // escalated complaints is role-tier-based (see src/lib/services/complaints.ts),
   // not a granted permission, since that authority is positional, exactly
   // like the approvals-tier system in dashboard.ts.
   perm("hr.complaint.manage", "View and act on complaints currently owned by HR Head's queue"),
 
-  // Operations — cross-department Projects. A shared artifact, not personal
+  // Operations - cross-department Projects. A shared artifact, not personal
   // data, so no self-scoped "mine" split like scheduling/support have.
   perm("operations.project.read", "View cross-department projects"),
   perm("operations.project.write", "Create/edit/delete cross-department projects"),
@@ -82,12 +82,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
 
 const permissionKeys = PERMISSION_CATALOG.map((p) => p.key);
 
-/** All permission keys belonging to a module — used for broad role grants. */
+/** All permission keys belonging to a module - used for broad role grants. */
 function keysFor(module: string): string[] {
   return permissionKeys.filter((key) => key.startsWith(`${module}.`));
 }
 
-/** All permission keys ending in `.read` — the read-everywhere auditor shape. */
+/** All permission keys ending in `.read` - the read-everywhere auditor shape. */
 function allReadKeys(): string[] {
   return permissionKeys.filter((key) => key.endsWith(".read"));
 }
@@ -101,17 +101,17 @@ export type SystemRoleDefinition = {
 
 // Only the 14 real roles below get seeded permission sets. The retired
 // aliases (line_manager, bd_head, bd_agent, agent, accounts_manager,
-// accounts_officer, hr_manager, auditor — superseded by property_manager for
+// accounts_officer, hr_manager, auditor - superseded by property_manager for
 // the old BD/line-manager family, or by their non-alias counterparts) stay in
 // the user_role enum for migration compatibility but are deliberately granted
-// nothing here — retiring them from the enum itself is a later cleanup, not a
+// nothing here - retiring them from the enum itself is a later cleanup, not a
 // P0 concern.
 export const SYSTEM_ROLES: SystemRoleDefinition[] = [
   {
     slug: "ceo",
     name: "Chief Executive Officer",
     scopeType: "global",
-    // Super-admin = every permission, seeded as real rows — not a code bypass.
+    // Super-admin = every permission, seeded as real rows - not a code bypass.
     permissions: permissionKeys,
   },
   {
@@ -122,7 +122,7 @@ export const SYSTEM_ROLES: SystemRoleDefinition[] = [
     permissions: permissionKeys.filter((key) => key !== "identity.role.write"),
   },
   {
-    // ADR 013 §13.1 / ADR 014 §14.3 — sits above property_manager in the BD/
+    // ADR 013 §13.1 / ADR 014 §14.3 - sits above property_manager in the BD/
     // property-management reporting line (owns Property Managers, Line
     // Managers, Sales, Marketers). Specced in ADR 013 but never implemented
     // until ADR 014 made it load-bearing for mandate approval routing.

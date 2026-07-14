@@ -13,12 +13,12 @@ This document compiles and details all the implementations, aesthetic enhancemen
 ### 1.2 Access Emulation Profiles
 - **File:** [page.tsx](file:///c:/Users/user/OneDrive/Documents/Sunland/sunland-crm/src/app/(auth)/login/page.tsx)
 - **Change:** Configured the `EMULATION_PROFILES` array to display the six primary client roles:
-  1. **CEO** (Paul Amos — `ceo` portal: `/admin`)
-  2. **GM** (Grace Mutua — `general_manager` portal: `/admin`)
-  3. **Finance** (Dennis Munge — `finance_head` portal: `/fin`)
-  4. **HR** (Cody Fisher — `hr_head` portal: `/admin/hr`)
-  5. **Line Manager / Business Dev** (Jared Omondi — `line_manager` portal: `/admin/pipeline`)
-  6. **Front Office** (Sharon Koech — `front_office_head` portal: `/admin/front-office`)
+  1. **CEO** (Paul Amos - `ceo` portal: `/admin`)
+  2. **GM** (Grace Mutua - `general_manager` portal: `/admin`)
+  3. **Finance** (Dennis Munge - `finance_head` portal: `/fin`)
+  4. **HR** (Cody Fisher - `hr_head` portal: `/admin/hr`)
+  5. **Line Manager / Business Dev** (Jared Omondi - `line_manager` portal: `/admin/pipeline`)
+  6. **Front Office** (Sharon Koech - `front_office_head` portal: `/admin/front-office`)
 - **Visuals:** Features monospaced initial blocks, clean outline cards, hover shadows, and smooth page transitions upon selection.
 
 ### 1.3 Unified Seeding Sync

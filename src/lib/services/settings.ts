@@ -11,7 +11,7 @@ import { parseInput } from "@/lib/validation/parse";
 
 /**
  * Reads a single company-wide (Group entity) setting value for business logic
- * to branch on — thresholds as data, never hardcoded (master doc §5.1). Falls
+ * to branch on - thresholds as data, never hardcoded (master doc §5.1). Falls
  * back rather than throwing so a not-yet-seeded environment degrades to the
  * documented default instead of hard-failing the caller's whole operation.
  */
@@ -72,7 +72,7 @@ export async function upsertSetting(ctx: CallerContext, rawInput: unknown) {
 }
 
 /**
- * Real threshold values — the P0 design's whole point was "thresholds as
+ * Real threshold values - the P0 design's whole point was "thresholds as
  * data, never hardcoded" (backend master §5.1); this is what actually
  * populates that promise. Company-wide, so seeded under the Group entity;
  * revamp guide §4 is the source for each value.
@@ -99,11 +99,11 @@ export const DEFAULT_SETTINGS: Array<{ key: string; value: unknown; description:
     description: "Default management-fee rate for a new mandate; a different rate requires justification",
   },
 
-  // ── Executive Dashboard Spec §6.2 — Consolidated Approval Authority Table.
+  // ── Executive Dashboard Spec §6.2 - Consolidated Approval Authority Table.
   // Additive to the four keys above (kept untouched for compatibility with
   // existing readers); each row below maps 1:1 to a table row. GM/CEO figures
   // are the only ones ever edited from System Administration (spec §8.3, CEO
-  // only) — the two existing generic petty-cash keys above stay as the
+  // only) - the two existing generic petty-cash keys above stay as the
   // legacy single-threshold reading some code may still use, while these
   // split property vs. office as the table actually specifies.
   {

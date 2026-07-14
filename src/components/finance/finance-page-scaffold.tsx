@@ -163,7 +163,7 @@ function StatementPreview({ tabId }: { tabId: string }) {
           <h2 className="title-serif font-normal text-slate-900">
             Statement Preview
           </h2>
-          <p className="mt-1 text-slate-500 text-base">
+          <p className="mt-1 text-slate-400 text-base">
             Document-style layout scaffold for the computed finance statement.
           </p>
         </div>
@@ -298,7 +298,7 @@ export function FinancePageScaffold({
               <h2 className="text-heading-primary">
                 {tab?.label ?? section.label} Work Queue
               </h2>
-              <p className="mt-1 text-slate-500 text-base">
+              <p className="mt-1 text-slate-400 text-base">
                 Production table scaffold with drawer row targets and 5-row pagination boundary.
               </p>
             </div>
@@ -330,7 +330,7 @@ export function FinancePageScaffold({
                         </td>
                         <td className="px-2 py-3">
                           <p className="text-title-primary">{row.subject}</p>
-                          <p className="mt-0.5 text-base text-slate-500">{row.detail}</p>
+                          <p className="mt-0.5 text-base text-slate-400">{row.detail}</p>
                         </td>
                         <td className="px-2 py-3 text-right text-slate-900 mono-data">
                           {formatCompactKES(row.amount)}
@@ -338,14 +338,14 @@ export function FinancePageScaffold({
                         <td className="px-2 py-3">
                           <Badge tone={statusTone[row.status]}>{row.status}</Badge>
                         </td>
-                        <td className="px-2 py-3 text-slate-500 mono-data">
+                        <td className="px-2 py-3 text-slate-400 mono-data">
                           {row.date}
                         </td>
                         <td className="px-2 py-3 text-right">
                           <button
                             type="button"
                             aria-label={`Open ${row.ref}`}
-                            className="inline-flex size-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                            className="inline-flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
                           >
                             <IconDotsVertical size={15} />
                           </button>

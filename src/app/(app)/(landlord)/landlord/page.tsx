@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/erp-primitives";
 import { formatCompactKES } from "@/lib/utils/format";
 import { PageTransition } from "@/components/shared/page-transition";
 
-// Mock data scaffold — will connect to /api/landlord/* once P2 mandates + P7 external identity land
+// Mock data scaffold - will connect to /api/landlord/* once P2 mandates + P7 external identity land
 const MOCK_OVERVIEW = {
   thisMonthCollected: 2850000,
   managementFee: 285000,
@@ -37,7 +37,7 @@ export default function LandlordOverviewPage() {
     <PageTransition className="mx-auto max-w-5xl space-y-6">
       {/* Welcome banner */}
       <div className="rounded-2xl bg-[#151936] px-6 py-5 text-white">
-        <p className="label-caps text-white/40">Sunland ERP — Landlord Portal</p>
+        <p className="label-caps text-white/40">Sunland ERP - Landlord Portal</p>
         <h1 className="mt-1 text-2xl text-white" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 500 }}>
           Your Portfolio Overview
         </h1>
@@ -80,8 +80,8 @@ export default function LandlordOverviewPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-heading-primary">June 2026 Remittance Summary</h2>
-            <p className="mt-0.5 text-slate-500 text-base">
-              Final remittance is derived from the Sunland Finance ledger — every figure is auditable.
+            <p className="mt-0.5 text-slate-400 text-base">
+              Final remittance is derived from the Sunland Finance ledger - every figure is auditable.
             </p>
           </div>
           <Badge tone="warning">Pending Disbursement</Badge>
@@ -108,14 +108,14 @@ export default function LandlordOverviewPage() {
       <BoardPanel className="gsap-stagger space-y-4">
         <div>
           <h2 className="text-heading-primary">Managed Properties</h2>
-          <p className="mt-0.5 text-slate-500 text-base">Occupancy and arrears status across your portfolio.</p>
+          <p className="mt-0.5 text-slate-400 text-base">Occupancy and arrears status across your portfolio.</p>
         </div>
         <div className="divide-y divide-slate-100">
           {MOCK_PROPERTIES.map((property) => (
             <div key={property.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
               <div className="flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-100">
-                  <IconBuildingCommunity size={17} className="text-slate-500" />
+                  <IconBuildingCommunity size={17} className="text-slate-400" />
                 </div>
                 <div>
                   <p className="text-title-primary">{property.name}</p>

@@ -78,7 +78,7 @@ export default function SalesChart({
             height={36}
             iconSize={8}
             iconType="circle"
-            formatter={(value) => <span className="text-slate-500 font-medium text-sm ">{value}</span>}
+            formatter={(value) => <span className="text-slate-400 font-medium text-sm ">{value}</span>}
           />
           {showRevenue && (
             <Bar

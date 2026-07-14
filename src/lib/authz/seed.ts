@@ -4,7 +4,7 @@ import { permissions, roles, rolePermissions, userRoles } from "@/db/schema";
 import { PERMISSION_CATALOG, SYSTEM_ROLES } from "@/lib/authz/catalog";
 
 /**
- * Idempotent: safe to run on every deploy/seed. System roles are declarative —
+ * Idempotent: safe to run on every deploy/seed. System roles are declarative -
  * their role_permissions are fully replaced from SYSTEM_ROLES each run, so the
  * catalog in code is always the source of truth (an API-side edit to a system
  * role's permissions would otherwise silently vanish on the next seed).

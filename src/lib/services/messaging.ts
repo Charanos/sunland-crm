@@ -8,7 +8,7 @@ import type { CallerContext } from "@/lib/services/types";
 import { createChannelSchema, getOrCreateDmSchema, sendMessageSchema } from "@/lib/validation/messaging";
 import { parseInput } from "@/lib/validation/parse";
 
-/** Access control for messaging is participancy, not a permission — never confirms existence to a non-participant. */
+/** Access control for messaging is participancy, not a permission - never confirms existence to a non-participant. */
 async function assertParticipant(conversationId: string, userId: string) {
   const [participant] = await db
     .select()
@@ -43,9 +43,9 @@ export async function listConversations(ctx: CallerContext, filters: { type?: "d
   );
   const otherUsers = otherUserIds.length
     ? await db
-        .select({ id: users.id, name: users.name, email: users.email, role: users.role })
-        .from(users)
-        .where(inArray(users.id, otherUserIds))
+      .select({ id: users.id, name: users.name, email: users.email, role: users.role })
+      .from(users)
+      .where(inArray(users.id, otherUserIds))
     : [];
 
   return convoRows
@@ -77,7 +77,7 @@ export async function listConversations(ctx: CallerContext, filters: { type?: "d
     .sort((a, b) => (b.lastMessageAt?.getTime() ?? 0) - (a.lastMessageAt?.getTime() ?? 0));
 }
 
-/** Finds the existing 2-person dm between these users, or creates one — avoids duplicate DM threads. */
+/** Finds the existing 2-person dm between these users, or creates one - avoids duplicate DM threads. */
 export async function getOrCreateDm(ctx: CallerContext, rawInput: unknown) {
   const input = parseInput(getOrCreateDmSchema, rawInput);
   const entityId = await resolveEntityId(input.entityId);
@@ -155,7 +155,7 @@ export async function listMessages(
   if (filters.before) conditions.push(lt(messages.createdAt, new Date(filters.before)));
 
   // Most recent `limit` messages before the cursor, then flipped back to
-  // chronological order — not a plain ascending scan, which would return the
+  // chronological order - not a plain ascending scan, which would return the
   // *oldest* messages before the cursor instead of the ones nearest it.
   const rows = await db
     .select()
@@ -182,7 +182,7 @@ export async function sendMessage(ctx: CallerContext, conversationId: string, ra
     try {
       await publishToChannel(`conversation-${conversationId}`, "message", message);
     } catch {
-      // Realtime delivery is a convenience — the row is already committed.
+      // Realtime delivery is a convenience - the row is already committed.
     }
 
     return message;

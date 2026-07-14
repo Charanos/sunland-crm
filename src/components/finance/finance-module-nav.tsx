@@ -54,7 +54,7 @@ export function FinanceModuleNav() {
               <h2 className="truncate leading-none text-title-primary">
                 {activeGroup.title}
               </h2>
-              <p className="mt-1.5 truncate text-sm text-slate-500">
+              <p className="mt-1.5 truncate text-sm text-slate-400">
                 {activeGroup.description}
               </p>
             </div>
@@ -77,7 +77,7 @@ export function FinanceModuleNav() {
                       "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-sm  font-medium transition",
                       isActive
                         ? "bg-[#151936] text-white shadow-sm"
-                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
+                        : "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
                     )}
                   >
                     <span>{section.label}</span>
@@ -111,7 +111,7 @@ export function FinanceModuleNav() {
                     "inline-flex px-3.5 py-1.5 text-base font-medium rounded-lg transition-all flex items-center gap-1.5",
                     isActive
                       ? "bg-[#151936] text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50",
+                      : "text-slate-400 hover:text-slate-900 hover:bg-slate-50",
                   )}
                 >
                   <span>{tab.label}</span>

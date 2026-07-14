@@ -13,7 +13,7 @@ const NAV_ITEMS = [
 
 /**
  * Shared cross-linking header for the four Property Portfolio boards
- * (Properties/Leases/Maintenance/Valuations) — was duplicated verbatim
+ * (Properties/Leases/Maintenance/Valuations) - was duplicated verbatim
  * across all four board files; extracted here so the nav only needs to
  * change in one place.
  */
@@ -39,7 +39,7 @@ export function PortfolioHubNav({ active }: { active: "properties" | "leases" | 
               href={item.href}
               className={cn(
                 "body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
-                isActive ? "bg-[#151936] text-white shadow-sm" : "text-slate-500 hover:text-slate-900 hover:bg-white/45",
+                isActive ? "bg-[#151936] text-white shadow-sm" : "text-slate-400 hover:text-slate-900 hover:bg-white/45",
               )}
             >
               <span>{item.label}</span>

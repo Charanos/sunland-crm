@@ -54,12 +54,16 @@ export const properties = pgTable(
     bedrooms: integer("bedrooms"),
     bathrooms: integer("bathrooms"),
     sizeSqft: integer("size_sqft"),
-    // Marketing/context blurb rendered on the property full view — the board
+    landAreaSqft: integer("land_area_sqft"),
+    yearBuilt: integer("year_built"),
+    parkingSpaces: integer("parking_spaces"),
+    amenities: jsonb("amenities").$type<string[]>().default([]),
+    // Marketing/context blurb rendered on the property full view - the board
     // was already designed to show it; the column just didn't exist yet.
     description: text("description"),
     media: jsonb("media").$type<Array<{ url: string; alt?: string; isPrimary?: boolean }>>().default([]),
     // For multi-unit properties (apartment blocks, hostels): the mix of unit
-    // types making up the property — e.g. 10 bedsitters + 6 one-bedrooms.
+    // types making up the property - e.g. 10 bedsitters + 6 one-bedrooms.
     // A jsonb array rather than a relational `units` table: the master doc
     // flags a real `units` table as a future item once per-unit tracking
     // (individual occupancy/lease-per-unit) is needed; a flat breakdown is

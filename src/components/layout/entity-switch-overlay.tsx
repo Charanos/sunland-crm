@@ -154,7 +154,7 @@ function EntitySwitchOverlayInner() {
                 animate={{ opacity: progress > 30 ? 1 : 0.2 }}
                 className="mt-1.5 block font-mono font-medium text-white/90 text-lg"
               >
-                {progress > 30 ? targetEntity.stats.properties : "—"}
+                {progress > 30 ? targetEntity.stats.properties : "-"}
               </motion.span>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 text-center transition hover:border-white/[0.08]">
@@ -163,7 +163,7 @@ function EntitySwitchOverlayInner() {
                 animate={{ opacity: progress > 55 ? 1 : 0.2 }}
                 className="mt-1.5 block font-mono font-medium text-white/90 text-lg"
               >
-                {progress > 55 ? targetEntity.stats.contacts : "—"}
+                {progress > 55 ? targetEntity.stats.contacts : "-"}
               </motion.span>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 text-center transition hover:border-white/[0.08]">
@@ -172,7 +172,7 @@ function EntitySwitchOverlayInner() {
                 animate={{ opacity: progress > 80 ? 1 : 0.2 }}
                 className="mt-1.5 block text-[var(--primary)] mono-data"
               >
-                {progress > 80 ? targetEntity.stats.revenue : "—"}
+                {progress > 80 ? targetEntity.stats.revenue : "-"}
               </motion.span>
             </div>
           </div>

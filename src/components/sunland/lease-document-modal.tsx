@@ -88,7 +88,7 @@ export function LeaseDocumentModal({
             </div>
             <div>
               <h2 className="font-medium text-slate-900 tracking-tight text-lg">Upload Document</h2>
-              <p className="body-sm text-slate-500 mt-0.5">{leaseLabel}</p>
+              <p className="body-sm text-slate-400 mt-0.5">{leaseLabel}</p>
             </div>
           </div>
           <button
@@ -101,7 +101,7 @@ export function LeaseDocumentModal({
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">Document Title</label>
+            <label className="block text-slate-400 mb-1.5 label-caps">Document Title</label>
             <input
               required
               type="text"
@@ -112,7 +112,7 @@ export function LeaseDocumentModal({
             />
           </div>
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">Document Type</label>
+            <label className="block text-slate-400 mb-1.5 label-caps">Document Type</label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as typeof type)}
@@ -124,7 +124,7 @@ export function LeaseDocumentModal({
             </select>
           </div>
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">Document URL</label>
+            <label className="block text-slate-400 mb-1.5 label-caps">Document URL</label>
             <input
               required
               type="url"

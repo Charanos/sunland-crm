@@ -1,4 +1,4 @@
-# Sunland Front Office Dashboard — Comprehensive Functional Spec
+# Sunland Front Office Dashboard - Comprehensive Functional Spec
 
 **Document status:** Drill-down of `SUNLAND_ERP_IMPLEMENTATION_SPEC.md` Section 8, expanded to the depth required to build Front Office as its own near-standalone logistics and office administration system inside the ERP shell, matching the rigor of `SUNLAND_FINANCE_DASHBOARD_SPEC.md`, `SUNLAND_HR_DASHBOARD_SPEC.md`, and `SUNLAND_BD_DASHBOARD_SPEC.md`.
 **Relationship to other documents:** Inherits the design system, entity context, locked components, and RBAC role list without modification. Where Finance's challenge was financial-logic integrity, HR's was access control, and BD's was territory ownership plus request transparency, Front Office's is the mirror image of BD's: it's the **execution layer** other departments depend on. BD's Liaison & Requests page (BD spec 8.4) is only as good as Front Office's discipline in keeping the underlying status current. This document is, in large part, the resolution of every "Front Office will handle this" reference left open in the Finance, HR, and BD specs.
@@ -215,21 +215,21 @@ Built last (Section 16), as with every other module, but with the "Today" strip 
 #### Vehicle Requests (default)
 
 - **Columns:** Requested By, Purpose, Date, Destination, Internal State, External Status (Section 6.1, shown for staff reference even though it's the requester-facing label).
-- **Row action — "Check Availability":** opens a fleet calendar for the requested date.
-- **Row action — "Assign Vehicle & Driver":** Modal, vehicle selector (filtered to available status), driver selector (filtered to those with a current license per Section 6.3). On confirm, internal state moves to Assigned/Confirmed, external status flips to Completed, and the cross-channel event (Section 5.3) notifies BD immediately.
-- **Row action — "Escalate to GM":** used when no vehicle is available or external hire is implied (master spec 4.1). Writes an `approval_requests` row, internal state moves to Escalated, external status shows Awaiting Approval.
+- **Row action - "Check Availability":** opens a fleet calendar for the requested date.
+- **Row action - "Assign Vehicle & Driver":** Modal, vehicle selector (filtered to available status), driver selector (filtered to those with a current license per Section 6.3). On confirm, internal state moves to Assigned/Confirmed, external status flips to Completed, and the cross-channel event (Section 5.3) notifies BD immediately.
+- **Row action - "Escalate to GM":** used when no vehicle is available or external hire is implied (master spec 4.1). Writes an `approval_requests` row, internal state moves to Escalated, external status shows Awaiting Approval.
 - **Drawer:** full request detail, assignment history, Activity Log.
 
 #### Fleet & Drivers
 
-- **Vehicles sub-table:** registration, make/model, capacity, status (available/in-use/maintenance/out-of-service). **Row action — "Mark for Maintenance":** routes the vehicle into the existing Operations & Maintenance module's ticketing system (Operations spec) rather than building a second maintenance tracker here, reusing infrastructure that already exists instead of duplicating it.
+- **Vehicles sub-table:** registration, make/model, capacity, status (available/in-use/maintenance/out-of-service). **Row action - "Mark for Maintenance":** routes the vehicle into the existing Operations & Maintenance module's ticketing system (Operations spec) rather than building a second maintenance tracker here, reusing infrastructure that already exists instead of duplicating it.
 - **Drivers sub-table:** employee (linked to HR's employee record, not re-created here), license status (read-only, from HR), current assignment, availability. **Adding a driver links an existing HR employee with the Driver role**; it does not create a new employee record, that stays HR's flow (HR spec 8.1).
-- **Modal — Add Vehicle.**
+- **Modal - Add Vehicle.**
 
 #### Trip Logs
 
 - **Columns:** Vehicle, Driver, Date, Destination, Mileage, Fuel Cost, Linked Vehicle Request.
-- **Modal — Log Trip.** Fuel and mileage costs post to Finance's Accounts Payable as an office operating expense (Finance spec 7.5) rather than sitting as an isolated, financially invisible log entry, the same "every cost eventually surfaces to Finance" principle that governs petty cash everywhere else in this ERP.
+- **Modal - Log Trip.** Fuel and mileage costs post to Finance's Accounts Payable as an office operating expense (Finance spec 7.5) rather than sitting as an isolated, financially invisible log entry, the same "every cost eventually surfaces to Finance" principle that governs petty cash everywhere else in this ERP.
 
 ---
 
@@ -241,7 +241,7 @@ Built last (Section 16), as with every other module, but with the "Today" strip 
 
 - Day/week/month toggle, color-coded by `appointment_type` using opacity variants of the Brand Dark token, the same color-economy choice made for HR's leave calendar (HR spec 8.2), rather than introducing new hues per type.
 - **Conflict detection:** a new appointment overlapping an existing one for the same attendee, property, or resource shows a soft warning before save, not a hard block, since legitimate near-overlaps happen (an agent finishing one viewing as another starts) and shouldn't be prevented outright.
-- **Modal — New Appointment:** type, title, time, location, attendees, optional `linked_module`/`linked_record_id`, pre-filled automatically when created from within HR's Interview Schedule or BD's listing flow rather than chosen manually in those contexts.
+- **Modal - New Appointment:** type, title, time, location, attendees, optional `linked_module`/`linked_record_id`, pre-filled automatically when created from within HR's Interview Schedule or BD's listing flow rather than chosen manually in those contexts.
 - **Drawer:** detail, attendee list, reschedule/cancel actions, Activity Log.
 
 #### Upcoming
@@ -273,7 +273,7 @@ Structurally identical to BD's Petty Cash pages (BD spec 8.3), same component fa
 #### Application Forms (default)
 
 - **Columns:** Applicant Name, Type (tenant/landlord), Property, Status (Received/Under Review/Processed), Submitted By.
-- **Modal — New Application Form:** digitized intake fields mirroring the physical form.
+- **Modal - New Application Form:** digitized intake fields mirroring the physical form.
 - **Drawer:** full detail, document preview/upload, processing actions.
 
 #### Offer Letters
@@ -286,7 +286,7 @@ Structurally identical to BD's Petty Cash pages (BD spec 8.3), same component fa
 This is the execution side of the workflow BD initiates on its own Liaison & Requests page (BD spec 8.4). Per Section 1, **this is the same underlying record BD tracks, not a separate copy**: BD's view is the originator's tracking view, this is the executor's working view.
 
 - **Columns:** Landlord, Property, Status (Draft Received → Formalizing → Sent for Approval → Signed/Active).
-- **Row action — "Formalize":** Front Office drafts the actual letter document from BD's submitted terms summary plus existing landlord/property data. On completion, the record routes into the Approval Engine per master spec 4.3, the same threshold-gated pattern used everywhere else in this ERP, and status changes are visible back on BD's Liaison page in real time (Section 5.3).
+- **Row action - "Formalize":** Front Office drafts the actual letter document from BD's submitted terms summary plus existing landlord/property data. On completion, the record routes into the Approval Engine per master spec 4.3, the same threshold-gated pattern used everywhere else in this ERP, and status changes are visible back on BD's Liaison page in real time (Section 5.3).
 - **On reaching Signed/Active:** Finance's Mandates module (Finance spec 7.3) activates the mandate record, and BD's Landlords > Mandate Status tab (BD spec 8.1) flips from draft to active automatically, closing the loop that started as a prospecting conversation in BD.
 
 ---

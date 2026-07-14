@@ -30,7 +30,7 @@ const PUBLIC_COLUMNS = {
   updatedAt: users.updatedAt,
 };
 
-/** Always entity-filtered — consistent with every other module's scopeEntityFilter reads. */
+/** Always entity-filtered - consistent with every other module's scopeEntityFilter reads. */
 export async function listUsers(ctx: CallerContext, filters: { entityId?: string } = {}) {
   const rawEntityId = filters.entityId ?? ctx.entityId;
   if (!rawEntityId) throw new DomainValidationError("entityId is required");
@@ -53,7 +53,7 @@ export async function getUser(ctx: CallerContext, userId: string) {
   return target;
 }
 
-/** Self-service only — name/title/avatarUrl. Never role/status/entity (that's updateUserAccess). */
+/** Self-service only - name/title/avatarUrl. Never role/status/entity (that's updateUserAccess). */
 export async function updateUserProfile(ctx: CallerContext, userId: string, rawInput: unknown) {
   if (userId !== ctx.user.id) {
     throw new ForbiddenError("You may only edit your own profile");
@@ -81,7 +81,7 @@ export async function updateUserProfile(ctx: CallerContext, userId: string, rawI
 }
 
 /**
- * Staff-only — role/isActive/primaryEntityId. This is the actual
+ * Staff-only - role/isActive/primaryEntityId. This is the actual
  * permission-escalation-adjacent surface (changing `role` changes default
  * portal routing; isActive gates login entirely), so it's blocked from ever
  * deactivating the last active CEO (isLastSuperAdmin).
@@ -120,7 +120,7 @@ export async function updateUserAccess(ctx: CallerContext, userId: string, rawIn
 }
 
 /**
- * No email service exists yet (checked — none configured), so this returns
+ * No email service exists yet (checked - none configured), so this returns
  * a one-time plaintext temporary password for the admin to relay out-of-band,
  * rather than building a speculative invite/reset-token flow that isn't
  * needed for anything else in the system today.

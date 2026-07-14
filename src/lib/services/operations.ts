@@ -12,7 +12,7 @@ import { parseInput } from "@/lib/validation/parse";
 type ProjectDepartment = (typeof projectDepartment.enumValues)[number];
 type ProjectStatus = (typeof projectStatus.enumValues)[number];
 
-/** Projects are a shared, cross-department artifact, not personal data — no self-scoped "mine" split. */
+/** Projects are a shared, cross-department artifact, not personal data - no self-scoped "mine" split. */
 export async function listProjects(
   ctx: CallerContext,
   filters: { entityId?: string; department?: string; status?: string } = {},
@@ -122,7 +122,7 @@ export async function deleteProject(ctx: CallerContext, projectId: string) {
   const linkedEvents = await db.select().from(calendarEvents).where(eq(calendarEvents.projectId, projectId));
   if (linkedEvents.length > 0) {
     throw new ConflictError(
-      `Cannot delete project with ${linkedEvents.length} linked calendar event(s) — unlink or delete them first`,
+      `Cannot delete project with ${linkedEvents.length} linked calendar event(s) - unlink or delete them first`,
     );
   }
 

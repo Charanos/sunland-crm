@@ -133,7 +133,7 @@ function LeadFormModalContent({
               <h2 className="font-medium text-slate-900 tracking-tight text-lg">
                 {initialData ? "Modify Deal Status" : "Log New CRM Opportunity"}
               </h2>
-              <p className="text-base text-slate-500 mt-0.5">Enlist leads, budget ranges, and property links.</p>
+              <p className="text-base text-slate-400 mt-0.5">Enlist leads, budget ranges, and property links.</p>
             </div>
           </div>
           <button
@@ -150,7 +150,7 @@ function LeadFormModalContent({
           <div className="space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Client / Organization Name</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Client / Organization Name</label>
               <input
                 required
                 type="text"
@@ -164,7 +164,7 @@ function LeadFormModalContent({
             {/* Email & Phone */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Email Address</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Email Address</label>
                 <input
                   required
                   type="email"
@@ -175,7 +175,7 @@ function LeadFormModalContent({
                 />
               </div>
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Phone Number</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Phone Number</label>
                 <input
                   required
                   type="tel"
@@ -190,7 +190,7 @@ function LeadFormModalContent({
             {/* Property Interest & Budget */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Property of Interest</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Property of Interest</label>
                 <select
                   value={formData.propertyInterest}
                   onChange={e => setFormData({ ...formData, propertyInterest: e.target.value })}
@@ -200,7 +200,7 @@ function LeadFormModalContent({
                 </select>
               </div>
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Estimated Budget (KES)</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Estimated Budget (KES)</label>
                 <input
                   required
                   type="number"
@@ -215,7 +215,7 @@ function LeadFormModalContent({
             {/* Stage & Source */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Deal Stage</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Deal Stage</label>
                 <select
                   value={formData.stage}
                   onChange={e => setFormData({ ...formData, stage: e.target.value as PipelineStage })}
@@ -225,7 +225,7 @@ function LeadFormModalContent({
                 </select>
               </div>
               <div>
-                <label className="block text-slate-500 mb-1.5 label-caps">Lead Source</label>
+                <label className="block text-slate-400 mb-1.5 label-caps">Lead Source</label>
                 <select
                   value={formData.source}
                   onChange={e => setFormData({ ...formData, source: e.target.value as PipelineSource })}
@@ -238,7 +238,7 @@ function LeadFormModalContent({
 
             {/* Agent */}
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Assigned Agent</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Assigned Agent</label>
               <select
                 value={formData.assignedAgent}
                 onChange={e => setFormData({ ...formData, assignedAgent: e.target.value })}
@@ -252,7 +252,7 @@ function LeadFormModalContent({
 
             {/* Notes */}
             <div>
-              <label className="block text-slate-500 mb-1.5 label-caps">Notes & Specific Requests</label>
+              <label className="block text-slate-400 mb-1.5 label-caps">Notes & Specific Requests</label>
               <textarea
                 placeholder="Client is looking for a penthouse. Needs flexible payments."
                 rows={3}

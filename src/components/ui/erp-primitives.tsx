@@ -38,7 +38,7 @@ export function BoardHeader({
       )}
       <h1 className="title-serif mt-2 text-slate-900">{title}</h1>
       {description && (
-        <p className="mt-1 max-w-3xl text-base leading-relaxed text-slate-500">
+        <p className="mt-1 max-w-3xl text-base leading-relaxed text-slate-400">
           {description}
         </p>
       )}
@@ -190,7 +190,7 @@ export function PaginationControls({
       <div className="flex items-center gap-1">
         <button
           aria-label="Previous page"
-          className="flex size-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
           disabled={currentPage === 1}
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         >
@@ -203,7 +203,7 @@ export function PaginationControls({
               "flex size-8 items-center justify-center rounded-lg text-base font-medium transition-colors",
               page === currentPage
                 ? "bg-[#151936] text-white"
-                : "text-slate-500 hover:bg-slate-100",
+                : "text-slate-400 hover:bg-slate-100",
             )}
             onClick={() => onPageChange(page)}
           >
@@ -212,7 +212,7 @@ export function PaginationControls({
         ))}
         <button
           aria-label="Next page"
-          className="flex size-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
           disabled={currentPage === totalPages}
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         >
@@ -244,4 +244,30 @@ export { GlobalChatWidget } from "../layout/global-chat-widget";
 export { SunlandNav } from "../layout/sunland-nav";
 export { TopNav } from "../layout/top-nav";
 export { MobileBottomNav, MobileNavigationDrawer } from "../layout/mobile-nav";
+
+export function ProfileDrawerRow({
+  icon: IconComponent,
+  label,
+  value,
+  mono = false,
+  valueClass,
+}: {
+  icon: React.ComponentType<{ size?: number; className?: string; stroke?: number }>;
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+  valueClass?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl p-3 px-4 shadow-[0_2px_10px_rgb(0,0,0,0.02)]">
+      <span className="size-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+        <IconComponent size={16} stroke={1.5} />
+      </span>
+      <span className="flex-1 body-sm text-slate-400">{label}</span>
+      <span className={cn("body-sm font-medium", mono && "mono-data", valueClass || "text-slate-900")}>
+        {value}
+      </span>
+    </div>
+  );
+}
 

@@ -703,7 +703,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 className="flex w-full items-center gap-4 p-5 text-left transition-all duration-300 hover:bg-white hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] hover:-translate-y-[1px] relative group/item"
               >
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-slate-100/80 text-slate-500 group-hover/item:scale-110 group-hover/item:bg-indigo-50 group-hover/item:text-indigo-600 transition-all duration-300 shadow-sm">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-slate-100/80 text-slate-400 group-hover/item:scale-110 group-hover/item:bg-indigo-50 group-hover/item:text-indigo-600 transition-all duration-300 shadow-sm">
                   <IconTimeline size={20} stroke={2} />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -735,7 +735,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
               <IconTrendingDown size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps text-xs">A/P Outstanding</span>
+            <span className="text-slate-400 label-caps text-xs">A/P Outstanding</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
@@ -754,7 +754,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
               <IconArrowUpRight size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps text-xs">A/R Outstanding</span>
+            <span className="text-slate-400 label-caps text-xs">A/R Outstanding</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
@@ -773,7 +773,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconCoins size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps text-xs">Net Working Capital</span>
+            <span className="text-slate-400 label-caps text-xs">Net Working Capital</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className={cn(
@@ -795,7 +795,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
             <div className="size-8 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100/50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-200/50">
               <IconClock size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps text-xs">Overdue Risk</span>
+            <span className="text-slate-400 label-caps text-xs">Overdue Risk</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-rose-700 text-3xl">
@@ -878,7 +878,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                         : "border-amber-200/60 bg-gradient-to-b from-amber-50/80 to-white hover:border-amber-300"
                   )}
                 >
-                  <p className={cn("text-sm font-medium uppercase tracking-widest", isRisk ? "text-rose-700" : "text-slate-500")}>{bucket}</p>
+                  <p className={cn("text-sm font-medium uppercase tracking-widest", isRisk ? "text-rose-700" : "text-slate-400")}>{bucket}</p>
                   <div className="mt-auto pt-4">
                     <p className="tracking-tight text-slate-900 mono-stat">{formatMoney(bucketValue)}</p>
                     <p className="mt-1 text-desc-secondary">{bucketRows.length} records</p>
@@ -914,7 +914,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 </div>
                 <div className="flex justify-between items-center font-medium text-sm">
                   <span className="text-slate-600">CR Cash/Bank</span>
-                  <span className="font-mono text-slate-500">- Amount</span>
+                  <span className="font-mono text-slate-400">- Amount</span>
                 </div>
               </div>
             </div>
@@ -932,7 +932,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 </div>
                 <div className="flex justify-between items-center font-medium text-sm">
                   <span className="text-slate-600">CR Receivable/Rev</span>
-                  <span className="font-mono text-slate-500">- Amount</span>
+                  <span className="font-mono text-slate-400">- Amount</span>
                 </div>
               </div>
             </div>
@@ -1326,7 +1326,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
           <div className="space-y-6 text-slate-700 text-sm">
             {/* Header context */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm border border-slate-100/50">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm border border-slate-100/50">
                 <IconUser size={20} />
               </div>
               <div>
@@ -1496,7 +1496,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
           <div className="space-y-6 text-slate-700 text-sm">
             {/* Header context */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm border border-slate-100/50">
+              <div className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm border border-slate-100/50">
                 <IconUser size={20} />
               </div>
               <div>

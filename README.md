@@ -44,12 +44,12 @@ Open `http://localhost:3000/` (which redirects automatically to `/login`).
 ## Development Access & Emulation Switcher
 
 For rapid testing and verification, the Login screen houses an **Authorized Workspace Portals** section. This allows you to immediately delegate a secure session to any of the six primary operational roles we are building dashboards for:
-- **CEO** (Paul Amos — `ceo` portal: `/admin`)
-- **GM** (Grace Mutua — `general_manager` portal: `/admin`)
-- **Finance** (Dennis Munge — `finance_head` portal: `/fin`)
-- **HR** (Cody Fisher — `hr_head` portal: `/admin/hr`)
-- **Line Manager / Business Dev** (Jared Omondi — `line_manager` portal: `/admin/pipeline`)
-- **Front Office** (Sharon Koech — `front_office_head` portal: `/admin/front-office`)
+- **CEO** (Paul Amos - `ceo` portal: `/admin`)
+- **GM** (Grace Mutua - `general_manager` portal: `/admin`)
+- **Finance** (Dennis Munge - `finance_head` portal: `/fin`)
+- **HR** (Cody Fisher - `hr_head` portal: `/admin/hr`)
+- **Line Manager / Business Dev** (Jared Omondi - `line_manager` portal: `/admin/pipeline`)
+- **Front Office** (Sharon Koech - `front_office_head` portal: `/admin/front-office`)
 
 All profiles share the default local password: `sunland-demo`.
 

@@ -53,7 +53,7 @@ export type SessionMetadata = { ip?: string; userAgent?: string };
 
 /**
  * Signs a session JWT and records a matching `sessions` row (backend master
- * §3.2) so the session is listable and revocable — the JWT alone can never be
+ * §3.2) so the session is listable and revocable - the JWT alone can never be
  * "unsigned" once issued, so revocation requires this side channel.
  */
 export async function setSession(user: SessionUser, metadata: SessionMetadata = {}) {
@@ -80,7 +80,7 @@ export async function setSession(user: SessionUser, metadata: SessionMetadata = 
   });
 }
 
-/** Revokes the current session (if any) and clears the cookie — real sign-out. */
+/** Revokes the current session (if any) and clears the cookie - real sign-out. */
 export async function clearSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(cookieName)?.value;
@@ -95,7 +95,7 @@ export async function clearSession() {
           .where(eq(sessions.tokenHash, hashJti(payload.jti)));
       }
     } catch {
-      // Token already invalid/expired — nothing to revoke, just clear the cookie below.
+      // Token already invalid/expired - nothing to revoke, just clear the cookie below.
     }
   }
 
@@ -134,7 +134,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       .where(eq(sessions.tokenHash, hashJti(jti)))
       .limit(1);
 
-    // No matching row (pre-dates this feature), revoked, or expired — treat as signed out.
+    // No matching row (pre-dates this feature), revoked, or expired - treat as signed out.
     if (!session || session.revokedAt || session.expiresAt < new Date()) {
       return null;
     }

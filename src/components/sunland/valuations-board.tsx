@@ -144,7 +144,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             setProperties(d.properties.map((p: { id: string; name: string; location: string }) => ({ id: p.id, name: p.name, location: p.location })));
           }
         })
-        .catch(() => {});
+        .catch(() => { });
       fetch(`/api/contacts?entityId=${entityId}`)
         .then((r) => r.json())
         .then((d) => {
@@ -152,24 +152,24 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             setContacts(d.contacts.map((c: { id: string; displayName: string }) => ({ id: c.id, displayName: c.displayName })));
           }
         })
-        .catch(() => {});
+        .catch(() => { });
       fetch(`/api/identity/users?entityId=${entityId}`)
         .then((r) => r.json())
         .then((d) => {
           if (Array.isArray(d.users)) setStaff(d.users.map((u: { id: string; name: string }) => ({ id: u.id, name: u.name })));
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [loadValuations, entityId]);
 
   const propertyOf = useCallback((id: string | null) => (id ? properties.find((p) => p.id === id) ?? null : null), [properties]);
-  const contactName = useCallback((id: string | null) => (id ? contacts.find((c) => c.id === id)?.displayName ?? "—" : "—"), [contacts]);
+  const contactName = useCallback((id: string | null) => (id ? contacts.find((c) => c.id === id)?.displayName ?? "-" : "-"), [contacts]);
   const staffName = useCallback((id: string | null) => (id ? staff.find((u) => u.id === id)?.name ?? "Unassigned" : "Unassigned"), [staff]);
 
   const subjectOf = useCallback((v: Valuation): { name: string; location: string; portfolio: boolean } => {
     const prop = propertyOf(v.propertyId);
     if (prop) return { name: prop.name, location: prop.location, portfolio: true };
-    return { name: v.externalPropertyName ?? "Unknown subject", location: v.externalLocation ?? "—", portfolio: false };
+    return { name: v.externalPropertyName ?? "Unknown subject", location: v.externalLocation ?? "-", portfolio: false };
   }, [propertyOf]);
 
   // ── Derived analytics ────────────────────────────────────────────────────────
@@ -277,7 +277,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
       <BoardHeader
         eyebrow={<Badge tone="primary">Advisory</Badge>}
         title="Valuations"
-        description="Chargeable valuation instructions — site visits, report preparation, appraised values, and fee collection across the advisory book."
+        description="Chargeable valuation instructions - site visits, report preparation, appraised values, and fee collection across the advisory book."
         actions={
           <div className="flex items-center gap-2">
             <Button variant="secondary" size="sm" onClick={loadValuations}>
@@ -387,22 +387,22 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                     onClick={() => { setStatusFilter(f.id); setPage(1); }}
                     className={cn(
                       "px-3 py-1.5 body-sm font-medium rounded-lg transition-colors flex items-center gap-1.5",
-                    statusFilter === f.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700",
-                  )}
-                >
-                  {f.label}
-                  {count > 0 && (
-                    <span className={cn(
-                      "text-xs font-mono px-1.5 py-0.5 rounded-full",
-                      statusFilter === f.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-200/70 text-slate-500",
-                    )}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                      statusFilter === f.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700",
+                    )}
+                  >
+                    {f.label}
+                    {count > 0 && (
+                      <span className={cn(
+                        "text-xs font-mono px-1.5 py-0.5 rounded-full",
+                        statusFilter === f.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-200/70 text-slate-400",
+                      )}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -423,7 +423,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             <EmptyState
               icon={IconFileAnalytics}
               title="No valuations yet"
-              description="Open the first valuation instruction — portfolio properties and external subjects both qualify."
+              description="Open the first valuation instruction - portfolio properties and external subjects both qualify."
               action="New Valuation"
               onClick={openCreate}
             />
@@ -471,7 +471,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       <div>
                         <p className="label-caps text-slate-400 mb-0.5">Client &amp; Type</p>
                         <span className="body-sm text-slate-700 block truncate">{contactName(v.clientContactId)}</span>
-                        <span className="body-sm text-slate-500 block truncate">{TYPE_META[v.type]}</span>
+                        <span className="body-sm text-slate-400 block truncate">{TYPE_META[v.type]}</span>
                       </div>
                       <div>
                         <p className="label-caps text-slate-400 mb-0.5">Valuer</p>
@@ -480,13 +480,13 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       <div>
                         <p className="label-caps text-slate-400 mb-0.5">Market Value</p>
                         <span className="mono-amount text-slate-900 text-sm">
-                          {v.marketValueKes ? formatCompactKES(parseFloat(v.marketValueKes)) : "—"}
+                          {v.marketValueKes ? formatCompactKES(parseFloat(v.marketValueKes)) : "-"}
                         </span>
                       </div>
                       <div>
                         <p className="label-caps text-slate-400 mb-0.5">Fee &amp; Payment</p>
                         <span className="mono-amount text-slate-900 text-sm flex items-center gap-1">
-                          {v.feeKes ? formatCompactKES(parseFloat(v.feeKes)) : "—"}
+                          {v.feeKes ? formatCompactKES(parseFloat(v.feeKes)) : "-"}
                           {v.feeKes && (
                             <span
                               className={cn("size-1.5 rounded-full", v.feePaid ? "bg-emerald-500" : "bg-amber-400")}
@@ -526,7 +526,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             <div className="hidden lg:block overflow-x-auto custom-scrollbar pb-2">
               <table className="w-full min-w-[1000px] text-left">
                 <thead>
-                  <tr className="border-b border-slate-100 label-caps text-slate-500 bg-slate-50/50">
+                  <tr className="border-b border-slate-100 label-caps text-slate-400 bg-slate-50/50">
                     <th className="px-4 py-3">Code</th>
                     <th className="px-4 py-3">Subject</th>
                     <th className="px-4 py-3">Client</th>
@@ -549,7 +549,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                         className="transition-colors hover:bg-slate-50/80 group cursor-pointer"
                         onClick={() => openEdit(v)}
                       >
-                        <td className="px-4 py-4 mono-data text-slate-500 group-hover:text-slate-900 transition-colors whitespace-nowrap">{v.valuationCode}</td>
+                        <td className="px-4 py-4 mono-data text-slate-400 group-hover:text-slate-900 transition-colors whitespace-nowrap">{v.valuationCode}</td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
                             <div className={cn(
@@ -562,7 +562,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                               <p className="text-title-primary truncate">{subject.name}</p>
                               <p className="text-meta-muted flex items-center gap-1 mt-0.5">
                                 <IconMapPin size={11} /> {subject.location}
-                                {!subject.portfolio && <span className="ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] uppercase tracking-wide">External</span>}
+                                {!subject.portfolio && <span className="ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 text-[10px] uppercase tracking-wide">External</span>}
                               </p>
                             </div>
                           </div>
@@ -579,7 +579,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-right mono-amount text-slate-900 whitespace-nowrap">
-                          {v.marketValueKes ? formatCompactKES(parseFloat(v.marketValueKes)) : "—"}
+                          {v.marketValueKes ? formatCompactKES(parseFloat(v.marketValueKes)) : "-"}
                         </td>
                         <td className="px-4 py-4 text-right whitespace-nowrap">
                           {v.feeKes ? (
@@ -591,7 +591,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                               />
                             </div>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-400">-</span>
                           )}
                         </td>
                         <td className="px-4 py-4 text-center">

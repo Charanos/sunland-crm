@@ -40,7 +40,7 @@ export function LeaseFormModal({
 }: {
   open: boolean;
   mode?: "create" | "edit";
-  /** Required when mode="edit" — the lease being edited. */
+  /** Required when mode="edit" - the lease being edited. */
   lease?: LeaseEditTarget | null;
   onClose: () => void;
   onSubmit: () => void;
@@ -82,9 +82,9 @@ export function LeaseFormModal({
     });
   }, [open, isEdit, lease]);
 
-  // Load available properties & tenants — only needed for create mode, since
+  // Load available properties & tenants - only needed for create mode, since
   // edit mode keeps the property/tenant fixed (reassigning either is a new
-  // lease or a renewal, not an edit — see updateLease's whitelist).
+  // lease or a renewal, not an edit - see updateLease's whitelist).
   useEffect(() => {
     if (!open || !activeEntityId || isEdit) return;
 
@@ -151,30 +151,30 @@ export function LeaseFormModal({
     try {
       const res = isEdit
         ? await fetch(`/api/leases/${lease!.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              entityId: activeEntityId,
-              action: "update",
-              startsAt: form.startsAt,
-              endsAt: form.endsAt,
-              monthlyRentKes: form.monthlyRentKes,
-              depositKes: form.depositKes || null,
-            }),
-          })
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entityId: activeEntityId,
+            action: "update",
+            startsAt: form.startsAt,
+            endsAt: form.endsAt,
+            monthlyRentKes: form.monthlyRentKes,
+            depositKes: form.depositKes || null,
+          }),
+        })
         : await fetch("/api/leases", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              entityId: activeEntityId,
-              propertyId: form.propertyId,
-              tenantContactId: form.tenantContactId,
-              startsAt: form.startsAt,
-              endsAt: form.endsAt,
-              monthlyRentKes: form.monthlyRentKes,
-              depositKes: form.depositKes || null,
-            }),
-          });
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entityId: activeEntityId,
+            propertyId: form.propertyId,
+            tenantContactId: form.tenantContactId,
+            startsAt: form.startsAt,
+            endsAt: form.endsAt,
+            monthlyRentKes: form.monthlyRentKes,
+            depositKes: form.depositKes || null,
+          }),
+        });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save lease agreement");
@@ -212,7 +212,7 @@ export function LeaseFormModal({
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Contracting Parties</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Property Unit</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Property Unit</label>
               {isEdit ? (
                 <p className="h-10 flex items-center px-3 rounded-lg border border-slate-200 bg-slate-100 text-body-primary text-slate-600">
                   {lease!.propertyName}
@@ -236,7 +236,7 @@ export function LeaseFormModal({
             </div>
 
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Tenant Contact</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Tenant Contact</label>
               {isEdit ? (
                 <p className="h-10 flex items-center px-3 rounded-lg border border-slate-200 bg-slate-100 text-body-primary text-slate-600">
                   {lease!.tenantName}
@@ -266,7 +266,7 @@ export function LeaseFormModal({
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Lease Duration</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Lease Starts</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Lease Starts</label>
               <input
                 type="date"
                 className={cn(
@@ -279,7 +279,7 @@ export function LeaseFormModal({
               {errors.startsAt && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.startsAt}</p>}
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Lease Ends</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Lease Ends</label>
               <input
                 type="date"
                 className={cn(
@@ -299,7 +299,7 @@ export function LeaseFormModal({
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Financial Terms</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Rent Rate (KES / month)</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Rent Rate (KES / month)</label>
               <input
                 className={cn(
                   "w-full h-10 rounded-lg border bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
@@ -312,7 +312,7 @@ export function LeaseFormModal({
               {errors.monthlyRentKes && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.monthlyRentKes}</p>}
             </div>
             <div>
-              <label className="label-caps text-slate-500 mb-1.5 block">Security Deposit Held (KES)</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Security Deposit Held (KES)</label>
               <input
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 placeholder="e.g. 170000"

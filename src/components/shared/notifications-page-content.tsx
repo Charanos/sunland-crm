@@ -20,7 +20,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageTransition } from "@/components/shared/page-transition";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-// Matches the real /api/notifications response shape (notifications table) —
+// Matches the real /api/notifications response shape (notifications table) -
 // `type` is a free-text dotted string ("complaint.assigned", "approval.pending",
 // etc.), not a closed enum, so display metadata is resolved by prefix below
 // rather than a fixed union.
@@ -41,7 +41,7 @@ const CATEGORY_META: Record<NotifCategory, { label: string; icon: typeof IconBel
   complaint: { label: "HR / Complaints", icon: IconAlertTriangle, color: "bg-purple-50 text-purple-600 border-purple-100" },
   support_ticket: { label: "Support Tickets", icon: IconLifebuoy, color: "bg-amber-50 text-amber-600 border-amber-100" },
   approval: { label: "Approvals", icon: IconCashBanknote, color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
-  system: { label: "System", icon: IconInfoCircle, color: "bg-slate-50 text-slate-500 border-slate-200" },
+  system: { label: "System", icon: IconInfoCircle, color: "bg-slate-50 text-slate-400 border-slate-200" },
 };
 
 function categorize(type: string): NotifCategory {
@@ -129,7 +129,7 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
   };
 
   const markRead = async (id: string) => {
-    // Optimistic — the row already exists locally, so flip it immediately and
+    // Optimistic - the row already exists locally, so flip it immediately and
     // let the request confirm rather than blocking the click on round-trip latency.
     setItems(prev => prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n));
     try {
@@ -207,7 +207,7 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
               {count > 0 && (
                 <span className={cn(
                   "flex items-center justify-center rounded-full px-1.5 py-0.5 text-tiny font-medium font-mono",
-                  activeFilter === tab.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-100 text-slate-500"
+                  activeFilter === tab.id ? "bg-[#f3df27] text-[#151936]" : "bg-slate-100 text-slate-400"
                 )}>
                   {count}
                 </span>
@@ -271,14 +271,14 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
                       </div>
                       <span className="text-tiny font-mono text-slate-400">{relativeTime(n.createdAt)}</span>
                     </div>
-                    <p className="text-tiny text-slate-500 mt-1.5 leading-relaxed">{n.body}</p>
+                    <p className="text-tiny text-slate-400 mt-1.5 leading-relaxed">{n.body}</p>
                     <div className="flex items-center gap-2 mt-2.5">
                       <span className="rounded bg-slate-100 text-slate-600 text-[9px] font-mono font-normal px-2 py-0.5 uppercase tracking-wider">{meta.label}</span>
                       {resolvePortalPath(n.href) && (
                         <Link
                           href={resolvePortalPath(n.href)!}
                           onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
-                          className="text-tiny text-slate-500 hover:text-slate-900 font-normal flex items-center gap-0.5 transition-colors ml-1"
+                          className="text-tiny text-slate-400 hover:text-slate-900 font-normal flex items-center gap-0.5 transition-colors ml-1"
                         >
                           Access <IconChevronRight size={10} className="mt-0.5" />
                         </Link>

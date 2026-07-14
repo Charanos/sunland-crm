@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // mandateRate/startDate/endDate travel as strings from the form, same
-// rationale as valuations — explicit null handling in the service rather
+// rationale as valuations - explicit null handling in the service rather
 // than z.coerce.date() silently turning null into 1970-01-01.
 export const createMandateSchema = z.object({
   entityId: z.string().min(1),

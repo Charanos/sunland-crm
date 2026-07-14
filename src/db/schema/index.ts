@@ -1,4 +1,4 @@
-// Barrel re-export — schema is split by module (platform/crm/properties/finance)
+// Barrel re-export - schema is split by module (platform/crm/properties/finance)
 // for maintainability as the finance ledger and remaining modules grow.
 // Existing `import { X } from "@/db/schema"` call sites keep working unchanged.
 export * from "@/db/schema/platform";

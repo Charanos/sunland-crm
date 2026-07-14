@@ -26,7 +26,7 @@ interface VerifyResult {
 export default function PublicVerifyPage() {
   const params = useParams();
   const token = params?.token as string;
-  
+
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<VerifyResult | null>(null);
 
@@ -50,12 +50,12 @@ export default function PublicVerifyPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-xl bg-white rounded-3xl border border-slate-200/80 shadow-xl overflow-hidden relative">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
-        
+
         <div className="p-6 md:p-8 space-y-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <LoadingSpinner size="lg" />
-              <p className="text-slate-500 text-sm">Querying secure registry database…</p>
+              <p className="text-slate-400 text-sm">Querying secure registry database…</p>
             </div>
           ) : result?.authentic ? (
             <div className="space-y-6">
@@ -75,7 +75,7 @@ export default function PublicVerifyPage() {
               {/* Certificate content */}
               <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 space-y-3 text-slate-700 text-base">
                 <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2 text-slate-500">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <IconFileText size={16} />
                     <span>Document Type</span>
                   </div>
@@ -85,7 +85,7 @@ export default function PublicVerifyPage() {
                 </div>
 
                 <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2 text-slate-500">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <IconClock size={16} />
                     <span>Generated On</span>
                   </div>
@@ -95,7 +95,7 @@ export default function PublicVerifyPage() {
                 </div>
 
                 <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2 text-slate-500">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <IconUser size={16} />
                     <span>Signatory Officer</span>
                   </div>
@@ -105,7 +105,7 @@ export default function PublicVerifyPage() {
                 </div>
 
                 <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2 text-slate-500">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <IconBuilding size={16} />
                     <span>Issuing Entity</span>
                   </div>
@@ -140,7 +140,7 @@ export default function PublicVerifyPage() {
               <h1 className="text-xl font-medium text-slate-900">
                 Invalid Verification Certificate
               </h1>
-              <p className="text-slate-500 max-w-sm text-base">
+              <p className="text-slate-400 max-w-sm text-base">
                 {result?.error || "The signature token provided does not match any official document registered in the Sunland Enterprise Directory."}
               </p>
             </div>

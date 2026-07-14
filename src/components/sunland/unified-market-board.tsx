@@ -250,7 +250,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
       <div className="py-6 border-t border-slate-200/60 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
         <div>
           <h2 className="title-serif text-slate-900">Market Insights & Portfolio</h2>
-          <p className="text-base text-slate-500 tracking-wide mt-1">Real-time analytical breakdown and inventory tracking.</p>
+          <p className="text-base text-slate-400 tracking-wide mt-1">Real-time analytical breakdown and inventory tracking.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -264,7 +264,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                   "text-xs px-3.5 py-1.5 rounded-md transition-all font-medium tracking-wide whitespace-nowrap",
                   activeType === type
                     ? "bg-[#f3df27] text-[#151936] shadow-sm"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                    : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
                 )}
               >
                 {type}
@@ -292,7 +292,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
           <div className="flex justify-between items-start mb-6">
             <div>
               <h3 className="text-lg font-medium text-slate-900 tracking-tight mb-1">Market Revenue Overview</h3>
-              <p className="body-sm text-slate-500">Available rental income this month</p>
+              <p className="body-sm text-slate-400">Available rental income this month</p>
               <div className="mt-4 flex items-center gap-3">
                 <span className="mono-stat text-slate-900 leading-none text-3xl">KES {analytics.revenue}</span>
                 <span className="text-xs label-caps font-medium text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full flex items-center shadow-sm">
@@ -321,11 +321,11 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="size-[12px] rounded-[3px] bg-tertiary-emerald"></div>
-                <span className="text-sm text-slate-500">Occupied Units - {analytics.occupiedPercent}%</span>
+                <span className="text-sm text-slate-400">Occupied Units - {analytics.occupiedPercent}%</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="size-[12px] rounded-[3px] bg-[#eef2f6] border border-slate-200"></div>
-                <span className="text-sm text-slate-500">Vacant Units - {analytics.vacantPercent}%</span>
+                <span className="text-sm text-slate-400">Vacant Units - {analytics.vacantPercent}%</span>
               </div>
             </div>
           </div>
@@ -485,17 +485,17 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 350px"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  {/* Softer gradient — just enough to read text */}
+                  {/* Softer gradient - just enough to read text */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-                  {/* Type — top left */}
+                  {/* Type - top left */}
                   <div className="absolute top-3 left-3">
                     <span className="label-caps px-2.5 py-1 rounded-full border border-white/20 bg-black/45 backdrop-blur-md text-white shadow-sm">
                       {card.type}
                     </span>
                   </div>
 
-                  {/* Status — top right */}
+                  {/* Status - top right */}
                   <div className="absolute top-3 right-3">
                     <span className={cn(
                       "label-caps px-2.5 py-1 rounded-full shadow-md backdrop-blur-md border",

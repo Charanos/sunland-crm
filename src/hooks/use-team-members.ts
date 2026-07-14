@@ -12,7 +12,7 @@ export interface TeamMember {
 const QUICK_CHAT_LIMIT = 5;
 
 /**
- * A short list of real colleagues for the sidebar's "quick message" section —
+ * A short list of real colleagues for the sidebar's "quick message" section -
  * replaces what used to be a hardcoded 3-person mock roster. No presence
  * system exists yet, so this deliberately doesn't return an online/away
  * status; callers shouldn't fake one.
@@ -39,7 +39,7 @@ export function useTeamMembers(entityId = "group") {
           );
         }
       } catch {
-        // Sidebar quick-chat list stays empty — Messages page remains the source of truth.
+        // Sidebar quick-chat list stays empty - Messages page remains the source of truth.
       }
     });
   }, [entityId]);

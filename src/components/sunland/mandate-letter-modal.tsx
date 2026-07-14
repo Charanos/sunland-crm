@@ -43,7 +43,7 @@ export function MandateLetterModal({
         body: JSON.stringify({
           entityId,
           type: "mandate_letter",
-          title: `${propertyName} — Mandate Letter`,
+          title: `${propertyName} - Mandate Letter`,
           fileUrl: url.trim(),
           ownerContactId,
         }),
@@ -79,7 +79,7 @@ export function MandateLetterModal({
             </div>
             <div>
               <h2 className="font-medium text-slate-900 tracking-tight text-lg">{hasExistingLetter ? "Replace" : "Upload"} Mandate Letter</h2>
-              <p className="body-sm text-slate-500 mt-0.5">{propertyName} · {landlordName}</p>
+              <p className="body-sm text-slate-400 mt-0.5">{propertyName} · {landlordName}</p>
             </div>
           </div>
           <button
@@ -92,7 +92,7 @@ export function MandateLetterModal({
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
           <div>
-            <label className="block text-slate-500 mb-1.5 label-caps">Document URL</label>
+            <label className="block text-slate-400 mb-1.5 label-caps">Document URL</label>
             <input
               required
               type="url"
@@ -103,7 +103,7 @@ export function MandateLetterModal({
             />
           </div>
           <p className="body-sm text-slate-400">
-            Saved against {landlordName}&apos;s document record, so it stays attached to every property they own —
+            Saved against {landlordName}&apos;s document record, so it stays attached to every property they own -
             not just this one.
           </p>
 

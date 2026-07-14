@@ -10,7 +10,7 @@ export const projectDepartment = pgEnum("project_department", [
   "front_office",
 ]);
 
-// Generic 5-state lifecycle rather than a bespoke enum per department — a
+// Generic 5-state lifecycle rather than a bespoke enum per department - a
 // progress bar (in_progress), a due-date-forward badge (planning/on_hold),
 // and a review badge (awaiting_review) cover every real-world shape without
 // inventing per-department status vocabularies.

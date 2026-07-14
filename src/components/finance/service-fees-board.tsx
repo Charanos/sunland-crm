@@ -300,7 +300,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200/50">
               <IconSettings size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Active Rules</span>
+            <span className="text-slate-400 label-caps">Active Rules</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-[#151936] text-3xl">
@@ -318,7 +318,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconCashBanknote size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Total Fees Earned</span>
+            <span className="text-slate-400 label-caps">Total Fees Earned</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-emerald-700 text-3xl">
@@ -336,7 +336,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
               <IconClipboardCheck size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Posted to Ledger</span>
+            <span className="text-slate-400 label-caps">Posted to Ledger</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-emerald-700 text-3xl">
@@ -354,7 +354,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
             <div className="size-8 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
               <IconReceipt size={16} stroke={2.5} />
             </div>
-            <span className="text-slate-500 label-caps">Awaiting Ledger Posting</span>
+            <span className="text-slate-400 label-caps">Awaiting Ledger Posting</span>
           </div>
           <div className="flex flex-col mt-auto relative z-10">
             <span className="font-mono font-normal tracking-tight text-amber-700 text-3xl">
@@ -370,7 +370,7 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-sans text-heading-primary">Monthly Fee Earnings Categories</h3>
-            <p className="text-base text-slate-500 font-sans">Revenue generated grouped by letting fee, valuation, and late penalties.</p>
+            <p className="text-base text-slate-400 font-sans">Revenue generated grouped by letting fee, valuation, and late penalties.</p>
           </div>
           <div className="flex items-center gap-4 font-medium text-sm">
             <span className="flex items-center gap-1.5 text-emerald-600">
@@ -706,12 +706,12 @@ export function ServiceFeesBoard({ tabId = "rules" }: { tabId: string }) {
                   <span className="text-slate-800">1200 - Accounts Receivable</span>
                   <span className="text-slate-550">Fee accrual: {postCharge.chargeCode}</span>
                   <span className="text-right text-slate-900">{postCharge.amount.toLocaleString()}</span>
-                  <span className="text-right text-slate-350">—</span>
+                  <span className="text-right text-slate-350">-</span>
                 </div>
                 <div className="grid grid-cols-[180px_1fr_80px_80px] p-2">
                   <span className="text-slate-800">4001 - Management Fee Income</span>
                   <span className="text-slate-550">Accrued fee earnings</span>
-                  <span className="text-right text-slate-350">—</span>
+                  <span className="text-right text-slate-350">-</span>
                   <span className="text-right text-emerald-700">{postCharge.amount.toLocaleString()}</span>
                 </div>
               </div>

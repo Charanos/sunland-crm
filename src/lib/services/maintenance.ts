@@ -118,7 +118,7 @@ export async function updateMaintenanceRequest(ctx: CallerContext, requestId: st
   if (input.priority !== undefined) updatable.priority = input.priority;
   if (input.dueAt !== undefined) updatable.dueAt = input.dueAt ? new Date(input.dueAt) : null;
 
-  // Assigning a contractor to an open request implicitly advances it —
+  // Assigning a contractor to an open request implicitly advances it -
   // there's no separate "assign" status transition for the caller to forget.
   if (input.assignedContractorId !== undefined) {
     updatable.assignedContractorId = input.assignedContractorId;

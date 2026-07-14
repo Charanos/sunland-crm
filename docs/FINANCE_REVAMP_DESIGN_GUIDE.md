@@ -14,7 +14,7 @@ Every sub-page must feel dense, premium, and structured. Do not use generic layo
   ```tsx
   <div className="pt-6 border-t border-slate-200/60 my-4">
     <h2 className="title-serif text-slate-900 text-[22px] font-normal">Section Title</h2>
-    <p className="text-[12.5px] text-slate-500 font-medium tracking-wide mt-1">
+    <p className="text-[12.5px] text-slate-400 font-medium tracking-wide mt-1">
       Clear explanation of what this section monitors and details.
     </p>
   </div>
@@ -22,7 +22,7 @@ Every sub-page must feel dense, premium, and structured. Do not use generic layo
 - App backgrounds use the **Warm Workspace** tone (`#f4f6f0`). Cards use white surfaces (`#ffffff`) with an `8px` or `12px` border radius (`rounded-xl` or `rounded-2xl`).
 
 ### 1.2 Strict Typography Rules
-- **Font-Weight Cap:** The project strictly prohibits `font-semibold` or `font-bold` (capped at font weights of 500 / `font-medium`). Use text size, color contrast (e.g. `text-slate-900` vs `text-slate-500`), letter-spacing, and casing to create visual hierarchy.
+- **Font-Weight Cap:** The project strictly prohibits `font-semibold` or `font-bold` (capped at font weights of 500 / `font-medium`). Use text size, color contrast (e.g. `text-slate-900` vs `text-slate-400`), letter-spacing, and casing to create visual hierarchy.
 - **Serif Accents:** All page and section headings use the `title-serif` style (Cormorant Garamond, `font-normal` / 300).
 - **Interface Text:** Body, labels, and generic text use nunito.
 - **Monospace Figures:** All KES currency values, dates, percentages, transactional reference IDs (e.g. `JE-0042`, `MDT-109`), cheque numbers, and ticket hashes must use JetBrains Mono (`font-mono`).

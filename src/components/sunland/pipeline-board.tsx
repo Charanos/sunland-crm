@@ -596,7 +596,7 @@ export function PipelineBoard({
           <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
             <Link
               href="/admin/contacts"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
             >
               <span>Contacts</span>
             </Link>
@@ -827,7 +827,7 @@ export function PipelineBoard({
                   <button onClick={() => setSourceFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
                 </span>
               )}
-              <button onClick={() => { setSearchQuery(""); setStageFilter("all"); setSourceFilter("all"); }} className="text-sm font-medium text-slate-500 hover:text-slate-800 underline ml-1">
+              <button onClick={() => { setSearchQuery(""); setStageFilter("all"); setSourceFilter("all"); }} className="text-sm font-medium text-slate-400 hover:text-slate-800 underline ml-1">
                 Clear all
               </button>
             </div>
@@ -878,7 +878,7 @@ export function PipelineBoard({
                           <span className="text-slate-400 mono-data">({stageLeads.length})</span>
                         </div>
                         {columnBudget > 0 && (
-                          <span className="text-sm  font-mono font-medium text-slate-500">{formatCompactKES(columnBudget)}</span>
+                          <span className="text-sm  font-mono font-medium text-slate-400">{formatCompactKES(columnBudget)}</span>
                         )}
                       </div>
 
@@ -916,7 +916,7 @@ export function PipelineBoard({
                                   <h4 className="text-base font-normal text-slate-900 group-hover:text-[#151936] transition-colors leading-snug truncate">
                                     {lead.clientName}
                                   </h4>
-                                  <p className="text-sm  text-slate-500 flex items-center gap-1 font-normal truncate">
+                                  <p className="text-sm  text-slate-400 flex items-center gap-1 font-normal truncate">
                                     <IconBuilding size={12} className="text-slate-400 shrink-0" />
                                     <span>{lead.propertyInterest}</span>
                                   </p>
@@ -1170,7 +1170,7 @@ export function PipelineBoard({
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1 || isLoading}
-                className="p-1.5 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors shadow-sm"
+                className="p-1.5 border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors shadow-sm"
               >
                 <IconChevronLeft size={16} />
               </button>
@@ -1191,7 +1191,7 @@ export function PipelineBoard({
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages || isLoading}
-                className="p-1.5 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors shadow-sm"
+                className="p-1.5 border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors shadow-sm"
               >
                 <IconChevronRight size={16} />
               </button>

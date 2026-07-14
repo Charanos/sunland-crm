@@ -148,7 +148,7 @@ export const TYPE_COLORS: Record<ContactType, string> = {
 
 export const STATUS_COLORS: Record<ContactStatus, string> = {
   active: "text-emerald-700 bg-emerald-50 border-emerald-150",
-  inactive: "text-slate-500 bg-slate-50 border-slate-200/70",
+  inactive: "text-slate-400 bg-slate-50 border-slate-200/70",
   blacklisted: "text-red-700 bg-red-50 border-red-150",
 };
 
@@ -522,7 +522,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
           </Link>
           <Link
             href="/admin/pipeline"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-500 hover:text-slate-900 hover:bg-white/45"
+            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
           >
             <span>Deals Pipeline</span>
           </Link>
@@ -675,7 +675,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                   setStatusFilter("all");
                   setSourceFilter("all");
                 }}
-                className="text-sm font-medium text-slate-500 hover:text-slate-800 underline ml-1"
+                className="text-sm font-medium text-slate-400 hover:text-slate-800 underline ml-1"
               >
                 Clear all
               </button>
@@ -806,11 +806,11 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                       {/* Quick contacts actions */}
                       <td className="py-4 px-4" onClick={e => e.stopPropagation()}>
                         <div className="space-y-1">
-                          <a href={`mailto:${contact.email}`} className="flex items-center gap-1.5 text-slate-500 hover:text-[#151936] transition-colors w-fit">
+                          <a href={`mailto:${contact.email}`} className="flex items-center gap-1.5 text-slate-400 hover:text-[#151936] transition-colors w-fit">
                             <IconMail size={13} className="text-slate-400" />
                             <span>{contact.email}</span>
                           </a>
-                          <a href={`tel:${contact.phone}`} className="flex items-center gap-1.5 text-slate-500 hover:text-[#151936] transition-colors w-fit font-mono">
+                          <a href={`tel:${contact.phone}`} className="flex items-center gap-1.5 text-slate-400 hover:text-[#151936] transition-colors w-fit font-mono">
                             <IconPhone size={13} className="text-slate-400" />
                             <span>{contact.phone}</span>
                           </a>
@@ -847,7 +847,7 @@ export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
                       </td>
 
                       {/* Last contacted / Activity snippet */}
-                      <td className="py-4 px-4 text-slate-500">
+                      <td className="py-4 px-4 text-slate-400">
                         <span className="font-mono body-sm">{contact.createdDate}</span>
                       </td>
 
