@@ -45,7 +45,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils/cn";
-import { useUIStore } from "@/store/ui";
+import { useUIStore, type ModalType } from "@/store/ui";
 import { getEntityById } from "@/data/entities";
 import { getActiveNavItem, navSections } from "@/components/layout/nav-model";
 import { useCalendarStore, type CalendarEvent } from "@/store/calendar";
@@ -68,7 +68,7 @@ interface QuickAction {
   label: string;
   shortcut?: string;
   href?: string;
-  action?: string;
+  action?: ModalType;
 }
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -335,7 +335,7 @@ function QuickCreatePanel({ onClose }: { onClose: () => void }) {
               <button
                 key={action.label}
                 onClick={() => {
-                  useUIStore.getState().openModal(action.action as any);
+                  useUIStore.getState().openModal(action.action!);
                   onClose();
                 }}
                 className={className}

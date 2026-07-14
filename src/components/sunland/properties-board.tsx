@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, startTransition, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   IconBuildingCommunity,
@@ -345,7 +345,9 @@ export function PropertiesBoard({
   // Initialize modal state from search params
   useEffect(() => {
     if (searchParams.get("create") === "true") {
-      setIsCreateOpen(true);
+      startTransition(() => {
+        setIsCreateOpen(true);
+      });
       // Clean up the URL so it doesn't re-trigger on refresh
       router.replace("/admin/properties", { scroll: false });
     }

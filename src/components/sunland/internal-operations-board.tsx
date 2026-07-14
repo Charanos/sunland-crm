@@ -148,7 +148,7 @@ export function InternalOperationsBoard({
     )
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 
-  const hasEvents = (day: number) =>
+  const _hasEvents = (day: number) =>
     events.some((e) => isSameCalendarDay(e.startsAt, currentDate.getFullYear(), currentDate.getMonth(), day));
 
   // "30m"/"1h"/"1.5h"/"2h"/"3h"/"4h"/"All Day" from EventFormModal's duration
