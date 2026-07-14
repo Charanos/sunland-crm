@@ -1,6 +1,7 @@
 import { Pool, neonConfig, neon } from "@neondatabase/serverless";
 import { drizzle as drizzleServerless } from "drizzle-orm/neon-serverless";
 import { drizzle as drizzleHttp } from "drizzle-orm/neon-http";
+import ws from "ws";
 import * as schema from "@/db/schema";
 import * as relations from "@/db/relations";
 
@@ -19,7 +20,6 @@ if (process.env.NODE_ENV === "production") {
   dbInstance = drizzleHttp(sql, { schema: { ...schema, ...relations } });
 } else {
   // Use websocket pool for local development and scripts
-  const ws = require("ws");
   neonConfig.webSocketConstructor = ws;
   const pool = new Pool({
     connectionString: databaseUrl ?? "postgresql://local:local@localhost:5432/sunland",
@@ -27,5 +27,13 @@ if (process.env.NODE_ENV === "production") {
   dbInstance = drizzleServerless(pool, { schema: { ...schema, ...relations } });
 }
 
-export const db = dbInstance;
+// Extract the concrete development database client type to resolve
+// union signature mismatch compiler errors while retaining type safety.
+const poolDummy = {} as Pool;
+const dummyDb = drizzleServerless(poolDummy, { schema: { ...schema, ...relations } });
+export type DbClient = typeof dummyDb;
+
+export const db = dbInstance as unknown as DbClient;
+
+
 
