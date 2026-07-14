@@ -26,7 +26,6 @@ import {
   IconEye,
   IconLayoutGrid,
   IconList,
-  IconArrowUpRight,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import {
@@ -85,17 +84,6 @@ function priceDisplay(property: Property): string {
 }
 
 
-function specChips(property: Property): string[] {
-  const out: string[] = [];
-  const unitTotal = property.unitBreakdown?.reduce((sum, u) => sum + u.count, 0);
-  if (unitTotal) out.push(`${unitTotal} units`);
-  if (property.bedrooms != null) out.push(`${property.bedrooms} beds`);
-  if (property.bathrooms != null) out.push(`${property.bathrooms} baths`);
-  if (property.sizeSqft != null) out.push(`${property.sizeSqft.toLocaleString()} sqft`);
-  if (property.landAreaSqft != null) out.push(`${property.landAreaSqft.toLocaleString()} sqft plot`);
-  if (property.parkingSpaces != null) out.push(`${property.parkingSpaces} parking`);
-  return out.slice(0, 4);
-}
 
 function featuredPriceDisplay(property: Property): { label: string; value: string } {
   if (property.askingPriceKes) {
@@ -568,12 +556,6 @@ export function PropertiesBoard({
 
       <PortfolioHubNav active="properties" />
 
-      <div className="flex items-center gap-4 my-6">
-        <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-400 tracking-wider">Analytics & Command</span>
-        <hr className="flex-1 border-slate-200/60" />
-      </div>
-
       {/* ── Dense, High-Contrast Dark KPI Tier - driven fully from STATUS_CONFIG ── */}
       <div className="gsap-stagger bg-tertiary-gradient border border-[#122a20]/80 p-1.5 rounded-[24px] shadow-xl relative overflow-hidden group">
         <div className="absolute right-0 top-0 size-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-700" />
@@ -651,6 +633,12 @@ export function PropertiesBoard({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center gap-4 my-6">
+        <hr className="flex-1 border-slate-200/60" />
+        <span className="label-caps text-slate-400 tracking-wider">Analytics & Command</span>
+        <hr className="flex-1 border-slate-200/60" />
       </div>
 
       {/* ── Market Highlights Tier ── */}

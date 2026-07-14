@@ -10,6 +10,25 @@ import type { CallerContext } from "@/lib/services/types";
 
 // ─── Properties ──────────────────────────────────────────────────────────────
 
+function toISOStringSafe(val: unknown): string | null {
+  if (!val) return null;
+  if (val instanceof Date) return val.toISOString();
+  if (typeof val === "string") {
+    if (val.includes("T") && val.includes("Z")) return val;
+    try {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    } catch {}
+    return val;
+  }
+  try {
+    const d = new Date(val as string | number | Date);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  } catch {}
+  return null;
+}
+
+
 export async function listProperties(
   ctx: CallerContext,
   filters: { ownerContactId?: string } = {}
@@ -61,8 +80,8 @@ export async function listProperties(
         email: ownerEmail,
         company: ownerCompany,
         idNumber: ownerIdNumber,
-        verifiedAt: ownerVerifiedAt?.toISOString() ?? null,
-        clientSince: ownerClientSince?.toISOString() ?? null,
+        verifiedAt: toISOStringSafe(ownerVerifiedAt),
+        clientSince: toISOStringSafe(ownerClientSince),
       }
       : null,
   }));
@@ -443,7 +462,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       email: ownerRow.email,
       phone: ownerRow.phone,
       idNumber: ownerRow.idNumber,
-      verifiedAt: ownerRow.verifiedAt?.toISOString() ?? null,
+      verifiedAt: toISOStringSafe(ownerRow.verifiedAt),
       verifiedByName: ownerRow.verifiedByName,
     }
     : null;
@@ -455,8 +474,8 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     tenantName: l.tenantName,
     tenantPhone: l.tenantPhone ?? undefined,
     tenantEmail: l.tenantEmail ?? undefined,
-    startDate: l.startsAt.toISOString(),
-    endDate: l.endsAt?.toISOString() ?? null,
+    startDate: toISOStringSafe(l.startsAt) || "",
+    endDate: toISOStringSafe(l.endsAt),
     status: !l.isActive
       ? ("ended" as const)
       : l.endsAt && l.endsAt <= sixtyDaysOut
@@ -502,13 +521,13 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   }
 
   // Vacancy start: latest ended tenancy, only when nothing is currently let.
-  const vacantSince =
+  const vacantSinceDate =
     prop.status !== "occupied" && activeLeaseRows.length === 0
       ? leaseRows
         .filter((l) => !l.isActive && l.endsAt)
         .reduce<Date | null>((latest, l) => (!latest || l.endsAt > latest ? l.endsAt : latest), null)
-        ?.toISOString() ?? null
       : null;
+  const vacantSince = toISOStringSafe(vacantSinceDate);
 
   // The full CRM pipeline stages collapse into the board's four display
   // stages; a lost deal means there is no live pipeline to show.
@@ -525,7 +544,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
               : ("lead" as const),
       leadName: leadRow.leadName,
       offerAmountKes: leadRow.expectedValueKes,
-      lastActivityAt: leadRow.updatedAt.toISOString(),
+      lastActivityAt: toISOStringSafe(leadRow.updatedAt) || "",
     }
     : null;
 
@@ -575,7 +594,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       id: mandateRow.id,
       status: mandateRow.status,
       mandateRate,
-      startDate: mandateRow.startDate.toISOString(),
+      startDate: toISOStringSafe(mandateRow.startDate) || "",
       pendingApproverRole,
       currentPeriod,
     }
@@ -591,7 +610,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     maintenanceRequests: maintenanceRows.map((m) => ({
       id: m.id,
       title: m.title,
-      reportedAt: m.createdAt.toISOString(),
+      reportedAt: toISOStringSafe(m.createdAt) || "",
       reportedBy: m.reportedBy ?? undefined,
       priority: m.priority,
       status: m.status,
@@ -887,7 +906,7 @@ export async function renewLease(
       action: "properties.lease.renew",
       associatedType: "lease",
       associatedId: renewed.id,
-      summary: `Renewed lease - new term starts ${existing.endsAt.toISOString().slice(0, 10)}`,
+      summary: `Renewed lease - new term starts ${toISOStringSafe(existing.endsAt)?.slice(0, 10) || ""}`,
       entityId,
       before: existing,
       after: renewed,

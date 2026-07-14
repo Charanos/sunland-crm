@@ -27,11 +27,8 @@ if (process.env.NODE_ENV === "production") {
   dbInstance = drizzleServerless(pool, { schema: { ...schema, ...relations } });
 }
 
-// Extract the concrete development database client type to resolve
-// union signature mismatch compiler errors while retaining type safety.
-const poolDummy = {} as Pool;
-const dummyDb = drizzleServerless(poolDummy, { schema: { ...schema, ...relations } });
-export type DbClient = typeof dummyDb;
+import { NeonDatabase } from "drizzle-orm/neon-serverless";
+export type DbClient = NeonDatabase<typeof schema & typeof relations>;
 
 export const db = dbInstance as unknown as DbClient;
 

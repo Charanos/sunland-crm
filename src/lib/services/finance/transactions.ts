@@ -50,7 +50,7 @@ export async function recordTransaction(ctx: CallerContext, rawInput: unknown) {
         transactionId: transaction.id,
         type: transaction.type,
         amountKes: input.amountKes,
-        occurredAt: transaction.occurredAt.toISOString().split("T")[0],
+        occurredAt: (transaction.occurredAt instanceof Date ? transaction.occurredAt : new Date(transaction.occurredAt)).toISOString().split("T")[0],
         recordedBy: ctx.user.name,
       };
 
