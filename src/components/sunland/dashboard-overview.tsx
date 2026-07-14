@@ -707,7 +707,7 @@ export function DashboardOverview({
           )}
         </Card>
 
-        {/* Col 4: Profit / Loss (Stacked) */}
+        {/* Col 4: Profit / Loss & Revenue (Stacked) */}
         <div className="flex flex-col gap-3">
           <Link
             href="/fin"
@@ -721,7 +721,7 @@ export function DashboardOverview({
               />
               <div className="flex items-start justify-between relative z-10">
                 <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
-                  <span className="text-desc-secondary">Net Profit</span>
+                  <span className="text-desc-secondary">Total PnL</span>
                   <span className="font-mono font-medium text-slate-900 mt-1 text-3xl truncate">
                     {formatCompactKES(metrics.profit)}
                   </span>
@@ -758,7 +758,7 @@ export function DashboardOverview({
             href="/fin"
             className="animate-fade-in-up stagger-5 block h-[155px]"
           >
-            <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#fff1f2]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#fff1f2]/60 transition-all duration-300 group">
+            <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#fdf2f8]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#fdf2f8]/60 transition-all duration-300 group">
               <IconWallet
                 size={140}
                 stroke={1}
@@ -766,30 +766,15 @@ export function DashboardOverview({
               />
               <div className="flex items-start justify-between relative z-10">
                 <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
-                  <span className="text-desc-secondary">Total Expenses</span>
+                  <span className="text-desc-secondary">Monthly Rent Pool</span>
                   <span className="font-mono font-medium text-slate-900 mt-1 text-3xl truncate">
-                    {formatCompactKES(metrics.expenses)}
+                    {formatCompactKES(metrics.rentPool)}
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-between mt-auto relative z-10">
                 <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "mono-data text-xs flex font-medium items-center px-1.5 py-0.5 rounded-md",
-                      metrics.expenseGrowth <= 0
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-rose-50 text-rose-700",
-                    )}
-                  >
-                    {metrics.expenseGrowth > 0 ? (
-                      <IconTrendingUp size={12} className="mr-1" />
-                    ) : (
-                      <IconTrendingDown size={12} className="mr-1" />
-                    )}
-                    {Math.abs(metrics.expenseGrowth)}%
-                  </span>
-                  <span className="text-meta-muted">vs last month</span>
+                  <span className="text-meta-muted">Across occupied portfolio</span>
                 </div>
                 <IconArrowUpRight
                   size={14}
