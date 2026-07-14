@@ -89,8 +89,9 @@ export async function recordTransaction(ctx: CallerContext, rawInput: unknown) {
 }
 
 export async function listTransactions(ctx: CallerContext, filters: { entityId?: string } = {}) {
-  const entityId = filters.entityId ?? ctx.entityId;
-  if (!entityId) throw new DomainValidationError("entityId is required");
+  const entityIdParam = filters.entityId ?? ctx.entityId;
+  if (!entityIdParam) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(entityIdParam);
   await authorize(ctx, "finance.transaction.read", entityId);
 
   return db

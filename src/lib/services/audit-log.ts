@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { activityLogs } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { DomainValidationError } from "@/lib/authz/errors";
+import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
 
 export type AuditLogFilters = {
@@ -21,8 +22,9 @@ const MAX_LIMIT = 200;
 const DEFAULT_LIMIT = 50;
 
 export async function listAuditLog(ctx: CallerContext, filters: AuditLogFilters = {}) {
-  const entityId = filters.entityId ?? ctx.entityId;
-  if (!entityId) throw new DomainValidationError("entityId is required");
+  const entityIdParam = filters.entityId ?? ctx.entityId;
+  if (!entityIdParam) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(entityIdParam);
   await authorize(ctx, "audit.log.read", entityId);
 
   const limit = Math.min(filters.limit ?? DEFAULT_LIMIT, MAX_LIMIT);

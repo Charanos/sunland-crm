@@ -556,6 +556,13 @@ export function PropertiesBoard({
 
       <PortfolioHubNav active="properties" />
 
+
+      <div className="flex items-center gap-4 my-6">
+        <hr className="flex-1 border-slate-200/60" />
+        <span className="label-caps text-slate-400 tracking-wider">Portfolio Signals</span>
+        <hr className="flex-1 border-slate-200/60" />
+      </div>
+
       {/* ── Dense, High-Contrast Dark KPI Tier - driven fully from STATUS_CONFIG ── */}
       <div className="gsap-stagger bg-tertiary-gradient border border-[#122a20]/80 p-1.5 rounded-[24px] shadow-xl relative overflow-hidden group">
         <div className="absolute right-0 top-0 size-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-700" />
@@ -637,7 +644,7 @@ export function PropertiesBoard({
 
       <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-400 tracking-wider">Analytics & Command</span>
+        <span className="label-caps text-slate-400 tracking-wider">Featured & Mix</span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
