@@ -1,20 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   IconBuildingCommunity,
-  IconCalendar,
   IconChevronRight,
   IconMail,
   IconMessageCircle,
-  IconPhone,
   IconBriefcase,
-  IconStar,
-  IconClock,
+  IconCash,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/drawer";
 import { ProfileDrawerRow } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
+import { formatCompactKES } from "@/lib/utils/format";
 import { PROPERTY_TYPE_ICON, type Property } from "./property-constants";
 
 function initialsOf(name: string): string {
@@ -33,56 +32,73 @@ interface InfoRow {
 export function PropertyManagerProfileDrawer({
   open,
   onClose,
+  entityId,
   managerId,
   properties,
   onOpenProperty,
 }: {
   open: boolean;
   onClose: () => void;
+  entityId: string;
   managerId: string | null;
   properties: Property[];
   onOpenProperty: (property: Property) => void;
 }) {
   const { pushToast } = useToast();
+  const [collectedYtd, setCollectedYtd] = useState<number | null>(null);
 
-  // Mock manager data for demonstration since PropertyManager is not fully integrated in types yet
-  const managerName = "Kevin Oduor";
-  const managerImage = "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400&auto=format&fit=crop";
-  const managerPhone = "+254 701 556 233";
-  const managerEmail = "k.oduor@sunland.co.ke";
-  const managerTeam = "Operations";
-  const managerSince = "Feb 2024";
+  const assignedProperties = managerId ? properties.filter((p) => p.manager?.id === managerId) : [];
+  const manager = assignedProperties[0]?.manager ?? null;
+  const managerName = manager?.name || "Property Manager";
 
-  // Mock performance data
-  const portfolioCount = 6;
-  const onTimeCollection = "94%";
-  const rating = "4.8 / 5";
-
-  // In a real app we'd filter properties by managerId
-  const assignedProperties = properties.slice(0, 3); // mock assigned properties
+  useEffect(() => {
+    if (!open || !managerId) {
+      Promise.resolve().then(() => setCollectedYtd(null));
+      return;
+    }
+    let active = true;
+    const propertyIds = new Set(assignedProperties.map((p) => p.id));
+    const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+    fetch(`/api/finance/transactions?entityId=${entityId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data) return;
+        const sum = (data.transactions ?? [])
+          .filter(
+            (t: { type: string; propertyId: string | null; occurredAt: string; amountKes: string }) =>
+              t.type === "rent" && t.propertyId && propertyIds.has(t.propertyId) && new Date(t.occurredAt).getTime() >= yearStart
+          )
+          .reduce((acc: number, t: { amountKes: string }) => acc + parseFloat(t.amountKes), 0);
+        setCollectedYtd(sum);
+      })
+      .catch(() => {
+        if (active) setCollectedYtd(null);
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, managerId, entityId]);
 
   if (!managerId) return null;
 
   const infoRows: InfoRow[] = [
-    { icon: IconPhone, label: "Phone", value: managerPhone, mono: true },
-    { icon: IconMail, label: "Mail", value: managerEmail },
-    { icon: IconBriefcase, label: "Team", value: managerTeam },
-    { icon: IconCalendar, label: "Since", value: managerSince, mono: true },
+    ...(manager?.title ? [{ icon: IconBriefcase, label: "Title", value: manager.title }] : []),
+    ...(manager?.email ? [{ icon: IconMail, label: "Mail", value: manager.email }] : []),
   ];
 
-  const performanceRows = [
-    { icon: IconBuildingCommunity, label: "Portfolio", value: `${portfolioCount} mandates` },
-    { icon: IconClock, label: "On-time collection", value: onTimeCollection, valueClass: "text-emerald-600" },
-    { icon: IconStar, label: "Landlord rating", value: rating },
+  const statRows: InfoRow[] = [
+    { icon: IconBuildingCommunity, label: "Assigned properties", value: String(assignedProperties.length), mono: true },
+    { icon: IconCash, label: "Collected YTD", value: collectedYtd != null ? formatCompactKES(collectedYtd) : "-", mono: true },
   ];
 
   return (
     <Drawer open={open} onClose={onClose} title="Property Manager" width="34rem">
-      <div className="flex flex-col gap-6 bg-slate-50 min-h-full -mx-6 -my-6 p-6">
-        {/* Photo-hero matching the premium design */}
+      <div className="flex flex-col gap-5">
+        {/* Premium photo-hero matching the owner profile design */}
         <div className="relative h-64 rounded-3xl overflow-hidden shadow-sm flex flex-col justify-end bg-slate-900 border border-slate-100/10">
-          {managerImage ? (
-            <Image src={managerImage} alt={managerName} fill className="object-cover opacity-80" />
+          {manager?.avatarUrl ? (
+            <Image src={manager.avatarUrl} alt={managerName} fill className="object-cover opacity-80" />
           ) : (
             <div className="absolute inset-0 bg-tertiary-gradient flex items-center justify-center">
               <span className="text-6xl font-mono text-white/30">{initialsOf(managerName)}</span>
@@ -91,11 +107,10 @@ export function PropertyManagerProfileDrawer({
           <div className="absolute inset-0 bg-gradient-to-t from-[#151936]/90 via-[#151936]/40 to-transparent" />
 
           <div className="relative flex items-center justify-between flex-col z-10 px-6 pb-6 text-center h-full w-full">
-
             <div>
               <h2 className="title-serif text-white mt-8">{managerName}</h2>
               <div className="flex items-center justify-center gap-1.5 text-slate-300 body-sm mb-5">
-                <IconBriefcase size={14} /> Property Manager · Sunland staff
+                <IconBriefcase size={14} /> {manager?.title || "Property Manager"} · Sunland staff
               </div>
             </div>
 
@@ -108,29 +123,33 @@ export function PropertyManagerProfileDrawer({
               >
                 <IconMessageCircle size={16} />
               </button>
-              <a
-                href={`tel:${managerPhone}`}
-                className="inline-flex items-center gap-2 bg-[#151936] text-white border border-white/20 rounded-full px-4 py-2 body-sm hover:bg-[#1f2547] transition-all shadow-lg hover:scale-105"
-              >
-                <IconPhone size={16} /> Call
-              </a>
+              {manager?.email && (
+                <a
+                  href={`mailto:${manager.email}`}
+                  className="inline-flex items-center gap-2 bg-[#151936] text-white border border-white/20 rounded-full px-4 py-2 body-sm hover:bg-[#1f2547] transition-all shadow-lg hover:scale-105"
+                >
+                  <IconMail size={16} /> Email
+                </a>
+              )}
             </div>
           </div>
         </div>
 
-        <div>
-          <p className="label-caps text-slate-400 mb-3 px-1">Main info</p>
-          <div className="flex flex-col gap-2">
-            {infoRows.map((row) => (
-              <ProfileDrawerRow key={row.label} {...row} />
-            ))}
+        {infoRows.length > 0 && (
+          <div>
+            <p className="label-caps text-slate-400 mb-3 px-1">Main info</p>
+            <div className="flex flex-col gap-2">
+              {infoRows.map((row) => (
+                <ProfileDrawerRow key={row.label} {...row} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
-          <p className="label-caps text-slate-400 mb-3 px-1">Performance</p>
+          <p className="label-caps text-slate-400 mb-3 px-1">Portfolio</p>
           <div className="flex flex-col gap-2">
-            {performanceRows.map((row) => (
+            {statRows.map((row) => (
               <ProfileDrawerRow key={row.label} {...row} />
             ))}
           </div>

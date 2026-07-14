@@ -203,11 +203,15 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
       });
     }
 
+    const isOverride = !!input.overrideNote?.trim();
+
     await writeAudit(tx, ctx, {
       action: "finance.approval.decide",
       associatedType: "approval_request",
       associatedId: updated.id,
-      summary: `${ctx.user.name} ${input.status} a ${existing.requestType} approval request`,
+      summary: isOverride
+        ? `${ctx.user.name} decided directly (override), bypassing the ${existing.requiredApproverRole.toUpperCase()} step: "${input.overrideNote!.trim()}"`
+        : `${ctx.user.name} ${input.status} a ${existing.requestType} approval request`,
       entityId: existing.entityId,
       before: existing,
       after: updated,
@@ -223,6 +227,31 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
       associatedId: updated.id,
       href: "/admin/approvals",
     });
+
+    // Override notice: tell the tier that was bypassed, separately from the
+    // requester notification above - they never got to weigh in, and the
+    // copy here says "was decided", not "awaiting your decision".
+    if (isOverride) {
+      const bypassedRoles =
+        existing.requiredApproverRole === "gm"
+          ? (["general_manager"] as const)
+          : existing.requiredApproverRole === "ceo"
+            ? (["ceo"] as const)
+            : (["finance_head", "hr_head", "front_office_head"] as const);
+      const bypassed = await tx.select().from(users).where(inArray(users.role, bypassedRoles));
+      for (const recipient of bypassed) {
+        await createNotification(tx, {
+          userId: recipient.id,
+          entityId: existing.entityId,
+          type: "approval.decided",
+          title: "A pending request was decided directly",
+          body: `${ctx.user.name} (${ctx.user.role.toUpperCase()}) bypassed your step on a ${existing.requestType.replace(/_/g, " ")} request: "${input.overrideNote!.trim()}"`,
+          associatedType: "approval_request",
+          associatedId: updated.id,
+          href: "/admin/approvals",
+        });
+      }
+    }
 
     return updated;
   });

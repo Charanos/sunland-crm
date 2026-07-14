@@ -5,11 +5,14 @@ import { SunlandNav } from "@/components/layout/sunland-nav";
 import { TopNav } from "@/components/layout/top-nav";
 import { EntitySwitchOverlay } from "@/components/layout/entity-switch-overlay";
 import { GlobalChatWidget } from "@/components/layout/global-chat-widget";
+import { PropertyFormModal } from "@/components/sunland/property-form-modal";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
+import { useRouter } from "next/navigation";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { sidebarCollapsed } = useUIStore();
+  const { sidebarCollapsed, activeModal, closeModal } = useUIStore();
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -29,6 +32,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MobileBottomNav />
       <GlobalChatWidget />
       <EntitySwitchOverlay />
+      
+      {activeModal === "create-property" && (
+        <PropertyFormModal
+          open={true}
+          onClose={closeModal}
+          onSubmit={() => {
+            closeModal();
+            router.push("/admin/properties");
+          }}
+        />
+      )}
     </div>
   );
 }

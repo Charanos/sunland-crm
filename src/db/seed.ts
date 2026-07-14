@@ -25,6 +25,7 @@ try {
   console.warn("Failed to load local env files:", e);
 }
 
+import { inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   entities,
@@ -345,7 +346,7 @@ async function runSeed() {
         yearBuilt: 2018,
         parkingSpaces: 5,
         amenities: ["Ample Parking", "Backup Generator", "High-Speed Elevators", "24/7 Security", "Internet / Fiber Ready", "CCTV Surveillance", "Commercial Zoning"],
-        description: "A premium commercial office suite situated in the heart of Westlands. Features full backup power, high-speed fiber connectivity, and dedicated basement parking.",
+        description: "A premium Grade-A commercial office suite situated in the prestigious heart of Westlands, Nairobi's premier business district.\n\nThis meticulously designed 2,400 sq.ft space offers an unparalleled corporate environment, featuring open-plan flexibility alongside executive private offices. The property boasts full-capacity backup power generation, guaranteeing zero downtime for mission-critical operations. High-speed, multi-provider fiber connectivity is pre-installed, ensuring seamless global communications from day one.\n\nTenants enjoy exclusive access to dedicated, secure basement parking, with 5 reserved bays included in the lease. The building is serviced by high-speed, intelligent elevators that minimize wait times even during peak hours. Security is paramount, with 24/7 manned guarding, comprehensive CCTV surveillance covering all common areas, and restricted biometric access control.\n\nThe Plaza is perfectly zoned for commercial use and sits within walking distance of high-end dining, luxury hotels, and major financial institutions, offering the ultimate convenience for your team and visiting clients.",
         media: [
           { url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", alt: "Office exterior", isPrimary: true },
           { url: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80", alt: "Lobby" },
@@ -369,6 +370,45 @@ async function runSeed() {
         media: [
           { url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80", alt: "Living room", isPrimary: true },
           { url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80", alt: "Bedroom" },
+        ]
+      },
+      {
+        entityId: groupEntity.id,
+        propertyCode: "PROP-RES-088",
+        name: "The Sovereign Riverside Penthouse",
+        propertyType: "Residential",
+        listingType: "Rental",
+        status: "available",
+        location: "Riverside Drive, Nairobi",
+        ownerContactId: landlordB.id,
+        monthlyRentKes: "450000.00",
+        sizeSqft: 4200,
+        yearBuilt: 2024,
+        parkingSpaces: 3,
+        amenities: [
+          "Smart Home Automation",
+          "Private Plunge Pool",
+          "Rooftop Infinity Pool (Shared)",
+          "Fully Fitted Bosch Kitchen",
+          "DSQ with Separate Entrance",
+          "Panoramic Floor-to-Ceiling Windows",
+          "Centralized Air Conditioning",
+          "Biometric Fingerprint Access",
+          "24/7 Concierge Service",
+          "State-of-the-Art Gymnasium",
+          "Spa and Sauna",
+          "Backup Generator (Full Load)",
+          "Borehole Water Supply",
+          "High-Speed Fiber Internet",
+          "EV Charging Stations"
+        ],
+        description: "An architectural masterpiece redefining luxury living in Nairobi, The Sovereign Riverside Penthouse offers an unparalleled residential experience. Perched atop the city's most exclusive new development on Riverside Drive, this expansive 4,200 sq.ft, four-bedroom residence delivers breathtaking, uninterrupted 360-degree views of the Nairobi skyline and lush canopy below.\n\nDesigned for the most discerning tenant, the penthouse features a sprawling open-concept living and dining area, wrapped in floor-to-ceiling double-glazed acoustic glass that ensures absolute tranquility. The chef-grade kitchen is a culinary dream, arriving fully fitted with top-of-the-line integrated Bosch appliances, custom European cabinetry, and a stunning Calacatta marble waterfall island. Entertainment is effortless with a seamless flow onto the massive wrap-around terrace, complete with a private, temperature-controlled plunge pool.\n\nThe master suite operates as a private sanctuary, boasting a custom walk-in dressing room, a spa-inspired en-suite bathroom with a freestanding soaking tub, dual rain showers, and premium fixtures. Every room is fully integrated with a cutting-edge smart home automation system, allowing you to control lighting, climate, automated blinds, and multi-room audio straight from your smartphone or the central control hub.\n\nResidents enjoy access to world-class communal amenities including a rooftop infinity pool, a commercial-grade fitness center, a dedicated yoga studio, and a wellness spa. Security is military-grade, featuring multi-tier biometric access, 24/7 CCTV surveillance, and a round-the-clock dedicated concierge and management team. The property includes a self-contained domestic staff quarter (DSQ) with a discrete entrance and three reserved premium parking bays equipped with EV charging capabilities.",
+        media: [
+          { url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80", alt: "Penthouse exterior and terrace", isPrimary: true },
+          { url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80", alt: "Luxury open-plan living room" },
+          { url: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200&q=80", alt: "Fitted designer kitchen with marble island" },
+          { url: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&q=80", alt: "Master bedroom with floor-to-ceiling windows" },
+          { url: "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=1200&q=80", alt: "Spa-inspired en-suite bathroom" }
         ]
       },
     ];
@@ -468,6 +508,117 @@ async function runSeed() {
     const propRes = insertedProps[1];
 
     console.log("Created 2 properties.");
+
+    // 5a. Management mandates + Property Manager assignments - permanent (not
+    // an ephemeral enrichment script) since assignedPmId backs the Properties
+    // board's manager mini-cards/column and the manager profile drawer;
+    // wiping mandates on every reseed without a reinsert left those surfaces
+    // pointing at nothing. isFeatured is also set here (the base insert never
+    // sets it), preferring properties that also carry a mandate + manager so
+    // the featured carousel's landlord/manager mini-cards always render real
+    // data rather than an "Unassigned" state.
+    console.log("Step 5a: Establishing management mandates and PM assignments...");
+    const pmRoster = [lineManagerUser, propertyManager1User, propertyManager2User, salesAgent1User, salesAgent2User];
+    const featuredExtraIdx = [5, 12, 20, 30, 42];
+    const mandatedExtraIdx = [...featuredExtraIdx, 7, 15, 25];
+
+    await db.update(properties).set({ isFeatured: true }).where(
+      inArray(properties.id, [propComm.id, propRes.id, ...featuredExtraIdx.map((i) => insertedProps[i].id)]),
+    );
+
+    const mandateStartDate = new Date();
+    mandateStartDate.setMonth(mandateStartDate.getMonth() - 6);
+    // Removed propComm from activeMandateProps so it can be pending_approval instead
+    const activeMandateProps = [propRes, ...mandatedExtraIdx.map((i) => insertedProps[i])];
+    const activeMandatesToInsert: (typeof propertyMandates.$inferInsert)[] = activeMandateProps.map((p, i) => ({
+      entityId: groupEntity.id,
+      propertyId: p.id,
+      landlordContactId: p.ownerContactId!,
+      // Every 5th mandate stays unassigned so the "Unassigned" empty state
+      // (grid card / table / drawer trigger) also has real data to exercise.
+      assignedPmId: i % 5 === 4 ? null : pmRoster[i % pmRoster.length].id,
+      mandateRate: "0.1000",
+      unitCount: 1,
+      startDate: mandateStartDate,
+      status: "active",
+    }));
+    await db.insert(propertyMandates).values(activeMandatesToInsert);
+
+    // Make propComm have a pending mandate and critical maintenance request
+    const pendingProp1 = propComm;
+    const [pendingMandate1] = await db
+      .insert(propertyMandates)
+      .values({
+        entityId: groupEntity.id,
+        propertyId: pendingProp1.id,
+        landlordContactId: pendingProp1.ownerContactId!,
+        assignedPmId: propertyManager1User.id,
+        mandateRate: "0.1500",
+        rateJustification: "Premium commercial management rate.",
+        unitCount: 24,
+        startDate: new Date(),
+        status: "pending_approval",
+      })
+      .returning();
+    await db.insert(approvalRequests).values({
+      entityId: groupEntity.id,
+      requestType: "mandate_activation",
+      relatedTable: "property_mandates",
+      relatedId: pendingMandate1.id,
+      requestedById: propertyManager1User.id,
+      requiredApproverRole: "gm",
+      status: "pending",
+    });
+
+    await db.insert(maintenanceRequests).values({
+      entityId: groupEntity.id,
+      propertyId: propComm.id,
+      title: "Elevator breakdown in block A",
+      description: "Main passenger elevator is stuck between floors.",
+      priority: "critical",
+      status: "open",
+      reportedByContactId: tenantA.id,
+    });
+
+    const pendingProp = insertedProps[35];
+    const [pendingMandate] = await db
+      .insert(propertyMandates)
+      .values({
+        entityId: groupEntity.id,
+        propertyId: pendingProp.id,
+        landlordContactId: pendingProp.ownerContactId!,
+        assignedPmId: propertyManager1User.id,
+        mandateRate: "0.1200",
+        rateJustification: "Larger multi-unit block - above-standard servicing effort.",
+        unitCount: 14,
+        startDate: new Date(),
+        status: "pending_approval",
+      })
+      .returning();
+    await db.insert(approvalRequests).values({
+      entityId: groupEntity.id,
+      requestType: "mandate_activation",
+      relatedTable: "property_mandates",
+      relatedId: pendingMandate.id,
+      requestedById: propertyManager1User.id,
+      requiredApproverRole: "gm",
+      status: "pending",
+    });
+
+    const terminatedProp = insertedProps[45];
+    await db.insert(propertyMandates).values({
+      entityId: groupEntity.id,
+      propertyId: terminatedProp.id,
+      landlordContactId: terminatedProp.ownerContactId!,
+      assignedPmId: salesAgent2User.id,
+      mandateRate: "0.1000",
+      unitCount: 1,
+      startDate: mandateStartDate,
+      endDate: new Date(),
+      status: "terminated",
+    });
+
+    console.log(`Created ${activeMandatesToInsert.length + 3} management mandates (active/pending/terminated) with PM assignments, and marked ${2 + featuredExtraIdx.length} properties as featured.`);
 
     // 5b. Create pipeline leads - spans this-week/this-month/last-month so the
     // executive overview's CRM metrics (closed deals, active pipeline, new
@@ -614,7 +765,7 @@ async function runSeed() {
         propertyId: propRes.id,
         leaseId: leaseB.id,
         amountKes: "95000.00",
-        occurredAt: new Date(),
+        occurredAt: new Date(Date.now() - 30 * 86_400_000),
         recordedById: pmUser.id,
         notes: "Rent payment for Alice Odhiambo - Month of June",
       },
@@ -632,7 +783,7 @@ async function runSeed() {
 
     for (let i = 0; i < 30; i++) {
       const dt = new Date();
-      dt.setDate(dt.getDate() - Math.floor(Math.random() * 120)); // Last 4 months
+      dt.setDate(dt.getDate() - (Math.floor(Math.random() * 120) + 30)); // At least 30 days ago
       txs.push({
         entityId: groupEntity.id,
         type: Math.random() > 0.3 ? "rent" : "expense",
@@ -647,6 +798,47 @@ async function runSeed() {
     await db.insert(transactions).values(txs);
 
     console.log("Created 3 initial transactions.");
+
+    // 7b. Create Maintenance Requests and Documents
+    console.log("Step 7b: Generating maintenance requests and property documents...");
+    await db.insert(maintenanceRequests).values([
+      {
+        entityId: groupEntity.id,
+        propertyId: propComm.id,
+        title: "Main generator electrical fault",
+        priority: "critical",
+        status: "open",
+        description: "The main backup generator is failing to auto-start during grid blackouts. Needs urgent technician attention.",
+        reportedByContactId: tenantA.id,
+        createdAt: new Date(Date.now() - 2 * 86_400_000),
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propRes.id,
+        title: "Master bathroom plumbing leak",
+        priority: "high",
+        status: "in_progress",
+        description: "Water leaking under the sink, causing dampness in the cabinets.",
+        reportedByContactId: tenantB.id,
+        createdAt: new Date(Date.now() - 5 * 86_400_000),
+      }
+    ]);
+
+    await db.insert(documents).values([
+      {
+        entityId: groupEntity.id,
+        propertyId: propComm.id,
+        ownerContactId: landlordA.id,
+        title: "Signed Management Mandate - Nexus Office Plaza",
+        type: "mandate_letter",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/mandate_nexus.pdf",
+        uploadedById: financeOfficerUser.id,
+        metadata: { status: "signed" },
+        createdAt: new Date(Date.now() - 180 * 86_400_000),
+      }
+    ]);
+
+    console.log("Created maintenance requests and documents.");
 
     // 8. Create Approval Requests
     console.log("Step 8: Populating dynamic approvals queue...");

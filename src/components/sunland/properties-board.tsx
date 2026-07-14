@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   IconBuildingCommunity,
   IconCash,
@@ -26,6 +27,7 @@ import {
   IconEye,
   IconLayoutGrid,
   IconList,
+  IconUsers,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import {
@@ -108,6 +110,12 @@ function ownerInitials(property: Property): string {
   return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
 }
 
+function managerInitials(name?: string | null): string {
+  if (!name) return "-";
+  const parts = name.trim().split(/\s+/);
+  return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+}
+
 /** Status badge pill - always dark/black text regardless of background for legibility */
 function StatusPill({ status }: { status: PropertyStatus }) {
   const sc = STATUS_CONFIG[status] || STATUS_CONFIG.available;
@@ -140,12 +148,14 @@ function PropertyGridCard({
   canManage,
   onOpen,
   onOwnerClick,
+  onManagerClick,
   onToggleFeature,
 }: {
   property: Property;
   canManage: boolean;
   onOpen: () => void;
   onOwnerClick: () => void;
+  onManagerClick: () => void;
   onToggleFeature: () => void;
 }) {
   const ownerName = property.owner?.name || property.ownerName;
@@ -255,26 +265,43 @@ function PropertyGridCard({
           </div>
         )}
 
-        {/* Footer: owner + property type icon */}
-        <div className="mt-auto pt-2.5 border-t border-slate-50 flex items-center justify-between gap-2">
-          {ownerName ? (
+        {/* Footer: owner + manager + property type icon */}
+        <div className="mt-auto pt-2.5 border-t border-slate-50 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            {ownerName ? (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onOwnerClick(); }}
+                aria-label={`View owner ${ownerName}`}
+                className="inline-flex items-center gap-2 rounded-full hover:bg-slate-50 transition-colors pr-1 py-0.5 min-w-0"
+              >
+                <span className="size-6 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center text-xs font-medium shrink-0">
+                  {ownerInitials(property)}
+                </span>
+                <span className="text-xs text-slate-500 truncate max-w-[100px]">{ownerName}</span>
+              </button>
+            ) : (
+              <span className="text-xs text-slate-300 italic">No owner</span>
+            )}
+            <div className="size-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shrink-0">
+              <PropertyTypeIcon type={property.propertyType} size={14} />
+            </div>
+          </div>
+          {property.manager?.name ? (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onOwnerClick(); }}
-              aria-label={`View owner ${ownerName}`}
-              className="inline-flex items-center gap-2 rounded-full hover:bg-slate-50 transition-colors pr-1 py-0.5 min-w-0"
+              onClick={(e) => { e.stopPropagation(); onManagerClick(); }}
+              aria-label={`View manager ${property.manager.name}`}
+              className="inline-flex items-center gap-2 rounded-full hover:bg-slate-50 transition-colors pr-1 py-0.5 min-w-0 self-start"
             >
-              <span className="size-6 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center text-xs font-medium shrink-0">
-                {ownerInitials(property)}
+              <span className="size-6 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-medium shrink-0">
+                {managerInitials(property.manager.name)}
               </span>
-              <span className="text-xs text-slate-500 truncate max-w-[100px]">{ownerName}</span>
+              <span className="text-xs text-slate-500 truncate max-w-[100px]">{property.manager.name}</span>
             </button>
           ) : (
-            <span className="text-xs text-slate-300 italic">No owner</span>
+            <span className="text-xs text-slate-300 italic">No manager assigned</span>
           )}
-          <div className="size-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shrink-0">
-            <PropertyTypeIcon type={property.propertyType} size={14} />
-          </div>
         </div>
       </div>
     </div>
@@ -290,6 +317,8 @@ export function PropertiesBoard({
   canManage?: boolean;
 }) {
   const { pushToast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -312,6 +341,15 @@ export function PropertiesBoard({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [ownerDrawerId, setOwnerDrawerId] = useState<string | null>(null);
   const [managerDrawerId, setManagerDrawerId] = useState<string | null>(null);
+
+  // Initialize modal state from search params
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setIsCreateOpen(true);
+      // Clean up the URL so it doesn't re-trigger on refresh
+      router.replace("/admin/properties", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   const requestIdRef = useRef(0);
 
@@ -811,17 +849,36 @@ export function PropertiesBoard({
                     </button>
                   )}
                   {/* Property Manager Card */}
-                  <button
-                    type="button"
-                    onClick={() => { setManagerDrawerId("mock_kevin"); }}
-                    className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-[16px] px-3 py-2 text-left hover:bg-white hover:border-slate-200 transition-colors shadow-sm min-w-0"
-                  >
-                    <span className="size-8 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center text-xs font-medium shrink-0">KO</span>
-                    <span className="min-w-0">
-                      <span className="block body-sm text-slate-900 truncate">Kevin Oduor</span>
-                      <span className="block label-caps text-slate-400">Property Manager</span>
-                    </span>
-                  </button>
+                  {featuredProperties[safeFeaturedIndex].manager?.name ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const managerId = featuredProperties[safeFeaturedIndex].manager?.id;
+                        if (managerId) setManagerDrawerId(managerId);
+                      }}
+                      className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-[16px] px-3 py-2 text-left hover:bg-white hover:border-slate-200 transition-colors shadow-sm min-w-0"
+                    >
+                      <span className="size-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-medium shrink-0">
+                        {managerInitials(featuredProperties[safeFeaturedIndex].manager?.name)}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block body-sm text-slate-900 truncate">
+                          {featuredProperties[safeFeaturedIndex].manager?.name}
+                        </span>
+                        <span className="block label-caps text-slate-400">Property Manager</span>
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2.5 bg-slate-50 border border-dashed border-slate-200 rounded-[16px] px-3 py-2 min-w-0">
+                      <span className="size-8 rounded-full bg-slate-100 text-slate-300 flex items-center justify-center shrink-0">
+                        <IconUsers size={14} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block body-sm text-slate-400 truncate">Unassigned</span>
+                        <span className="block label-caps text-slate-300">Property Manager</span>
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Price + CTA */}
@@ -842,7 +899,7 @@ export function PropertiesBoard({
                       Quick View
                     </Button>
                     <a
-                      href={`/properties/${featuredProperties[safeFeaturedIndex].id}`}
+                      href={`/admin/properties/${featuredProperties[safeFeaturedIndex].id}`}
                       className="inline-flex items-center justify-center bg-[#151936] text-white hover:bg-[#151936]/90 transition-colors px-4 sm:px-6 py-2 rounded-xl shadow-sm body-sm font-medium whitespace-nowrap"
                     >
                       <IconEye size={15} className="mr-1.5" /> View
@@ -1117,8 +1174,8 @@ export function PropertiesBoard({
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Mobile/Tablet: always the image-forward grid card, single column - matches the SKILL.md rule that tables never render on mobile */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:hidden">
+            {/* Mobile/Tablet: single-column stacked cards - matches the mobile decard pattern used by every other board's table (maintenance/valuations) */}
+            <div className="flex flex-col gap-4 lg:hidden">
               {visible.map((p) => (
                 <PropertyGridCard
                   key={p.id}
@@ -1126,6 +1183,7 @@ export function PropertiesBoard({
                   canManage={canManage}
                   onOpen={() => setDrawerProperty(p)}
                   onOwnerClick={() => p.ownerContactId && setOwnerDrawerId(p.ownerContactId)}
+                  onManagerClick={() => p.manager?.id && setManagerDrawerId(p.manager.id)}
                   onToggleFeature={() => handleToggleFeature(p.id, !!p.isFeatured)}
                 />
               ))}
@@ -1141,6 +1199,7 @@ export function PropertiesBoard({
                     canManage={canManage}
                     onOpen={() => setDrawerProperty(p)}
                     onOwnerClick={() => p.ownerContactId && setOwnerDrawerId(p.ownerContactId)}
+                    onManagerClick={() => p.manager?.id && setManagerDrawerId(p.manager.id)}
                     onToggleFeature={() => handleToggleFeature(p.id, !!p.isFeatured)}
                   />
                 ))}
@@ -1327,16 +1386,32 @@ export function PropertiesBoard({
                             <p className="label-caps text-slate-300 mt-0.5 text-right">{priceLabel}</p>
                           </td>
 
-                          {/* Mandate */}
+                          {/* Mandate + manager */}
                           <td className="px-3 py-3.5 text-center">
                             {p.mandateStatus ? (
-                              <span className={cn(
-                                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium text-slate-900",
-                                MANDATE_STATUS_CONFIG[p.mandateStatus].pill
-                              )}>
-                                <span className={cn("size-1.5 rounded-full shrink-0", MANDATE_STATUS_CONFIG[p.mandateStatus].dot)} />
-                                {MANDATE_STATUS_CONFIG[p.mandateStatus].label}
-                              </span>
+                              <div className="flex flex-col items-center gap-1">
+                                <span className={cn(
+                                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium text-slate-900",
+                                  MANDATE_STATUS_CONFIG[p.mandateStatus].pill
+                                )}>
+                                  <span className={cn("size-1.5 rounded-full shrink-0", MANDATE_STATUS_CONFIG[p.mandateStatus].dot)} />
+                                  {MANDATE_STATUS_CONFIG[p.mandateStatus].label}
+                                </span>
+                                {p.manager?.name ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (p.manager?.id) setManagerDrawerId(p.manager.id);
+                                    }}
+                                    className="text-xs text-slate-400 hover:text-[#151936] hover:underline truncate max-w-[110px]"
+                                  >
+                                    {p.manager.name}
+                                  </button>
+                                ) : (
+                                  <span className="text-xs text-slate-200">Unassigned</span>
+                                )}
+                              </div>
                             ) : (
                               <span className="text-slate-200 text-sm">-</span>
                             )}
@@ -1456,6 +1531,7 @@ export function PropertiesBoard({
       <PropertyManagerProfileDrawer
         open={!!managerDrawerId}
         onClose={() => setManagerDrawerId(null)}
+        entityId={entityId}
         managerId={managerDrawerId}
         properties={properties}
         onOpenProperty={(p) => setDrawerProperty(p)}

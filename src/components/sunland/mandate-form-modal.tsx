@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { IconX, IconFileCertificate, IconAlertTriangle } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { IconX, IconFileCertificate, IconAlertTriangle, IconUserCog } from "@tabler/icons-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
+
+interface ManagerOption {
+  id: string;
+  name: string;
+  title: string | null;
+}
 
 interface MandateFormModalProps {
   open: boolean;
@@ -36,7 +42,26 @@ export function MandateFormModal({
   const [unitCount, setUnitCount] = useState(String(Math.max(1, defaultUnitCount)));
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState("");
+  const [assignedPmId, setAssignedPmId] = useState("");
+  const [managers, setManagers] = useState<ManagerOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open || !entityId) return;
+    let active = true;
+    fetch(`/api/identity/users?entityId=${entityId}&role=property_manager`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data) return;
+        setManagers(data.users ?? []);
+      })
+      .catch(() => {
+        if (active) setManagers([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [open, entityId]);
 
   if (!open) return null;
 
@@ -67,6 +92,7 @@ export function MandateFormModal({
           unitCount: parseInt(unitCount, 10) || 1,
           startDate: new Date(startDate).toISOString(),
           endDate: endDate ? new Date(endDate).toISOString() : null,
+          assignedPmId: assignedPmId || null,
         }),
       });
 
@@ -198,6 +224,25 @@ export function MandateFormModal({
                 onChange={(e) => setEndDate(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-slate-400 mb-1.5 label-caps">Property Manager (optional)</label>
+            <div className="relative">
+              <IconUserCog size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" aria-hidden="true" />
+              <select
+                value={assignedPmId}
+                onChange={(e) => setAssignedPmId(e.target.value)}
+                className="w-full pl-10 pr-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm appearance-none"
+              >
+                <option value="">Unassigned</option>
+                {managers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}{m.title ? ` · ${m.title}` : ""}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

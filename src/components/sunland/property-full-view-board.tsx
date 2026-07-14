@@ -7,49 +7,77 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   IconAlertTriangle,
-  IconBath,
-  IconBed,
+  IconArrowUpRight,
+  IconBolt,
   IconBuildingSkyscraper,
   IconCalendarEvent,
+  IconChevronDown,
   IconChevronLeft,
+  IconChevronRight,
   IconClipboardList,
+  IconDotsVertical,
   IconEdit,
   IconExternalLink,
+  IconFileAlert,
   IconFileCertificate,
   IconFileText,
   IconHistory,
+  IconLink,
   IconMail,
   IconMapPin,
   IconMoodEmpty,
   IconPhone,
+  IconPhoto,
   IconPlus,
   IconReceipt2,
   IconRuler,
   IconShieldCheck,
   IconStar,
   IconStarFilled,
+  IconTool,
   IconTrash,
   IconTrendingUp,
   IconUsers,
+  IconUserCog,
 } from "@tabler/icons-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DropdownMenu, DropdownItem } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PropertyFormModal } from "./property-form-modal";
 import { ReportIssueModal } from "./report-issue-modal";
 import { MandateFormModal } from "./mandate-form-modal";
 import { MandateLetterModal } from "./mandate-letter-modal";
+import { MandateDecisionDrawer } from "./mandate-decision-drawer";
+import { MandateOverrideModal } from "./mandate-override-modal";
+import { AssignManagerModal } from "./assign-manager-modal";
 import { VerifyContactModal } from "./verify-contact-modal";
+import { PhotoLightbox } from "./photo-lightbox";
+import { LeaseDetailDrawer } from "./lease-detail-drawer";
+import { LeaseFormModal, type LeaseEditTarget } from "./lease-form-modal";
+import { LeaseRenewModal, type LeaseRenewTarget } from "./lease-renew-modal";
 import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { LISTING_TYPE_LABEL, MANDATE_STATUS_CONFIG, PROPERTY_TYPE_ICON, STATUS_CONFIG, STATUS_ORDER, formatPropertyDate } from "./property-constants";
 import type { PropertyStatus } from "./property-constants";
-import type { ActivityLogEntry, PropertyDetail, PropertyDocumentSummary } from "./property-detail-types";
+import type { ActivityLogEntry, LeaseSummary, PropertyDetail, PropertyDocumentSummary } from "./property-detail-types";
 
 type TabKey = "overview" | "financials" | "tenancy" | "maintenance" | "activity";
+type ActionTone = "amber" | "rose" | "neutral";
+
+interface ActionItem {
+  key: string;
+  tone: ActionTone;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  title: string;
+  meta: string;
+  cta: string;
+  primary: boolean;
+  onClick: () => void;
+}
 
 // Hides scrollbars on the mobile tab strip / pipeline stepper while staying scrollable
 // by touch, trackpad, or keyboard - cross-browser via one Tailwind arbitrary variant
@@ -57,15 +85,22 @@ type TabKey = "overview" | "financials" | "tenancy" | "maintenance" | "activity"
 const SCROLL_HIDDEN_CLASS = "[&::-webkit-scrollbar]:hidden";
 const scrollHiddenStyle: React.CSSProperties = { scrollbarWidth: "none", msOverflowStyle: "none" };
 
-// Dark-hero recast of STATUS_CONFIG's light pill tones - same semantic hue
-// per status (emerald/amber/rose/slate, Terrain Identity palette), just
-// legible against the majestic gradient header instead of a white card.
-const STATUS_HERO_TONE: Record<PropertyStatus, string> = {
-  available: "border-white/10 bg-white/5 text-slate-300",
-  occupied: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  under_offer: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-  maintenance: "border-rose-500/30 bg-rose-500/10 text-rose-400",
-  off_market: "border-white/10 bg-white/5 text-slate-400",
+const ACTION_TONE_CLASSES: Record<ActionTone, { card: string; iconWrap: string; cta: string }> = {
+  amber: {
+    card: "border-amber-200 bg-amber-500/[0.04] rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
+    iconWrap: "bg-amber-100/80 text-amber-700 size-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
+    cta: "bg-[#f3df27] text-[#151936] font-medium text-xs rounded-xl px-4 py-1.5 hover:bg-[#e6d220] transition-colors shadow-sm whitespace-nowrap",
+  },
+  rose: {
+    card: "border-rose-100 bg-rose-500/[0.02] rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
+    iconWrap: "bg-rose-100/80 text-rose-600 size-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
+    cta: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs rounded-xl px-4 py-1.5 transition-colors shadow-xs whitespace-nowrap",
+  },
+  neutral: {
+    card: "border-slate-200/80 bg-slate-50/50 rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
+    iconWrap: "bg-slate-100 text-slate-500 size-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
+    cta: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs rounded-xl px-4 py-1.5 transition-colors shadow-xs whitespace-nowrap",
+  },
 };
 
 export function PropertyFullViewBoard({
@@ -89,6 +124,7 @@ export function PropertyFullViewBoard({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
+  const [viewerRole, setViewerRole] = useState<string | null>(null);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -96,16 +132,27 @@ export function PropertyFullViewBoard({
   const [reportIssueOpen, setReportIssueOpen] = useState(false);
   const [createMandateOpen, setCreateMandateOpen] = useState(false);
   const [terminateMandateOpen, setTerminateMandateOpen] = useState(false);
+  const [terminateNotes, setTerminateNotes] = useState("");
   const [isTerminatingMandate, setIsTerminatingMandate] = useState(false);
   const [verifyLandlordOpen, setVerifyLandlordOpen] = useState(false);
   const [mandateLetterOpen, setMandateLetterOpen] = useState(false);
+  const [assignManagerOpen, setAssignManagerOpen] = useState(false);
+  const [decisionDrawerOpen, setDecisionDrawerOpen] = useState(false);
+  const [overrideModalOpen, setOverrideModalOpen] = useState(false);
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const [drawerLease, setDrawerLease] = useState<LeaseSummary | null>(null);
+  const [editingLease, setEditingLease] = useState<LeaseSummary | null>(null);
+  const [renewingLease, setRenewingLease] = useState<LeaseSummary | null>(null);
+  const [leasePage, setLeasePage] = useState(1);
 
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[] | null>(null);
   const [activityLoading, setActivityLoading] = useState(false);
-  const [activityLoaded, setActivityLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -136,13 +183,30 @@ export function PropertyFullViewBoard({
     };
   }, [propertyId, entityId, refreshCount]);
 
-  // Lazy-load the audit trail only once the Activity tab is actually opened.
   useEffect(() => {
-    if (activeTab !== "activity" || activityLoaded) return;
     let active = true;
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active) return;
+        setViewerRole(data?.user?.role ?? null);
+      })
+      .catch(() => {
+        if (active) setViewerRole(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Audit trail loads unconditionally alongside the property - the rail's
+  // "Latest Activity" peek needs it regardless of which tab is active, not
+  // just when the Activity tab happens to be open.
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => { if (active) setActivityLoading(true); });
     const timeoutId = setTimeout(() => {
-      setActivityLoading(true);
-      fetch(`/api/audit?resourceType=property&resourceId=${propertyId}`)
+      fetch(`/api/audit?entityId=${entityId || ""}&associatedType=property&associatedId=${propertyId}`)
         .then((res) => (res.ok ? res.json() : { data: [] }))
         .then((data) => {
           if (!active) return;
@@ -153,21 +217,18 @@ export function PropertyFullViewBoard({
           if (active) setActivityLog([]);
         })
         .finally(() => {
-          if (active) {
-            setActivityLoading(false);
-            setActivityLoaded(true);
-          }
+          if (active) setActivityLoading(false);
         });
     }, 0);
     return () => {
       active = false;
       clearTimeout(timeoutId);
     };
-  }, [activeTab, activityLoaded, propertyId]);
+  }, [propertyId, entityId, refreshCount]);
 
   const tabs = useMemo(() => {
     if (!property) return [];
-    const list: { key: TabKey; label: string; icon: ComponentType<{ size?: number; className?: string }> }[] = [
+    const list: { key: TabKey; label: string; icon: ComponentType<{ size?: number; className?: string }>; dot?: boolean }[] = [
       { key: "overview", label: "Overview", icon: IconBuildingSkyscraper },
     ];
     if (canViewFinance) list.push({ key: "financials", label: "Financials", icon: IconReceipt2 });
@@ -176,10 +237,98 @@ export function PropertyFullViewBoard({
       label: property.listingType === "sale" ? "Sales Pipeline" : "Tenancy",
       icon: property.listingType === "sale" ? IconTrendingUp : IconUsers,
     });
-    list.push({ key: "maintenance", label: "Maintenance", icon: IconClipboardList });
+    const openCritical = (property.maintenanceRequests ?? []).some(
+      (m) => m.priority === "critical" && m.status !== "resolved" && m.status !== "closed"
+    );
+    list.push({ key: "maintenance", label: "Maintenance", icon: IconClipboardList, dot: openCritical });
     list.push({ key: "activity", label: "Activity", icon: IconHistory });
     return list;
   }, [property, canViewFinance]);
+
+  const mandateLetterDoc = property?.documents?.find((d) => d.type === "mandate_letter");
+
+  // Who this mandate's pending decision is actually mine to make (matches the
+  // viewer's own role to the tier), vs. something a CEO could override.
+  const mandate = property?.mandate;
+  const canDecideMandate = !!(
+    mandate?.status === "pending_approval" &&
+    mandate.approvalRequestId &&
+    viewerRole &&
+    ((mandate.pendingApproverRole === "gm" && viewerRole === "general_manager") ||
+      (mandate.pendingApproverRole === "ceo" && viewerRole === "ceo"))
+  );
+  const canOverrideMandate = !!(
+    mandate?.status === "pending_approval" &&
+    mandate.approvalRequestId &&
+    mandate.pendingApproverRole === "gm" &&
+    viewerRole === "ceo"
+  );
+
+  const actionItems: ActionItem[] = useMemo(() => {
+    if (!property) return [];
+    const items: ActionItem[] = [];
+    if (mandate?.status === "pending_approval" && mandate.approvalRequestId) {
+      items.push({
+        key: "mandate",
+        tone: "amber",
+        icon: IconFileCertificate,
+        title: canDecideMandate
+          ? "Mandate awaiting your approval"
+          : `Mandate pending at the ${(mandate.pendingApproverRole ?? "gm").toUpperCase()} step`,
+        meta: `${(mandate.mandateRate * 100).toFixed(0)}% rate${mandate.manager?.name ? ` · ${mandate.manager.name}` : ""}`,
+        cta: canDecideMandate ? "Review" : canOverrideMandate ? "Decide Directly" : "View",
+        primary: canDecideMandate,
+        onClick: () => {
+          if (canDecideMandate) setDecisionDrawerOpen(true);
+          else if (canOverrideMandate) setOverrideModalOpen(true);
+          else setActiveTab("financials");
+        },
+      });
+    }
+    if (property.arrears && (property.arrears.status === "partial" || property.arrears.status === "defaulted")) {
+      const unitsBehind = property.unitBreakdown && property.unitBreakdown.length > 0
+        ? ` · Units ${property.unitBreakdown.slice(0, 2).map(u => u.unitType).join(", ")} behind`
+        : "";
+      items.push({
+        key: "arrears",
+        tone: "rose",
+        icon: IconAlertTriangle,
+        title: `${formatCompactKES(property.arrears.amount)} in arrears`,
+        meta: `${property.arrears.daysInArrears} days${unitsBehind}`,
+        cta: "Follow up",
+        primary: false,
+        onClick: () => setActiveTab("financials"),
+      });
+    }
+    const openCritical = (property.maintenanceRequests ?? []).find(
+      (m) => m.priority === "critical" && m.status !== "resolved" && m.status !== "closed"
+    );
+    if (openCritical) {
+      items.push({
+        key: "maintenance",
+        tone: "rose",
+        icon: IconAlertTriangle,
+        title: `Critical: ${openCritical.title}`,
+        meta: `Reported ${formatPropertyDate(openCritical.reportedAt)} by caretaker`,
+        cta: "Escalate",
+        primary: false,
+        onClick: () => setActiveTab("maintenance"),
+      });
+    }
+    if (property.owner && mandate && !mandateLetterDoc?.url) {
+      items.push({
+        key: "letter",
+        tone: "neutral",
+        icon: IconFileAlert,
+        title: "Mandate letter not attached",
+        meta: "Required on file before first remittance",
+        cta: "Attach",
+        primary: false,
+        onClick: () => setMandateLetterOpen(true),
+      });
+    }
+    return items;
+  }, [property, mandate, mandateLetterDoc, canDecideMandate, canOverrideMandate]);
 
   if (isLoading) {
     return (
@@ -214,7 +363,9 @@ export function PropertyFullViewBoard({
   const primaryImage = mediaList[activeMediaIndex]?.url ?? mediaList[0]?.url;
 
   const adaptiveMetric = getAdaptiveMetric(property);
-  const mandateLetterDoc = property.documents?.find((d) => d.type === "mandate_letter");
+  const vitals = getVitals(property, adaptiveMetric);
+  const PrimaryActionIcon = actionItems[0]?.icon;
+  const specLine = buildSpecLine(property);
 
   const handleEditSave = () => {
     setEditModalOpen(false);
@@ -228,7 +379,7 @@ export function PropertyFullViewBoard({
       const res = await fetch(`/api/properties?id=${property.id}&entityId=${entityId || ""}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isFeatured: newVal }),
+        body: JSON.stringify({ isFeatured: newVal, entityId }),
       });
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       setProperty({ ...property, isFeatured: newVal });
@@ -239,14 +390,23 @@ export function PropertyFullViewBoard({
     }
   };
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/admin/properties/${property.id}`);
+      pushToast({ tone: "success", title: "Link copied" });
+    } catch {
+      pushToast({ tone: "warning", title: "Couldn't copy link" });
+    }
+  };
+
   const handleStatusChange = async (status: PropertyStatus) => {
     const previous = property.status;
     setProperty({ ...property, status });
     try {
-      const res = await fetch(`/api/properties/${property.id}`, {
+      const res = await fetch(`/api/properties?id=${property.id}&entityId=${entityId || ""}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, entityId }),
       });
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       pushToast({ tone: "success", title: "Status updated", body: STATUS_CONFIG[status].label });
@@ -276,12 +436,16 @@ export function PropertyFullViewBoard({
 
   const handleTerminateMandate = async () => {
     if (!property.mandate) return;
+    if (!terminateNotes.trim()) {
+      pushToast({ tone: "warning", title: "Notes required", body: "Explain why this mandate is being terminated." });
+      return;
+    }
     setIsTerminatingMandate(true);
     try {
       const res = await fetch(`/api/mandates/${property.mandate.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "terminate" }),
+        body: JSON.stringify({ action: "terminate", reason: terminateNotes.trim() }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -289,6 +453,7 @@ export function PropertyFullViewBoard({
       }
       pushToast({ tone: "success", title: "Mandate terminated" });
       setTerminateMandateOpen(false);
+      setTerminateNotes("");
       setRefreshCount((c) => c + 1);
     } catch (e: unknown) {
       pushToast({ tone: "warning", title: "Error", body: e instanceof Error ? e.message : "Failed to terminate mandate" });
@@ -297,168 +462,294 @@ export function PropertyFullViewBoard({
     }
   };
 
+  const handleLeaseTerminate = async (id: string) => {
+    try {
+      const res = await fetch(`/api/leases/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityId, action: "terminate" }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Failed to terminate lease");
+      pushToast({ tone: "success", title: "Lease terminated", body: "Property occupancy reverted to available." });
+      setDrawerLease(null);
+      setRefreshCount((c) => c + 1);
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Termination failed." });
+    }
+  };
+
+  const openLeaseDrawer = (lease: LeaseSummary) => {
+    setDrawerLease(lease);
+  };
+
   return (
     <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
-      {/* ── Breadcrumb ── */}
-      <div className="flex items-center gap-2">
-        <Link href="/admin/properties" className="text-slate-400 hover:text-slate-600 transition-colors" aria-label="Back to Properties">
-          <IconChevronLeft size={20} stroke={2} />
-        </Link>
-        <Link href="/" className="text-desc-secondary hover:text-slate-800">
-          Dashboard
-        </Link>
-        <span className="text-slate-300">/</span>
-        <Link href="/admin/properties" className="text-desc-secondary hover:text-slate-800">
-          Properties
-        </Link>
-        <span className="text-slate-300">/</span>
-        <span className="text-meta-muted-strong truncate max-w-[40vw]">{property.name}</span>
-      </div>
-
-      {/* ── Majestic Header ── */}
-      <div className="bg-tertiary-gradient text-white rounded-[24px] shadow-2xl relative overflow-hidden group border border-[#151936] p-8 lg:p-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute right-0 bottom-0 size-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/20 transition-colors duration-700" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-          <div className="flex flex-col gap-4 min-w-0">
+      {/* ── Unified Hero Section ── */}
+      <div className="flex flex-col gap-5 animate-fade-in-up stagger-1">
+        {/* Command Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1">
+          <div className="flex flex-col gap-2.5 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className={cn("inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs uppercase tracking-wider", STATUS_HERO_TONE[property.status as PropertyStatus])}>
-                <span className={cn("size-2 rounded-full shadow-sm", statusConfig.dot)} aria-hidden="true" />
-                {canManage ? (
-                  <select
-                    value={property.status}
-                    onChange={(e) => handleStatusChange(e.target.value as PropertyStatus)}
-                    aria-label={`Change status for ${property.name}`}
-                    className="appearance-none bg-transparent outline-none cursor-pointer"
-                  >
-                    {STATUS_ORDER.map((s) => (
-                      <option key={s} value={s}>
-                        {STATUS_CONFIG[s].label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  statusConfig.label
-                )}
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-wider text-slate-300 backdrop-blur-sm">
-                <TypeIcon size={14} aria-hidden="true" />
-                {property.propertyType}
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-wider text-slate-300 backdrop-blur-sm">
-                {LISTING_TYPE_LABEL[property.listingType as keyof typeof LISTING_TYPE_LABEL] || property.listingType}
-              </span>
+              <h1 className="text-3xl lg:text-4xl font-serif tracking-tight text-slate-950 truncate">{property.name}</h1>
+              {canManage ? (
+                <DropdownMenu
+                  label="Change status"
+                  align="left"
+                  trigger={
+                    <div role="button" className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider shadow-sm transition-colors hover:opacity-80 cursor-pointer", statusConfig.pill)}>
+                      <span className={cn("size-1.5 rounded-full", statusConfig.dot)} aria-hidden="true" />
+                      {statusConfig.label}
+                      <IconChevronDown size={14} className="opacity-70 ml-0.5" aria-hidden="true" />
+                    </div>
+                  }
+                >
+                  {STATUS_ORDER.map((s) => (
+                    <DropdownItem
+                      key={s}
+                      onClick={() => handleStatusChange(s)}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={cn("size-2 rounded-full", STATUS_CONFIG[s].dot)} aria-hidden="true" />
+                        <span className="uppercase text-xs font-bold tracking-wider text-slate-700">{STATUS_CONFIG[s].label}</span>
+                      </div>
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              ) : (
+                <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider", statusConfig.pill)}>
+                  <span className={cn("size-1.5 rounded-full", statusConfig.dot)} aria-hidden="true" />
+                  {statusConfig.label}
+                </span>
+              )}
               {property.isFeatured && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1 text-xs uppercase tracking-wider text-amber-400">
-                  <IconStarFilled size={12} aria-hidden="true" /> Featured
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-500/15 px-3 py-0.5 label-caps text-amber-700">
+                  <IconStarFilled size={11} aria-hidden="true" /> Featured
                 </span>
               )}
             </div>
 
-            <h1 className="text-4xl lg:text-5xl font-serif tracking-tight text-white drop-shadow-sm truncate">{property.name}</h1>
-
-            <div className="flex items-center gap-3 text-slate-400 min-w-0">
-              <span className="flex items-center gap-1.5 font-medium min-w-0">
-                <IconMapPin size={16} className="shrink-0" aria-hidden="true" />
+            <div className="flex items-center gap-3 text-slate-500 text-sm min-w-0">
+              <span className="flex items-center gap-1.5 min-w-0 font-medium">
+                <IconMapPin size={15} className="shrink-0 text-slate-400" aria-hidden="true" />
                 <span className="truncate">{property.location}</span>
               </span>
-              <span className="text-slate-600 shrink-0">|</span>
-              <span className="font-mono text-slate-300 bg-white/5 px-2 py-0.5 rounded text-sm shrink-0">{property.propertyCode}</span>
+              <span className="text-slate-200 shrink-0">|</span>
+              <span className="mono-data text-slate-500 shrink-0">{property.propertyCode}</span>
+              <span className="text-slate-200 shrink-0">|</span>
+              <span className="shrink-0 font-medium text-slate-500">
+                {property.propertyType} · {LISTING_TYPE_LABEL[property.listingType as keyof typeof LISTING_TYPE_LABEL] || property.listingType}
+              </span>
             </div>
           </div>
 
-          {canManage && (
-            <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap mt-1 sm:mt-0">
+            {canManage && actionItems[0]?.primary && (
               <button
                 type="button"
-                onClick={handleToggleFeature}
-                aria-label={property.isFeatured ? "Unfeature property" : "Feature property"}
-                className={cn(
-                  "inline-flex items-center gap-2 px-5 py-1.5 text-sm rounded-xl border transition-all font-medium shadow-sm backdrop-blur-sm",
-                  property.isFeatured
-                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
-                    : "bg-white/5 border-white/10 text-slate-200 hover:bg-white/10 hover:border-white/20"
-                )}
+                onClick={actionItems[0].onClick}
+                className="bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium text-sm rounded-full px-4 py-2 shadow-[0_2px_10px_rgb(243,223,39,0.3)] transition-all hover:shadow-[0_4px_14px_rgb(243,223,39,0.4)] flex items-center gap-1.5 border border-amber-300/40"
               >
-                {property.isFeatured ? <IconStarFilled size={14} /> : <IconStar size={14} />} {property.isFeatured ? "Featured" : "Feature"}
+                <IconFileCertificate size={15} /> Review Mandate
               </button>
-              {canLogMaintenance && (
-                <button
-                  type="button"
-                  onClick={() => setReportIssueOpen(true)}
-                  aria-label="Report an issue"
-                  className="inline-flex items-center gap-2 px-5 py-1.5 text-sm rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all font-medium shadow-sm backdrop-blur-sm"
-                >
-                  <IconPlus size={14} /> Report Issue
-                </button>
-              )}
+            )}
+            {canManage && canLogMaintenance && (
+              <button
+                type="button"
+                onClick={() => setReportIssueOpen(true)}
+                className="bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80 font-medium text-sm rounded-full px-4 py-2 shadow-xs transition-colors flex items-center gap-1.5"
+              >
+                <IconTool size={14} /> Report Issue
+              </button>
+            )}
+            {canManage && (
               <button
                 type="button"
                 onClick={() => setEditModalOpen(true)}
-                aria-label="Edit property"
-                className="inline-flex items-center gap-2 px-5 py-1.5 text-sm rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all font-medium shadow-sm backdrop-blur-sm"
+                className="bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80 font-medium text-sm rounded-full px-4 py-2 shadow-xs transition-colors flex items-center gap-1.5"
               >
                 <IconEdit size={14} /> Edit
               </button>
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmOpen(true)}
-                aria-label="Delete property"
-                className="inline-flex items-center gap-2 px-5 py-1.5 text-sm rounded-xl bg-white/5 border border-white/10 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-300 transition-all font-medium shadow-sm backdrop-blur-sm"
+            )}
+            {canManage && (
+              <DropdownMenu
+                label="More actions"
+                align="right"
+                trigger={
+                  <div className="inline-flex size-[38px] items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs cursor-pointer">
+                    <IconDotsVertical size={16} />
+                  </div>
+                }
               >
-                <IconTrash size={14} /> Delete
-              </button>
+                <DropdownItem icon={property.isFeatured ? IconStarFilled : IconStar} onClick={handleToggleFeature}>
+                  {property.isFeatured ? "Unfeature property" : "Feature property"}
+                </DropdownItem>
+                <DropdownItem icon={IconLink} onClick={handleCopyLink}>
+                  Copy deep link
+                </DropdownItem>
+                <DropdownItem icon={IconTrash} variant="danger" onClick={() => setDeleteConfirmOpen(true)}>
+                  Delete property
+                </DropdownItem>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+
+        {/* ── Bento hero: media + vitals ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 lg:gap-5 items-start mt-1">
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => mediaList.length > 0 && setLightboxOpen(true)}
+              disabled={mediaList.length === 0}
+              aria-label="Open photo gallery"
+              className="group relative rounded-[24px] lg:rounded-[32px] overflow-hidden min-h-[280px] lg:min-h-[380px] flex-1 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] disabled:cursor-default disabled:hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-slate-100/50"
+            >
+              {primaryImage ? (
+                <Image src={primaryImage} alt={mediaList[activeMediaIndex]?.alt ?? property.name} fill sizes="(max-width: 1024px) 100vw, 60vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
+                  <TypeIcon size={48} className="text-slate-300" />
+                </div>
+              )}
+
+              {/* Elegant Hover Overlay */}
+              {mediaList.length > 0 && (
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500 flex items-center justify-center">
+                  <span className="opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 bg-white/95 backdrop-blur-md text-[#151936] font-medium px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 text-sm border border-white/20">
+                    <IconPhoto size={16} aria-hidden="true" /> View {mediaList.length} photos
+                  </span>
+                </div>
+              )}
+            </button>
+
+            {/* Deconstructed thumbnail slider */}
+            {mediaList.length > 1 && (
+              <div className="flex gap-2.5 overflow-x-auto pb-1 mt-1" style={scrollHiddenStyle}>
+                {mediaList.map((media, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setActiveMediaIndex(index)}
+                    className={cn(
+                      "relative size-[72px] rounded-2xl overflow-hidden border-2 shrink-0 transition-all duration-300",
+                      activeMediaIndex === index ? "border-slate-800 scale-95 shadow-sm" : "border-slate-200/60 opacity-70 hover:opacity-100 hover:scale-95"
+                    )}
+                  >
+                    <Image src={media.url} alt={media.alt || `Property photo ${index + 1}`} fill sizes="72px" className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 animate-fade-in-up stagger-2">
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-3.5 px-1">
+                <p className="text-sm font-medium text-slate-800">Vital signs</p>
+                <span className="label-caps text-slate-400">{isForSale ? "Pipeline" : formatPropertyDate(new Date().toISOString()).split(" ").slice(1).join(" ")}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3.5">
+                {vitals.map((v) => (
+                  <div
+                    key={v.label}
+                    className={cn(
+                      "relative overflow-hidden rounded-2xl border p-5 flex flex-col justify-between group/vital shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 h-[140px]",
+                      VITAL_TONE_BG[v.tone]
+                    )}
+                  >
+                    <v.icon
+                      size={140}
+                      stroke={1}
+                      className={cn(
+                        "absolute -right-6 -bottom-6 opacity-[0.03] group-hover/vital:scale-110 group-hover/vital:opacity-[0.05] transition-all duration-500 pointer-events-none",
+                        VITAL_TONE_ARTWORK[v.tone]
+                      )}
+                      aria-hidden="true"
+                    />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div className="flex flex-col gap-1 max-w-[calc(100%-12px)]">
+                        <span className="text-desc-secondary flex items-center gap-1.5 font-medium">
+                          <v.icon size={13} className={VITAL_TONE_ICON[v.tone]} aria-hidden="true" />
+                          {v.label}
+                        </span>
+                        <span className="font-mono font-medium text-slate-900 mt-1 text-3xl truncate leading-none">
+                          {v.value}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-auto pt-3 relative z-10">
+                      <div className="flex items-center gap-2">
+                        {v.hasBar ? (
+                          <div className="flex flex-col gap-1.5 w-full min-w-[100px]">
+                            <div className="h-1.5 rounded-full bg-slate-200/40 overflow-hidden">
+                              <div className={cn("h-full rounded-full", VITAL_TONE_BAR[v.tone])} style={{ width: `${Math.min(100, Math.round((v.barRatio ?? 0) * 100))}%` }} />
+                            </div>
+                            {v.sub && <span className="text-xs text-slate-500 font-medium">{v.sub}</span>}
+                          </div>
+                        ) : (
+                          v.sub && (
+                            <span className={cn(
+                              "mono-data text-xs flex font-medium items-center px-1.5 py-0.5 rounded-md",
+                              v.tone === "rose" ? "bg-rose-50 text-rose-700" : "bg-slate-50 text-slate-600"
+                            )}>
+                              {v.sub}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {specLine && (
+                <div className="mt-3.5 rounded-[16px] lg:rounded-[20px] bg-slate-50/80 border border-slate-100 px-4 py-3 shadow-[0_2px_10px_rgb(0,0,0,0.02)]">
+                  <p className="mono-data text-slate-500 flex items-center justify-center gap-2 font-medium">
+                    <IconRuler size={14} className="text-slate-400 shrink-0" aria-hidden="true" />
+                    {specLine}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* ── Gallery (only when there's actually media - no fake hero for empty listings) ── */}
-      {mediaList.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="relative aspect-[21/9] md:aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 bg-tertiary-emerald">
-            {primaryImage && (
-              <Image src={primaryImage} alt={mediaList[activeMediaIndex]?.alt ?? property.name} fill sizes="100vw" className="object-cover" />
-            )}
-          </div>
-          {mediaList.length > 1 && (
-            <div className={cn("flex items-center gap-2 overflow-x-auto pb-1", SCROLL_HIDDEN_CLASS)} style={scrollHiddenStyle}>
-              {mediaList.map((m, i) => (
-                <button
-                  key={m.url + i}
-                  type="button"
-                  onClick={() => setActiveMediaIndex(i)}
-                  aria-label={`Show photo ${i + 1} of ${mediaList.length}`}
-                  aria-pressed={i === activeMediaIndex}
-                  className={cn(
-                    "relative size-16 shrink-0 rounded-lg overflow-hidden border-2 transition-colors",
-                    i === activeMediaIndex ? "border-[#151936]" : "border-transparent opacity-70 hover:opacity-100"
-                  )}
-                >
-                  <Image src={m.url} alt={m.alt ?? `${property.name} photo ${i + 1}`} fill sizes="64px" className="object-cover" />
+      {/* ── Action-required band ── */}
+      {actionItems.length > 0 && (
+        <div className={cn("grid gap-3.5 animate-fade-in-up stagger-3 mt-1", actionItems.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1")}>
+          {actionItems.map((item) => {
+            const t = ACTION_TONE_CLASSES[item.tone];
+            return (
+              <div key={item.key} className={t.card}>
+                <div className="flex items-start gap-3 min-w-0">
+                  <span className={t.iconWrap}>
+                    <item.icon size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-sans text-sm font-medium text-slate-950 truncate leading-snug">{item.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate font-medium">{item.meta}</p>
+                  </div>
+                </div>
+                <button type="button" onClick={item.onClick} className={t.cta}>
+                  {item.cta}
                 </button>
-              ))}
-            </div>
-          )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* ── Adaptive metrics row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricTile icon={IconBed} label="Bedrooms" value={property.bedrooms ?? "-"} />
-        <MetricTile icon={IconBath} label="Bathrooms" value={property.bathrooms ?? "-"} />
-        <MetricTile icon={IconRuler} label="Size (Sqft)" value={property.sizeSqft ? property.sizeSqft.toLocaleString() : "-"} />
-        <MetricTile icon={adaptiveMetric.icon} label={adaptiveMetric.label} value={adaptiveMetric.value} />
-      </div>
+      {/* ── Section divider ── */}
+      <div className="h-px bg-slate-200/60 my-2 lg:my-4" />
 
       {/* ── Main: tabbed content + persistent context rail ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 flex flex-col gap-4 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start animate-fade-in-up stagger-3">
+        <div className="flex flex-col min-w-0">
           <div
             role="tablist"
             aria-label="Property sections"
-            className={cn("flex bg-slate-100 p-1 rounded-xl gap-1 overflow-x-auto flex-nowrap", SCROLL_HIDDEN_CLASS)}
+            className={cn("flex bg-white border border-slate-100 p-1.5 rounded-[16px] shadow-[0_2px_10px_rgb(0,0,0,0.02)] gap-1 overflow-x-auto flex-nowrap mb-6", SCROLL_HIDDEN_CLASS)}
             style={scrollHiddenStyle}
           >
             {tabs.map((tab) => (
@@ -477,20 +768,45 @@ export function PropertyFullViewBoard({
                   setActiveTab(tabs[next].key);
                 }}
                 className={cn(
-                  "body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap",
-                  activeTab === tab.key ? "bg-[#151936] text-white shadow-sm" : "text-slate-400 hover:text-slate-900 hover:bg-white/45"
+                  "body-sm px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 shrink-0 whitespace-nowrap font-medium",
+                  activeTab === tab.key ? "bg-[#151936] text-white shadow-md" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                 )}
               >
-                <tab.icon size={14} aria-hidden="true" />
+                <tab.icon size={15} aria-hidden="true" />
                 {tab.label}
+                {tab.dot && <span className="size-1.5 rounded-full bg-rose-500 shrink-0" aria-hidden="true" />}
               </button>
             ))}
           </div>
 
           <div id={`panel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`}>
-            {activeTab === "overview" && <OverviewPanel property={property} />}
+            {activeTab === "overview" && (
+              <OverviewPanel
+                property={property}
+                handlers={{
+                  canManage,
+                  canViewFinance,
+                  canDecideMandate,
+                  canOverrideMandate,
+                  mandateLetterDoc,
+                  onVerifyLandlord: () => setVerifyLandlordOpen(true),
+                  onAssignManager: () => setAssignManagerOpen(true),
+                  onMandateLetter: () => setMandateLetterOpen(true),
+                  onDecision: () => setDecisionDrawerOpen(true),
+                  onOverride: () => setOverrideModalOpen(true),
+                  onTerminate: () => setTerminateMandateOpen(true),
+                  onCreateMandate: () => setCreateMandateOpen(true),
+                }}
+              />
+            )}
             {activeTab === "financials" && canViewFinance && <FinancialsPanel property={property} />}
-            {activeTab === "tenancy" && (isForSale ? <PipelinePanel property={property} /> : <TenancyPanel property={property} />)}
+            {activeTab === "tenancy" && (
+              isForSale ? (
+                <PipelinePanel property={property} />
+              ) : (
+                <TenancyPanel property={property} page={leasePage} onPageChange={setLeasePage} onOpenLease={openLeaseDrawer} />
+              )
+            )}
             {activeTab === "maintenance" && (
               <MaintenancePanel property={property} canLog={canLogMaintenance} onReport={() => setReportIssueOpen(true)} />
             )}
@@ -501,10 +817,40 @@ export function PropertyFullViewBoard({
         </div>
 
         {/* Context rail */}
-        <div className="flex flex-col gap-4">
-          <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-title-primary">Owner / Landlord</h3>
+        <div className="flex flex-col gap-5 pt-[68px]">
+          {actionItems.length > 0 && (
+            <Card className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-title-primary">Needs your attention</h3>
+                <span className="min-w-[24px] h-[24px] px-1.5 rounded-full bg-rose-500 text-white flex items-center justify-center mono-data text-xs shadow-sm">
+                  {actionItems.length}
+                </span>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {actionItems.map((item) => {
+                  const t = ACTION_TONE_CLASSES[item.tone];
+                  return (
+                    <div key={item.key} className={cn("flex items-center justify-between gap-3 rounded-2xl border px-3.5 py-3 shadow-sm transition-all hover:shadow-[0_4px_12px_rgb(0,0,0,0.04)]", t.card)}>
+                      <div className="min-w-0">
+                        <p className="body-sm text-slate-900 font-medium truncate">{item.title}</p>
+                        <p className="label-caps text-slate-500 mt-0.5 truncate">{item.meta}</p>
+                      </div>
+                      <button type="button" onClick={item.onClick} className={cn("shrink-0 rounded-xl px-3 py-1.5 label-caps transition-colors shadow-sm", t.cta)}>
+                        {item.cta}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-title-primary flex items-center gap-2">
+                <IconShieldCheck size={18} className="text-slate-400" />
+                Ownership
+              </h3>
               {property.owner?.verifiedAt && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/60 bg-emerald-500/15 px-2.5 py-0.5 label-caps text-emerald-700">
                   <IconShieldCheck size={12} aria-hidden="true" /> Verified
@@ -512,27 +858,24 @@ export function PropertyFullViewBoard({
               )}
             </div>
             {property.owner ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="size-11 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 mono-data shrink-0">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="size-12 rounded-full bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 mono-data shrink-0">
                     {property.owner.name?.slice(0, 2).toUpperCase() || "??"}
                   </div>
-                  <div className="flex flex-col gap-2 min-w-0">
-                    <p className="text-body-primary text-slate-900 truncate">{property.owner.name || "Unknown"}</p>
+                  <div className="flex flex-col gap-1.5 min-w-0 pt-0.5">
+                    <p className="body-sm font-medium text-slate-900 truncate">{property.owner.name || "Unknown"}</p>
                     {property.owner.phone && (
-                      <a href={`tel:${property.owner.phone}`} className="text-body-regular text-slate-400 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                      <a href={`tel:${property.owner.phone}`} className="body-sm text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
                         <IconPhone size={14} className="shrink-0" aria-hidden="true" />
                         <span className="truncate">{property.owner.phone}</span>
                       </a>
                     )}
                     {property.owner.email && (
-                      <a href={`mailto:${property.owner.email}`} className="text-body-regular text-slate-400 hover:text-[#122a20] flex items-center gap-2 transition-colors">
+                      <a href={`mailto:${property.owner.email}`} className="body-sm text-slate-500 hover:text-[#122a20] flex items-center gap-2 transition-colors">
                         <IconMail size={14} className="shrink-0" aria-hidden="true" />
                         <span className="truncate">{property.owner.email}</span>
                       </a>
-                    )}
-                    {property.owner.idNumber && (
-                      <span className="text-body-regular text-slate-400 mono-data">ID {property.owner.idNumber}</span>
                     )}
                   </div>
                 </div>
@@ -540,86 +883,62 @@ export function PropertyFullViewBoard({
                   <button
                     type="button"
                     onClick={() => setVerifyLandlordOpen(true)}
-                    className="inline-flex items-center gap-1 self-start text-body-regular text-[#122a20] hover:underline"
+                    className="mt-1 inline-flex items-center justify-center gap-1.5 w-full rounded-xl bg-white border border-slate-200 px-4 py-2 label-caps text-slate-700 hover:bg-slate-50 hover:text-[#122a20] transition-colors shadow-sm"
                   >
-                    <IconShieldCheck size={13} aria-hidden="true" />
+                    <IconShieldCheck size={14} aria-hidden="true" />
                     {property.owner.verifiedAt ? "Re-confirm landlord" : "Confirm landlord"}
                   </button>
                 )}
               </div>
             ) : (
-              <p className="text-desc-secondary">No owner assigned.</p>
+              <div className="flex flex-col items-center text-center gap-2 py-4">
+                <IconMoodEmpty size={24} className="text-slate-300" />
+                <p className="body-sm text-slate-500">No owner assigned.</p>
+              </div>
             )}
           </Card>
 
-          {canViewFinance && property.mandate && (
-            <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-title-primary">Management Mandate</h3>
-                <MandateStatusPill status={property.mandate.status} pendingApproverRole={property.mandate.pendingApproverRole} />
-              </div>
-              <p className="text-desc-secondary mb-3">
-                {(property.mandate.mandateRate * 100).toFixed(0)}% management fee · started{" "}
-                {formatPropertyDate(property.mandate.startDate)}
-              </p>
-              <div className="flex items-center justify-between gap-2 mb-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                {mandateLetterDoc?.url ? (
-                  <a
-                    href={mandateLetterDoc.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 min-w-0 text-body-regular text-slate-700 hover:text-[#122a20]"
-                  >
-                    <IconFileText size={14} className="shrink-0" aria-hidden="true" />
-                    <span className="truncate">Mandate letter</span>
-                    <IconExternalLink size={12} className="shrink-0" aria-hidden="true" />
-                  </a>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-body-regular text-amber-700 min-w-0">
-                    <IconAlertTriangle size={14} className="shrink-0" aria-hidden="true" />
-                    <span className="truncate">No mandate letter on file</span>
-                  </span>
-                )}
-                {canManage && (
-                  <button
-                    type="button"
-                    onClick={() => setMandateLetterOpen(true)}
-                    className="text-meta-muted-strong hover:text-[#122a20] shrink-0"
-                  >
-                    {mandateLetterDoc?.url ? "Replace" : "Upload"}
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-4">
-                <button type="button" onClick={() => setActiveTab("financials")} className="inline-flex items-center gap-1 text-body-regular text-[#122a20] hover:underline">
-                  View financials <IconExternalLink size={13} aria-hidden="true" />
-                </button>
-                {canManage && property.mandate.status === "active" && (
-                  <button type="button" onClick={() => setTerminateMandateOpen(true)} className="text-body-regular text-rose-600 hover:underline">
-                    Terminate
-                  </button>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {canViewFinance && !property.mandate && canManage && property.owner && (
-            <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <h3 className="text-title-primary mb-2">Management Mandate</h3>
-              <p className="text-desc-secondary mb-4">This property isn&apos;t under a Sunland management mandate yet.</p>
-              <Button variant="secondary" onClick={() => setCreateMandateOpen(true)} className="w-full justify-center">
-                <IconFileCertificate size={16} className="mr-1.5" /> Create Mandate
-              </Button>
-            </Card>
-          )}
-
           <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-3">
-            <h3 className="text-title-primary">Quick Facts</h3>
-            <FactRow label="Property code" value={<span className="mono-data">{property.propertyCode}</span>} />
-            <FactRow label="Registered" value={formatPropertyDate(property.createdAt)} />
-            <FactRow label="Last updated" value={formatPropertyDate(property.updatedAt)} />
+            <h3 className="text-title-primary mb-1">Quick Facts</h3>
+            <FactRow label="Property code" value={<span className="mono-data text-slate-700 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">{property.propertyCode}</span>} />
+            <FactRow label="Registered" value={<span className="mono-data">{formatPropertyDate(property.createdAt)}</span>} />
+            <FactRow label="Last updated" value={<span className="mono-data">{formatPropertyDate(property.updatedAt)}</span>} />
             {property.unitBreakdown && property.unitBreakdown.length > 0 && (
-              <FactRow label="Units" value={property.unitBreakdown.reduce((sum, u) => sum + u.count, 0)} />
+              <FactRow label="Units" value={<span className="mono-stat">{property.unitBreakdown.reduce((sum, u) => sum + u.count, 0)}</span>} />
+            )}
+          </Card>
+
+          <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-title-primary">Latest Activity</h3>
+              <button type="button" onClick={() => setActiveTab("activity")} className="label-caps text-slate-400 hover:text-slate-900 transition-colors">
+                View all
+              </button>
+            </div>
+            {activityLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : activityLog && activityLog.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {activityLog.slice(0, 3).map((entry) => {
+                  const actionParts = entry.action.split(".");
+                  const readableAction = actionParts[actionParts.length - 1].replace(/_/g, " ");
+                  return (
+                    <div key={entry.id} className="flex items-start gap-2.5">
+                      <span className={cn("size-2 rounded-full shrink-0 mt-1", activityTone(entry.action))} aria-hidden="true" />
+                      <div className="min-w-0">
+                        <p className="text-body-regular text-slate-600 leading-snug">
+                          <span className="text-slate-900 font-medium">{entry.actorName}</span> performed {readableAction}
+                        </p>
+                        <p className="text-meta-muted mono-data mt-0.5">{formatPropertyDate(entry.occurredAt)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-desc-secondary">No activity recorded yet.</p>
             )}
           </Card>
         </div>
@@ -678,6 +997,51 @@ export function PropertyFullViewBoard({
         />
       )}
 
+      {property.mandate && (
+        <AssignManagerModal
+          open={assignManagerOpen}
+          entityId={entityId}
+          mandateId={property.mandate.id}
+          propertyName={property.name}
+          currentManagerId={property.mandate.manager?.id ?? null}
+          onClose={() => setAssignManagerOpen(false)}
+          onAssigned={() => setRefreshCount((c) => c + 1)}
+        />
+      )}
+
+      {property.mandate?.approvalRequestId && (viewerRole === "ceo" || viewerRole === "general_manager") && (
+        <MandateDecisionDrawer
+          open={decisionDrawerOpen}
+          propertyName={property.name}
+          landlordName={property.owner?.name ?? "Unknown"}
+          approvalRequestId={property.mandate.approvalRequestId}
+          mandateRate={property.mandate.mandateRate}
+          expectedMonthlyKes={property.collections?.[property.collections.length - 1]?.expected ?? 0}
+          unitTotal={
+            property.unitBreakdown && property.unitBreakdown.length > 0
+              ? `${property.unitBreakdown.reduce((sum, u) => sum + u.count, 0)} units`
+              : "1 unit"
+          }
+          submittedBy={property.mandate.manager?.name}
+          submittedAt={property.mandate.startDate}
+          requiredApproverRole={(property.mandate.pendingApproverRole as "gm" | "ceo" | "department_head") ?? "gm"}
+          viewerRole={viewerRole === "ceo" ? "ceo" : "gm"}
+          mandateLetterUrl={mandateLetterDoc?.url}
+          mandateLetterName={mandateLetterDoc?.name}
+          onClose={() => setDecisionDrawerOpen(false)}
+          onDecided={() => setRefreshCount((c) => c + 1)}
+        />
+      )}
+
+      {property.mandate?.approvalRequestId && (
+        <MandateOverrideModal
+          open={overrideModalOpen}
+          approvalRequestId={property.mandate.approvalRequestId}
+          onClose={() => setOverrideModalOpen(false)}
+          onDecided={() => setRefreshCount((c) => c + 1)}
+        />
+      )}
+
       {property.owner && (
         <VerifyContactModal
           open={verifyLandlordOpen}
@@ -692,19 +1056,127 @@ export function PropertyFullViewBoard({
 
       <ConfirmDialog
         open={terminateMandateOpen}
-        onClose={() => setTerminateMandateOpen(false)}
+        onClose={() => { setTerminateMandateOpen(false); setTerminateNotes(""); }}
         onConfirm={handleTerminateMandate}
         title="Terminate Mandate"
-        description="Are you sure you want to terminate this management mandate? This action cannot be undone."
+        description="This cannot be undone. Rent collection under this mandate stops, and the final landlord remittance is queued for Finance review."
         confirmLabel="Terminate Mandate"
         tone="danger"
         isLoading={isTerminatingMandate}
+        notes={{
+          label: "Termination notes",
+          placeholder: "Reason for terminating…",
+          value: terminateNotes,
+          onChange: setTerminateNotes,
+          required: true,
+        }}
+      />
+
+      <PhotoLightbox
+        open={lightboxOpen}
+        media={mediaList}
+        index={lightboxIndex}
+        onIndexChange={(i) => { setLightboxIndex(i); setActiveMediaIndex(i); }}
+        onClose={() => setLightboxOpen(false)}
+      />
+
+      <LeaseDetailDrawer
+        lease={drawerLease ? leaseSummaryToDrawerLease(drawerLease, property) : null}
+        open={!!drawerLease}
+        entityId={entityId ?? undefined}
+        onClose={() => setDrawerLease(null)}
+        canManage={canManage}
+        onTerminate={handleLeaseTerminate}
+        onEdit={() => { setEditingLease(drawerLease); setDrawerLease(null); }}
+        onRenew={() => { setRenewingLease(drawerLease); setDrawerLease(null); }}
+      />
+
+      {editingLease && (
+        <LeaseFormModal
+          open={!!editingLease}
+          mode="edit"
+          lease={leaseSummaryToEditTarget(editingLease, property)}
+          onClose={() => setEditingLease(null)}
+          onSubmit={() => { setEditingLease(null); setRefreshCount((c) => c + 1); }}
+        />
+      )}
+
+      <LeaseRenewModal
+        open={!!renewingLease}
+        lease={renewingLease ? leaseSummaryToRenewTarget(renewingLease, property) : null}
+        onClose={() => setRenewingLease(null)}
+        onRenewed={() => { setRenewingLease(null); setRefreshCount((c) => c + 1); }}
       />
     </div>
   );
 }
 
-// ── Adaptive 4th metric ──
+// ── Lease shape adapters (property page only has LeaseSummary; the shared
+// LeaseDetailDrawer/LeaseFormModal/LeaseRenewModal want the leases-board's
+// flatter Lease shape - property context is spliced in from the already-
+// loaded property object rather than a second fetch). ──
+
+function leaseSummaryToDrawerLease(l: LeaseSummary, property: PropertyDetail) {
+  return {
+    id: l.id,
+    startsAt: l.startDate,
+    endsAt: l.endDate ?? "",
+    monthlyRentKes: l.monthlyRentKes,
+    depositKes: l.depositKes,
+    isActive: l.isActive,
+    propertyId: property.id,
+    tenantContactId: l.tenantContactId,
+    propertyName: property.name,
+    propertyCode: property.propertyCode,
+    propertyType: property.propertyType,
+    propertyLocation: property.location,
+    tenantName: l.tenantName,
+    tenantEmail: l.tenantEmail ?? null,
+    tenantPhone: l.tenantPhone ?? null,
+  };
+}
+
+function leaseSummaryToEditTarget(l: LeaseSummary, property: PropertyDetail): LeaseEditTarget {
+  return {
+    id: l.id,
+    propertyName: property.name,
+    tenantName: l.tenantName,
+    startsAt: l.startDate,
+    endsAt: l.endDate ?? "",
+    monthlyRentKes: l.monthlyRentKes,
+    depositKes: l.depositKes,
+  };
+}
+
+function leaseSummaryToRenewTarget(l: LeaseSummary, property: PropertyDetail): LeaseRenewTarget {
+  return {
+    id: l.id,
+    propertyName: property.name,
+    tenantName: l.tenantName,
+    endsAt: l.endDate ?? "",
+    monthlyRentKes: l.monthlyRentKes,
+    depositKes: l.depositKes,
+  };
+}
+
+function activityTone(action: string): string {
+  const lower = action.toLowerCase();
+  if (lower.includes("terminat") || lower.includes("reject") || lower.includes("critical")) return "bg-rose-300";
+  if (lower.includes("override")) return "bg-amber-400";
+  return "bg-slate-300";
+}
+
+function buildSpecLine(property: PropertyDetail): string {
+  const parts: string[] = [];
+  if (property.bedrooms != null) parts.push(`${property.bedrooms} bed`);
+  if (property.bathrooms != null) parts.push(`${property.bathrooms} bath`);
+  if (property.sizeSqft != null) parts.push(`${property.sizeSqft.toLocaleString()} sqft`);
+  if (property.landAreaSqft != null) parts.push(`${(property.landAreaSqft / 43560).toFixed(2)} acre`);
+  if (property.yearBuilt != null) parts.push(`Built ${property.yearBuilt}`);
+  return parts.join(" · ");
+}
+
+// ── Adaptive 4th metric (also feeds the vitals card) ──
 
 function getAdaptiveMetric(property: PropertyDetail): {
   icon: ComponentType<{ size?: number; className?: string }>;
@@ -739,29 +1211,94 @@ function getAdaptiveMetric(property: PropertyDetail): {
   return { icon: IconCalendarEvent, label: "Days Vacant", value: "-" };
 }
 
-// ── Local presentational pieces ──
+// ── Vitals (bento hero card) ──
 
-function MetricTile({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: ComponentType<{ size?: number; stroke?: number; className?: string }>;
+type VitalTone = "emerald" | "amber" | "rose" | "neutral";
+interface Vital {
   label: string;
-  value: string | number;
-}) {
-  return (
-    <Card className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="size-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600">
-          <Icon size={20} stroke={1.5} />
-        </div>
-        <p className="label-caps text-slate-400">{label}</p>
-      </div>
-      <p className="mono-stat headline-md text-slate-900 mt-2">{value}</p>
-    </Card>
-  );
+  value: string;
+  icon: ComponentType<{ size?: number; stroke?: number; className?: string }>;
+  tone: VitalTone;
+  hasBar?: boolean;
+  barRatio?: number;
+  sub?: string;
 }
+
+const VITAL_TONE_BG: Record<VitalTone, string> = {
+  emerald: "bg-gradient-to-br from-white to-[#ecfdf5]/30 border-slate-200/80 hover:to-[#ecfdf5]/55",
+  amber: "bg-gradient-to-br from-white to-[#fffbeb]/45 border-slate-200/80 hover:to-[#fffbeb]/70",
+  rose: "bg-gradient-to-br from-white to-[#fff1f2]/30 border-slate-200/80 hover:to-[#fff1f2]/55",
+  neutral: "bg-gradient-to-br from-white to-slate-50/40 border-slate-200/80 hover:to-slate-50/60",
+};
+const VITAL_TONE_TEXT: Record<VitalTone, string> = {
+  emerald: "text-emerald-700 font-medium",
+  amber: "text-amber-700 font-medium",
+  rose: "text-rose-700 font-medium",
+  neutral: "text-slate-900 font-medium",
+};
+const VITAL_TONE_ICON: Record<VitalTone, string> = {
+  emerald: "text-emerald-500",
+  amber: "text-amber-500",
+  rose: "text-rose-500",
+  neutral: "text-slate-400",
+};
+const VITAL_TONE_BAR: Record<VitalTone, string> = {
+  emerald: "bg-emerald-500",
+  amber: "bg-amber-500",
+  rose: "bg-rose-500",
+  neutral: "bg-slate-900",
+};
+const VITAL_TONE_ARTWORK: Record<VitalTone, string> = {
+  emerald: "text-[#047857]",
+  amber: "text-[#b45309]",
+  rose: "text-[#be123c]",
+  neutral: "text-slate-500",
+};
+
+function getVitals(
+  property: PropertyDetail,
+  adaptiveMetric: { icon: ComponentType<{ size?: number; className?: string }>; label: string; value: string | number }
+): Vital[] {
+  if (property.listingType === "sale") {
+    const pipeline = property.salesPipeline;
+    return [
+      { label: "Stage", value: pipeline ? pipeline.stage[0].toUpperCase() + pipeline.stage.slice(1) : "Not listed", icon: IconTrendingUp, tone: "neutral" },
+      { label: "Asking price", value: property.askingPriceKes ? formatCompactKES(parseFloat(property.askingPriceKes)) : "-", icon: IconReceipt2, tone: "neutral" },
+      { label: "Best offer", value: pipeline?.offerAmountKes ? formatCompactKES(parseFloat(pipeline.offerAmountKes)) : "-", icon: IconReceipt2, tone: "neutral" },
+      { label: "Last activity", value: pipeline?.lastActivityAt ? formatPropertyDate(pipeline.lastActivityAt) : "-", icon: IconCalendarEvent, tone: "neutral" },
+    ];
+  }
+  const currentMonth = property.collections?.[property.collections.length - 1];
+  const ratio = currentMonth && currentMonth.expected > 0 ? currentMonth.collected / currentMonth.expected : null;
+  const collectionTone: VitalTone = ratio == null ? "neutral" : ratio >= 0.95 ? "emerald" : ratio >= 0.7 ? "amber" : "rose";
+  const openMaint = (property.maintenanceRequests ?? []).filter((m) => ["open", "assigned", "in_progress"].includes(m.status));
+  const criticalCount = openMaint.filter((m) => m.priority === "critical").length;
+
+  return [
+    {
+      label: `Collection${currentMonth ? "" : ""}`,
+      value: ratio != null ? `${Math.round(ratio * 100)}%` : "-",
+      icon: IconTrendingUp,
+      tone: collectionTone,
+      hasBar: ratio != null,
+      barRatio: ratio ?? 0,
+      sub: currentMonth ? `${formatCompactKES(currentMonth.collected)} of ${formatCompactKES(currentMonth.expected)}` : undefined,
+    },
+    property.arrears && (property.arrears.status === "partial" || property.arrears.status === "defaulted")
+      ? { label: "Arrears", value: formatCompactKES(property.arrears.amount), icon: IconAlertTriangle, tone: "rose", sub: `${property.arrears.daysInArrears} days` }
+      : { label: "Arrears", value: "None", icon: IconShieldCheck, tone: "neutral" },
+    { label: adaptiveMetric.label, value: String(adaptiveMetric.value), icon: adaptiveMetric.icon, tone: "neutral" },
+    {
+      label: "Open maintenance",
+      value: String(openMaint.length),
+      icon: IconClipboardList,
+      tone: criticalCount > 0 ? "rose" : "neutral",
+      sub: criticalCount > 0 ? `${criticalCount} critical` : "None critical",
+    },
+  ];
+}
+
+// ── Local presentational pieces ──
 
 function FactRow({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -812,41 +1349,215 @@ function EmptyPanel({
 
 // ── Overview ──
 
-function OverviewPanel({ property }: { property: PropertyDetail }) {
+type OverviewHandlers = {
+  canManage: boolean;
+  canViewFinance: boolean;
+  canDecideMandate: boolean;
+  canOverrideMandate: boolean;
+  mandateLetterDoc?: { url?: string };
+  onVerifyLandlord: () => void;
+  onAssignManager: () => void;
+  onMandateLetter: () => void;
+  onDecision: () => void;
+  onOverride: () => void;
+  onTerminate: () => void;
+  onCreateMandate: () => void;
+};
+
+function OverviewPanel({ property, handlers }: { property: PropertyDetail; handlers: OverviewHandlers }) {
+  const isForSale = property.listingType === "sale";
+  const numberBlocks = isForSale
+    ? [
+      { label: "Asking price", value: property.askingPriceKes ? formatCompactKES(parseFloat(property.askingPriceKes)) : "-" },
+      { label: "Best offer", value: property.salesPipeline?.offerAmountKes ? formatCompactKES(parseFloat(property.salesPipeline.offerAmountKes)) : "-" },
+      { label: "Pipeline stage", value: property.salesPipeline ? property.salesPipeline.stage[0].toUpperCase() + property.salesPipeline.stage.slice(1) : "-" },
+      { label: "Last activity", value: property.salesPipeline?.lastActivityAt ? formatPropertyDate(property.salesPipeline.lastActivityAt) : "-" },
+    ]
+    : [
+      { label: "Expected / mo", value: property.collections?.length ? formatCompactKES(property.collections[property.collections.length - 1].expected) : "-" },
+      { label: "Occupancy", value: property.leases?.filter((l) => l.status === "active").length ? `${property.leases.filter((l) => l.status === "active").length} active lease(s)` : "Vacant" },
+      {
+        label: "6mo collected",
+        value: property.collections?.length ? formatCompactKES(property.collections.reduce((sum, c) => sum + c.collected, 0)) : "-",
+      },
+      {
+        label: "Mgmt fee rate",
+        value: property.mandate ? `${(property.mandate.mandateRate * 100).toFixed(0)}%` : "No mandate",
+      },
+    ];
+
   return (
-    <div className="flex flex-col gap-4">
-      {property.description && (
-        <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <h3 className="text-title-primary mb-3">Description</h3>
-          <p className="text-body-regular text-slate-600 whitespace-pre-line">{property.description}</p>
-        </Card>
-      )}
-      {property.unitBreakdown && property.unitBreakdown.length > 0 ? (
-        <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <h3 className="text-title-primary mb-4">Unit Breakdown</h3>
-          <div className="space-y-3">
-            {property.unitBreakdown.map((unit, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="size-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-700 mono-data">
-                    {unit.count}x
-                  </div>
-                  <span className="text-body-regular text-slate-800">{unit.unitType}</span>
-                </div>
-                {unit.monthlyRentKes && <span className="mono-amount text-slate-600">{formatCompactKES(parseFloat(unit.monthlyRentKes))}/mo</span>}
-              </div>
-            ))}
+    <div className="flex flex-col gap-6">
+      {/* ── Top Metric Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {numberBlocks.map((b) => (
+          <div key={b.label} className="rounded-2xl border border-slate-100/80 bg-white p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col gap-1.5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+            <p className="label-caps text-slate-400">{b.label}</p>
+            <p className="mono-stat text-slate-900">{b.value}</p>
           </div>
-        </Card>
-      ) : (
-        !property.description && (
-          <EmptyPanel
-            icon={IconBuildingSkyscraper}
-            title="No additional details yet"
-            description="Add a description or a unit breakdown from the Edit form to flesh out this property's overview."
-          />
-        )
-      )}
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        {/* ── Left Column: Description & Units ── */}
+        <div className="flex flex-col gap-6 xl:col-span-2">
+          {property.description && (
+            <Card className="bg-white border border-slate-100 rounded-[24px] p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h3 className="text-title-primary mb-4">Description</h3>
+              <p className="text-body-regular text-slate-600 whitespace-pre-line">{property.description}</p>
+            </Card>
+          )}
+
+          {property.unitBreakdown && property.unitBreakdown.length > 0 ? (
+            <Card className="bg-white border border-slate-100 rounded-[24px] p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h3 className="text-title-primary mb-5">Unit Breakdown</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {property.unitBreakdown.map((unit, idx) => (
+                  <div key={idx} className="flex flex-col p-4 rounded-[16px] bg-slate-50/80 border border-slate-100 transition-colors hover:bg-white hover:shadow-sm hover:border-slate-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="size-9 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-700 mono-data">
+                        {unit.count}x
+                      </div>
+                      <span className="body-sm text-slate-900 font-medium">{unit.unitType}</span>
+                    </div>
+                    {unit.monthlyRentKes && (
+                      <span className="mono-amount text-slate-500 mt-1">{formatCompactKES(parseFloat(unit.monthlyRentKes))}/mo expected</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : (
+            !property.description && (
+              <EmptyPanel
+                icon={IconBuildingSkyscraper}
+                title="No additional details yet"
+                description="Add a description or a unit breakdown from the Edit form to flesh out this property's overview."
+              />
+            )
+          )}
+        </div>
+
+        {/* ── Right Column: Mandate ── */}
+        <div className="flex flex-col gap-6">
+          <Card className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col p-6">
+            {/* Mandate Section */}
+            {handlers.canViewFinance && property.mandate ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-title-primary flex items-center gap-2">
+                    <IconFileCertificate size={18} className="text-slate-400" />
+                    Mandate
+                  </h3>
+                  <MandateStatusPill status={property.mandate.status} pendingApproverRole={property.mandate.pendingApproverRole} />
+                </div>
+                <p className="body-sm text-slate-500 mb-5 leading-relaxed">
+                  <strong className="text-slate-700 font-medium">{(property.mandate.mandateRate * 100).toFixed(0)}% fee</strong> · started{" "}
+                  {formatPropertyDate(property.mandate.startDate)} · Ref <span className="mono-data bg-slate-100 px-1.5 py-0.5 rounded">{property.mandate.id.slice(0, 8).toUpperCase()}</span>
+                </p>
+
+                <div className="flex flex-col gap-2.5 mb-5">
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-white p-3 shadow-sm hover:border-slate-200 transition-colors">
+                    {property.mandate.manager?.name ? (
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="size-9 rounded-full bg-emerald-700 text-white flex items-center justify-center label-caps shrink-0 shadow-sm">
+                          {property.mandate.manager.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block body-sm font-medium text-slate-900 truncate">{property.mandate.manager.name}</span>
+                          <span className="block label-caps text-slate-400 mt-0.5">Manager</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-2 body-sm text-slate-400 min-w-0">
+                        <IconUserCog size={16} className="shrink-0" aria-hidden="true" />
+                        <span className="truncate">No manager assigned</span>
+                      </span>
+                    )}
+                    {handlers.canManage && (
+                      <button type="button" onClick={handlers.onAssignManager} className="label-caps text-slate-400 hover:text-[#122a20] shrink-0 transition-colors">
+                        {property.mandate.manager?.name ? "Reassign" : "Assign"}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-white p-3 shadow-sm hover:border-slate-200 transition-colors">
+                    {handlers.mandateLetterDoc?.url ? (
+                      <a href={handlers.mandateLetterDoc.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 min-w-0 body-sm font-medium text-slate-700 hover:text-[#122a20] transition-colors">
+                        <span className="size-9 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                          <IconFileText size={16} className="text-slate-500" />
+                        </span>
+                        <span className="truncate">Mandate letter</span>
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center gap-2 body-sm text-amber-700 min-w-0">
+                        <span className="size-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                          <IconAlertTriangle size={16} className="text-amber-500" />
+                        </span>
+                        <span className="truncate">No letter on file</span>
+                      </span>
+                    )}
+                    {handlers.canManage && (
+                      <button type="button" onClick={handlers.onMandateLetter} className="label-caps text-slate-400 hover:text-[#122a20] shrink-0 transition-colors">
+                        {handlers.mandateLetterDoc?.url ? "Replace" : "Upload"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {handlers.canManage && handlers.canDecideMandate && (
+                  <div className="mb-4 rounded-[16px] border border-amber-300/60 bg-[#fffdf0] p-4 shadow-sm">
+                    <p className="body-sm font-medium text-amber-900 mb-3">
+                      Awaiting approval. Submitted {formatPropertyDate(property.mandate.startDate)}.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" className="flex-1 justify-center bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium shadow-sm" onClick={handlers.onDecision}>
+                        Approve
+                      </Button>
+                      <Button size="sm" variant="secondary" className="flex-1 justify-center text-rose-600 border-rose-200 hover:bg-rose-50 font-medium shadow-sm" onClick={handlers.onDecision}>
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {handlers.canManage && handlers.canOverrideMandate && (
+                  <div className="mb-4 rounded-[16px] border border-amber-300/60 bg-[#fffdf0] p-4 shadow-sm">
+                    <p className="body-sm font-medium text-amber-900 mb-3">
+                      Pending GM step. You may decide directly.
+                    </p>
+                    <Button size="sm" variant="secondary" className="w-full justify-center font-medium" onClick={handlers.onOverride}>
+                      <IconBolt size={14} className="mr-1.5 text-amber-500" /> Override Decision
+                    </Button>
+                  </div>
+                )}
+
+                {handlers.canManage && property.mandate.status === "active" && (
+                  <button type="button" onClick={handlers.onTerminate} className="mt-auto self-center label-caps text-rose-500 hover:text-rose-700 transition-colors pt-2">
+                    Terminate Mandate
+                  </button>
+                )}
+              </>
+            ) : handlers.canViewFinance && !property.mandate && handlers.canManage && property.owner ? (
+              <div className="flex flex-col items-center text-center gap-3 py-4">
+                <div className="size-12 rounded-full bg-slate-50 flex items-center justify-center mb-1">
+                  <IconFileCertificate size={24} className="text-slate-300" />
+                </div>
+                <h3 className="text-title-primary">No Mandate</h3>
+                <p className="body-sm text-slate-500 mb-2">This property isn&apos;t under a management mandate.</p>
+                <Button onClick={handlers.onCreateMandate} className="w-full justify-center bg-[#151936] text-white hover:bg-slate-800 shadow-md font-medium">
+                  <IconPlus size={16} className="mr-1.5" /> Create Mandate
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center text-center gap-2 py-4">
+                <IconFileCertificate size={24} className="text-slate-300" />
+                <p className="body-sm text-slate-500">Mandate info unavailable.</p>
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -885,6 +1596,23 @@ function FinancialsPanel({ property }: { property: PropertyDetail }) {
         </div>
       )}
 
+      {period && (
+        <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="flex items-baseline justify-between mb-1">
+            <h3 className="text-title-primary">Remittance breakdown — current period</h3>
+            <span className="label-caps text-slate-400">This month</span>
+          </div>
+          <p className="text-desc-secondary mb-4">Collected rent is a landlord-payable liability — only the management fee is Sunland revenue.</p>
+          <RemittanceBar period={period} />
+          <div className="flex flex-col mt-4">
+            <RemittanceRow dotClass="bg-slate-200" label="Rent collected (landlord-payable)" value={formatCompactKES(period.collectedAmount)} />
+            <RemittanceRow dotClass="bg-[#f3df27]" label="Less management fee — Sunland revenue" value={`− ${formatCompactKES(period.managementFee)}`} valueClass="text-amber-700" />
+            <RemittanceRow dotClass="bg-slate-400" label="Less approved expenses" value={`− ${formatCompactKES(period.expenses)}`} valueClass="text-slate-500" />
+            <RemittanceRow dotClass="bg-[#122a20]" label="Landlord remittance due" value={formatCompactKES(period.landlordRemittance)} valueClass="text-[#122a20] text-base" bold last />
+          </div>
+        </Card>
+      )}
+
       {property.collections && property.collections.length > 0 ? (
         <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <div className="mb-6">
@@ -921,6 +1649,44 @@ function FinancialsPanel({ property }: { property: PropertyDetail }) {
   );
 }
 
+function RemittanceBar({ period }: { period: { collectedAmount: number; managementFee: number; expenses: number; landlordRemittance: number } }) {
+  const total = period.collectedAmount || 1;
+  const pct = (v: number) => `${Math.max(1.5, (v / total) * 100).toFixed(1)}%`;
+  return (
+    <div className="flex h-3.5 w-full rounded-full overflow-hidden border border-slate-200" aria-hidden="true">
+      <div className="h-full bg-[#122a20]" style={{ width: pct(period.landlordRemittance) }} />
+      <div className="h-full bg-slate-400" style={{ width: pct(period.expenses) }} />
+      <div className="h-full bg-[#f3df27]" style={{ width: pct(period.managementFee) }} />
+    </div>
+  );
+}
+
+function RemittanceRow({
+  dotClass,
+  label,
+  value,
+  valueClass,
+  bold,
+  last,
+}: {
+  dotClass: string;
+  label: string;
+  value: string;
+  valueClass?: string;
+  bold?: boolean;
+  last?: boolean;
+}) {
+  return (
+    <div className={cn("flex items-center justify-between py-2.5", !last && "border-b border-slate-50")}>
+      <span className="flex items-center gap-2 text-body-regular text-slate-600">
+        <span className={cn("size-2.5 rounded-sm shrink-0", dotClass)} aria-hidden="true" />
+        {label}
+      </span>
+      <span className={cn("mono-amount", bold ? "font-medium" : "", valueClass ?? "text-slate-900")}>{value}</span>
+    </div>
+  );
+}
+
 interface CollectionChartPoint {
   period: string;
   expected: number;
@@ -951,34 +1717,51 @@ function CollectionsTooltip({
 
 // ── Tenancy (let) ──
 
-function TenancyPanel({ property }: { property: PropertyDetail }) {
+const LEASES_PER_PAGE = 5;
+
+function TenancyPanel({
+  property,
+  page,
+  onPageChange,
+  onOpenLease,
+}: {
+  property: PropertyDetail;
+  page: number;
+  onPageChange: (page: number) => void;
+  onOpenLease: (lease: LeaseSummary) => void;
+}) {
   const leases = property.leases ?? [];
   if (leases.length === 0) {
     return <EmptyPanel icon={IconUsers} title="No lease on record" description="This property doesn't have an active or past lease recorded yet." />;
   }
+  const totalPages = Math.max(1, Math.ceil(leases.length / LEASES_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pageLeases = leases.slice((safePage - 1) * LEASES_PER_PAGE, safePage * LEASES_PER_PAGE);
+
   return (
     <Card className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[1.6fr_1fr_1fr_auto] gap-3 px-5 py-2.5 border-b border-slate-100 label-caps text-slate-400">
+      <div className="hidden sm:grid grid-cols-[1.6fr_1fr_1fr_auto_28px] gap-3 px-5 py-2.5 border-b border-slate-100 label-caps text-slate-400">
         <span>Tenant</span>
         <span>Term</span>
         <span>Status</span>
         <span className="text-right">Rent</span>
+        <span />
       </div>
       <div className="divide-y divide-slate-100">
-        {leases.map((lease) => (
-          <div key={lease.id} className="grid grid-cols-1 sm:grid-cols-[1.6fr_1fr_1fr_auto] gap-1.5 sm:gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
+        {pageLeases.map((lease) => (
+          <button
+            key={lease.id}
+            type="button"
+            onClick={() => onOpenLease(lease)}
+            className="w-full text-left grid grid-cols-1 sm:grid-cols-[1.6fr_1fr_1fr_auto_28px] gap-1.5 sm:gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors items-center"
+          >
             <div className="min-w-0">
               <p className="text-body-primary text-slate-900 truncate">{lease.tenantName}</p>
               <div className="flex items-center gap-3 flex-wrap mt-0.5">
                 {lease.tenantPhone && (
-                  <a href={`tel:${lease.tenantPhone}`} className="text-meta-muted hover:text-[#122a20] flex items-center gap-1">
+                  <span className="text-meta-muted flex items-center gap-1">
                     <IconPhone size={12} aria-hidden="true" /> {lease.tenantPhone}
-                  </a>
-                )}
-                {lease.tenantEmail && (
-                  <a href={`mailto:${lease.tenantEmail}`} className="text-meta-muted hover:text-[#122a20] flex items-center gap-1 truncate">
-                    <IconMail size={12} aria-hidden="true" /> <span className="truncate">{lease.tenantEmail}</span>
-                  </a>
+                  </span>
                 )}
               </div>
             </div>
@@ -989,9 +1772,35 @@ function TenancyPanel({ property }: { property: PropertyDetail }) {
               <LeaseStatusPill status={lease.status} />
             </div>
             <span className="mono-amount text-slate-900 sm:self-center sm:text-right">{formatCompactKES(parseFloat(lease.monthlyRentKes))}/mo</span>
-          </div>
+            <IconChevronRight size={15} className="hidden sm:block text-slate-300 justify-self-end" aria-hidden="true" />
+          </button>
         ))}
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100">
+          <span className="text-meta-muted">Page {safePage} of {totalPages} · {leases.length} leases</span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => onPageChange(Math.max(1, safePage - 1))}
+              disabled={safePage <= 1}
+              aria-label="Previous page"
+              className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50"
+            >
+              <IconChevronLeft size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => onPageChange(Math.min(totalPages, safePage + 1))}
+              disabled={safePage >= totalPages}
+              aria-label="Next page"
+              className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50"
+            >
+              <IconChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
@@ -1007,7 +1816,9 @@ function LeaseStatusPill({ status }: { status: "active" | "expiring" | "ended" |
   return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.className}`}>{c.label}</span>;
 }
 
-// ── Sales Pipeline (sale) ──
+// ── Sales Pipeline (sale) - read-only: no CRM lead-mutation backend exists in
+// this codebase yet (verified - no leads service/route), so no Advance/Log
+// buttons are added here rather than wiring them to nothing real. ──
 
 const PIPELINE_STAGES: { key: "lead" | "viewing" | "offer" | "sale"; label: string }[] = [
   { key: "lead", label: "Lead" },
@@ -1100,21 +1911,33 @@ function MaintenancePanel({ property, canLog, onReport }: { property: PropertyDe
           <span>Status</span>
         </div>
         <div className="divide-y divide-slate-100">
-          {requests.map((req) => (
-            <div key={req.id} className="grid grid-cols-1 sm:grid-cols-[1.8fr_1fr_auto_auto] gap-1.5 sm:gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
-              <p className="text-body-primary text-slate-900 truncate sm:self-center">{req.title}</p>
-              <p className="text-body-regular text-slate-400 sm:self-center">
-                {formatPropertyDate(req.reportedAt)}
-                {req.reportedBy ? ` · ${req.reportedBy}` : ""}
-              </p>
-              <div className="sm:self-center">
-                <PriorityPill priority={req.priority} />
+          {requests.map((req) => {
+            const isHotCritical = req.priority === "critical" && req.status !== "resolved" && req.status !== "closed";
+            return (
+              <div
+                key={req.id}
+                className={cn(
+                  "grid grid-cols-1 sm:grid-cols-[1.8fr_1fr_auto_auto] gap-1.5 sm:gap-3 px-5 py-3.5 transition-colors",
+                  isHotCritical ? "bg-rose-50/50 hover:bg-rose-50" : "hover:bg-slate-50/60"
+                )}
+              >
+                <p className="text-body-primary text-slate-900 truncate sm:self-center flex items-center gap-1.5">
+                  {isHotCritical && <IconAlertTriangle size={14} className="text-rose-500 shrink-0" aria-hidden="true" />}
+                  {req.title}
+                </p>
+                <p className="text-body-regular text-slate-400 sm:self-center">
+                  {formatPropertyDate(req.reportedAt)}
+                  {req.reportedBy ? ` · ${req.reportedBy}` : ""}
+                </p>
+                <div className="sm:self-center">
+                  <PriorityPill priority={req.priority} />
+                </div>
+                <div className="sm:self-center">
+                  <MaintenanceStatusPill status={req.status} />
+                </div>
               </div>
-              <div className="sm:self-center">
-                <MaintenanceStatusPill status={req.status} />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
     </div>
@@ -1196,7 +2019,7 @@ function ActivityPanel({
             {entries.map((entry, i) => (
               <li key={entry.id} className={cn("flex gap-3 pb-4", i !== entries.length - 1 && "border-b border-slate-100 mb-4")}>
                 <div className="flex flex-col items-center pt-1">
-                  <span className="size-2 rounded-full bg-slate-300" aria-hidden="true" />
+                  <span className={cn("size-2 rounded-full", activityTone(entry.action))} aria-hidden="true" />
                   {i !== entries.length - 1 && <span className="w-px flex-1 bg-slate-100 mt-1" aria-hidden="true" />}
                 </div>
                 <div className="flex flex-col gap-0.5 pb-1">
@@ -1222,4 +2045,26 @@ function DocumentStatusPill({ status }: { status: "draft" | "awaiting_signature"
   };
   const c = config[status];
   return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.className}`}>{c.label}</span>;
+}
+
+function MetricTile({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<{ size?: number; stroke?: number; className?: string }>;
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <Card className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="size-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600">
+          <Icon size={20} stroke={1.5} />
+        </div>
+        <p className="label-caps text-slate-400">{label}</p>
+      </div>
+      <p className="mono-stat headline-md text-slate-900 mt-2">{value}</p>
+    </Card>
+  );
 }

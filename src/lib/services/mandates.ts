@@ -8,7 +8,7 @@ import { createNotification } from "@/lib/services/notifications";
 import { getGroupSettingValue } from "@/lib/services/settings";
 import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
-import { createMandateSchema, terminateMandateSchema } from "@/lib/validation/mandates";
+import { assignMandateManagerSchema, createMandateSchema, terminateMandateSchema } from "@/lib/validation/mandates";
 import { parseInput } from "@/lib/validation/parse";
 
 // Mandates reuse the properties.property.* permission keys deliberately, same
@@ -76,10 +76,15 @@ export async function listMandates(
       endDate: propertyMandates.endDate,
       status: propertyMandates.status,
       createdAt: propertyMandates.createdAt,
+      assignedPmId: propertyMandates.assignedPmId,
+      managerName: users.name,
+      managerTitle: users.title,
+      managerAvatarUrl: users.avatarUrl,
     })
     .from(propertyMandates)
     .innerJoin(properties, eq(propertyMandates.propertyId, properties.id))
     .innerJoin(contacts, eq(propertyMandates.landlordContactId, contacts.id))
+    .leftJoin(users, eq(propertyMandates.assignedPmId, users.id))
     .where(and(...conditions))
     .orderBy(desc(propertyMandates.createdAt));
 }
@@ -103,6 +108,14 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
   }
   const [landlord] = await db.select().from(contacts).where(eq(contacts.id, landlordContactId));
   if (!landlord) throw new NotFoundError("Landlord contact not found");
+
+  if (input.assignedPmId) {
+    const [manager] = await db.select().from(users).where(eq(users.id, input.assignedPmId)).limit(1);
+    if (!manager) throw new NotFoundError("Property manager not found");
+    if (manager.role !== "property_manager") {
+      throw new DomainValidationError("Selected staff member is not a Property Manager");
+    }
+  }
 
   const [existingInFlight] = await db
     .select({ id: propertyMandates.id })
@@ -175,6 +188,7 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
         entityId,
         propertyId: input.propertyId,
         landlordContactId,
+        assignedPmId: input.assignedPmId ?? null,
         mandateRate: mandateRate.toFixed(4),
         rateJustification: input.rateJustification?.trim() || null,
         unitCount,
@@ -274,6 +288,49 @@ export async function terminateMandate(ctx: CallerContext, mandateId: string, ra
       associatedType: "property_mandate",
       associatedId: mandateId,
       summary: `${ctx.user.name} terminated the management mandate${input.reason ? `: ${input.reason}` : ""}`,
+      entityId: existing.entityId,
+      before: existing,
+      after: updated,
+    });
+
+    return updated;
+  });
+}
+
+export async function assignMandateManager(ctx: CallerContext, mandateId: string, rawInput: unknown) {
+  const input = parseInput(assignMandateManagerSchema, rawInput);
+
+  const [existing] = await db.select().from(propertyMandates).where(eq(propertyMandates.id, mandateId)).limit(1);
+  if (!existing) throw new NotFoundError("Mandate not found");
+
+  await authorize(ctx, "properties.property.write", existing.entityId);
+
+  if (existing.status !== "active" && existing.status !== "pending_approval") {
+    throw new ConflictError("Only an active or pending mandate can have its manager reassigned.");
+  }
+
+  if (input.assignedPmId) {
+    const [manager] = await db.select().from(users).where(eq(users.id, input.assignedPmId)).limit(1);
+    if (!manager) throw new NotFoundError("Property manager not found");
+    if (manager.role !== "property_manager") {
+      throw new DomainValidationError("Selected staff member is not a Property Manager");
+    }
+  }
+
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(propertyMandates)
+      .set({ assignedPmId: input.assignedPmId, updatedAt: new Date() })
+      .where(eq(propertyMandates.id, mandateId))
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "properties.mandate.assign_manager",
+      associatedType: "property_mandate",
+      associatedId: mandateId,
+      summary: input.assignedPmId
+        ? `${ctx.user.name} assigned a property manager to the mandate`
+        : `${ctx.user.name} unassigned the property manager from the mandate`,
       entityId: existing.entityId,
       before: existing,
       after: updated,

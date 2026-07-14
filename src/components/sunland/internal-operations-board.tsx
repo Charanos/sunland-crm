@@ -410,7 +410,7 @@ export function InternalOperationsBoard({
           </div>
 
           {/* Active Workflows Timeline */}
-          <BoardPanel className="flex flex-1 flex-col p-4 sm:p-6 bg-transparent sm:bg-slate-50/30 border-0 sm:border sm:border-slate-200/80 shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
+          <BoardPanel className="flex flex-1 flex-col py-4 px-6">
             <div className="flex items-center justify-between mb-6 border-b border-slate-200/60 pb-4">
               <h3 className="text-title-secondary text-slate-900 flex items-center gap-2">
                 Cross-Department Operations

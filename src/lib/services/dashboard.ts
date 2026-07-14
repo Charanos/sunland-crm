@@ -1,4 +1,4 @@
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   activityLogs,
@@ -7,6 +7,7 @@ import {
   leases,
   maintenanceRequests,
   properties,
+  propertyMandates,
   settings,
   transactions,
   users,
@@ -161,7 +162,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
   const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
   const lookback = new Date(now.getFullYear(), now.getMonth() - 3, 1); // covers quarter charting + mom trends
 
-  const [allProperties, recentTransactions, allLeads, recentLogs, allMaintenanceRequests, allLeases] =
+  const [allProperties, recentTransactions, allLeads, recentLogs, allMaintenanceRequests, allLeases, mandateManagerRows] =
     await Promise.all([
       db.select().from(properties).where(eq(properties.entityId, entityId)),
       db
@@ -177,7 +178,27 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
         .limit(8),
       db.select().from(maintenanceRequests).where(eq(maintenanceRequests.entityId, entityId)),
       db.select().from(leases).where(eq(leases.entityId, entityId)),
+      db
+        .select({
+          propertyId: propertyMandates.propertyId,
+          managerId: propertyMandates.assignedPmId,
+          managerName: users.name,
+        })
+        .from(propertyMandates)
+        .leftJoin(users, eq(propertyMandates.assignedPmId, users.id))
+        .where(
+          and(
+            eq(propertyMandates.entityId, entityId),
+            inArray(propertyMandates.status, ["pending_approval", "active"]),
+          ),
+        ),
     ]);
+
+  const managerByPropertyId = new Map(
+    mandateManagerRows
+      .filter((r) => r.managerId)
+      .map((r) => [r.propertyId, { id: r.managerId as string, name: r.managerName }]),
+  );
 
   // ── Portfolio ──
   const totalProperties = allProperties.length;
@@ -345,6 +366,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
         else if (p.askingPriceKes) priceStr = `KES ${parseFloat(p.askingPriceKes).toLocaleString()}`;
 
         const media = p.media as Array<{ url: string; alt?: string }> | null;
+        const manager = managerByPropertyId.get(p.id) ?? null;
 
         return {
           id: p.id,
@@ -355,6 +377,9 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
           roi: "N/A",
           price: priceStr,
           imageUrl: media?.[0]?.url ?? null,
+          isFeatured: p.isFeatured,
+          managerId: manager?.id ?? null,
+          managerName: manager?.name ?? null,
         };
       }),
     activityLogs: recentLogs.map((l) => {

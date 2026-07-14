@@ -6,9 +6,11 @@ import { requireCallerContext } from "@/lib/services/types";
 export async function GET(request: Request) {
   try {
     const ctx = await requireCallerContext(undefined, request);
-    const entityId = new URL(request.url).searchParams.get("entityId") ?? undefined;
+    const searchParams = new URL(request.url).searchParams;
+    const entityId = searchParams.get("entityId") ?? undefined;
+    const role = searchParams.get("role") ?? undefined;
 
-    const users = await listUsers(ctx, { entityId });
+    const users = await listUsers(ctx, { entityId, role });
     return NextResponse.json({ users });
   } catch (error) {
     return handleRouteError(error);

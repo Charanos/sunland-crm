@@ -59,7 +59,7 @@ export function BoardPanel({
   return (
     <Component
       className={cn(
-        "border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-md",
+        "py-6",
         "rounded-lg",
         className,
       )}

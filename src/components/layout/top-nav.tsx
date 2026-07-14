@@ -67,7 +67,8 @@ interface QuickAction {
   icon: Icon;
   label: string;
   shortcut?: string;
-  href: string;
+  href?: string;
+  action?: string;
 }
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -80,7 +81,7 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
 ];
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { icon: IconBuildingCommunity, label: "New Property", shortcut: "P", href: "/admin/properties" },
+  { icon: IconBuildingCommunity, label: "New Property", shortcut: "P", action: "create-property" },
   { icon: IconUsersGroup, label: "New Contact", shortcut: "C", href: "/admin/contacts" },
   { icon: IconChartBar, label: "New Lead", shortcut: "L", href: "/admin/pipeline" },
   { icon: IconCalendarDollar, label: "New Lease", shortcut: "E", href: "/admin/leases" },
@@ -313,24 +314,48 @@ function QuickCreatePanel({ onClose }: { onClose: () => void }) {
         <p className="text-caption text-slate-400">Start something new</p>
       </div>
       <div className="p-1.5">
-        {QUICK_ACTIONS.map((action) => (
-          <Link
-            key={action.href}
-            href={action.href}
-            onClick={onClose}
-            className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-slate-50"
-          >
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-              <action.icon size={14} aria-hidden />
-            </span>
-            <span className="text-label flex-1 text-slate-700">{action.label}</span>
-            {action.shortcut && (
-              <kbd className="text-tiny select-none rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-slate-400">
-                ⌘{action.shortcut}
-              </kbd>
-            )}
-          </Link>
-        ))}
+        {QUICK_ACTIONS.map((action) => {
+          const content = (
+            <>
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                <action.icon size={14} aria-hidden />
+              </span>
+              <span className="text-label flex-1 text-slate-700 text-left">{action.label}</span>
+              {action.shortcut && (
+                <kbd className="text-tiny select-none rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-slate-400">
+                  ⌘{action.shortcut}
+                </kbd>
+              )}
+            </>
+          );
+          const className = "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-slate-50";
+
+          if (action.action) {
+            return (
+              <button
+                key={action.label}
+                onClick={() => {
+                  useUIStore.getState().openModal(action.action as any);
+                  onClose();
+                }}
+                className={className}
+              >
+                {content}
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={action.href}
+              href={action.href!}
+              onClick={onClose}
+              className={className}
+            >
+              {content}
+            </Link>
+          );
+        })}
       </div>
     </PanelShell>
   );
@@ -694,6 +719,15 @@ function Breadcrumb() {
   if (!activeItem) return null;
   const isFlat = activeSection && activeSection.items.length === 1;
 
+  let dynamicLabel: string | null = null;
+  if (pathname.includes("/properties/") && !pathname.endsWith("/properties")) {
+    dynamicLabel = "Property Details";
+  } else if (pathname.includes("/leases/") && !pathname.endsWith("/leases")) {
+    dynamicLabel = "Lease Details";
+  } else if (pathname.includes("/valuations/") && !pathname.endsWith("/valuations")) {
+    dynamicLabel = "Valuation Details";
+  }
+
   return (
     <nav aria-label="Breadcrumb" className="hidden items-center gap-1.5 xl:flex">
       {activeSection && !isFlat && (
@@ -702,7 +736,22 @@ function Breadcrumb() {
           <IconChevronRight size={10} className="text-slate-300" aria-hidden />
         </>
       )}
-      <span className="text-caption text-slate-700">{activeItem.label}</span>
+      {dynamicLabel ? (
+        <Link
+          href={activeItem.href}
+          className="text-caption text-slate-400 hover:text-slate-900 transition-colors"
+        >
+          {activeItem.label}
+        </Link>
+      ) : (
+        <span className="text-caption text-slate-700">{activeItem.label}</span>
+      )}
+      {dynamicLabel && (
+        <>
+          <IconChevronRight size={10} className="text-slate-300" aria-hidden />
+          <span className="text-caption text-slate-700 font-medium">{dynamicLabel}</span>
+        </>
+      )}
     </nav>
   );
 }

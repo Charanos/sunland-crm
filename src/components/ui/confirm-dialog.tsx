@@ -17,6 +17,7 @@ export function ConfirmDialog({
   open,
   title,
   tone = "danger",
+  notes,
 }: {
   cancelLabel?: string;
   confirmLabel?: string;
@@ -27,6 +28,15 @@ export function ConfirmDialog({
   open: boolean;
   title: string;
   tone?: ConfirmTone;
+  /** Optional reason/notes field rendered above the action buttons. */
+  notes?: {
+    label: string;
+    placeholder?: string;
+    value: string;
+    onChange: (value: string) => void;
+    required?: boolean;
+    error?: string;
+  };
 }) {
   const IconComponent = tone === "info" ? IconInfoCircle : IconAlertTriangle;
   const confirmVariant = tone === "danger" ? "danger" : "primary";
@@ -55,6 +65,22 @@ export function ConfirmDialog({
           <p className="text-slate-400 leading-relaxed text-base">
             {description}
           </p>
+          {notes && (
+            <div className="mt-4">
+              <label className="block text-slate-400 mb-1.5 label-caps">
+                {notes.label}{notes.required && " — required"}
+              </label>
+              <textarea
+                rows={2}
+                value={notes.value}
+                onChange={(e) => notes.onChange(e.target.value)}
+                placeholder={notes.placeholder}
+                disabled={isLoading}
+                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm resize-y"
+              />
+              {notes.error && <p className="body-sm text-rose-600 mt-1.5">{notes.error}</p>}
+            </div>
+          )}
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button onClick={onClose} variant="secondary" disabled={isLoading}>
               {cancelLabel}

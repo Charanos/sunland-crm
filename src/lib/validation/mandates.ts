@@ -12,9 +12,15 @@ export const createMandateSchema = z.object({
   unitCount: z.coerce.number().int().min(1).optional(),
   startDate: z.string().optional(),
   endDate: z.string().nullable().optional(),
+  assignedPmId: z.string().uuid().nullable().optional(),
 });
 
 export const terminateMandateSchema = z.object({
   entityId: z.string().min(1),
   reason: z.string().optional(),
+});
+
+export const assignMandateManagerSchema = z.object({
+  entityId: z.string().min(1),
+  assignedPmId: z.string().uuid().nullable(),
 });

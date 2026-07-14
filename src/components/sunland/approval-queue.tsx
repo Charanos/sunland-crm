@@ -90,8 +90,8 @@ export function ApprovalQueue({ onActionComplete }: { onActionComplete?: () => v
 
   return (
     <>
-      <BoardPanel className="flex flex-col gap-4 min-h-[220px] p-4 sm:p-6 bg-transparent sm:bg-slate-50/30 border-0 sm:border sm:border-slate-100 shadow-none sm:shadow-sm rounded-none sm:rounded-lg">
-        <div className="flex items-center justify-between border-b border-slate-200/60 pb-4">
+      <BoardPanel className="flex flex-col gap-4 h-full">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-700">
               <IconInbox size={20} />

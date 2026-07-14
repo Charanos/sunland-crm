@@ -166,6 +166,14 @@ export type Property = {
     verifiedAt?: string | null;
     clientSince?: string | null;
   } | null;
+  /** Property Manager assigned via the property's active/pending mandate - null when unassigned. */
+  manager?: {
+    id: string;
+    name?: string | null;
+    title?: string | null;
+    email?: string | null;
+    avatarUrl?: string | null;
+  } | null;
   askingPriceKes: string | null;
   monthlyRentKes: string | null;
   bedrooms: number | null;

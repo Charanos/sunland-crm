@@ -13,6 +13,10 @@ export const decideApprovalRequestSchema = z.object({
   requestId: z.string().uuid(),
   status: z.enum(["approved", "rejected"]),
   decisionNotes: z.string().optional(),
+  // Set only when a higher-authority actor (e.g. CEO) is deciding a request
+  // still pending at a lower tier (e.g. GM) - see decideApprovalRequest for
+  // the audit/notification behavior this triggers.
+  overrideNote: z.string().optional(),
 });
 
 export const recordTransactionSchema = z.object({

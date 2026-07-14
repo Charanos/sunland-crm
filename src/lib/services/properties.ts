@@ -58,6 +58,11 @@ export async function listProperties(
       ownerIdNumber: contacts.idNumber,
       ownerVerifiedAt: contacts.verifiedAt,
       ownerClientSince: contacts.createdAt,
+      managerId: propertyMandates.assignedPmId,
+      managerName: users.name,
+      managerTitle: users.title,
+      managerEmail: users.email,
+      managerAvatarUrl: users.avatarUrl,
     })
     .from(properties)
     .leftJoin(
@@ -68,9 +73,10 @@ export async function listProperties(
       ),
     )
     .leftJoin(contacts, eq(contacts.id, properties.ownerContactId))
+    .leftJoin(users, eq(users.id, propertyMandates.assignedPmId))
     .where(conditions);
 
-  return rows.map(({ ownerName, ownerPhone, ownerEmail, ownerCompany, ownerIdNumber, ownerVerifiedAt, ownerClientSince, ...rest }) => ({
+  return rows.map(({ ownerName, ownerPhone, ownerEmail, ownerCompany, ownerIdNumber, ownerVerifiedAt, ownerClientSince, managerId, managerName, managerTitle, managerEmail, managerAvatarUrl, ...rest }) => ({
     ...rest,
     ownerName,
     owner: rest.ownerContactId
@@ -82,6 +88,15 @@ export async function listProperties(
         idNumber: ownerIdNumber,
         verifiedAt: toISOStringSafe(ownerVerifiedAt),
         clientSince: toISOStringSafe(ownerClientSince),
+      }
+      : null,
+    manager: managerId
+      ? {
+        id: managerId,
+        name: managerName,
+        title: managerTitle,
+        email: managerEmail,
+        avatarUrl: managerAvatarUrl,
       }
       : null,
   }));
@@ -360,7 +375,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   const now = new Date();
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
-  const [ownerRows, leaseRows, maintenanceRows, documentRows, rentTxRows, leadRows, mandateRows] = await Promise.all([
+  const [ownerRows, leaseRows, maintenanceRows, documentRows, rentTxRows, expenseTxRows, leadRows, mandateRows] = await Promise.all([
     prop.ownerContactId
       ? db
         .select({
@@ -383,7 +398,9 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
         startsAt: leases.startsAt,
         endsAt: leases.endsAt,
         monthlyRentKes: leases.monthlyRentKes,
+        depositKes: leases.depositKes,
         isActive: leases.isActive,
+        tenantContactId: leases.tenantContactId,
         tenantName: contacts.displayName,
         tenantPhone: contacts.phone,
         tenantEmail: contacts.email,
@@ -429,6 +446,16 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
         ),
       ),
     db
+      .select({ amountKes: transactions.amountKes, occurredAt: transactions.occurredAt })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.propertyId, propertyId),
+          eq(transactions.type, "expense"),
+          gte(transactions.occurredAt, sixMonthsAgo),
+        ),
+      ),
+    db
       .select({
         stage: leads.stage,
         expectedValueKes: leads.expectedValueKes,
@@ -441,8 +468,15 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       .orderBy(desc(leads.updatedAt))
       .limit(1),
     db
-      .select()
+      .select({
+        ...getTableColumns(propertyMandates),
+        managerName: users.name,
+        managerTitle: users.title,
+        managerEmail: users.email,
+        managerAvatarUrl: users.avatarUrl,
+      })
       .from(propertyMandates)
+      .leftJoin(users, eq(propertyMandates.assignedPmId, users.id))
       .where(
         and(
           eq(propertyMandates.propertyId, propertyId),
@@ -471,6 +505,8 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   const sixtyDaysOut = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
   const leaseSummaries = leaseRows.map((l) => ({
     id: l.id,
+    tenantContactId: l.tenantContactId,
+    isActive: l.isActive,
     tenantName: l.tenantName,
     tenantPhone: l.tenantPhone ?? undefined,
     tenantEmail: l.tenantEmail ?? undefined,
@@ -482,6 +518,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
         ? ("expiring" as const)
         : ("active" as const),
     monthlyRentKes: l.monthlyRentKes,
+    depositKes: l.depositKes,
   }));
 
   // Expected monthly rent: sum of active leases, falling back to the listed
@@ -510,6 +547,10 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
 
   // Arrears reads the current month's bucket - only meaningful with a tenancy.
   const currentMonth = collections[collections.length - 1];
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const currentMonthExpenses = expenseTxRows
+    .filter((t) => t.occurredAt >= currentMonthStart)
+    .reduce((sum, t) => sum + parseFloat(t.amountKes), 0);
   let arrears: { status: "current" | "partial" | "defaulted"; amount: number; daysInArrears: number } | null = null;
   if (activeLeaseRows.length > 0 && expectedMonthly > 0) {
     const shortfall = Math.max(0, expectedMonthly - currentMonth.collected);
@@ -561,9 +602,10 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
   // GM" vs "Pending CEO" rather than a generic "Pending".
   const mandateRow = mandateRows[0];
   let pendingApproverRole: "gm" | "ceo" | "department_head" | null = null;
+  let pendingApprovalRequestId: string | null = null;
   if (mandateRow && mandateRow.status === "pending_approval") {
     const [pendingApproval] = await db
-      .select({ requiredApproverRole: approvalRequests.requiredApproverRole })
+      .select({ id: approvalRequests.id, requiredApproverRole: approvalRequests.requiredApproverRole })
       .from(approvalRequests)
       .where(
         and(
@@ -574,6 +616,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       )
       .limit(1);
     pendingApproverRole = pendingApproval?.requiredApproverRole ?? null;
+    pendingApprovalRequestId = pendingApproval?.id ?? null;
   }
   const mandateRate = mandateRow ? parseFloat(mandateRow.mandateRate) : 0;
   // Current-period snapshot derived live from this month's collections
@@ -586,9 +629,19 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       ? {
         collectedAmount: currentMonth.collected,
         managementFee: currentMonth.collected * mandateRate,
-        landlordRemittance: currentMonth.collected - currentMonth.collected * mandateRate,
+        expenses: currentMonthExpenses,
+        landlordRemittance: currentMonth.collected - currentMonth.collected * mandateRate - currentMonthExpenses,
       }
       : undefined;
+  const manager = mandateRow?.assignedPmId
+    ? {
+      id: mandateRow.assignedPmId,
+      name: mandateRow.managerName,
+      title: mandateRow.managerTitle,
+      email: mandateRow.managerEmail,
+      avatarUrl: mandateRow.managerAvatarUrl,
+    }
+    : null;
   const mandate = mandateRow
     ? {
       id: mandateRow.id,
@@ -596,7 +649,9 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       mandateRate,
       startDate: toISOStringSafe(mandateRow.startDate) || "",
       pendingApproverRole,
+      approvalRequestId: pendingApprovalRequestId,
       currentPeriod,
+      manager,
     }
     : null;
 

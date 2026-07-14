@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { userRole, users } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, ForbiddenError, NotFoundError } from "@/lib/authz/errors";
@@ -30,12 +30,29 @@ const PUBLIC_COLUMNS = {
   updatedAt: users.updatedAt,
 };
 
-/** Always entity-filtered - consistent with every other module's scopeEntityFilter reads. */
-export async function listUsers(ctx: CallerContext, filters: { entityId?: string } = {}) {
+/**
+ * Entity-filtered by default, consistent with every other module's
+ * scopeEntityFilter reads. When `role` is given the entity filter is dropped
+ * instead - staff like Property Managers are tagged to a home division
+ * (Commercial/Residential) but are assignable to mandates anywhere in the
+ * group, so a role-scoped lookup needs to see the whole company, not just
+ * one division.
+ */
+export async function listUsers(ctx: CallerContext, filters: { entityId?: string; role?: string } = {}) {
   const rawEntityId = filters.entityId ?? ctx.entityId;
   if (!rawEntityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(rawEntityId);
   await authorize(ctx, "identity.user.read", entityId);
+
+  if (filters.role) {
+    if (!(userRole.enumValues as readonly string[]).includes(filters.role)) {
+      throw new DomainValidationError("Invalid role filter");
+    }
+    return db
+      .select(PUBLIC_COLUMNS)
+      .from(users)
+      .where(and(eq(users.role, filters.role as (typeof userRole.enumValues)[number]), eq(users.isActive, true)));
+  }
 
   return db.select(PUBLIC_COLUMNS).from(users).where(eq(users.primaryEntityId, entityId));
 }

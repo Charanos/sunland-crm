@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   IconArrowUpRight,
@@ -75,6 +76,9 @@ interface PropertyListing {
   roi: string;
   price: string;
   imageUrl: string | null;
+  isFeatured?: boolean;
+  managerId?: string | null;
+  managerName?: string | null;
 }
 
 interface DashboardStats {
@@ -169,6 +173,7 @@ export function DashboardOverview({
 }) {
   const [mounted, setMounted] = useState(false);
   const { pushToast } = useToast();
+  const router = useRouter();
 
   // Entity context
   const context =
@@ -305,14 +310,21 @@ export function DashboardOverview({
       : 0;
 
   const hasListings = listings.length > 0;
+  // Prefer a real isFeatured property (same flag driven by the Properties board's
+  // star toggle); fall back to the most recent listing so the card isn't empty
+  // before anything has been starred.
+  const featuredListing = listings.find((l) => l.isFeatured) ?? listings[0];
   const featured = hasListings
     ? {
-      name: listings[0].name,
-      location: listings[0].location,
-      price: listings[0].price,
-      roi: listings[0].roi,
-      imageUrl: listings[0].imageUrl,
-      status: listings[0].status,
+      id: featuredListing.id,
+      name: featuredListing.name,
+      location: featuredListing.location,
+      type: featuredListing.type,
+      price: featuredListing.price,
+      roi: featuredListing.roi,
+      imageUrl: featuredListing.imageUrl,
+      status: featuredListing.status,
+      managerName: featuredListing.managerName,
     }
     : null;
 
@@ -371,9 +383,18 @@ export function DashboardOverview({
   // handler separately PATCHed the original). This is just the post-success
   // refresh now.
   const handlePropertySaved = useCallback(() => {
+    const wasCreating = propertyModalMode === "create";
+    setPropertyModalOpen(false);
+    setEditingProperty(null);
+    if (wasCreating) {
+      // A brand-new property belongs in the full portfolio list, not this
+      // summary dashboard - only creation redirects; editing refreshes in place.
+      router.push("/admin/properties");
+      return;
+    }
     loadDashboardData();
     setCurrentPage(1);
-  }, [loadDashboardData]);
+  }, [loadDashboardData, propertyModalMode, router]);
 
   const handleDeleteProperty = useCallback(async () => {
     if (!deleteConfirmId) return;
@@ -467,12 +488,16 @@ export function DashboardOverview({
                 Quick Action
               </button>
               <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 py-1">
-                <Link
-                  href="/admin/properties"
-                  className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-sm"
+                <button
+                  onClick={() => {
+                    setPropertyModalMode("create");
+                    setEditingProperty(null);
+                    setPropertyModalOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-sm"
                 >
                   <IconBuildingSkyscraper size={14} /> Add Property
-                </Link>
+                </button>
                 <Link
                   href="/admin/contacts"
                   className="flex items-center gap-2 px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-sm"
@@ -652,6 +677,11 @@ export function DashboardOverview({
                   <p className="text-sm text-slate-300 mt-1">
                     {featured.location}
                   </p>
+                  {featured.managerName && (
+                    <p className="text-xs text-slate-400 mt-1.5">
+                      Managed by <span className="text-slate-200">{featured.managerName}</span>
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/15">
                   <span
@@ -664,13 +694,7 @@ export function DashboardOverview({
                   </span>
                   <span className="body-sm text-slate-300">{featured.roi}</span>
                   <button
-                    onClick={() =>
-                      setDrawerProperty({
-                        id: "featured",
-                        ...featured,
-                        type: "Premium Estate",
-                      })
-                    }
+                    onClick={() => featured && setDrawerProperty(featured)}
                     className="ml-auto inline-flex h-8 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 body-sm transition"
                   >
                     More Details

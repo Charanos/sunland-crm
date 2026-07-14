@@ -13,7 +13,16 @@ export interface OwnerInfo {
 export interface MandatePeriod {
   collectedAmount: number;
   managementFee: number;
+  expenses: number;
   landlordRemittance: number;
+}
+
+export interface ManagerInfo {
+  id: string;
+  name?: string | null;
+  title?: string | null;
+  email?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface ManagementMandate {
@@ -24,6 +33,10 @@ export interface ManagementMandate {
   currentPeriod?: MandatePeriod;
   /** Only set while status is "pending_approval" - who the decision is awaiting. */
   pendingApproverRole?: "gm" | "ceo" | "department_head" | null;
+  /** Only set while status is "pending_approval" - the approval_requests row to decide against. */
+  approvalRequestId?: string | null;
+  /** Property Manager assigned to this mandate - null when unassigned. */
+  manager?: ManagerInfo | null;
 }
 
 export interface CollectionHistoryEntry {
@@ -40,6 +53,8 @@ export interface ArrearsInfo {
 
 export interface LeaseSummary {
   id: string;
+  tenantContactId: string;
+  isActive: boolean;
   tenantName: string;
   tenantPhone?: string;
   tenantEmail?: string;
@@ -47,6 +62,7 @@ export interface LeaseSummary {
   endDate?: string | null;
   status: "active" | "expiring" | "ended" | "pending_renewal";
   monthlyRentKes: string;
+  depositKes: string | null;
 }
 
 // Priority/status mirror the DB enums (maintenance_priority /
