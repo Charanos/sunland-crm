@@ -58,7 +58,7 @@ export default function RevenueStreamChart({ entityId = "group" }: { entityId?: 
 
   return (
     <div className="h-80 w-full mt-2 text-base">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
         <BarChart
           data={data}
           margin={{ top: 10, right: 10, left: -5, bottom: 5 }}

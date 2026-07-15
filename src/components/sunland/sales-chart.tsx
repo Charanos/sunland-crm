@@ -49,7 +49,7 @@ export default function SalesChart({
 
   return (
     <div className="h-72 w-full body-sm">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
         <BarChart
           data={data}
           margin={{ top: 10, right: 10, left: -10, bottom: 0 }}

@@ -32,6 +32,8 @@ import {
   IconFileText,
   IconCheck,
   IconBriefcase,
+  IconMapPin,
+  IconUser,
 } from "@tabler/icons-react";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -645,6 +647,8 @@ export function DashboardOverview({
                     fill
                     sizes="(max-width: 1024px) 100vw, 600px"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    priority
+                    loading="eager"
                   />
                 ) : (
                   <div className="size-full bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center">
@@ -671,15 +675,18 @@ export function DashboardOverview({
               <div className="absolute bottom-0 inset-x-0 p-5 flex flex-col justify-end text-white z-10">
                 <div>
                   <p className="text-[#f3df27] mono-stat">{featured.price}</p>
-                  <h3 className="text-lg text-white mt-1 leading-snug">
+                  <h3 className="text-lg text-white mt-1 leading-snug flex items-center gap-1.5">
+                    <IconBuildingSkyscraper size={18} className="text-white/70 shrink-0" />
                     {featured.name}
                   </h3>
-                  <p className="text-sm text-slate-300 mt-1">
+                  <p className="text-sm text-slate-300 mt-1 flex items-center gap-1.5">
+                    <IconMapPin size={14} className="text-slate-400 shrink-0" />
                     {featured.location}
                   </p>
                   {featured.managerName && (
-                    <p className="text-xs text-slate-400 mt-1.5">
-                      Managed by <span className="text-slate-200">{featured.managerName}</span>
+                    <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1.5">
+                      <IconUser size={12} className="text-slate-500 shrink-0" />
+                      <span>Managed by <span className="text-slate-200">{featured.managerName}</span></span>
                     </p>
                   )}
                 </div>
@@ -692,7 +699,12 @@ export function DashboardOverview({
                   >
                     {featured.status}
                   </span>
-                  <span className="body-sm text-slate-300">{featured.roi}</span>
+                  {featured.roi && featured.roi !== "N/A" && featured.roi !== "NaN" && (
+                    <span className="body-sm text-slate-300 flex items-center gap-1.5">
+                      <IconTrendingUp size={14} className="text-emerald-400 shrink-0" />
+                      {featured.roi}
+                    </span>
+                  )}
                   <button
                     onClick={() => featured && setDrawerProperty(featured)}
                     className="ml-auto inline-flex h-8 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 body-sm transition"

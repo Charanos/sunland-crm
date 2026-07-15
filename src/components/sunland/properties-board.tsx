@@ -139,7 +139,7 @@ function StatusPill({ status }: { status: PropertyStatus }) {
 function SpecChip({ icon: Icon, value }: { icon: React.ElementType; value: string }) {
   return (
     <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 label-caps text-slate-500">
-      <Icon size={11} stroke={1.8} className="text-slate-400 shrink-0" />
+      <Icon size={11} stroke={1.8} className="text-slate-600 shrink-0" />
       {value}
     </span>
   );
@@ -250,7 +250,7 @@ function PropertyGridCard({
             <p className="body-sm text-slate-900 leading-snug line-clamp-1 flex-1">{property.name}</p>
             <span className="mono-data text-slate-300 text-xs shrink-0 mt-px">{property.propertyCode}</span>
           </div>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
+          <p className="text-xs text-slate-600 flex items-center gap-1">
             <IconMapPin size={11} stroke={2} className="shrink-0" />
             <span className="truncate">{property.location}</span>
           </p>
@@ -608,7 +608,7 @@ export function PropertiesBoard({
 
       <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-400 tracking-wider">Portfolio Signals</span>
+        <span className="label-caps text-slate-600 tracking-wider">Portfolio Signals</span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
@@ -622,7 +622,7 @@ export function PropertiesBoard({
               <IconBuildingCommunity size={180} stroke={1} />
             </div>
 
-            <span className="text-xs font-medium text-slate-400 relative z-10">Total Properties</span>
+            <span className="text-xs font-medium text-slate-300 relative z-10">Total Properties</span>
             <div className="flex items-end justify-between gap-3 relative z-10">
               <span className="font-mono text-4xl font-medium text-white">{kpis.total}</span>
               <div className="text-right mb-0.5">
@@ -642,35 +642,56 @@ export function PropertiesBoard({
               />
             </svg>
             <div className="flex flex-col justify-between h-full py-1">
-              <p className="text-xs font-medium text-slate-400">Occupancy</p>
+              <p className="text-xs font-medium text-slate-300">Occupancy</p>
               <span className="font-mono text-4xl font-medium text-white">{kpis.rate.toFixed(0)}%</span>
               <p className="text-xs font-medium uppercase tracking-widest text-emerald-400">{kpis.occupied} occupied</p>
             </div>
           </div>
 
           {/* Portfolio mix - segment bar + legend, all 5 STATUS_ORDER segments */}
-          <div className="py-6 px-6 lg:py-8 lg:px-8 flex flex-col justify-between h-[150px]">
-            <span className="text-xs font-medium text-slate-400">Portfolio mix</span>
-            {/* Full status segment bar - all 5 segments from STATUS_ORDER */}
-            <div className="flex h-2 w-full overflow-hidden rounded-full gap-0.5 my-auto">
-              {portfolioMix.map(({ status, pct, config }) =>
-                statusCounts[status] > 0 ? (
-                  <div
-                    key={status}
-                    className={cn("h-full transition-all duration-1000", config.dot.replace("bg-", "bg-"))}
-                    style={{ width: `${pct}%` }}
-                    title={`${config.label}: ${statusCounts[status]}`}
-                  />
-                ) : null
-              )}
+          <div className="py-6 px-6 lg:py-8 lg:px-8 flex flex-col justify-between h-[150px] relative overflow-hidden group/card bg-white/[0.01]">
+            <div className="absolute -bottom-10 -right-10 opacity-[0.02] text-white pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconChartBar size={140} stroke={1} />
             </div>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mt-auto">
-              {portfolioMix.slice(0, 4).map(({ status, count, config }) => (
-                <div key={status} className="flex items-center gap-1.5">
-                  <span className={cn("size-1.5 rounded-full inline-block", config.dot)} />
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400">{config.label} · <span className="mono-data">{count}</span></span>
-                </div>
-              ))}
+            <span className="text-xs font-medium text-slate-300 relative z-10">Portfolio mix</span>
+            <div className="relative z-10 mt-auto">
+              {/* Full status segment bar - all 5 segments from STATUS_ORDER */}
+              <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                {portfolioMix.map(({ status, pct, config }) =>
+                  statusCounts[status] > 0 ? (
+                    <div
+                      key={status}
+                      className={cn("h-full transition-all duration-1000", config.dot)}
+                      style={{ width: `${pct}%` }}
+                      title={`${config.label}: ${statusCounts[status]}`}
+                    />
+                  ) : null
+                )}
+              </div>
+              <div className="mt-2.5 flex items-center gap-x-3 gap-y-1 flex-wrap">
+                {portfolioMix.map(({ status, count, config }) => {
+                  if (count === 0) return null;
+                  const textColors: Record<string, string> = {
+                    available: "text-emerald-400",
+                    occupied: "text-slate-100",
+                    under_offer: "text-amber-400",
+                    maintenance: "text-rose-400",
+                    off_market: "text-slate-300",
+                  };
+                  return (
+                    <span
+                      key={status}
+                      className={cn(
+                        "flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider",
+                        textColors[status] || "text-slate-300"
+                      )}
+                    >
+                      <span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />
+                      {count} {config.label}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -680,12 +701,12 @@ export function PropertiesBoard({
               <IconCash size={180} stroke={1} />
             </div>
 
-            <span className="text-xs font-medium text-slate-400 relative z-10">Monthly Rent Pool</span>
+            <span className="text-xs font-medium text-slate-300 relative z-10">Monthly Rent Pool</span>
             <div className="relative z-10">
               <span className="font-mono text-4xl text-white">
                 KES {formatCompactKES(kpis.rentPool).replace('KES ', '')}
               </span>
-              <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mt-2">Contracted · occupied only</p>
+              <p className="text-xs font-medium uppercase tracking-widest text-slate-600 mt-2">Contracted · occupied only</p>
             </div>
           </div>
         </div>
@@ -693,7 +714,7 @@ export function PropertiesBoard({
 
       <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-400 tracking-wider">Featured & Mix</span>
+        <span className="label-caps text-slate-600 tracking-wider">Featured & Mix</span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
@@ -744,14 +765,14 @@ export function PropertiesBoard({
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => setFeaturedIndex((i) => (i === 0 ? featuredProperties.length - 1 : i - 1))}
-                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                       >
                         <IconChevronLeft size={14} />
                       </button>
                       <span className="label-caps text-slate-600 tabular-nums">{safeFeaturedIndex + 1}&thinsp;/&thinsp;{featuredProperties.length}</span>
                       <button
                         onClick={() => setFeaturedIndex((i) => (i === featuredProperties.length - 1 ? 0 : i + 1))}
-                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                       >
                         <IconChevronRight size={14} />
                       </button>
@@ -783,31 +804,31 @@ export function PropertiesBoard({
                     <div className="flex items-center gap-2 mb-4 flex-wrap">
                       {featuredProperties[safeFeaturedIndex].bedrooms != null && (
                         <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconBed size={14} stroke={1.5} className="text-slate-400" />
+                          <IconBed size={14} stroke={1.5} className="text-slate-600" />
                           <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].bedrooms} beds</span>
                         </div>
                       )}
                       {featuredProperties[safeFeaturedIndex].bathrooms != null && (
                         <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconRuler size={14} stroke={1.5} className="text-slate-400" />
+                          <IconRuler size={14} stroke={1.5} className="text-slate-600" />
                           <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].bathrooms} baths</span>
                         </div>
                       )}
                       {featuredProperties[safeFeaturedIndex].sizeSqft != null && (
                         <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconRuler size={14} stroke={1.5} className="text-slate-400" />
+                          <IconRuler size={14} stroke={1.5} className="text-slate-600" />
                           <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].sizeSqft?.toLocaleString()} sqft</span>
                         </div>
                       )}
                       {featuredProperties[safeFeaturedIndex].landAreaSqft != null && (
                         <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconRuler size={14} stroke={1.5} className="text-slate-400" />
+                          <IconRuler size={14} stroke={1.5} className="text-slate-600" />
                           <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].landAreaSqft?.toLocaleString()} plot sqft</span>
                         </div>
                       )}
                       {featuredProperties[safeFeaturedIndex].parkingSpaces != null && (
                         <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconBuildingCommunity size={14} stroke={1.5} className="text-slate-400" />
+                          <IconBuildingCommunity size={14} stroke={1.5} className="text-slate-600" />
                           <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].parkingSpaces} parking</span>
                         </div>
                       )}
@@ -817,7 +838,7 @@ export function PropertiesBoard({
                 {/* ── Individual amenity tags — unique to featured panel ── */}
                 {(featuredProperties[safeFeaturedIndex].amenities?.length ?? 0) > 0 && (
                   <div className="mb-4">
-                    <p className="label-caps text-slate-400 mb-2">Amenities & Features</p>
+                    <p className="label-caps text-slate-600 mb-2">Amenities & Features</p>
                     <div className="flex flex-wrap gap-1.5">
                       {featuredProperties[safeFeaturedIndex].amenities!.map((amenity) => (
                         <span
@@ -851,7 +872,7 @@ export function PropertiesBoard({
                         <span className="block body-sm text-slate-900 truncate">
                           {featuredProperties[safeFeaturedIndex].owner?.name || featuredProperties[safeFeaturedIndex].ownerName}
                         </span>
-                        <span className="block label-caps text-slate-400">Landlord</span>
+                        <span className="block label-caps text-slate-600">Landlord</span>
                       </span>
                     </button>
                   )}
@@ -874,7 +895,7 @@ export function PropertiesBoard({
                         <span className="block body-sm text-slate-900 truncate">
                           {featuredProperties[safeFeaturedIndex].manager?.name}
                         </span>
-                        <span className="block label-caps text-slate-400">Property Manager</span>
+                        <span className="block label-caps text-slate-600">Property Manager</span>
                       </span>
                     </button>
                   ) : (
@@ -883,7 +904,7 @@ export function PropertiesBoard({
                         <IconUsers size={14} />
                       </span>
                       <span className="min-w-0">
-                        <span className="block body-sm text-slate-400 truncate">Unassigned</span>
+                        <span className="block body-sm text-slate-600 truncate">Unassigned</span>
                         <span className="block label-caps text-slate-300">Property Manager</span>
                       </span>
                     </div>
@@ -893,7 +914,7 @@ export function PropertiesBoard({
                 {/* Price + CTA */}
                 <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="label-caps text-slate-400 mb-1">{featuredPriceDisplay(featuredProperties[safeFeaturedIndex]).label}</p>
+                    <p className="label-caps text-slate-600 mb-1">{featuredPriceDisplay(featuredProperties[safeFeaturedIndex]).label}</p>
                     <p className="font-mono text-slate-900 text-2xl sm:text-3xl font-medium tracking-tight leading-none">
                       {featuredPriceDisplay(featuredProperties[safeFeaturedIndex]).value}
                     </p>
@@ -918,11 +939,11 @@ export function PropertiesBoard({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-14 text-center text-slate-400 flex-1">
+            <div className="flex flex-col items-center justify-center py-14 text-center text-slate-600 flex-1">
               <div className="size-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3">
                 <IconStar size={24} className="opacity-40" />
               </div>
-              <p className="body-sm text-slate-400">No featured listings currently.</p>
+              <p className="body-sm text-slate-600">No featured listings currently.</p>
               <p className="label-caps text-slate-300 mt-1">Star a property to feature it here.</p>
             </div>
           )}
@@ -971,11 +992,11 @@ export function PropertiesBoard({
           {typeMix.length > 0 && (
             <>
               <div className="border-t border-slate-100 pt-5 mt-auto">
-                <p className="text-xs  font-medium uppercase tracking-widest text-slate-400 mb-4">By Property Type</p>
+                <p className="text-xs  font-medium uppercase tracking-widest text-slate-600 mb-4">By Property Type</p>
                 <div className="space-y-2.5">
                   {typeMix.map(({ type, count }) => (
                     <div key={type} className="flex items-center gap-3">
-                      <div className="size-6 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                      <div className="size-6 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shrink-0">
                         <PropertyTypeIcon type={type} size={14} />
                       </div>
                       <span className="text-sm text-slate-600 flex-1">{type}</span>
@@ -991,7 +1012,7 @@ export function PropertiesBoard({
 
       <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-400 tracking-wider">Inventory Data</span>
+        <span className="label-caps text-slate-600 tracking-wider">Inventory Data</span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
@@ -1002,7 +1023,7 @@ export function PropertiesBoard({
             <div className="relative flex items-center group w-full">
               <IconSearch
                 size={16}
-                className="absolute left-3.5 text-slate-400 group-focus-within:text-[#151936] transition-colors"
+                className="absolute left-3.5 text-slate-600 group-focus-within:text-[#151936] transition-colors"
               />
               <input
                 value={query}
@@ -1011,7 +1032,7 @@ export function PropertiesBoard({
                   setPage(1);
                 }}
                 placeholder="Search name, code, location, owner…"
-                className="w-full bg-slate-50 lg:bg-slate-50 border border-slate-200/60 rounded-xl pl-10 pr-4 py-2.5 body-sm text-slate-900 outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#151936]/10 focus:border-[#151936]/30 transition-all shadow-sm"
+                className="w-full bg-slate-50 lg:bg-slate-50 border border-slate-200/60 rounded-xl pl-10 pr-4 py-2.5 body-sm text-slate-900 outline-none placeholder:text-slate-600 focus:bg-white focus:ring-2 focus:ring-[#151936]/10 focus:border-[#151936]/30 transition-all shadow-sm"
               />
               {query && (
                 <button
@@ -1029,7 +1050,7 @@ export function PropertiesBoard({
                 onClick={() => { setStatusFilter("all"); setPage(1); }}
                 className={cn(
                   "px-3 py-1.5 body-sm rounded-lg transition-colors",
-                  statusFilter === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700"
+                  statusFilter === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-700"
                 )}
               >
                 All
@@ -1042,7 +1063,7 @@ export function PropertiesBoard({
                     "px-3 py-1.5 body-sm rounded-lg transition-colors flex items-center gap-1.5",
                     statusFilter === status
                       ? "bg-white text-slate-900 shadow-sm"
-                      : "text-slate-400 hover:text-slate-700"
+                      : "text-slate-600 hover:text-slate-700"
                   )}
                 >
                   <span className={cn("size-1.5 rounded-full", STATUS_CONFIG[status].dot)} />
@@ -1075,7 +1096,7 @@ export function PropertiesBoard({
                 aria-pressed={viewMode === "grid"}
                 className={cn(
                   "size-8 rounded-lg flex items-center justify-center transition-colors",
-                  viewMode === "grid" ? "bg-[#151936] text-white" : "text-slate-400 hover:text-slate-800"
+                  viewMode === "grid" ? "bg-[#151936] text-white" : "text-slate-600 hover:text-slate-800"
                 )}
               >
                 <IconLayoutGrid size={15} />
@@ -1087,7 +1108,7 @@ export function PropertiesBoard({
                 aria-pressed={viewMode === "list"}
                 className={cn(
                   "size-8 rounded-lg flex items-center justify-center transition-colors",
-                  viewMode === "list" ? "bg-[#151936] text-white" : "text-slate-400 hover:text-slate-800"
+                  viewMode === "list" ? "bg-[#151936] text-white" : "text-slate-600 hover:text-slate-800"
                 )}
               >
                 <IconList size={15} />
@@ -1100,7 +1121,7 @@ export function PropertiesBoard({
         {filtersOpen && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 mb-6">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="prop-type-filter" className="label-caps text-slate-400">
+              <label htmlFor="prop-type-filter" className="label-caps text-slate-600">
                 Property type
               </label>
               <select
@@ -1116,7 +1137,7 @@ export function PropertiesBoard({
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="prop-listing-filter" className="label-caps text-slate-400">
+              <label htmlFor="prop-listing-filter" className="label-caps text-slate-600">
                 Listing type
               </label>
               <select
@@ -1135,7 +1156,7 @@ export function PropertiesBoard({
                 <button
                   type="button"
                   onClick={() => { setQuery(""); setStatusFilter("all"); setTypeFilter("all"); setListingFilter("all"); setPage(1); }}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 body-sm text-slate-400 hover:text-rose-600 transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 body-sm text-slate-600 hover:text-rose-600 transition-colors"
                 >
                   <IconX size={14} /> Clear All Filters
                 </button>
@@ -1217,7 +1238,7 @@ export function PropertiesBoard({
               <div className="hidden lg:block overflow-x-auto custom-scrollbar pb-2 -mx-8 px-8">
                 <table className="w-full min-w-[900px] text-left border-separate border-spacing-0">
                   <thead>
-                    <tr className="label-caps text-slate-400">
+                    <tr className="label-caps text-slate-600">
                       {/* Featured */}
                       <th className="pl-0 pr-2 py-3 w-9" />
                       {/* Thumbnail + Name */}
@@ -1337,7 +1358,7 @@ export function PropertiesBoard({
                                           e.stopPropagation();
                                           if (p.ownerContactId) setOwnerDrawerId(p.ownerContactId);
                                         }}
-                                        className="text-xs text-slate-400 hover:text-[#151936] hover:underline truncate max-w-[120px]"
+                                        className="text-xs text-slate-600 hover:text-[#151936] hover:underline truncate max-w-[120px]"
                                       >
                                         {p.owner?.name || p.ownerName}
                                       </button>
@@ -1351,12 +1372,12 @@ export function PropertiesBoard({
                           {/* Type + listing */}
                           <td className="px-3 py-3.5 hidden xl:table-cell">
                             <div className="flex items-center gap-2">
-                              <div className="size-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                              <div className="size-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shrink-0">
                                 <PropertyTypeIcon type={p.propertyType} size={14} />
                               </div>
                               <div>
                                 <p className="text-xs text-slate-700 leading-none">{p.propertyType}</p>
-                                <p className={cn("label-caps mt-0.5", isSale(p) ? "text-indigo-400" : "text-slate-400")}>
+                                <p className={cn("label-caps mt-0.5", isSale(p) ? "text-indigo-400" : "text-slate-600")}>
                                   {LISTING_TYPE_LABEL[p.listingType as keyof typeof LISTING_TYPE_LABEL] ?? (isSale(p) ? "For Sale" : "To Let")}
                                 </p>
                               </div>
@@ -1368,7 +1389,7 @@ export function PropertiesBoard({
                             {rowSpecs.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {rowSpecs.slice(0, 2).map((s, i) => (
-                                  <span key={i} className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-md px-1.5 py-0.5 label-caps text-slate-400">
+                                  <span key={i} className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-md px-1.5 py-0.5 label-caps text-slate-600">
                                     <s.icon size={10} stroke={2} />
                                     {s.value}
                                   </span>
@@ -1413,7 +1434,7 @@ export function PropertiesBoard({
                                       e.stopPropagation();
                                       if (p.manager?.id) setManagerDrawerId(p.manager.id);
                                     }}
-                                    className="text-xs text-slate-400 hover:text-[#151936] hover:underline truncate max-w-[110px]"
+                                    className="text-xs text-slate-600 hover:text-[#151936] hover:underline truncate max-w-[110px]"
                                   >
                                     {p.manager.name}
                                   </button>

@@ -25,7 +25,7 @@ try {
   console.warn("Failed to load local env files:", e);
 }
 
-import { inArray } from "drizzle-orm";
+import { inArray, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   entities,
@@ -302,6 +302,7 @@ async function runSeed() {
         companyName: "Nexus Technology Solutions Ltd",
         email: "office@nexustech.co.ke",
         phone: "+254711222333",
+        avatarUrl: "https://images.unsplash.com/photo-1549692520-acc6669e2f0c?w=400&q=80",
         source: "Listing Portal",
         assignedToId: financeOfficerUser.id,
       },
@@ -311,6 +312,7 @@ async function runSeed() {
         displayName: "Alice Odhiambo",
         email: "alice@odhiambo.co.ke",
         phone: "+254700333444",
+        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80",
         source: "Walk-in Client",
         assignedToId: pmUser.id,
       },
@@ -324,6 +326,16 @@ async function runSeed() {
         companyName: i % 3 === 0 ? `Company ${i} Ltd` : null as unknown as string,
         email: `contact${i}@example.co.ke`,
         phone: `+2547000000${i.toString().padStart(2, '0')}`,
+        avatarUrl: [
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80",
+          "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=400&q=80",
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80",
+          "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80",
+          "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80"
+        ][i % 8],
         source: i % 4 === 0 ? "Listing Portal" : "Direct Referral",
         assignedToId: i % 2 === 0 ? pmUser.id : financeOfficerUser.id,
       });
@@ -769,88 +781,107 @@ async function runSeed() {
     const endsAt = new Date();
     endsAt.setFullYear(endsAt.getFullYear() + 1);
 
-    const [leaseA, leaseB] = await db
+    const allTenants = await db
+      .select()
+      .from(contacts)
+      .where(eq(contacts.type, "tenant"));
+
+    // propRes's lease is deliberately given a near-term end date so the
+    // Leases Board's "expiring soon" Needs Attention branch has real data in dev.
+    const expiringSoonEndsAt = new Date();
+    expiringSoonEndsAt.setDate(expiringSoonEndsAt.getDate() + 18);
+
+    const leasesToInsert = activeMandateProps.map((p, idx) => {
+      const tenant = allTenants[idx % allTenants.length];
+      const rentAmount = p.monthlyRentKes || "120000.00";
+      const depositAmount = (parseFloat(rentAmount) * 2).toString() + ".00";
+
+      return {
+        entityId: groupEntity.id,
+        propertyId: p.id,
+        tenantContactId: tenant.id,
+        startsAt,
+        endsAt: p.id === propRes.id ? expiringSoonEndsAt : endsAt,
+        monthlyRentKes: rentAmount,
+        depositKes: depositAmount,
+        isActive: true,
+      };
+    });
+
+    if (!activeMandateProps.some(p => p.id === propComm.id)) {
+      leasesToInsert.push({
+        entityId: groupEntity.id,
+        propertyId: propComm.id,
+        tenantContactId: tenantA.id,
+        startsAt,
+        endsAt,
+        monthlyRentKes: "350000.00",
+        depositKes: "700000.00",
+        isActive: true,
+      });
+    }
+
+    const insertedLeases = await db
       .insert(leases)
-      .values([
-        {
-          entityId: groupEntity.id,
-          propertyId: propComm.id,
-          tenantContactId: tenantA.id,
-          startsAt,
-          endsAt,
-          monthlyRentKes: "350000.00",
-          depositKes: "700000.00",
-          isActive: true,
-        },
-        {
-          entityId: groupEntity.id,
-          propertyId: propRes.id,
-          tenantContactId: tenantB.id,
-          startsAt,
-          endsAt,
-          monthlyRentKes: "95000.00",
-          depositKes: "190000.00",
-          isActive: true,
-        },
-      ])
+      .values(leasesToInsert)
       .returning();
 
-    console.log("Created 2 active leases.");
+    const leaseA = insertedLeases.find(l => l.propertyId === propComm.id) || insertedLeases[0];
+    const leaseB = insertedLeases.find(l => l.propertyId === propRes.id) || insertedLeases[1];
+
+    console.log(`Created ${insertedLeases.length} active leases.`);
 
     // 7. Create Transactions
     console.log("Step 7: Generating ledger transactions...");
-    const txs: (typeof transactions.$inferInsert)[] = [
-      {
-        entityId: groupEntity.id,
-        type: "rent",
-        contactId: tenantA.id,
-        propertyId: propComm.id,
-        leaseId: leaseA.id,
-        amountKes: "350000.00",
-        occurredAt: new Date(),
-        recordedById: financeOfficerUser.id,
-        notes: "Rent payment for Nexus Tech Solutions - Month of June",
-      },
-      {
-        entityId: groupEntity.id,
-        type: "rent",
-        contactId: tenantB.id,
-        propertyId: propRes.id,
-        leaseId: leaseB.id,
-        amountKes: "95000.00",
-        occurredAt: new Date(Date.now() - 30 * 86_400_000),
-        recordedById: pmUser.id,
-        notes: "Rent payment for Alice Odhiambo - Month of June",
-      },
-      {
-        entityId: groupEntity.id,
-        type: "expense",
-        contactId: landlordA.id,
-        propertyId: propComm.id,
-        amountKes: "45000.00",
-        occurredAt: new Date(),
-        recordedById: financeOfficerUser.id,
-        notes: "Elevator repair maintenance cost - Westlands Plaza",
-      },
-    ];
+    const txs: (typeof transactions.$inferInsert)[] = [];
 
-    for (let i = 0; i < 30; i++) {
-      const dt = new Date();
-      dt.setDate(dt.getDate() - (Math.floor(Math.random() * 120) + 30)); // At least 30 days ago
+    // Add a rent payment for this current month for every active lease EXCEPT
+    // propComm's, which is deliberately left unpaid so the Leases Board's
+    // "overdue balance" Needs Attention branch + KPI have real data in dev.
+    insertedLeases.forEach((l) => {
+      if (l.propertyId === propComm.id) return;
+      const collectedAmount = parseFloat(l.monthlyRentKes);
       txs.push({
         entityId: groupEntity.id,
-        type: Math.random() > 0.3 ? "rent" : "expense",
-        contactId: Math.random() > 0.5 ? tenantA.id : tenantB.id,
-        propertyId: Math.random() > 0.5 ? propComm.id : propRes.id,
-        amountKes: (Math.floor(Math.random() * 50) * 10000 + 50000).toString() + ".00",
+        type: "rent",
+        contactId: l.tenantContactId,
+        propertyId: l.propertyId,
+        leaseId: l.id,
+        amountKes: collectedAmount.toFixed(2),
+        occurredAt: new Date(), // Today (this month)
+        recordedById: financeOfficerUser.id,
+        notes: `Rent payment - current month`,
+      });
+    });
+
+    // Add some random historical rent/expense transactions distributed across all mandated properties
+    for (let i = 0; i < 40; i++) {
+      const dt = new Date();
+      dt.setDate(dt.getDate() - (Math.floor(Math.random() * 120) + 5)); // 5 to 125 days ago
+      const randomLease = insertedLeases[i % insertedLeases.length];
+      // leaseA (propComm) is deliberately left unpaid for the current month above;
+      // never let this loop backfill a "rent" entry for it, since a randomly-picked
+      // recent date could still fall inside the current month and mask the arrears.
+      const isRent = randomLease.id === leaseA.id ? false : Math.random() > 0.3;
+      const rentVal = parseFloat(randomLease.monthlyRentKes);
+      const val = isRent ? rentVal : Math.floor(Math.random() * 15) * 5000 + 5000;
+
+      txs.push({
+        entityId: groupEntity.id,
+        type: isRent ? "rent" : "expense",
+        contactId: isRent ? randomLease.tenantContactId : landlordA.id,
+        propertyId: randomLease.propertyId,
+        leaseId: isRent ? randomLease.id : null,
+        amountKes: val.toFixed(2),
         occurredAt: dt,
         recordedById: financeOfficerUser.id,
-        notes: "Auto-generated transaction " + i,
+        notes: `Auto-generated historical ${isRent ? "rent" : "expense"} ` + i,
       });
     }
+
     await db.insert(transactions).values(txs);
 
-    console.log("Created 3 initial transactions.");
+    console.log("Created all transactions and rent ledger entries.");
 
     // 7b. Create Maintenance Requests and Documents
     console.log("Step 7b: Generating maintenance requests and property documents...");
@@ -924,6 +955,76 @@ async function runSeed() {
 
     // 9. Activity Logs
     console.log("Step 9: Writing initial system activity audit logs...");
+    const hoursAgo = (n: number) => new Date(new Date().getTime() - n * 60 * 60 * 1000);
+    const daysAgoTs = (n: number) => new Date(new Date().getTime() - n * 24 * 60 * 60 * 1000);
+
+    // Seeded leases bypass the createLease/terminateLease service layer (and
+    // therefore writeAudit), so the Leases Board's "Recent Lease Activity"
+    // panel would otherwise show an empty state in dev. Insert realistic
+    // activity rows directly, anchored on leaseA (propComm, deliberately
+    // left unpaid above) and leaseB (propRes, deliberately expiring soon
+    // above) so their narratives line up with the Needs Attention band.
+    const leaseActivitySeed: (typeof activityLogs.$inferInsert)[] = [
+      {
+        entityId: groupEntity.id,
+        actorId: pmUser.id,
+        associatedType: "lease",
+        associatedId: leaseA.id,
+        action: "properties.lease.create",
+        summary: "Lease agreement executed for commercial unit.",
+        createdAt: daysAgoTs(60),
+      },
+      {
+        entityId: groupEntity.id,
+        actorId: financeOfficerUser.id,
+        associatedType: "lease",
+        associatedId: leaseA.id,
+        action: "properties.lease.overdue_followup",
+        summary: "Rent payment overdue — follow-up call logged with tenant.",
+        createdAt: hoursAgo(6),
+      },
+      {
+        entityId: groupEntity.id,
+        actorId: pmUser.id,
+        associatedType: "lease",
+        associatedId: leaseB.id,
+        action: "properties.lease.create",
+        summary: "Lease agreement executed for residential unit.",
+        createdAt: daysAgoTs(55),
+      },
+      {
+        entityId: groupEntity.id,
+        actorId: lineManagerUser.id,
+        associatedType: "lease",
+        associatedId: leaseB.id,
+        action: "properties.lease.renewal_discussion",
+        summary: "Renewal discussion initiated ahead of upcoming lease expiry.",
+        createdAt: hoursAgo(30),
+      },
+    ];
+    if (insertedLeases[2]) {
+      leaseActivitySeed.push({
+        entityId: groupEntity.id,
+        actorId: pmUser.id,
+        associatedType: "lease",
+        associatedId: insertedLeases[2].id,
+        action: "properties.lease.create",
+        summary: "Lease agreement executed and tenant move-in inspection completed.",
+        createdAt: daysAgoTs(48),
+      });
+    }
+    if (insertedLeases[3]) {
+      leaseActivitySeed.push({
+        entityId: groupEntity.id,
+        actorId: financeOfficerUser.id,
+        associatedType: "lease",
+        associatedId: insertedLeases[3].id,
+        action: "finance.transaction.record",
+        summary: "Current month rent collected in full.",
+        createdAt: daysAgoTs(2),
+      });
+    }
+
     await db.insert(activityLogs).values([
       {
         entityId: groupEntity.id,
@@ -933,6 +1034,7 @@ async function runSeed() {
         action: "initialize_workspace",
         summary: "Demo Workspace has been successfully initialized and configured.",
       },
+      ...leaseActivitySeed,
     ]);
 
     // 10. Cross-Department Projects - real rows behind the Overview's

@@ -714,13 +714,22 @@ function EntityBadge() {
 
 function Breadcrumb() {
   const pathname = usePathname();
-  const activeItem = getActiveNavItem(pathname);
+  let resolvedPathname = pathname;
+  let isMandateDetail = false;
+  if (pathname.includes("/mandates/") && !pathname.endsWith("/mandates")) {
+    resolvedPathname = "/admin/leases";
+    isMandateDetail = true;
+  }
+
+  const activeItem = getActiveNavItem(resolvedPathname);
   const activeSection = navSections.find((s) => s.items.some((i) => i.href === activeItem?.href));
   if (!activeItem) return null;
   const isFlat = activeSection && activeSection.items.length === 1;
 
   let dynamicLabel: string | null = null;
-  if (pathname.includes("/properties/") && !pathname.endsWith("/properties")) {
+  if (isMandateDetail) {
+    dynamicLabel = "Mandate Details";
+  } else if (pathname.includes("/properties/") && !pathname.endsWith("/properties")) {
     dynamicLabel = "Property Details";
   } else if (pathname.includes("/leases/") && !pathname.endsWith("/leases")) {
     dynamicLabel = "Lease Details";

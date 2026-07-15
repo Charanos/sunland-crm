@@ -182,7 +182,7 @@ export function FinanceOverviewCharts({ period }: FinanceOverviewChartsProps) {
           </div>
         </div>
         <div className="flex-1 w-full min-h-0">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
             <ComposedChart data={displayData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.04)" />
               <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} dy={10} />
@@ -202,7 +202,7 @@ export function FinanceOverviewCharts({ period }: FinanceOverviewChartsProps) {
           <p className="text-meta-muted mt-0.5">{periodLabel} - cumulative</p>
         </div>
         <div className="flex-1 w-full min-h-0 -ml-4">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
             <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
@@ -225,7 +225,7 @@ export function FinanceOverviewCharts({ period }: FinanceOverviewChartsProps) {
           <p className="text-meta-muted mt-0.5">Year-to-date income breakdown</p>
         </div>
         <div className="flex-1 w-full min-h-0 relative flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
             <PieChart>
               <Pie
                 data={REVENUE_DISTRIBUTION_DATA}

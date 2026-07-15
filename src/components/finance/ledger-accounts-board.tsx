@@ -955,7 +955,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 {/* Donut Chart Summary */}
                 <div className="lg:col-span-4 bg-white border border-slate-200/70 p-4 rounded-xl shadow-sm flex items-center justify-between">
                   <div className="w-[55%] h-[120px] relative">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                       <PieChart>
                         <Pie
                           data={coaChartData}
@@ -1130,7 +1130,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   </Badge>
                 </div>
                 <div className="h-64 w-full text-sm ">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                     <BarChart
                       data={trialBalanceData.categoryRows}
                       margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
@@ -1386,7 +1386,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4">
                     <h5 className="text-title-primary uppercase tracking-wider">Asset Reserve Mix</h5>
                     <div className="h-44 w-full text-sm">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                         <PieChart>
                           <Pie
                             data={balanceSheetData.assetBreakdown}
@@ -1424,7 +1424,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4">
                     <h5 className="text-title-primary uppercase tracking-wider">Funding Composition</h5>
                     <div className="h-44 w-full text-sm">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                         <PieChart>
                           <Pie
                             data={balanceSheetData.composition}
@@ -1596,7 +1596,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                   <div className="bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm space-y-4">
                     <h5 className="text-title-primary uppercase tracking-wider">Cash Movements</h5>
                     <div className="h-52 w-full text-sm ">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                         <BarChart
                           data={cashFlowData.chartPoints}
                           layout="vertical"
@@ -1661,7 +1661,7 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                     </div>
 
                     <div className="h-40 w-full text-sm  pt-1">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                         <LineChart data={forecastData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                           <XAxis dataKey="week" tickLine={false} axisLine={false} stroke="#94a3b8" />
                           <YAxis tickLine={false} axisLine={false} stroke="#94a3b8" tickFormatter={(v) => `${(v / 1e6).toFixed(1)}M`} />

@@ -526,7 +526,7 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
 
           <div className="h-[180px] w-full relative flex items-center justify-center">
             {financialSplitTotals.chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                 <PieChart>
                   <Pie
                     data={financialSplitTotals.chartData}

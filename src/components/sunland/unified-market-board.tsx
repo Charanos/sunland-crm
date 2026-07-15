@@ -307,7 +307,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
 
           <div className="flex-1 flex flex-col justify-end">
             <div className="h-[120px] w-full mt-4 mb-2 relative">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                 <BarChart data={barChartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                   <Tooltip content={<OccupancyTooltip />} cursor={{ fill: "rgba(0,0,0,0.02)" }} />
                   <Bar dataKey="occupancy" fill="#122a20" radius={[2, 2, 0, 0]} maxBarSize={6} animationDuration={800} />
@@ -340,7 +340,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
 
           <div className="flex-1 flex flex-col items-center justify-center mb-4 mt-2 relative">
             <div className="relative size-[160px] flex items-center justify-center hover:scale-105 transition-transform duration-700 drop-shadow-[0_8px_16px_rgba(0,0,0,0.04)]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                 <PieChart>
                   <Tooltip content={<PropertyPieTooltip />} cursor={{ fill: "transparent" }} />
                   <Pie

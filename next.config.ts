@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
+    qualities: [75, 100],
     minimumCacheTTL: 60 * 60 * 24,
     remotePatterns: [
       {

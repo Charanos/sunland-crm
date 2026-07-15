@@ -8,8 +8,10 @@ import {
   IconMessageCircle,
   IconBriefcase,
   IconCash,
+  IconArrowUpRight,
 } from "@tabler/icons-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Drawer } from "@/components/ui/drawer";
 import { ProfileDrawerRow } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
@@ -185,6 +187,13 @@ export function PropertyManagerProfileDrawer({
             </div>
           </div>
         )}
+
+        <Link
+          href={`/admin/team/${managerId}`}
+          className="flex items-center justify-center gap-2 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm font-medium transition-colors"
+        >
+          View Full Details <IconArrowUpRight size={14} />
+        </Link>
       </div>
     </Drawer>
   );

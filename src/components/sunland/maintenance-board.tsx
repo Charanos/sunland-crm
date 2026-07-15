@@ -294,8 +294,6 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
         }
       />
 
-      <PortfolioHubNav active="maintenance" />
-
       <div className="flex items-center gap-4 mt-2">
         <hr className="flex-1 border-slate-200/60" />
         <span className="label-caps text-slate-400 tracking-wider">Maintenance Command</span>

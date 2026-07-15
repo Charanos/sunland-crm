@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils/cn";
 const NAV_ITEMS = [
   { href: "/admin/properties", label: "Properties" },
   { href: "/admin/leases", label: "Leases" },
-  { href: "/admin/maintenance", label: "Maintenance" },
   { href: "/admin/valuations", label: "Valuations" },
 ] as const;
 
@@ -17,7 +16,7 @@ const NAV_ITEMS = [
  * across all four board files; extracted here so the nav only needs to
  * change in one place.
  */
-export function PortfolioHubNav({ active }: { active: "properties" | "leases" | "maintenance" | "valuations" }) {
+export function PortfolioHubNav({ active }: { active: "properties" | "leases" | "valuations" }) {
   return (
     <div className="flex items-center justify-between flex-wrap gap-4 bg-white border border-slate-100 p-4 rounded-[20px] shadow-sm">
       <div className="flex items-center gap-2">

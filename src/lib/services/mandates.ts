@@ -8,6 +8,8 @@ import { createNotification } from "@/lib/services/notifications";
 import { getLatestPendingRemittance } from "@/lib/services/finance/remittances";
 import { getPropertyWithDetails, toISOStringSafe } from "@/lib/services/properties";
 import { getGroupSettingValue } from "@/lib/services/settings";
+import { getUser } from "@/lib/services/identity/users";
+import { listAuditLog } from "@/lib/services/audit-log";
 import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
 import { assignMandateManagerSchema, createMandateSchema, terminateMandateSchema } from "@/lib/validation/mandates";
@@ -72,6 +74,7 @@ export async function listMandates(
       landlordContactId: propertyMandates.landlordContactId,
       landlordName: contacts.displayName,
       landlordAvatarUrl: contacts.avatarUrl,
+      landlordCompanyName: contacts.companyName,
       mandateRate: propertyMandates.mandateRate,
       rateJustification: propertyMandates.rateJustification,
       unitCount: propertyMandates.unitCount,
@@ -83,6 +86,7 @@ export async function listMandates(
       managerName: users.name,
       managerTitle: users.title,
       managerAvatarUrl: users.avatarUrl,
+      propertyMedia: properties.media,
     })
     .from(propertyMandates)
     .innerJoin(properties, eq(propertyMandates.propertyId, properties.id))
@@ -137,6 +141,8 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
       landlordEmail: contacts.email,
       landlordPhone: contacts.phone,
       landlordVerifiedAt: contacts.verifiedAt,
+      landlordAvatarUrl: contacts.avatarUrl,
+      landlordCompany: contacts.companyName,
       mandateRate: propertyMandates.mandateRate,
       rateJustification: propertyMandates.rateJustification,
       unitCount: propertyMandates.unitCount,
@@ -203,6 +209,8 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
       email: mandateRow.landlordEmail,
       phone: mandateRow.landlordPhone,
       verifiedAt: toISOStringSafe(mandateRow.landlordVerifiedAt),
+      avatarUrl: mandateRow.landlordAvatarUrl,
+      company: mandateRow.landlordCompany,
     },
     manager: mandateRow.assignedPmId
       ? {
@@ -283,10 +291,12 @@ export async function getMandatesSummary(ctx: CallerContext) {
     .where(eq(propertyMandates.entityId, entityId));
   const pendingRemittances = allMandateIds.length
     ? await db
-      .select({ id: remittanceAdvices.id })
+      .select({ id: remittanceAdvices.id, amountKes: remittanceAdvices.netRemittanceKes })
       .from(remittanceAdvices)
       .where(and(inArray(remittanceAdvices.mandateId, allMandateIds.map((m) => m.id)), eq(remittanceAdvices.status, "pending")))
     : [];
+
+  const remittancesPendingKes = pendingRemittances.reduce((sum, r) => sum + parseFloat(r.amountKes), 0);
 
   return {
     activeMandateCount: activeMandates.length,
@@ -294,7 +304,79 @@ export async function getMandatesSummary(ctx: CallerContext) {
     expectedRentRollKes,
     collectedMtdKes,
     managementFeeMtdKes,
-    remittancesPending: pendingRemittances.length,
+    remittancesPendingCount: pendingRemittances.length,
+    remittancesPendingKes,
+  };
+}
+
+/**
+ * "Everything about one property manager" - both PropertyOwnerProfileDrawer's
+ * sibling PropertyManagerProfileDrawer and the Properties/Leases boards'
+ * featured-card manager mini-card currently derive this from whatever
+ * Property[] array the parent board already has loaded, and recompute
+ * "Collected YTD" client-side via a full entity-wide transactions fetch on
+ * every open. This centralizes that server-side for the new dedicated
+ * manager profile page, using the same assignedPmId join listProperties and
+ * getPropertyWithDetails already use.
+ */
+export async function getManagerProfile(ctx: CallerContext, userId: string) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.read", entityId);
+
+  const manager = await getUser(ctx, userId);
+
+  const mandateRows = await db
+    .select({
+      id: propertyMandates.id,
+      propertyId: propertyMandates.propertyId,
+      propertyName: properties.name,
+      propertyCode: properties.propertyCode,
+      mandateRate: propertyMandates.mandateRate,
+      status: propertyMandates.status,
+      startDate: propertyMandates.startDate,
+    })
+    .from(propertyMandates)
+    .innerJoin(properties, eq(propertyMandates.propertyId, properties.id))
+    .where(and(eq(propertyMandates.assignedPmId, userId), eq(propertyMandates.entityId, entityId)))
+    .orderBy(desc(propertyMandates.createdAt));
+
+  const propertyIds = mandateRows.map((m) => m.propertyId);
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+
+  const [collectedRows, activity] = await Promise.all([
+    propertyIds.length
+      ? db
+        .select({ propertyId: transactions.propertyId, amountKes: transactions.amountKes })
+        .from(transactions)
+        .where(and(inArray(transactions.propertyId, propertyIds), eq(transactions.type, "rent"), gte(transactions.occurredAt, yearStart)))
+      : Promise.resolve([]),
+    mandateRows.length
+      ? listAuditLog(ctx, {
+        entityId,
+        associatedGroups: [{ type: "property_mandate", ids: mandateRows.map((m) => m.id) }],
+        limit: 50,
+      })
+      : Promise.resolve([]),
+  ]);
+
+  const collectedYtd = collectedRows.reduce((sum, t) => sum + parseFloat(t.amountKes), 0);
+
+  return {
+    ...manager,
+    mandates: mandateRows.map((m) => ({
+      id: m.id,
+      propertyId: m.propertyId,
+      propertyName: m.propertyName,
+      propertyCode: m.propertyCode,
+      mandateRate: m.mandateRate,
+      status: m.status,
+      startDate: toISOStringSafe(m.startDate),
+    })),
+    activeMandateCount: mandateRows.filter((m) => m.status === "active").length,
+    collectedYtd,
+    activity: activity.map((a) => ({ id: a.id, summary: a.summary, actorName: a.actorName, createdAt: toISOStringSafe(a.createdAt) })),
   };
 }
 

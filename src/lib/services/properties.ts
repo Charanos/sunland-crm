@@ -770,7 +770,7 @@ export async function listLeases(ctx: CallerContext) {
   const entityId = await resolveEntityId(ctx.entityId);
   await authorize(ctx, "properties.lease.read", entityId);
 
-  return db
+  const rows = await db
     .select({
       id: leases.id,
       entityId: leases.entityId,
@@ -790,11 +790,47 @@ export async function listLeases(ctx: CallerContext) {
       tenantEmail: contacts.email,
       tenantPhone: contacts.phone,
       tenantAvatarUrl: contacts.avatarUrl,
+      propertyMedia: properties.media,
+      // Same in-flight-mandate join as listProperties:70-78 - surfaces the
+      // property's manager on the lease row so the Leases hero card can show
+      // a manager mini-card without a second fetch.
+      managerId: propertyMandates.assignedPmId,
+      managerName: users.name,
+      managerAvatarUrl: users.avatarUrl,
     })
     .from(leases)
     .innerJoin(properties, eq(leases.propertyId, properties.id))
     .innerJoin(contacts, eq(leases.tenantContactId, contacts.id))
+    .leftJoin(
+      propertyMandates,
+      and(
+        eq(propertyMandates.propertyId, properties.id),
+        inArray(propertyMandates.status, ["pending_approval", "active"]),
+      ),
+    )
+    .leftJoin(users, eq(users.id, propertyMandates.assignedPmId))
     .where(eq(leases.entityId, entityId));
+
+  const activeIds = rows.filter((l) => l.isActive).map((l) => l.id);
+  if (activeIds.length === 0) return rows.map((l) => ({ ...l, balanceKes: 0 }));
+
+  // Current-month collected-vs-expected balance per lease, same "fetch then
+  // reduce" pattern already used for property/mandate arrears - no formal
+  // rental_ledger table exists yet (SUNLAND_ERP_IMPLEMENTATION_SPEC.md §5.3
+  // records it as designed-but-unbuilt), so this is computed live from the
+  // same transactions rows the ledger would eventually be derived from.
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const periodTx = await db
+    .select({ leaseId: transactions.leaseId, amountKes: transactions.amountKes })
+    .from(transactions)
+    .where(and(inArray(transactions.leaseId, activeIds), eq(transactions.type, "rent"), gte(transactions.occurredAt, monthStart)));
+
+  return rows.map((l) => {
+    if (!l.isActive) return { ...l, balanceKes: 0 };
+    const collected = periodTx.filter((t) => t.leaseId === l.id).reduce((sum, t) => sum + parseFloat(t.amountKes), 0);
+    return { ...l, balanceKes: Math.max(0, parseFloat(l.monthlyRentKes) - collected) };
+  });
 }
 
 export async function getLeaseById(ctx: CallerContext, leaseId: string) {
