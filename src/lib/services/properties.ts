@@ -6,6 +6,7 @@ import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
 import { resolveEntityId } from "@/lib/services/entity";
+import { listAuditLog } from "@/lib/services/audit-log";
 import type { CallerContext } from "@/lib/services/types";
 
 // ─── Properties ──────────────────────────────────────────────────────────────
@@ -293,7 +294,7 @@ export async function updateProperty(
       action: "properties.property.update",
       associatedType: "property",
       associatedId: updated.id,
-      summary: `Updated property details for ${updated.name}`,
+      summary: describePropertyUpdate(Object.keys(updatableFields), existing, updated),
       entityId,
       before: existing,
       after: updated,
@@ -302,6 +303,39 @@ export async function updateProperty(
     return updated;
   });
 }
+
+/**
+ * The PATCH payload's own key list already says exactly what was targeted -
+ * no need to diff every column. Named single-field cases (the common
+ * board actions: status change, feature toggle) get a precise sentence;
+ * anything broader (the full edit form) gets a readable field list instead
+ * of the old one-size-fits-all "Updated property details".
+ */
+function describePropertyUpdate(
+  changedKeys: string[],
+  before: typeof properties.$inferSelect,
+  after: typeof properties.$inferSelect,
+): string {
+  if (changedKeys.length === 1) {
+    const key = changedKeys[0];
+    if (key === "status") return `Changed status from "${STATUS_LABELS[before.status] ?? before.status}" to "${STATUS_LABELS[after.status] ?? after.status}" for ${after.name}`;
+    if (key === "isFeatured") return `${after.isFeatured ? "Marked" : "Removed"} ${after.name} ${after.isFeatured ? "as featured" : "from featured"}`;
+    if (key === "ownerContactId") return `Changed the registered owner for ${after.name}`;
+  }
+  const FIELD_LABELS: Record<string, string> = {
+    propertyCode: "code", name: "name", propertyType: "type", listingType: "listing type", location: "location",
+    ownerContactId: "owner", askingPriceKes: "asking price", monthlyRentKes: "monthly rent", bedrooms: "bedrooms",
+    bathrooms: "bathrooms", sizeSqft: "size", landAreaSqft: "land area", yearBuilt: "year built",
+    parkingSpaces: "parking", amenities: "amenities", description: "description", status: "status",
+    media: "photos", unitBreakdown: "unit breakdown", isFeatured: "featured status",
+  };
+  const labels = changedKeys.map((k) => FIELD_LABELS[k] ?? k);
+  return `Updated ${labels.join(", ")} for ${after.name}`;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  available: "Available", occupied: "Occupied", under_offer: "Under Offer", off_market: "Off Market", maintenance: "Maintenance",
+};
 
 export async function deleteProperty(ctx: CallerContext, propertyId: string) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
@@ -674,6 +708,55 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     documents: documentSummaries,
     vacantSince,
   };
+}
+
+/**
+ * A property's real activity isn't just its own create/update/delete rows -
+ * mandate decisions, lease signings/renewals/terminations, maintenance
+ * reports, and document uploads are each written against THEIR OWN entity
+ * (associatedType "property_mandate"/"lease"/"maintenance_request"/
+ * "document"), never the property directly. A naive
+ * associatedType=property,associatedId=X query misses all of that. This
+ * looks up every related entity's id for this property and reads them all
+ * in one merged, actor-named, chronologically-ordered feed.
+ */
+export async function listPropertyActivity(
+  ctx: CallerContext,
+  propertyId: string,
+  filters: { limit?: number; offset?: number } = {},
+) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+
+  const [prop] = await db.select({ ownerContactId: properties.ownerContactId }).from(properties).where(eq(properties.id, propertyId)).limit(1);
+  if (!prop) throw new NotFoundError("Property not found");
+
+  const [mandateRows, leaseRows, maintenanceRows, documentRows] = await Promise.all([
+    db.select({ id: propertyMandates.id }).from(propertyMandates).where(eq(propertyMandates.propertyId, propertyId)),
+    db.select({ id: leases.id }).from(leases).where(eq(leases.propertyId, propertyId)),
+    db.select({ id: maintenanceRequests.id }).from(maintenanceRequests).where(eq(maintenanceRequests.propertyId, propertyId)),
+    db
+      .select({ id: documents.id })
+      .from(documents)
+      .where(
+        prop.ownerContactId
+          ? or(eq(documents.propertyId, propertyId), eq(documents.ownerContactId, prop.ownerContactId))
+          : eq(documents.propertyId, propertyId),
+      ),
+  ]);
+
+  return listAuditLog(ctx, {
+    entityId,
+    limit: filters.limit,
+    offset: filters.offset,
+    associatedGroups: [
+      { type: "property", ids: [propertyId] },
+      { type: "property_mandate", ids: mandateRows.map((r) => r.id) },
+      { type: "lease", ids: leaseRows.map((r) => r.id) },
+      { type: "maintenance_request", ids: maintenanceRows.map((r) => r.id) },
+      { type: "document", ids: documentRows.map((r) => r.id) },
+    ],
+  });
 }
 
 // ─── Leases ──────────────────────────────────────────────────────────────────

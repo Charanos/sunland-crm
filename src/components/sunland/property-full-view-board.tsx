@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   IconAlertTriangle,
-  IconArrowUpRight,
   IconBolt,
   IconBuildingSkyscraper,
   IconCalendarEvent,
@@ -206,7 +205,7 @@ export function PropertyFullViewBoard({
     let active = true;
     Promise.resolve().then(() => { if (active) setActivityLoading(true); });
     const timeoutId = setTimeout(() => {
-      fetch(`/api/audit?entityId=${entityId || ""}&associatedType=property&associatedId=${propertyId}`)
+      fetch(`/api/properties/${propertyId}/activity?entityId=${entityId || ""}`)
         .then((res) => (res.ok ? res.json() : { data: [] }))
         .then((data) => {
           if (!active) return;
@@ -364,7 +363,6 @@ export function PropertyFullViewBoard({
 
   const adaptiveMetric = getAdaptiveMetric(property);
   const vitals = getVitals(property, adaptiveMetric);
-  const PrimaryActionIcon = actionItems[0]?.icon;
   const specLine = buildSpecLine(property);
 
   const handleEditSave = () => {
@@ -1230,12 +1228,6 @@ const VITAL_TONE_BG: Record<VitalTone, string> = {
   rose: "bg-gradient-to-br from-white to-[#fff1f2]/30 border-slate-200/80 hover:to-[#fff1f2]/55",
   neutral: "bg-gradient-to-br from-white to-slate-50/40 border-slate-200/80 hover:to-slate-50/60",
 };
-const VITAL_TONE_TEXT: Record<VitalTone, string> = {
-  emerald: "text-emerald-700 font-medium",
-  amber: "text-amber-700 font-medium",
-  rose: "text-rose-700 font-medium",
-  neutral: "text-slate-900 font-medium",
-};
 const VITAL_TONE_ICON: Record<VitalTone, string> = {
   emerald: "text-emerald-500",
   amber: "text-amber-500",
@@ -1368,48 +1360,47 @@ function OverviewPanel({ property, handlers }: { property: PropertyDetail; handl
   const isForSale = property.listingType === "sale";
   const numberBlocks = isForSale
     ? [
-      { label: "Asking price", value: property.askingPriceKes ? formatCompactKES(parseFloat(property.askingPriceKes)) : "-" },
-      { label: "Best offer", value: property.salesPipeline?.offerAmountKes ? formatCompactKES(parseFloat(property.salesPipeline.offerAmountKes)) : "-" },
-      { label: "Pipeline stage", value: property.salesPipeline ? property.salesPipeline.stage[0].toUpperCase() + property.salesPipeline.stage.slice(1) : "-" },
-      { label: "Last activity", value: property.salesPipeline?.lastActivityAt ? formatPropertyDate(property.salesPipeline.lastActivityAt) : "-" },
+      { label: "Asking price", value: property.askingPriceKes ? formatCompactKES(parseFloat(property.askingPriceKes)) : "-", icon: IconReceipt2 },
+      { label: "Best offer", value: property.salesPipeline?.offerAmountKes ? formatCompactKES(parseFloat(property.salesPipeline.offerAmountKes)) : "-", icon: IconTrendingUp },
+      { label: "Pipeline stage", value: property.salesPipeline ? property.salesPipeline.stage[0].toUpperCase() + property.salesPipeline.stage.slice(1) : "-", icon: IconClipboardList },
+      { label: "Last activity", value: property.salesPipeline?.lastActivityAt ? formatPropertyDate(property.salesPipeline.lastActivityAt) : "-", icon: IconCalendarEvent },
     ]
     : [
-      { label: "Expected / mo", value: property.collections?.length ? formatCompactKES(property.collections[property.collections.length - 1].expected) : "-" },
-      { label: "Occupancy", value: property.leases?.filter((l) => l.status === "active").length ? `${property.leases.filter((l) => l.status === "active").length} active lease(s)` : "Vacant" },
+      { label: "Expected / mo", value: property.collections?.length ? formatCompactKES(property.collections[property.collections.length - 1].expected) : "-", icon: IconReceipt2 },
+      { label: "Occupancy", value: property.leases?.filter((l) => l.status === "active").length ? `${property.leases.filter((l) => l.status === "active").length} active lease(s)` : "Vacant", icon: IconUsers },
       {
         label: "6mo collected",
         value: property.collections?.length ? formatCompactKES(property.collections.reduce((sum, c) => sum + c.collected, 0)) : "-",
+        icon: IconTrendingUp,
       },
       {
         label: "Mgmt fee rate",
         value: property.mandate ? `${(property.mandate.mandateRate * 100).toFixed(0)}%` : "No mandate",
+        icon: IconFileCertificate,
       },
     ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {/* ── Top Metric Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {numberBlocks.map((b) => (
-          <div key={b.label} className="rounded-2xl border border-slate-100/80 bg-white p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col gap-1.5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
-            <p className="label-caps text-slate-400">{b.label}</p>
-            <p className="mono-stat text-slate-900">{b.value}</p>
-          </div>
+          <MetricTile key={b.label} icon={b.icon} label={b.label} value={b.value} />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
         {/* ── Left Column: Description & Units ── */}
-        <div className="flex flex-col gap-6 xl:col-span-2">
+        <div className="flex flex-col gap-4 xl:col-span-2">
           {property.description && (
-            <Card className="bg-white border border-slate-100 rounded-[24px] p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
               <h3 className="text-title-primary mb-4">Description</h3>
               <p className="text-body-regular text-slate-600 whitespace-pre-line">{property.description}</p>
             </Card>
           )}
 
           {property.unitBreakdown && property.unitBreakdown.length > 0 ? (
-            <Card className="bg-white border border-slate-100 rounded-[24px] p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
               <h3 className="text-title-primary mb-5">Unit Breakdown</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {property.unitBreakdown.map((unit, idx) => (
@@ -1439,7 +1430,7 @@ function OverviewPanel({ property, handlers }: { property: PropertyDetail; handl
         </div>
 
         {/* ── Right Column: Mandate ── */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           <Card className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col p-6">
             {/* Mandate Section */}
             {handlers.canViewFinance && property.mandate ? (

@@ -150,7 +150,7 @@ export async function updateMaintenanceRequest(ctx: CallerContext, requestId: st
       action: "properties.maintenance.update",
       associatedType: "maintenance_request",
       associatedId: requestId,
-      summary: `Updated maintenance request "${existing.title}"`,
+      summary: describeMaintenanceUpdate(Object.keys(updatable), existing, updated),
       entityId: existing.entityId,
       before: existing,
       after: updated,
@@ -158,6 +158,31 @@ export async function updateMaintenanceRequest(ctx: CallerContext, requestId: st
 
     return updated;
   });
+}
+
+const MAINT_STATUS_LABELS: Record<string, string> = {
+  open: "Open", assigned: "Assigned", in_progress: "In Progress", resolved: "Resolved", closed: "Closed",
+};
+
+/** Named single-field cases (status move, contractor assignment) read like a
+ * real status change; anything broader falls back to a field list. */
+function describeMaintenanceUpdate(
+  changedKeys: string[],
+  before: typeof maintenanceRequests.$inferSelect,
+  after: typeof maintenanceRequests.$inferSelect,
+): string {
+  if (changedKeys.length === 1 && changedKeys[0] === "status") {
+    return `Moved "${after.title}" from ${MAINT_STATUS_LABELS[before.status] ?? before.status} to ${MAINT_STATUS_LABELS[after.status] ?? after.status}`;
+  }
+  if (changedKeys.includes("assignedContractorId") && after.assignedContractorId && !before.assignedContractorId) {
+    return `Assigned a contractor to "${after.title}"${changedKeys.includes("status") ? ` (status: ${MAINT_STATUS_LABELS[after.status] ?? after.status})` : ""}`;
+  }
+  const FIELD_LABELS: Record<string, string> = {
+    title: "title", description: "description", priority: "priority", dueAt: "due date",
+    assignedContractorId: "assigned contractor", status: "status", resolvedAt: "resolution date",
+  };
+  const labels = changedKeys.filter((k) => k !== "resolvedAt").map((k) => FIELD_LABELS[k] ?? k);
+  return `Updated ${labels.length > 0 ? labels.join(", ") : "details"} for "${after.title}"`;
 }
 
 export async function deleteMaintenanceRequest(ctx: CallerContext, requestId: string) {

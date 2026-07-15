@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IconX, IconFileCertificate, IconAlertTriangle, IconUserCog } from "@tabler/icons-react";
+import { IconAlertTriangle, IconUserCog } from "@tabler/icons-react";
+import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
 
@@ -63,8 +64,6 @@ export function MandateFormModal({
     };
   }, [open, entityId]);
 
-  if (!open) return null;
-
   const rateValue = parseFloat(ratePercent);
   const rateDiffersFromDefault = Number.isFinite(rateValue) && Math.abs(rateValue - DEFAULT_RATE_PERCENT) > 0.01;
 
@@ -125,142 +124,121 @@ export function MandateFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center animate-fade-in">
-      <button
-        aria-label="Close form backdrop"
-        className="absolute inset-0 size-full cursor-default bg-[#151936]/20 backdrop-blur-sm"
-        onClick={onClose}
-        type="button"
-      />
-
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-[0_20px_60px_rgba(21,25,54,0.1)] overflow-hidden animate-scale-in max-h-[90vh] flex flex-col z-10">
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-white flex items-center justify-center text-[#151936] border border-slate-200 shadow-sm">
-              <IconFileCertificate size={20} stroke={1.5} />
-            </div>
-            <div>
-              <h2 className="font-medium text-slate-900 tracking-tight text-lg">Create Management Mandate</h2>
-              <p className="body-sm text-slate-400 mt-0.5">{propertyName} · {landlordName}</p>
-            </div>
+    <Modal
+      open={open}
+      onClose={submitting ? () => { } : onClose}
+      title="Create Management Mandate"
+      description={`${propertyName} · ${landlordName}`}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {!landlordVerified && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-3">
+            <IconAlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="body-sm text-amber-800">
+              <span className="font-medium">{landlordName}</span> hasn&apos;t been identity-verified yet. You can
+              still submit this mandate, but confirming the landlord first is strongly recommended before funds
+              start moving under this agreement.
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <IconX size={20} />
-          </button>
+        )}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label-caps text-slate-400 mb-1.5 block">Management Fee Rate (%)</label>
+            <input
+              required
+              type="number"
+              min="0.1"
+              max="100"
+              step="0.1"
+              value={ratePercent}
+              onChange={(e) => setRatePercent(e.target.value)}
+              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+            />
+          </div>
+          <div>
+            <label className="label-caps text-slate-400 mb-1.5 block">Unit Count</label>
+            <input
+              required
+              type="number"
+              min="1"
+              step="1"
+              value={unitCount}
+              onChange={(e) => setUnitCount(e.target.value)}
+              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+            />
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-          {!landlordVerified && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-3">
-              <IconAlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
-              <p className="body-sm text-amber-800">
-                <span className="font-medium">{landlordName}</span> hasn&apos;t been identity-verified yet. You can
-                still submit this mandate, but confirming the landlord first is strongly recommended before funds
-                start moving under this agreement.
-              </p>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-slate-400 mb-1.5 label-caps">Management Fee Rate (%)</label>
-              <input
-                required
-                type="number"
-                min="0.1"
-                max="100"
-                step="0.1"
-                value={ratePercent}
-                onChange={(e) => setRatePercent(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm mono-data"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-400 mb-1.5 label-caps">Unit Count</label>
-              <input
-                required
-                type="number"
-                min="1"
-                step="1"
-                value={unitCount}
-                onChange={(e) => setUnitCount(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm mono-data"
-              />
-            </div>
-          </div>
-
-          {rateDiffersFromDefault && (
-            <div>
-              <label className="block text-slate-400 mb-1.5 label-caps">Rate Justification</label>
-              <textarea
-                required
-                rows={2}
-                placeholder="Why does this mandate use a non-standard rate?"
-                value={rateJustification}
-                onChange={(e) => setRateJustification(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm resize-none"
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-slate-400 mb-1.5 label-caps">Start Date</label>
-              <input
-                required
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-400 mb-1.5 label-caps">End Date (optional)</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
-              />
-            </div>
-          </div>
-
+        {rateDiffersFromDefault && (
           <div>
-            <label className="block text-slate-400 mb-1.5 label-caps">Property Manager (optional)</label>
-            <div className="relative">
-              <IconUserCog size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" aria-hidden="true" />
-              <select
-                value={assignedPmId}
-                onChange={(e) => setAssignedPmId(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm appearance-none"
-              >
-                <option value="">Unassigned</option>
-                {managers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}{m.title ? ` · ${m.title}` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <label className="label-caps text-slate-400 mb-1.5 block">Rate Justification</label>
+            <textarea
+              required
+              rows={2}
+              placeholder="Why does this mandate use a non-standard rate?"
+              value={rateJustification}
+              onChange={(e) => setRateJustification(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm resize-none"
+            />
           </div>
+        )}
 
-          <p className="body-sm text-slate-400">
-            Mandate activation always requires GM sign-off; mandates covering more than 10 units, or an
-            annualized collectible value above KES 5M, additionally require CEO approval.
-          </p>
-
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-[#151936] text-white hover:bg-[#151936]/90" disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit Mandate"}
-            </Button>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label-caps text-slate-400 mb-1.5 block">Start Date</label>
+            <input
+              required
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+            />
           </div>
-        </form>
-      </div>
-    </div>
+          <div>
+            <label className="label-caps text-slate-400 mb-1.5 block">End Date (optional)</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="label-caps text-slate-400 mb-1.5 block">Property Manager (optional)</label>
+          <div className="relative">
+            <IconUserCog size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" aria-hidden="true" />
+            <select
+              value={assignedPmId}
+              onChange={(e) => setAssignedPmId(e.target.value)}
+              className="w-full h-10 rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm appearance-none"
+            >
+              <option value="">Unassigned</option>
+              {managers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}{m.title ? ` · ${m.title}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <p className="body-sm text-slate-400">
+          Mandate activation always requires GM sign-off; mandates covering more than 10 units, or an
+          annualized collectible value above KES 5M, additionally require CEO approval.
+        </p>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Submitting..." : "Submit Mandate"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

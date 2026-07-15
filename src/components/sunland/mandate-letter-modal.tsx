@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { CldUploadButton } from "next-cloudinary";
-import { IconX, IconFileText, IconCloudUpload, IconFileTypePdf, IconPhoto } from "@tabler/icons-react";
+import { IconX, IconCloudUpload, IconFileTypePdf, IconPhoto } from "@tabler/icons-react";
+import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
 
@@ -40,8 +41,6 @@ export function MandateLetterModal({
   const [stagedName, setStagedName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (!open) return null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
@@ -73,102 +72,81 @@ export function MandateLetterModal({
   };
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center animate-fade-in">
-      <button
-        aria-label="Close form backdrop"
-        className="absolute inset-0 size-full cursor-default bg-[#151936]/20 backdrop-blur-sm"
-        onClick={onClose}
-        type="button"
-      />
-
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-[0_20px_60px_rgba(21,25,54,0.1)] overflow-hidden animate-scale-in max-h-[90vh] flex flex-col z-10">
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-white flex items-center justify-center text-[#151936] border border-slate-200 shadow-sm">
-              <IconFileText size={20} stroke={1.5} />
-            </div>
-            <div>
-              <h2 className="font-medium text-slate-900 tracking-tight text-lg">{hasExistingLetter ? "Replace" : "Upload"} Mandate Letter</h2>
-              <p className="body-sm text-slate-400 mt-0.5">{propertyName} · {landlordName}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <IconX size={20} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-          {url ? (
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
-              {stagedName?.toLowerCase().endsWith(".pdf") ? (
-                <IconFileTypePdf size={20} className="text-[#122a20] shrink-0" aria-hidden="true" />
-              ) : (
-                <IconPhoto size={20} className="text-[#122a20] shrink-0" aria-hidden="true" />
-              )}
-              <span className="flex-1 min-w-0 body-sm text-slate-800 truncate">{stagedName ?? url}</span>
-              <button
-                type="button"
-                onClick={() => { setUrl(""); setStagedName(null); }}
-                aria-label="Remove selected file"
-                className="text-slate-300 hover:text-rose-500 shrink-0"
-              >
-                <IconX size={16} />
-              </button>
-            </div>
-          ) : CLOUDINARY_CONFIGURED ? (
-            <CldUploadButton
-              uploadPreset={CLOUDINARY_UPLOAD_PRESET}
-              options={{ resourceType: "auto" }}
-              onSuccess={(results) => {
-                const info = results.info;
-                if (info && typeof info === "object" && "secure_url" in info) {
-                  setUrl(info.secure_url as string);
-                  setStagedName("original_filename" in info ? String(info.original_filename) : null);
-                }
-              }}
-              className="flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 py-8 text-center cursor-pointer hover:border-[#f3df27] hover:bg-[#fffdf0] transition-colors"
+    <Modal
+      open={open}
+      onClose={submitting ? () => { } : onClose}
+      title={`${hasExistingLetter ? "Replace" : "Upload"} Mandate Letter`}
+      description={`${propertyName} · ${landlordName}`}
+      size="sm"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {url ? (
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
+            {stagedName?.toLowerCase().endsWith(".pdf") ? (
+              <IconFileTypePdf size={20} className="text-[#122a20] shrink-0" aria-hidden="true" />
+            ) : (
+              <IconPhoto size={20} className="text-[#122a20] shrink-0" aria-hidden="true" />
+            )}
+            <span className="flex-1 min-w-0 body-sm text-slate-800 truncate">{stagedName ?? url}</span>
+            <button
+              type="button"
+              onClick={() => { setUrl(""); setStagedName(null); }}
+              aria-label="Remove selected file"
+              className="text-slate-300 hover:text-rose-500 shrink-0"
             >
-              <IconCloudUpload size={26} className="text-slate-400" aria-hidden="true" />
-              <span className="body-sm text-slate-700 font-medium">Drag the mandate letter here, or click to browse</span>
-              <span className="text-meta-muted">PDF or image · up to 10MB</span>
-            </CldUploadButton>
-          ) : (
-            <div>
-              <label className="block text-slate-400 mb-1.5 label-caps">Document URL</label>
-              <input
-                required
-                type="url"
-                placeholder="https://…"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
-              />
-              <p
-                className="text-meta-muted mt-1.5"
-                title="Cloudinary isn't configured yet (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME / NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) - paste a document URL instead."
-              >
-                Upload widget unavailable in this environment - paste a document URL instead.
-              </p>
-            </div>
-          )}
-          <p className="body-sm text-slate-400">
-            Saved against {landlordName}&apos;s document record, so it stays attached to every property they own -
-            not just this one.
-          </p>
-
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-[#151936] text-white hover:bg-[#151936]/90" disabled={submitting || !url.trim()}>
-              {submitting ? "Saving..." : hasExistingLetter ? "Replace Letter" : "Attach Letter"}
-            </Button>
+              <IconX size={16} />
+            </button>
           </div>
-        </form>
-      </div>
-    </div>
+        ) : CLOUDINARY_CONFIGURED ? (
+          <CldUploadButton
+            uploadPreset={CLOUDINARY_UPLOAD_PRESET}
+            options={{ resourceType: "auto" }}
+            onSuccess={(results) => {
+              const info = results.info;
+              if (info && typeof info === "object" && "secure_url" in info) {
+                setUrl(info.secure_url as string);
+                setStagedName("original_filename" in info ? String(info.original_filename) : null);
+              }
+            }}
+            className="flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 py-8 text-center cursor-pointer hover:border-[#f3df27] hover:bg-[#fffdf0] transition-colors"
+          >
+            <IconCloudUpload size={26} className="text-slate-400" aria-hidden="true" />
+            <span className="body-sm text-slate-700 font-medium">Drag the mandate letter here, or click to browse</span>
+            <span className="text-meta-muted">PDF or image · up to 10MB</span>
+          </CldUploadButton>
+        ) : (
+          <div>
+            <label className="label-caps text-slate-400 mb-1.5 block">Document URL</label>
+            <input
+              required
+              type="url"
+              placeholder="https://…"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+            />
+            <p
+              className="text-meta-muted mt-1.5"
+              title="Cloudinary isn't configured yet (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME / NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) - paste a document URL instead."
+            >
+              Upload widget unavailable in this environment - paste a document URL instead.
+            </p>
+          </div>
+        )}
+        <p className="body-sm text-slate-400">
+          Saved against {landlordName}&apos;s document record, so it stays attached to every property they own -
+          not just this one.
+        </p>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={submitting || !url.trim()}>
+            {submitting ? "Saving..." : hasExistingLetter ? "Replace Letter" : "Attach Letter"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
