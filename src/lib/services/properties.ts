@@ -11,7 +11,7 @@ import type { CallerContext } from "@/lib/services/types";
 
 // ─── Properties ──────────────────────────────────────────────────────────────
 
-function toISOStringSafe(val: unknown): string | null {
+export function toISOStringSafe(val: unknown): string | null {
   if (!val) return null;
   if (val instanceof Date) return val.toISOString();
   if (typeof val === "string") {
@@ -59,6 +59,7 @@ export async function listProperties(
       ownerIdNumber: contacts.idNumber,
       ownerVerifiedAt: contacts.verifiedAt,
       ownerClientSince: contacts.createdAt,
+      ownerAvatarUrl: contacts.avatarUrl,
       managerId: propertyMandates.assignedPmId,
       managerName: users.name,
       managerTitle: users.title,
@@ -77,7 +78,7 @@ export async function listProperties(
     .leftJoin(users, eq(users.id, propertyMandates.assignedPmId))
     .where(conditions);
 
-  return rows.map(({ ownerName, ownerPhone, ownerEmail, ownerCompany, ownerIdNumber, ownerVerifiedAt, ownerClientSince, managerId, managerName, managerTitle, managerEmail, managerAvatarUrl, ...rest }) => ({
+  return rows.map(({ ownerName, ownerPhone, ownerEmail, ownerCompany, ownerIdNumber, ownerVerifiedAt, ownerClientSince, ownerAvatarUrl, managerId, managerName, managerTitle, managerEmail, managerAvatarUrl, ...rest }) => ({
     ...rest,
     ownerName,
     owner: rest.ownerContactId
@@ -89,6 +90,7 @@ export async function listProperties(
         idNumber: ownerIdNumber,
         verifiedAt: toISOStringSafe(ownerVerifiedAt),
         clientSince: toISOStringSafe(ownerClientSince),
+        avatarUrl: ownerAvatarUrl,
       }
       : null,
     manager: managerId
@@ -420,6 +422,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
           idNumber: contacts.idNumber,
           verifiedAt: contacts.verifiedAt,
           verifiedByName: users.name,
+          avatarUrl: contacts.avatarUrl,
         })
         .from(contacts)
         .leftJoin(users, eq(contacts.verifiedById, users.id))
@@ -532,6 +535,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       idNumber: ownerRow.idNumber,
       verifiedAt: toISOStringSafe(ownerRow.verifiedAt),
       verifiedByName: ownerRow.verifiedByName,
+      avatarUrl: ownerRow.avatarUrl,
     }
     : null;
 
@@ -785,6 +789,7 @@ export async function listLeases(ctx: CallerContext) {
       tenantName: contacts.displayName,
       tenantEmail: contacts.email,
       tenantPhone: contacts.phone,
+      tenantAvatarUrl: contacts.avatarUrl,
     })
     .from(leases)
     .innerJoin(properties, eq(leases.propertyId, properties.id))

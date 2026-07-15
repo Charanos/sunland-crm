@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Avatar } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { formatCompactKES } from "@/lib/utils/format";
@@ -513,9 +514,11 @@ export function LeaseFullViewBoard({
               <IconUser size={14} /> Principal Tenant
             </h3>
             <div className="flex items-center gap-4">
-              <div className="size-14 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200/60 flex items-center justify-center text-slate-700 text-lg font-medium shrink-0 shadow-inner">
-                {getInitials(lease.tenantName)}
-              </div>
+              <Avatar
+                src={(lease as any).tenantAvatarUrl || undefined}
+                fallback={getInitials(lease.tenantName)}
+                className="size-14 bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200/60 text-slate-700 text-lg shrink-0 shadow-inner"
+              />
               <div className="flex flex-col min-w-0">
                 <p className="text-lg font-serif text-slate-900 truncate mb-1">{lease.tenantName}</p>
                 <div className="flex flex-col gap-1.5">

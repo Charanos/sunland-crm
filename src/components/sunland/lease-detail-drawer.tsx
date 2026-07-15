@@ -15,7 +15,7 @@ import {
   IconTrash,
   IconBuildingCommunity,
 } from "@tabler/icons-react";
-import { Button, ConfirmDialog } from "@/components/ui/erp-primitives";
+import { Button, ConfirmDialog, Avatar } from "@/components/ui/erp-primitives";
 import { Drawer } from "@/components/ui/drawer";
 import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
@@ -237,9 +237,11 @@ export function LeaseDetailDrawer({
           <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
             <p className="label-caps text-slate-400 mb-3">Principal Tenant</p>
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-full bg-white border border-slate-200 shadow-sm shrink-0 flex items-center justify-center text-slate-400 font-medium">
-                {getInitials(lease.tenantName)}
-              </div>
+              <Avatar
+                src={(lease as any).tenantAvatarUrl || undefined}
+                fallback={getInitials(lease.tenantName)}
+                className="size-10 bg-white border border-slate-200 text-slate-400 shrink-0 text-[10px]"
+              />
               <div className="flex-1 min-w-0">
                 <p className="body-sm text-slate-800 leading-none mb-1.5 truncate font-medium">{lease.tenantName}</p>
                 <p className="label-caps text-slate-400 leading-none truncate">{lease.tenantEmail || lease.tenantPhone || "No contact info"}</p>

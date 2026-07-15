@@ -34,7 +34,8 @@ export function Avatar({
             alt={alt ?? fallback}
             className="object-cover"
             fill
-            sizes="40px"
+            sizes="120px"
+            quality={100}
             src={src}
           />
         </span>

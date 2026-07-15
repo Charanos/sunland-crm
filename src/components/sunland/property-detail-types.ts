@@ -8,6 +8,7 @@ export interface OwnerInfo {
   idNumber?: string | null;
   verifiedAt?: string | null;
   verifiedByName?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface MandatePeriod {

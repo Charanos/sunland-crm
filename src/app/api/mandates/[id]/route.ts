@@ -1,7 +1,22 @@
 import { NextResponse } from "next/server";
 import { DomainValidationError, handleRouteError } from "@/lib/authz/errors";
-import { assignMandateManager, terminateMandate } from "@/lib/services/mandates";
+import { assignMandateManager, getMandateWithDetails, terminateMandate } from "@/lib/services/mandates";
 import { requireCallerContext } from "@/lib/services/types";
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const entityId = searchParams.get("entityId") ?? null;
+
+    const ctx = await requireCallerContext(entityId, request);
+    const mandate = await getMandateWithDetails(ctx, id);
+
+    return NextResponse.json({ mandate });
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

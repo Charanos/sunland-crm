@@ -42,6 +42,7 @@ export const contacts = pgTable(
     companyName: text("company_name"),
     email: text("email"),
     phone: text("phone"),
+    avatarUrl: text("avatar_url"),
     source: text("source"),
     assignedToId: uuid("assigned_to_id").references(() => users.id),
     // National ID/passport number - ADR 014 §14.4, generic to any contact

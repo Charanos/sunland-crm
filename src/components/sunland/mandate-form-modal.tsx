@@ -12,14 +12,24 @@ interface ManagerOption {
   title: string | null;
 }
 
+interface PropertyOption {
+  id: string;
+  name: string;
+  propertyCode: string;
+  mandateStatus: string | null;
+  unitBreakdown: Array<{ unitType: string; count: number }> | null;
+  owner: { name: string | null; verifiedAt: string | null } | null;
+}
+
 interface MandateFormModalProps {
   open: boolean;
   entityId: string | null;
-  propertyId: string;
-  propertyName: string;
-  landlordName: string;
+  /** Pre-set when opened from a property's own page; omit to show a property picker (Leases Board's "New Mandate"). */
+  propertyId?: string;
+  propertyName?: string;
+  landlordName?: string;
   landlordVerified?: boolean;
-  defaultUnitCount: number;
+  defaultUnitCount?: number;
   onClose: () => void;
   onCreated: () => void;
 }
@@ -33,7 +43,7 @@ export function MandateFormModal({
   propertyName,
   landlordName,
   landlordVerified = false,
-  defaultUnitCount,
+  defaultUnitCount = 1,
   onClose,
   onCreated,
 }: MandateFormModalProps) {
@@ -46,6 +56,13 @@ export function MandateFormModal({
   const [assignedPmId, setAssignedPmId] = useState("");
   const [managers, setManagers] = useState<ManagerOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const [propertyOptions, setPropertyOptions] = useState<PropertyOption[]>([]);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(propertyId ?? "");
+
+  useEffect(() => {
+    Promise.resolve().then(() => setSelectedPropertyId(propertyId ?? ""));
+  }, [propertyId, open]);
 
   useEffect(() => {
     if (!open || !entityId) return;
@@ -64,11 +81,50 @@ export function MandateFormModal({
     };
   }, [open, entityId]);
 
+  useEffect(() => {
+    if (!open || !entityId || propertyId) return;
+    let active = true;
+    fetch(`/api/properties?entityId=${entityId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data) return;
+        // Only properties without an in-flight mandate can start a new one -
+        // the same invariant createMandate enforces server-side.
+        const eligible = (data.properties ?? []).filter(
+          (p: PropertyOption) => p.mandateStatus !== "pending_approval" && p.mandateStatus !== "active",
+        );
+        setPropertyOptions(eligible);
+      })
+      .catch(() => {
+        if (active) setPropertyOptions([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [open, entityId, propertyId]);
+
+  const selectedProperty = propertyOptions.find((p) => p.id === selectedPropertyId);
+  const resolvedPropertyName = propertyId ? propertyName : selectedProperty?.name;
+  const resolvedLandlordName = propertyId ? landlordName : selectedProperty?.owner?.name ?? undefined;
+  const resolvedLandlordVerified = propertyId ? landlordVerified : Boolean(selectedProperty?.owner?.verifiedAt);
+
+  useEffect(() => {
+    if (propertyId || !selectedProperty) return;
+    Promise.resolve().then(() => {
+      const breakdownCount = (selectedProperty.unitBreakdown ?? []).reduce((sum, u) => sum + (u.count ?? 0), 0);
+      setUnitCount(String(Math.max(1, breakdownCount)));
+    });
+  }, [propertyId, selectedProperty]);
+
   const rateValue = parseFloat(ratePercent);
   const rateDiffersFromDefault = Number.isFinite(rateValue) && Math.abs(rateValue - DEFAULT_RATE_PERCENT) > 0.01;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedPropertyId) {
+      pushToast({ tone: "warning", title: "Select a property", body: "Choose which property this mandate covers." });
+      return;
+    }
     if (!Number.isFinite(rateValue) || rateValue <= 0 || rateValue > 100) {
       pushToast({ tone: "warning", title: "Invalid rate", body: "Enter a management fee rate between 0 and 100%." });
       return;
@@ -85,7 +141,7 @@ export function MandateFormModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           entityId,
-          propertyId,
+          propertyId: selectedPropertyId,
           mandateRate: (rateValue / 100).toFixed(4),
           rateJustification: rateDiffersFromDefault ? rateJustification.trim() : undefined,
           unitCount: parseInt(unitCount, 10) || 1,
@@ -128,15 +184,33 @@ export function MandateFormModal({
       open={open}
       onClose={submitting ? () => { } : onClose}
       title="Create Management Mandate"
-      description={`${propertyName} · ${landlordName}`}
+      description={resolvedPropertyName ? `${resolvedPropertyName}${resolvedLandlordName ? ` · ${resolvedLandlordName}` : ""}` : "Choose a property to begin"}
       size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {!landlordVerified && (
+        {!propertyId && (
+          <div>
+            <label className="label-caps text-slate-400 mb-1.5 block">Property</label>
+            <select
+              required
+              value={selectedPropertyId}
+              onChange={(e) => setSelectedPropertyId(e.target.value)}
+              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+            >
+              <option value="">Select a property...</option>
+              {propertyOptions.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.propertyCode})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        {selectedPropertyId && !resolvedLandlordVerified && (
           <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-3">
             <IconAlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
             <p className="body-sm text-amber-800">
-              <span className="font-medium">{landlordName}</span> hasn&apos;t been identity-verified yet. You can
+              <span className="font-medium">{resolvedLandlordName ?? "This landlord"}</span> hasn&apos;t been identity-verified yet. You can
               still submit this mandate, but confirming the landlord first is strongly recommended before funds
               start moving under this agreement.
             </p>

@@ -426,12 +426,14 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
             {analytics.agents.map((agent, i) => (
               <div key={`${agent.name}-${i}`} className="flex items-center justify-between group animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}>
                 <div className="flex items-center gap-3">
-                  <div className="size-[38px] rounded-full overflow-hidden border border-slate-100 shadow-sm relative shrink-0">
-                    <Avatar src={agent.img} fallback={agent.name.substring(0, 2)} className="size-full group-hover:scale-105 transition-transform duration-500" />
-                  </div>
+                  <Avatar
+                    src={agent.img}
+                    fallback={agent.name.substring(0, 2)}
+                    className="size-[38px] text-xs bg-slate-900 text-yellow-300"
+                  />
                   <div>
                     <h4 className="body-sm text-slate-800 leading-none mb-1.5 group-hover:text-[#151936] transition-colors">{agent.name}</h4>
-                    <p className="text-desc-secondary leading-none text-[11px]">{agent.sold} deals closed</p>
+                    <p className="text-desc-secondary leading-none text-xs">{agent.sold} deals closed</p>
                   </div>
                 </div>
                 <div className="text-right">

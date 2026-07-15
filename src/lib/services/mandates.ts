@@ -1,10 +1,12 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { approvalRequests, contacts, mandateStatus, properties, propertyMandates, users } from "@/db/schema";
+import { approvalRequests, contacts, mandateStatus, properties, propertyMandates, remittanceAdvices, transactions, users } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
 import { createNotification } from "@/lib/services/notifications";
+import { getLatestPendingRemittance } from "@/lib/services/finance/remittances";
+import { getPropertyWithDetails, toISOStringSafe } from "@/lib/services/properties";
 import { getGroupSettingValue } from "@/lib/services/settings";
 import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
@@ -48,7 +50,7 @@ async function notifyMandateApprovers(
 
 export async function listMandates(
   ctx: CallerContext,
-  filters: { propertyId?: string; status?: string } = {},
+  filters: { propertyId?: string; status?: string; includeFinancials?: boolean } = {},
 ) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(ctx.entityId);
@@ -60,7 +62,7 @@ export async function listMandates(
     conditions.push(eq(propertyMandates.status, filters.status as (typeof MANDATE_STATUS_VALUES)[number]));
   }
 
-  return db
+  const rows = await db
     .select({
       id: propertyMandates.id,
       entityId: propertyMandates.entityId,
@@ -69,6 +71,7 @@ export async function listMandates(
       propertyCode: properties.propertyCode,
       landlordContactId: propertyMandates.landlordContactId,
       landlordName: contacts.displayName,
+      landlordAvatarUrl: contacts.avatarUrl,
       mandateRate: propertyMandates.mandateRate,
       rateJustification: propertyMandates.rateJustification,
       unitCount: propertyMandates.unitCount,
@@ -87,6 +90,212 @@ export async function listMandates(
     .leftJoin(users, eq(propertyMandates.assignedPmId, users.id))
     .where(and(...conditions))
     .orderBy(desc(propertyMandates.createdAt));
+
+  if (!filters.includeFinancials || rows.length === 0) return rows;
+
+  // Register grid's Collection/Remittance columns - one grouped read of this
+  // month's rent transactions across every listed mandate's property, plus
+  // each mandate's latest pending remittance, merged in JS rather than
+  // N+1 per-row queries (same "fetch then reduce" convention used throughout
+  // this service layer, see getPropertyWithDetails's currentPeriod calc).
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const propertyIds = rows.map((r) => r.propertyId);
+  const [periodTx, pendingRemittances] = await Promise.all([
+    db
+      .select({ propertyId: transactions.propertyId, amountKes: transactions.amountKes })
+      .from(transactions)
+      .where(and(inArray(transactions.propertyId, propertyIds), eq(transactions.type, "rent"), gte(transactions.occurredAt, monthStart))),
+    Promise.all(rows.map((r) => getLatestPendingRemittance(r.id))),
+  ]);
+
+  return rows.map((r, i) => ({
+    ...r,
+    currentPeriodCollected: periodTx
+      .filter((t) => t.propertyId === r.propertyId)
+      .reduce((sum, t) => sum + parseFloat(t.amountKes), 0),
+    pendingRemittanceId: pendingRemittances[i]?.id ?? null,
+  }));
+}
+
+/**
+ * Loads one mandate by its own id (not "whichever mandate is currently
+ * active on this property", which getPropertyWithDetails' embedded mandate
+ * field means - a property can have terminated mandates in its history that
+ * getPropertyWithDetails would never surface). Reuses getPropertyWithDetails
+ * for the property/leases/documents/collections data that doesn't depend on
+ * which mandate is being viewed.
+ */
+export async function getMandateWithDetails(ctx: CallerContext, mandateId: string) {
+  const [mandateRow] = await db
+    .select({
+      id: propertyMandates.id,
+      entityId: propertyMandates.entityId,
+      propertyId: propertyMandates.propertyId,
+      landlordContactId: propertyMandates.landlordContactId,
+      landlordName: contacts.displayName,
+      landlordEmail: contacts.email,
+      landlordPhone: contacts.phone,
+      landlordVerifiedAt: contacts.verifiedAt,
+      mandateRate: propertyMandates.mandateRate,
+      rateJustification: propertyMandates.rateJustification,
+      unitCount: propertyMandates.unitCount,
+      startDate: propertyMandates.startDate,
+      endDate: propertyMandates.endDate,
+      status: propertyMandates.status,
+      assignedPmId: propertyMandates.assignedPmId,
+      managerName: users.name,
+      managerTitle: users.title,
+      managerEmail: users.email,
+      managerAvatarUrl: users.avatarUrl,
+    })
+    .from(propertyMandates)
+    .innerJoin(contacts, eq(propertyMandates.landlordContactId, contacts.id))
+    .leftJoin(users, eq(propertyMandates.assignedPmId, users.id))
+    .where(eq(propertyMandates.id, mandateId))
+    .limit(1);
+  if (!mandateRow) throw new NotFoundError("Mandate not found");
+
+  await authorize(ctx, "properties.property.read", mandateRow.entityId);
+
+  const property = await getPropertyWithDetails(ctx, mandateRow.propertyId);
+
+  let pendingApproverRole: "gm" | "ceo" | "department_head" | null = null;
+  let approvalRequestId: string | null = null;
+  if (mandateRow.status === "pending_approval") {
+    const [pendingApproval] = await db
+      .select({ id: approvalRequests.id, requiredApproverRole: approvalRequests.requiredApproverRole })
+      .from(approvalRequests)
+      .where(
+        and(
+          eq(approvalRequests.relatedTable, "property_mandates"),
+          eq(approvalRequests.relatedId, mandateId),
+          eq(approvalRequests.status, "pending"),
+        ),
+      )
+      .limit(1);
+    pendingApproverRole = pendingApproval?.requiredApproverRole ?? null;
+    approvalRequestId = pendingApproval?.id ?? null;
+  }
+
+  const pendingRemittance = await getLatestPendingRemittance(mandateId);
+  // Property.mandate is the property's currently in-flight mandate, if any -
+  // only trust its currentPeriod snapshot when it actually IS this mandate;
+  // a terminated mandate being viewed here has no "this month" to show.
+  const currentPeriod = property.mandate?.id === mandateId ? property.mandate.currentPeriod : undefined;
+
+  return {
+    id: mandateRow.id,
+    entityId: mandateRow.entityId,
+    status: mandateRow.status,
+    mandateRate: parseFloat(mandateRow.mandateRate),
+    rateJustification: mandateRow.rateJustification,
+    unitCount: mandateRow.unitCount,
+    startDate: toISOStringSafe(mandateRow.startDate) || "",
+    endDate: toISOStringSafe(mandateRow.endDate),
+    pendingApproverRole,
+    approvalRequestId,
+    currentPeriod,
+    pendingRemittance,
+    landlord: {
+      id: mandateRow.landlordContactId,
+      name: mandateRow.landlordName,
+      email: mandateRow.landlordEmail,
+      phone: mandateRow.landlordPhone,
+      verifiedAt: toISOStringSafe(mandateRow.landlordVerifiedAt),
+    },
+    manager: mandateRow.assignedPmId
+      ? {
+        id: mandateRow.assignedPmId,
+        name: mandateRow.managerName,
+        title: mandateRow.managerTitle,
+        email: mandateRow.managerEmail,
+        avatarUrl: mandateRow.managerAvatarUrl,
+      }
+      : null,
+    property: {
+      id: property.id,
+      name: property.name,
+      propertyCode: property.propertyCode,
+      propertyType: property.propertyType,
+      location: property.location,
+      media: property.media,
+    },
+    leases: property.leases,
+    documents: property.documents,
+    collections: property.collections,
+    arrears: property.arrears,
+  };
+}
+
+/**
+ * Leases Board's mode-aware KPI tier when in "Management Mandates" mode -
+ * Under Management / Expected Rent Roll / Collected MTD / Management Fee MTD
+ * / Remittances Pending, aggregated the same "fetch then reduce in JS" way
+ * as getDashboardOverview and getPropertyWithDetails rather than SQL groupBy
+ * (no groupBy usage exists anywhere else in this service layer).
+ */
+export async function getMandatesSummary(ctx: CallerContext) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.read", entityId);
+
+  const activeMandates = await db
+    .select({
+      id: propertyMandates.id,
+      propertyId: propertyMandates.propertyId,
+      mandateRate: propertyMandates.mandateRate,
+      monthlyRentKes: properties.monthlyRentKes,
+    })
+    .from(propertyMandates)
+    .innerJoin(properties, eq(propertyMandates.propertyId, properties.id))
+    .where(and(eq(propertyMandates.entityId, entityId), eq(propertyMandates.status, "active")));
+
+  if (activeMandates.length === 0) {
+    return { activeMandateCount: 0, underManagementKes: 0, expectedRentRollKes: 0, collectedMtdKes: 0, managementFeeMtdKes: 0, remittancesPending: 0 };
+  }
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const propertyIds = activeMandates.map((m) => m.propertyId);
+
+  const periodTx = await db
+    .select({ propertyId: transactions.propertyId, amountKes: transactions.amountKes })
+    .from(transactions)
+    .where(and(inArray(transactions.propertyId, propertyIds), eq(transactions.type, "rent"), gte(transactions.occurredAt, monthStart)));
+
+  let expectedRentRollKes = 0;
+  let collectedMtdKes = 0;
+  let managementFeeMtdKes = 0;
+  for (const m of activeMandates) {
+    const monthly = m.monthlyRentKes ? parseFloat(m.monthlyRentKes) : 0;
+    expectedRentRollKes += monthly;
+    const collectedThisProperty = periodTx
+      .filter((t) => t.propertyId === m.propertyId)
+      .reduce((sum, t) => sum + parseFloat(t.amountKes), 0);
+    collectedMtdKes += collectedThisProperty;
+    managementFeeMtdKes += collectedThisProperty * parseFloat(m.mandateRate);
+  }
+
+  const allMandateIds = await db
+    .select({ id: propertyMandates.id })
+    .from(propertyMandates)
+    .where(eq(propertyMandates.entityId, entityId));
+  const pendingRemittances = allMandateIds.length
+    ? await db
+      .select({ id: remittanceAdvices.id })
+      .from(remittanceAdvices)
+      .where(and(inArray(remittanceAdvices.mandateId, allMandateIds.map((m) => m.id)), eq(remittanceAdvices.status, "pending")))
+    : [];
+
+  return {
+    activeMandateCount: activeMandates.length,
+    underManagementKes: expectedRentRollKes * 12,
+    expectedRentRollKes,
+    collectedMtdKes,
+    managementFeeMtdKes,
+    remittancesPending: pendingRemittances.length,
+  };
 }
 
 export async function createMandate(ctx: CallerContext, rawInput: unknown) {

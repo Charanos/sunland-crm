@@ -165,6 +165,7 @@ export type Property = {
     idNumber?: string | null;
     verifiedAt?: string | null;
     clientSince?: string | null;
+    avatarUrl?: string | null;
   } | null;
   /** Property Manager assigned via the property's active/pending mandate - null when unassigned. */
   manager?: {

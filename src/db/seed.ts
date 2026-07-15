@@ -51,7 +51,9 @@ import {
   messages,
   valuations,
   propertyMandates,
+  remittanceAdvices,
 } from "@/db/schema";
+import { randomBytes } from "crypto";
 import { hashPassword } from "@/lib/auth/password";
 import { grantUserRole, seedPermissionCatalog } from "@/lib/authz/seed";
 import { seedDefaultSettings } from "@/lib/services/settings";
@@ -85,6 +87,7 @@ async function runSeed() {
     await db.delete(maintenanceRequests);
     await db.delete(leads);
     await db.delete(valuations);
+    await db.delete(remittanceAdvices);
     await db.delete(propertyMandates);
     await db.delete(properties);
     await db.delete(contacts);
@@ -186,6 +189,7 @@ async function runSeed() {
           name: "James Kiptoo",
           role: "property_manager",
           title: "Operations Manager",
+          avatarUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80",
           primaryEntityId: commEntity.id,
         },
         {
@@ -203,6 +207,7 @@ async function runSeed() {
           name: "David Omondi",
           role: "property_manager",
           title: "Senior Property Manager",
+          avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
           primaryEntityId: commEntity.id,
         },
         {
@@ -276,6 +281,7 @@ async function runSeed() {
         companyName: "Kariuki Real Estate Investments Ltd",
         email: "investments@kariuki.co.ke",
         phone: "+254722000111",
+        avatarUrl: "https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=400&q=80",
         source: "Direct Referral",
         assignedToId: ceoUser.id,
       },
@@ -285,6 +291,7 @@ async function runSeed() {
         displayName: "Margaret Wambui",
         email: "margaret@wambui.me",
         phone: "+254733111222",
+        avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
         source: "Marketing Campaign",
         assignedToId: pmUser.id,
       },
@@ -431,7 +438,7 @@ async function runSeed() {
         "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80"
       ],
       "Villa": [
-        "https://images.unsplash.com/photo-1613490900233-08ba5d54a7ee?w=800&q=80",
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
         "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
         "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80"
       ],
@@ -542,7 +549,7 @@ async function runSeed() {
       startDate: mandateStartDate,
       status: "active",
     }));
-    await db.insert(propertyMandates).values(activeMandatesToInsert);
+    const insertedActiveMandates = await db.insert(propertyMandates).values(activeMandatesToInsert).returning();
 
     // Make propComm have a pending mandate and critical maintenance request
     const pendingProp1 = propComm;
@@ -619,6 +626,52 @@ async function runSeed() {
     });
 
     console.log(`Created ${activeMandatesToInsert.length + 3} management mandates (active/pending/terminated) with PM assignments, and marked ${2 + featuredExtraIdx.length} properties as featured.`);
+
+    // 5a2. Seed one pending remittance advice against the first active
+    // mandate (propRes) so the Mandate File's remittance panel / release-
+    // flag flow, and the Leases Board's "remittance pending" indicator, are
+    // both exercisable without generating one by hand first.
+    const remittancePeriodStart = new Date();
+    remittancePeriodStart.setDate(1);
+    const remittanceCollected = 285000;
+    const remittanceFee = remittanceCollected * 0.1;
+    const remittanceExpenses = 12500;
+    const remittanceToken = randomBytes(24).toString("base64url");
+    const [seededRemittance] = await db
+      .insert(remittanceAdvices)
+      .values({
+        entityId: groupEntity.id,
+        mandateId: insertedActiveMandates[0].id,
+        periodStart: remittancePeriodStart,
+        periodEnd: new Date(),
+        collectedKes: remittanceCollected.toFixed(2),
+        managementFeeKes: remittanceFee.toFixed(2),
+        expensesKes: remittanceExpenses.toFixed(2),
+        netRemittanceKes: (remittanceCollected - remittanceFee - remittanceExpenses).toFixed(2),
+        status: "pending",
+        verificationToken: remittanceToken,
+        generatedById: propertyManager1User.id,
+      })
+      .returning();
+    await db.insert(reportExports).values({
+      entityId: groupEntity.id,
+      reportType: "remittance_advice",
+      generatedById: propertyManager1User.id,
+      verificationToken: remittanceToken,
+      snapshot: {
+        remittanceAdviceId: seededRemittance.id,
+        mandateId: insertedActiveMandates[0].id,
+        property: propRes.name,
+        periodStart: remittancePeriodStart.toISOString().split("T")[0],
+        periodEnd: new Date().toISOString().split("T")[0],
+        collectedKes: remittanceCollected,
+        managementFeeKes: remittanceFee,
+        expensesKes: remittanceExpenses,
+        netRemittanceKes: remittanceCollected - remittanceFee - remittanceExpenses,
+        generatedBy: propertyManager1User.name,
+      },
+    });
+    console.log("Seeded 1 pending remittance advice.");
 
     // 5b. Create pipeline leads - spans this-week/this-month/last-month so the
     // executive overview's CRM metrics (closed deals, active pipeline, new

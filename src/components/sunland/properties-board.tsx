@@ -32,6 +32,8 @@ import {
 import Image from "next/image";
 import {
   Badge,
+  MarketBadge,
+  Avatar,
   BoardHeader,
   Button,
   PaginationControls,
@@ -116,19 +118,20 @@ function managerInitials(name?: string | null): string {
   return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
 }
 
-/** Status badge pill - always dark/black text regardless of background for legibility */
+/** Status badge pill - solid market badge style */
 function StatusPill({ status }: { status: PropertyStatus }) {
   const sc = STATUS_CONFIG[status] || STATUS_CONFIG.available;
+  const toneMap: Record<PropertyStatus, "success" | "neutral" | "warning" | "risk"> = {
+    available: "success",
+    occupied: "neutral",
+    under_offer: "warning",
+    maintenance: "risk",
+    off_market: "neutral",
+  };
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium tracking-wide text-slate-900",
-        sc.pill
-      )}
-    >
-      <span className={cn("size-1.5 rounded-full shrink-0", sc.dot)} />
+    <MarketBadge tone={toneMap[status] || "neutral"}>
       {sc.label}
-    </span>
+    </MarketBadge>
   );
 }
 
@@ -200,10 +203,12 @@ function PropertyGridCard({
         {/* Dark scrim from bottom */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
 
-        {/* Top-left: listing type chip */}
-        <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-[#151936]/70 backdrop-blur-md rounded-lg px-2.5 py-1 text-xs font-medium uppercase tracking-widest text-white shadow-sm">
-          {LISTING_TYPE_LABEL[property.listingType as keyof typeof LISTING_TYPE_LABEL] || property.listingType}
-        </span>
+        {/* Top-left: property type chip */}
+        <div className="absolute top-3 left-3">
+          <MarketBadge tone="neutral">
+            {property.propertyType}
+          </MarketBadge>
+        </div>
 
         {/* Top-right: feature star */}
         {canManage && (
@@ -275,9 +280,11 @@ function PropertyGridCard({
                 aria-label={`View owner ${ownerName}`}
                 className="inline-flex items-center gap-2 rounded-full hover:bg-slate-50 transition-colors pr-1 py-0.5 min-w-0"
               >
-                <span className="size-6 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center text-xs font-medium shrink-0">
-                  {ownerInitials(property)}
-                </span>
+                <Avatar
+                  src={property.owner?.avatarUrl || undefined}
+                  fallback={ownerInitials(property)}
+                  className="size-6 text-[10px] bg-[#151936] text-[#f3df27]"
+                />
                 <span className="text-xs text-slate-500 truncate max-w-[100px]">{ownerName}</span>
               </button>
             ) : (
@@ -294,9 +301,11 @@ function PropertyGridCard({
               aria-label={`View manager ${property.manager.name}`}
               className="inline-flex items-center gap-2 rounded-full hover:bg-slate-50 transition-colors pr-1 py-0.5 min-w-0 self-start"
             >
-              <span className="size-6 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-medium shrink-0">
-                {managerInitials(property.manager.name)}
-              </span>
+              <Avatar
+                src={property.manager.avatarUrl || undefined}
+                fallback={managerInitials(property.manager.name)}
+                className="size-6 text-[10px] bg-emerald-700 text-white"
+              />
               <span className="text-xs text-slate-500 truncate max-w-[100px]">{property.manager.name}</span>
             </button>
           ) : (
@@ -720,13 +729,7 @@ export function PropertiesBoard({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent sm:hidden pointer-events-none" />
                 {/* Status chip */}
                 <div className="absolute bottom-4 left-4">
-                  <span className={cn(
-                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium backdrop-blur-sm",
-                    STATUS_CONFIG[featuredProperties[safeFeaturedIndex].status].pill
-                  )}>
-                    <span className={cn("size-1.5 rounded-full", STATUS_CONFIG[featuredProperties[safeFeaturedIndex].status].dot)} />
-                    {STATUS_CONFIG[featuredProperties[safeFeaturedIndex].status].label}
-                  </span>
+                  <StatusPill status={featuredProperties[safeFeaturedIndex].status} />
                 </div>
               </div>
 
@@ -839,9 +842,11 @@ export function PropertiesBoard({
                       }}
                       className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-[16px] px-3 py-2 text-left hover:bg-white hover:border-slate-200 transition-colors shadow-sm min-w-0"
                     >
-                      <span className="size-8 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center text-xs font-medium shrink-0">
-                        {ownerInitials(featuredProperties[safeFeaturedIndex])}
-                      </span>
+                      <Avatar
+                        src={featuredProperties[safeFeaturedIndex].owner?.avatarUrl || undefined}
+                        fallback={ownerInitials(featuredProperties[safeFeaturedIndex])}
+                        className="size-8 text-xs bg-[#151936] text-[#f3df27]"
+                      />
                       <span className="min-w-0">
                         <span className="block body-sm text-slate-900 truncate">
                           {featuredProperties[safeFeaturedIndex].owner?.name || featuredProperties[safeFeaturedIndex].ownerName}
@@ -860,9 +865,11 @@ export function PropertiesBoard({
                       }}
                       className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-[16px] px-3 py-2 text-left hover:bg-white hover:border-slate-200 transition-colors shadow-sm min-w-0"
                     >
-                      <span className="size-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-medium shrink-0">
-                        {managerInitials(featuredProperties[safeFeaturedIndex].manager?.name)}
-                      </span>
+                      <Avatar
+                        src={featuredProperties[safeFeaturedIndex].manager?.avatarUrl || undefined}
+                        fallback={managerInitials(featuredProperties[safeFeaturedIndex].manager?.name)}
+                        className="size-8 text-xs bg-emerald-700 text-white"
+                      />
                       <span className="min-w-0">
                         <span className="block body-sm text-slate-900 truncate">
                           {featuredProperties[safeFeaturedIndex].manager?.name}

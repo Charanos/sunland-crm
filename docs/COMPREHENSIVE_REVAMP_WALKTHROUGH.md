@@ -241,4 +241,32 @@ Every bespoke `fixed inset-0` icon-badge-header modal in the module (`mandate-fo
 
 **Takeaway for the next module (Leases):** reuse the Command Center shell wholesale — sticky header + bento hero + action band + Premium Card tabs + context rail with an activity peek — and reuse `listAuditLog`'s `associatedGroups` pattern for any "comprehensive activity log" requirement rather than re-deriving it per module.
 
+---
+
+## 13. Leases & Management Mandates Module (mandate-centric rebuild)
+
+Following ADR 014's reframe — Sunland's real clients are landlords, not tenants — the Leases module now has a **mandate-centric register** as its default view, with the old per-tenant lease list preserved as a secondary mode. This is the first module to apply the §12 Command Center pattern to a *new* entity type (a mandate) rather than to Properties itself.
+
+### 13.1 Leases Board (`leases-board.tsx`) — mode switcher
+- New `mode: "mandates" | "leases"` state, default `"mandates"`, rendered as a segmented control (same pill-group pattern as the existing status filters). The **existing tenant-lease table/cards/filters/pagination/drawer were kept entirely intact** under the `"leases"` mode — no working code was discarded to build the mandate register.
+- **Mandates mode** adds a Mandate Register (columns: Landlord, Property, Manager, Rate, Collection MTD, Remittance-pending pill, Status, row `...` menu), a mode-aware KPI tier (swaps the same 4-cell dark shell's content: Under Management / Expected Rent Roll / Collected MTD / Management Fee MTD instead of Total/Active/Mix/Rent Pool), and a mode-aware "Highlighted Recent" hero card (recently-activated mandates instead of recent leases).
+- Row menu actions: Landlord Profile (reuses `PropertyOwnerProfileDrawer` via an on-demand `ownerContactId`-scoped fetch), Message Manager (deep-links to `/admin/messages`), Terminate (reuses the `ConfirmDialog` notes-slot pattern from §12).
+- `mandate-form-modal.tsx` gained an optional-`propertyId` picker branch — copied verbatim from `report-issue-modal.tsx`'s "pre-scoped vs board-level picker" pattern — so the board's "New Mandate" action needed no new modal file.
+
+### 13.2 Mandate File (`mandate-full-view-board.tsx`, route `/admin/mandates/[id]`) — Command Center applied to a mandate
+Structured identically to `property-full-view-board.tsx`: command header (adaptive CTA — "Decide Directly" only for a CEO viewing a GM-pending mandate) + bento hero (property photo + tone-adaptive Vitals: fee rate, collected MTD, management fee MTD, remittance due) + action-required band (pending decision / remittance pending / arrears / missing mandate letter, one derivation feeding both the band and rail) + Premium Card tabs (Overview terms / Financials / Units & Tenants / Documents / Activity) + context rail (Landlord, Property Manager, Property link, Quick Facts).
+- `getMandateWithDetails` (`src/lib/services/mandates.ts`) loads the mandate by its **own id** — not "whichever mandate is currently active on this property" (`getPropertyWithDetails`'s embedded `mandate` field, which misses terminated/historical mandates) — then reuses `getPropertyWithDetails` internally for the leases/documents/collections data that doesn't depend on which mandate is being viewed.
+- Activity tab reuses the exact `associatedGroups` cross-entity pattern from §12.4, grouping `property_mandate` + this property's `lease` ids + this mandate's `remittance_advice` ids in one query (`/api/mandates/[id]/activity`).
+- Units & Tenants tab reuses `LeaseDetailDrawer` unchanged (no new lease overlay), via the same `LeaseSummary → drawer-shape` adapter pattern established in `property-full-view-board.tsx`.
+
+### 13.3 Remittances — new stateful entity, not a report_exports snapshot
+- New `remittance_advices` table (`src/db/schema/finance.ts`): per-period `collectedKes`/`managementFeeKes`/`expensesKes`/`netRemittanceKes`, `status` (`pending`/`released`/`flagged`), its own `verificationToken`. Distinct from `report_exports` (write-once snapshot) because Release/Flag are real state transitions a snapshot can't hold — but **generation still writes a matching `report_exports` row** (same token, `reportType: "remittance_advice"`) so the existing `/fin/reports/verify/[token]` QR-verification flow authenticates it for free, no parallel verification mechanism.
+- `src/lib/services/finance/remittances.ts`: `generateRemittanceAdvice` sums the mandate's property's `transactions` (rent/expense) for a caller-chosen period — the exact computation already built for `getPropertyWithDetails`'s `currentPeriod`, generalized from "this month" to any period. `decideRemittanceAdvice` (release/flag) is authorized via `finance.transaction.write`, the same tier as `recordTransaction` — **not** approval-gated, since the design shows Release as a direct PM/Finance action.
+- `remittance-advice-panel.tsx`: a `Drawer`-based cheque-style breakdown card wrapping the existing `FinanceQrProof` component (no new QR component built) with Copy/Share/Authenticate + Release/Flag actions.
+
+### 13.4 Scope boundaries (mirrors §12's approach)
+- Hub nav's "Scheduler" tab (per the design file) stays "Maintenance" — a design-file inconsistency, not a real requirement, same reasoning as §12.
+- No per-mandate chat FAB (design has one) — duplicates the existing global Messages module.
+- No landlord/tenant portal status rail card — those portals are still stub `ModulePage` placeholders.
+
 

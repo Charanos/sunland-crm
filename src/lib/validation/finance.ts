@@ -29,3 +29,13 @@ export const recordTransactionSchema = z.object({
   occurredAt: z.string().optional(),
   notes: z.string().optional(),
 });
+
+export const generateRemittanceSchema = z.object({
+  periodStart: z.string().min(1),
+  periodEnd: z.string().min(1),
+});
+
+export const decideRemittanceSchema = z.object({
+  action: z.enum(["release", "flag"]),
+  reason: z.string().optional(),
+});

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/authz/errors";
-import { createMandate, listMandates } from "@/lib/services/mandates";
+import { createMandate, getMandatesSummary, listMandates } from "@/lib/services/mandates";
 import { requireCallerContext } from "@/lib/services/types";
 
 export async function GET(request: Request) {
@@ -9,11 +9,14 @@ export async function GET(request: Request) {
     const entityId = searchParams.get("entityId") ?? null;
     const propertyId = searchParams.get("propertyId") ?? undefined;
     const status = searchParams.get("status") ?? undefined;
+    const includeFinancials = searchParams.get("includeFinancials") === "1";
+    const includeSummary = searchParams.get("includeSummary") === "1";
 
     const ctx = await requireCallerContext(entityId, request);
-    const mandates = await listMandates(ctx, { propertyId, status });
+    const mandates = await listMandates(ctx, { propertyId, status, includeFinancials });
+    const summary = includeSummary ? await getMandatesSummary(ctx) : undefined;
 
-    return NextResponse.json({ mandates });
+    return NextResponse.json({ mandates, summary });
   } catch (error) {
     return handleRouteError(error);
   }

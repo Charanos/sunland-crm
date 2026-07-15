@@ -113,6 +113,20 @@
       "when": 1784025779101,
       "tag": "0015_green_absorbing_man",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1784109943939,
+      "tag": "0016_add_remittance_advices",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1784110443967,
+      "tag": "0017_nice_angel",
+      "breakpoints": true
     }
   ]
 }

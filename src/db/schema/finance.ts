@@ -11,6 +11,7 @@ import {
 import { entities, timestamps, users } from "@/db/schema/platform";
 import { contacts } from "@/db/schema/crm";
 import { leases, properties } from "@/db/schema/properties";
+import { propertyMandates } from "@/db/schema/mandates";
 
 export const transactionType = pgEnum("transaction_type", [
   "rent",
@@ -47,5 +48,46 @@ export const transactions = pgTable(
     occurredAtIdx: index("transactions_occurred_at_idx").on(table.occurredAt),
     // Per-property collection history (property full view) filters on this.
     propertyIdx: index("transactions_property_idx").on(table.propertyId),
+  }),
+);
+
+// pending: generated, awaiting release to the landlord. released: paid out.
+// flagged: a discrepancy was raised - release blocked until resolved.
+export const remittanceStatus = pgEnum("remittance_status", [
+  "pending",
+  "released",
+  "flagged",
+]);
+
+// A stateful, per-period remittance record for a management mandate -
+// distinct from report_exports (a write-once snapshot). Generation writes a
+// matching report_exports row (same verificationToken, reportType
+// "remittance_advice") so the existing /fin/reports/verify/[token] flow
+// authenticates it without a parallel verification mechanism.
+export const remittanceAdvices = pgTable(
+  "remittance_advices",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    entityId: uuid("entity_id").references(() => entities.id).notNull(),
+    mandateId: uuid("mandate_id").references(() => propertyMandates.id).notNull(),
+    periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+    periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+    collectedKes: numeric("collected_kes", { precision: 14, scale: 2 }).notNull(),
+    managementFeeKes: numeric("management_fee_kes", { precision: 14, scale: 2 }).notNull(),
+    expensesKes: numeric("expenses_kes", { precision: 14, scale: 2 }).notNull(),
+    netRemittanceKes: numeric("net_remittance_kes", { precision: 14, scale: 2 }).notNull(),
+    status: remittanceStatus("status").default("pending").notNull(),
+    verificationToken: text("verification_token").unique().notNull(),
+    generatedById: uuid("generated_by_id").references(() => users.id).notNull(),
+    releasedById: uuid("released_by_id").references(() => users.id),
+    releasedAt: timestamp("released_at", { withTimezone: true }),
+    flagReason: text("flag_reason"),
+    ...timestamps,
+  },
+  (table) => ({
+    mandateIdx: index("remittance_advices_mandate_idx").on(table.mandateId),
+    entityIdx: index("remittance_advices_entity_idx").on(table.entityId),
+    statusIdx: index("remittance_advices_status_idx").on(table.status),
+    tokenIdx: index("remittance_advices_token_idx").on(table.verificationToken),
   }),
 );

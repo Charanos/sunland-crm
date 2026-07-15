@@ -225,7 +225,7 @@ export function PaginationControls({
 
 // ─── Unified Basic UI/UX Component Exports ────────────────────────────────────
 export { Avatar } from "./avatar";
-export { Badge } from "./badge";
+export { Badge, MarketBadge } from "./badge";
 export { Button } from "./button";
 export { CalendarModal } from "./calendar-modal";
 export { Card } from "./card";

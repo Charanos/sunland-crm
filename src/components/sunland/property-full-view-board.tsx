@@ -43,7 +43,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { DropdownMenu, DropdownItem } from "@/components/ui/erp-primitives";
+import { DropdownMenu, DropdownItem, Avatar } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PropertyFormModal } from "./property-form-modal";
@@ -443,7 +443,7 @@ export function PropertyFullViewBoard({
       const res = await fetch(`/api/mandates/${property.mandate.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "terminate", reason: terminateNotes.trim() }),
+        body: JSON.stringify({ action: "terminate", entityId, reason: terminateNotes.trim() }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -857,10 +857,7 @@ export function PropertyFullViewBoard({
             </div>
             {property.owner ? (
               <div className="flex flex-col gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="size-12 rounded-full bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 mono-data shrink-0">
-                    {property.owner.name?.slice(0, 2).toUpperCase() || "??"}
-                  </div>
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-1.5 min-w-0 pt-0.5">
                     <p className="body-sm font-medium text-slate-900 truncate">{property.owner.name || "Unknown"}</p>
                     {property.owner.phone && (
@@ -876,6 +873,11 @@ export function PropertyFullViewBoard({
                       </a>
                     )}
                   </div>
+                  <Avatar
+                    src={property.owner.avatarUrl || undefined}
+                    fallback={property.owner.name?.slice(0, 2).toUpperCase() || "??"}
+                    className="size-12 bg-slate-50 border border-slate-200 text-slate-600 shrink-0 text-sm"
+                  />
                 </div>
                 {canManage && (
                   <button
@@ -1451,9 +1453,11 @@ function OverviewPanel({ property, handlers }: { property: PropertyDetail; handl
                   <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-white p-3 shadow-sm hover:border-slate-200 transition-colors">
                     {property.mandate.manager?.name ? (
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className="size-9 rounded-full bg-emerald-700 text-white flex items-center justify-center label-caps shrink-0 shadow-sm">
-                          {property.mandate.manager.name.slice(0, 2).toUpperCase()}
-                        </span>
+                        <Avatar
+                          src={property.mandate.manager.avatarUrl || undefined}
+                          fallback={property.mandate.manager.name.slice(0, 2).toUpperCase()}
+                          className="size-9 bg-emerald-700 text-white text-[10px]"
+                        />
                         <span className="min-w-0">
                           <span className="block body-sm font-medium text-slate-900 truncate">{property.mandate.manager.name}</span>
                           <span className="block label-caps text-slate-400 mt-0.5">Manager</span>
