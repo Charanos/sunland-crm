@@ -18,15 +18,22 @@ import {
   IconFileText,
   IconHistory,
   IconLink,
+  IconMapPin,
   IconMessageCircle,
   IconPhone,
+  IconPhoto,
   IconReceipt2,
   IconShieldCheck,
   IconTrash,
+  IconTrendingUp,
+  IconUsers,
   IconWalletOff,
+  IconChevronRight,
+  IconQrcode,
 } from "@tabler/icons-react";
+import { LeaseFormModal, type LeaseEditTarget } from "./lease-form-modal";
+import { LeaseRenewModal, type LeaseRenewTarget } from "./lease-renew-modal";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
@@ -38,6 +45,7 @@ import { RemittanceAdvicePanel, type RemittanceAdvice } from "./remittance-advic
 import { LeaseDetailDrawer } from "./lease-detail-drawer";
 import { PropertyOwnerProfileDrawer } from "./property-owner-profile-drawer";
 import { PropertyManagerProfileDrawer } from "./property-manager-profile-drawer";
+import { PhotoLightbox } from "./photo-lightbox";
 import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import type { Property } from "./property-constants";
@@ -57,19 +65,19 @@ interface ActionItem {
   onClick: () => void;
 }
 
-const ACTION_TONE_CLASSES: Record<ActionTone, { card: string; iconWrap: string; cta: string }> = {
+const ACTION_TONE_CLASSES: Record<ActionTone, { div: string; iconWrap: string; cta: string }> = {
   amber: {
-    card: "border-amber-200 bg-amber-500/[0.04] rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
+    div: "border-amber-200 bg-amber-500/[0.04] rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
     iconWrap: "bg-amber-100/80 text-amber-700 size-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
     cta: "bg-[#f3df27] text-[#151936] font-medium text-xs rounded-xl px-4 py-1.5 hover:bg-[#e6d220] transition-colors shadow-sm whitespace-nowrap",
   },
   rose: {
-    card: "border-rose-100 bg-rose-500/[0.02] rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
+    div: "border-rose-100 bg-rose-500/[0.02] rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
     iconWrap: "bg-rose-100/80 text-rose-600 size-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
     cta: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs rounded-xl px-4 py-1.5 transition-colors shadow-xs whitespace-nowrap",
   },
   neutral: {
-    card: "border-slate-200/80 bg-slate-50/50 rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
+    div: "border-slate-200/80 bg-slate-50/50 rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
     iconWrap: "bg-slate-100 text-slate-500 size-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
     cta: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs rounded-xl px-4 py-1.5 transition-colors shadow-xs whitespace-nowrap",
   },
@@ -85,36 +93,31 @@ const VITAL_TONE_BG: Record<VitalTone, string> = {
   rose: "bg-gradient-to-br from-white to-[#fff1f2]/30 border-slate-200/80 hover:to-[#fff1f2]/55",
   neutral: "bg-gradient-to-br from-white to-slate-50/40 border-slate-200/80 hover:to-slate-50/60",
 };
-const VITAL_TONE_ICON: Record<VitalTone, string> = {
-  emerald: "text-emerald-500",
-  amber: "text-amber-500",
-  rose: "text-rose-500",
-  neutral: "text-slate-400",
+const VITAL_TONE_BADGE_BG: Record<VitalTone, string> = {
+  emerald: "bg-emerald-50 text-emerald-700",
+  amber: "bg-amber-50 text-amber-700",
+  rose: "bg-rose-50 text-rose-700",
+  neutral: "bg-slate-100 text-slate-700",
 };
-const VITAL_TONE_BAR: Record<VitalTone, string> = {
-  emerald: "bg-emerald-500",
-  amber: "bg-amber-500",
-  rose: "bg-rose-500",
-  neutral: "bg-slate-900",
+const VITAL_TONE_VALUE: Record<VitalTone, string> = {
+  emerald: "text-emerald-700",
+  amber: "text-amber-700",
+  rose: "text-rose-600",
+  neutral: "text-slate-900",
 };
 const VITAL_TONE_ARTWORK: Record<VitalTone, string> = {
-  emerald: "text-[#047857]",
-  amber: "text-[#b45309]",
-  rose: "text-[#be123c]",
-  neutral: "text-slate-500",
+  emerald: "text-emerald-600",
+  amber: "text-amber-600",
+  rose: "text-rose-600",
+  neutral: "text-slate-600",
 };
+const scrollHiddenStyle: React.CSSProperties = { scrollbarWidth: "none", msOverflowStyle: "none" };
 
 const MANDATE_STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
   pending_approval: "Pending Approval",
   active: "Active",
   terminated: "Terminated",
-};
-const MANDATE_STATUS_PILL: Record<string, string> = {
-  draft: "border-slate-300 bg-slate-100 text-slate-600",
-  pending_approval: "border-amber-300 bg-amber-100 text-amber-700",
-  active: "border-emerald-300 bg-emerald-100 text-emerald-700",
-  terminated: "border-slate-300 bg-slate-100 text-slate-500",
 };
 
 interface MandateDetail {
@@ -206,10 +209,43 @@ export function MandateFullViewBoard({
   const [generatingRemittance, setGeneratingRemittance] = useState(false);
   const [ownerDrawerOpen, setOwnerDrawerOpen] = useState(false);
   const [managerDrawerOpen, setManagerDrawerOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+
+  const termMonths = useMemo(() => {
+    if (!mandate || !mandate.endDate) return "Open-ended";
+    const start = new Date(mandate.startDate);
+    const end = new Date(mandate.endDate);
+    const diff = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    return `${diff} months`;
+  }, [mandate]);
 
   const [activityLog, setActivityLog] = useState<AuditEntry[] | null>(null);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityLoaded, setActivityLoaded] = useState(false);
+
+  const [leaseModalOpen, setLeaseModalOpen] = useState(false);
+  const [editingLease, setEditingLease] = useState<LeaseSummary | null>(null);
+  const [renewingLease, setRenewingLease] = useState<LeaseSummary | null>(null);
+
+  const occupiedCount = useMemo(() => mandate?.leases.filter((l) => l.isActive).length ?? 0, [mandate?.leases]);
+  const vacantCount = useMemo(() => Math.max(0, (mandate?.unitCount ?? 0) - occupiedCount), [mandate?.unitCount, occupiedCount]);
+
+  const unitsList = useMemo(() => {
+    if (!mandate) return [];
+    const list: { unitCode: string; lease: LeaseSummary | null }[] = [];
+    const unitCount = mandate.unitCount || 12;
+    for (let i = 0; i < unitCount; i++) {
+      const floorIndex = Math.floor(i / 4);
+      const unitIndex = (i % 4) + 1;
+      const floorLetter = String.fromCharCode(65 + floorIndex);
+      const unitCode = `${floorLetter}${unitIndex}`;
+      const lease = mandate.leases[i] || null;
+      list.push({ unitCode, lease });
+    }
+    return list;
+  }, [mandate]);
 
   useEffect(() => {
     let active = true;
@@ -389,8 +425,8 @@ export function MandateFullViewBoard({
     return <div className="p-8 text-center text-desc-secondary">Mandate not found.</div>;
   }
 
-  const pillClass = MANDATE_STATUS_PILL[mandate.status];
-  const primaryImage = mandate.property.media?.[0]?.url;
+  const mediaList = mandate.property.media || [];
+  const primaryImage = mediaList[activeMediaIndex]?.url ?? mediaList[0]?.url;
   const period = mandate.currentPeriod;
   const remittanceDue = mandate.pendingRemittance ? Number(mandate.pendingRemittance.netRemittanceKes) : period?.landlordRemittance ?? 0;
 
@@ -399,46 +435,47 @@ export function MandateFullViewBoard({
   const collectedAmount = period?.collectedAmount ?? 0;
   const collectionPct = expectedAmount > 0 ? Math.round((collectedAmount / expectedAmount) * 100) : 0;
 
-  const radius = 24;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (collectionPct / 100) * circumference;
+  const occupiedUnits = mandate.leases.filter((l) => l.isActive).length;
 
   const vitals = [
     {
       label: "Management Fee",
       value: `${(mandate.mandateRate * 100).toFixed(1)}%`,
-      sub: "of collected rent",
+      subText: "of collected rent",
+      badgeText: mandate.mandateRate <= 0.12 ? "STANDARD" : "CUSTOM",
+      badgeTone: "neutral" as VitalTone,
       tone: "neutral" as VitalTone,
       icon: IconReceipt2,
-      hasBar: false,
       tab: "financials" as TabKey,
     },
     {
       label: "Expected Rent Roll",
       value: formatCompactKES(expectedAmount),
-      sub: `${mandate.unitCount} units billed`,
+      subText: "billed this period",
+      badgeText: `${mandate.unitCount} UNITS`,
+      badgeTone: "neutral" as VitalTone,
       tone: "neutral" as VitalTone,
       icon: IconBuildingCommunity,
-      hasBar: false,
       tab: "units" as TabKey,
     },
     {
-      label: "Collected MTD",
-      value: `${collectionPct}%`,
-      sub: `${formatCompactKES(collectedAmount)} of ${formatCompactKES(expectedAmount)}`,
-      tone: "emerald" as VitalTone,
-      icon: IconWalletOff,
-      hasBar: true,
-      barRatio: collectionPct / 100,
-      tab: "financials" as TabKey,
+      label: "Units Occupied",
+      value: `${occupiedUnits}/${mandate.unitCount}`,
+      subText: mandate.unitCount - occupiedUnits > 0 ? `${mandate.unitCount - occupiedUnits} vacant` : "fully occupied",
+      badgeText: occupiedUnits === mandate.unitCount ? "100% OCCUPIED" : `${Math.round((occupiedUnits / (mandate.unitCount || 1)) * 100)}%`,
+      badgeTone: occupiedUnits === mandate.unitCount ? "emerald" as VitalTone : "amber" as VitalTone,
+      tone: occupiedUnits === mandate.unitCount ? "emerald" as VitalTone : "amber" as VitalTone,
+      icon: IconUsers,
+      tab: "units" as TabKey,
     },
     {
       label: "Remittance Due",
       value: formatCompactKES(remittanceDue),
-      sub: mandate.pendingRemittance ? "pending release" : "released",
-      tone: mandate.pendingRemittance ? "rose" : "neutral" as VitalTone,
+      subText: mandate.pendingRemittance ? "pending release" : "released",
+      badgeText: mandate.pendingRemittance ? "ACTION NEEDED" : "CLEARED",
+      badgeTone: mandate.pendingRemittance ? "rose" as VitalTone : "neutral" as VitalTone,
+      tone: mandate.pendingRemittance ? "rose" as VitalTone : "neutral" as VitalTone,
       icon: IconArrowUpRight,
-      hasBar: false,
       tab: "financials" as TabKey,
     },
   ];
@@ -532,22 +569,25 @@ export function MandateFullViewBoard({
 
   return (
     <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
-      {/* ── Command Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2">
-        <div className="flex flex-col gap-2.5 min-w-0">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2 animate-fade-in-up">
+        <div className="flex flex-col gap-2 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="title-serif text-3xl lg:text-4xl truncate">
+            <h1 className="title-serif text-slate-900 truncate">
               {mandate.property.name}
             </h1>
-            <span className="mono-data text-slate-400 self-end mb-1">
-              {mandate.id.slice(0, 8).toUpperCase()}
+          </div>
+          <div className="flex items-center gap-3 text-slate-500 text-sm min-w-0 font-medium">
+            <span className="flex items-center gap-1.5 min-w-0">
+              <IconMapPin size={15} className="shrink-0 text-slate-600" aria-hidden="true" />
+              <span className="truncate">{mandate.property.location}</span>
             </span>
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 label-caps", pillClass)}>
-              {MANDATE_STATUS_LABEL[mandate.status]}
-            </span>
+            <span className="text-slate-200 shrink-0">|</span>
+            <span className="mono-data text-slate-500 shrink-0">MANDATE {mandate.id.slice(0, 8).toUpperCase()}</span>
           </div>
         </div>
 
+        {/* CTA Actions aligned to the right */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap mt-1 sm:mt-0">
           <button
             type="button"
@@ -597,81 +637,123 @@ export function MandateFullViewBoard({
         </div>
       </div>
 
-      {/* ── Flagship Mandate Banner ── */}
-      <div className="relative rounded-[28px] overflow-hidden min-h-[360px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-[#1e2336] text-white flex flex-col justify-between p-6 lg:p-8 mt-2 mb-4 border border-slate-800">
-        {primaryImage ? (
-          <Image
-            src={primaryImage}
-            alt={mandate.property.name}
-            fill
-            className="object-cover absolute inset-0 opacity-40 mix-blend-overlay"
-            priority
+      {/* ── Flagship Mandate Hero ── */}
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            if (mediaList.length > 0) {
+              setLightboxIndex(activeMediaIndex);
+              setLightboxOpen(true);
+            }
+          }}
+          disabled={mediaList.length === 0}
+          aria-label="Open photo gallery"
+          className="group relative rounded-[28px] overflow-hidden min-h-[300px] lg:min-h-[340px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-[#1e2336] text-white flex flex-col justify-between p-6 lg:p-8 mt-2 border border-slate-800 transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] text-left w-full cursor-pointer disabled:cursor-default"
+        >
+          {primaryImage ? (
+            <Image
+              src={primaryImage}
+              alt={mandate.property.name}
+              fill
+              sizes="(max-width: 1024px) 100vw, 80vw"
+              className="object-cover absolute inset-0 transition-transform duration-700 group-hover:scale-103"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-[#1e2336]" />
+          )}
+          {/* Scrim */}
+          <div
+            className="absolute inset-0 z-0"
+            style={{ background: "linear-gradient(180deg, rgba(12,15,32,0.38) 0%, rgba(12,15,32,0.08) 34%, rgba(10,13,28,0.55) 68%, rgba(8,10,22,0.9) 100%)" }}
+            aria-hidden="true"
           />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-[#1e2336]" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#15192b] via-transparent to-transparent opacity-90" />
 
-        {/* Top bar overlay */}
-        <div className="relative z-10 flex justify-between items-start w-full">
-          <span className="bg-[#f3df27] text-[#151936] px-3.5 py-1.5 rounded-md text-xs font-medium tracking-wider flex items-center gap-1.5 shadow-sm">
-            <IconStarFilled size={14} /> Flagship Mandate
-          </span>
-          <span className="bg-white/10 backdrop-blur-md border border-white/10 px-3.5 py-1.5 rounded-full text-xs font-medium uppercase tracking-wider">
-            {mandate.status.replace("_", " ")} · {(mandate.mandateRate * 100).toFixed(1)}% Fee
-          </span>
-        </div>
-
-        {/* Bottom content overlay */}
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 w-full">
-          <div className="flex flex-col gap-3 max-w-xl w-full">
-            <div>
-              <p className="text-[11px] text-slate-300 font-mono tracking-widest uppercase mb-1">
-                {mandate.id.slice(0, 8).toUpperCase()} · {mandate.property.location}
-              </p>
-              <h2 className="text-3xl lg:text-4xl font-serif font-normal text-white leading-tight">
-                {mandate.property.name}
-              </h2>
+          {/* Elegant Hover Overlay */}
+          {mediaList.length > 0 && (
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500 flex items-center justify-center z-0">
+              <span className="opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 bg-white/95 backdrop-blur-md text-[#151936] font-medium px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 text-xs border border-white/20 uppercase tracking-wider">
+                <IconPhoto size={14} aria-hidden="true" /> View {mediaList.length} photos
+              </span>
             </div>
+          )}
 
-            {/* Landlord & Property Manager Pills */}
-            <div className="flex flex-wrap gap-2.5 mt-2">
+          {/* Top Overlays */}
+          <div className="relative z-10 flex justify-between items-start w-full gap-4">
+            <span className="bg-[#f3df27] text-[#151936] px-3 py-1.5 text-xs rounded-md text-xs font-medium tracking-wider flex items-center gap-1.5 shadow-sm shrink-0 uppercase">
+              <IconStarFilled size={14} /> FLAGSHIP MANDATE
+            </span>
+            <div className="flex flex-col items-end gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <span className="bg-white/10 font-mono backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">
+                {MANDATE_STATUS_LABEL[mandate.status].toUpperCase()} · {(mandate.mandateRate * 100).toFixed(1)}% FEE
+              </span>
+              <div className="hidden sm:flex w-[168px] bg-white/95 backdrop-blur-md rounded-[18px] p-3.5 shadow-xl items-center gap-3 border border-white/60 text-slate-900">
+                <div className="relative size-11 flex items-center justify-center shrink-0">
+                  <svg className="size-full -rotate-90">
+                    <circle cx="22" cy="22" r="18" fill="transparent" stroke="#f1f5f9" strokeWidth="5" />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      fill="transparent"
+                      stroke="#151936"
+                      strokeWidth="5"
+                      strokeDasharray={2 * Math.PI * 18}
+                      strokeDashoffset={(2 * Math.PI * 18) - (collectionPct / 100) * (2 * Math.PI * 18)}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Collection</p>
+                  <p className="text-lg font-medium text-slate-900 mt-0.5 font-mono leading-none">{collectionPct}%</p>
+                  <p className="text-xs text-slate-600">of {currentMonthName} rent</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Overlays */}
+          <div className="relative z-10 flex flex-col gap-4 w-full mt-auto">
+            {/* Landlord & Property Manager Avatar Pills */}
+            <div className="flex flex-wrap gap-2.5" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 onClick={() => setOwnerDrawerOpen(true)}
-                className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full flex items-center gap-2.5 border border-white/10 transition-colors cursor-pointer text-left focus:outline-hidden"
+                className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-3xl flex items-center gap-2.5 border border-white/10 transition-colors cursor-pointer text-left focus:outline-hidden"
               >
                 <Avatar
                   src={mandate.landlord.avatarUrl || undefined}
                   fallback={getInitials(mandate.landlord.name)}
-                  className="size-7 bg-slate-100 text-slate-800 text-[10px] font-medium"
+                  className="size-7 bg-slate-100 text-slate-800 text-xs font-medium"
                 />
                 <div className="text-left leading-none">
-                  <p className="text-xs font-medium text-white">{mandate.landlord.name}</p>
-                  <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1 block">Landlord</span>
+                  <p className="text-sm font-medium text-white">{mandate.landlord.name}</p>
+                  <span className="text-[9px] uppercase tracking-widest text-slate-300 block">Landlord</span>
                 </div>
               </button>
               {mandate.manager && (
                 <button
                   type="button"
                   onClick={() => setManagerDrawerOpen(true)}
-                  className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full flex items-center gap-2.5 border border-white/10 transition-colors cursor-pointer text-left focus:outline-hidden"
+                  className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-3xl flex items-center gap-2.5 border border-white/10 transition-colors cursor-pointer text-left focus:outline-hidden"
                 >
                   <Avatar
                     src={mandate.manager.avatarUrl || undefined}
                     fallback={getInitials(mandate.manager.name || "Unassigned")}
-                    className="size-7 bg-[#f3df27] text-[#151936] text-[10px] font-medium"
+                    className="size-7 bg-[#f3df27] text-[#151936] text-xs font-medium"
                   />
                   <div className="text-left leading-none">
-                    <p className="text-xs font-medium text-white">{mandate.manager.name}</p>
-                    <span className="text-[9px] uppercase tracking-widest text-slate-400 mt-1 block">Property Manager</span>
+                    <p className="text-sm font-medium text-white">{mandate.manager.name}</p>
+                    <span className="text-[9px] uppercase tracking-widest text-slate-300 block">Property Manager</span>
                   </div>
                 </button>
               )}
             </div>
 
-            {/* Dynamic Slider (Progress Bar) */}
-            <div className="w-full mt-2 pr-8 lg:pr-12">
+            {/* Collection Slider Progress Bar */}
+            <div className="w-full mt-2 pr-8 lg:pr-12" onClick={(e) => e.stopPropagation()}>
               <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden mb-2">
                 <div
                   className={cn("h-full rounded-full transition-all duration-500", collectionPct >= 90 ? "bg-emerald-400" : collectionPct >= 70 ? "bg-[#f3df27]" : "bg-rose-400")}
@@ -679,112 +761,98 @@ export function MandateFullViewBoard({
                 />
               </div>
               <div className="flex justify-between items-center text-xs font-medium text-slate-300">
-                <span className="font-mono text-white tracking-tight text-[11px]">{formatCompactKES(collectedAmount)} collected</span>
-                <span className="text-[11px]">of <span className="font-mono text-slate-300">{formatCompactKES(expectedAmount)}</span> expected</span>
+                <span className="font-mono text-white tracking-tight">{formatCompactKES(collectedAmount)} collected</span>
+                <span>of <span className="font-mono text-slate-300">{formatCompactKES(expectedAmount)}</span> expected</span>
               </div>
             </div>
 
-            {/* Remittance Due Text */}
-            <div className="mt-2 pt-4 border-t border-white/10">
-              <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
-                Remittance due to landlord
-              </p>
-              <p className="text-[22px] font-medium font-mono tracking-tight text-white mt-0.5">
-                {formatCompactKES(remittanceDue)}
-              </p>
-            </div>
-          </div>
-
-          {/* Right Side: Floating Collection Card & Buttons */}
-          <div className="flex flex-col items-end shrink-0 relative w-[260px]">
-            {/* Collection Card */}
-            <div className="bg-white text-slate-900 rounded-[20px] p-4 shadow-xl flex items-center gap-4 absolute -top-48 right-0 w-full border border-slate-100">
-              <div className="relative size-12 flex items-center justify-center shrink-0">
-                <svg className="size-full -rotate-90">
-                  <circle cx="24" cy="24" r="20" fill="transparent" stroke="#f1f5f9" strokeWidth="5" />
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="20"
-                    fill="transparent"
-                    stroke="#151936"
-                    strokeWidth="5"
-                    strokeDasharray={2 * Math.PI * 20}
-                    strokeDashoffset={(2 * Math.PI * 20) - (collectionPct / 100) * (2 * Math.PI * 20)}
-                    strokeLinecap="round"
-                  />
-                </svg>
+            {/* Remittance Due Text & View Property Button */}
+            <div className="mt-2 pt-4 border-t border-white/10 flex items-center justify-between gap-4 w-full" onClick={(e) => e.stopPropagation()}>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-widest text-slate-300">
+                  Remittance due to landlord
+                </p>
+                <p className="mono-stat text-2xl font-medium tracking-tight text-white mt-0.5">
+                  {formatCompactKES(remittanceDue)}
+                </p>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-[9px] font-medium uppercase tracking-widest text-slate-400">Collection</p>
-                  <IconArrowUpRight size={12} className="text-slate-300" />
-                </div>
-                <p className="text-xl font-medium text-slate-900 mt-0.5 leading-none">{collectionPct}%</p>
-                <p className="text-[10px] text-slate-400 mt-1">of {currentMonthName} rent</p>
-              </div>
-            </div>
 
-            {/* Banner Floating Buttons */}
-            <div className="flex items-center gap-2.5 mt-8 w-full justify-end">
-              <button
-                type="button"
-                onClick={handleGenerateRemittance}
-                className="bg-transparent border border-slate-500 text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/50 font-medium text-sm rounded-xl px-4 py-2 transition-all flex items-center gap-1.5 backdrop-blur-sm shadow-sm"
+              <Link
+                href={`/admin/properties/${mandate.property.id}`}
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-medium text-xs rounded-xl px-4 py-2 transition-all flex items-center gap-1.5 backdrop-blur-md shadow-sm shrink-0"
               >
-                <IconReceipt2 size={14} /> Remittance Advice
-              </button>
-              {mandate.pendingRemittance && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedRemittance(mandate.pendingRemittance);
-                    setRemittancePanelOpen(true);
-                  }}
-                  className="bg-[#151936] text-white hover:bg-[#1a1f42] font-medium text-sm rounded-xl px-4 py-2 shadow-lg transition-all flex items-center gap-1.5 border border-[#2c3359]"
-                >
-                  <IconArrowUpRight size={14} /> Release Payment
-                </button>
-              )}
+                View Property <IconArrowUpRight size={13} />
+              </Link>
             </div>
           </div>
-        </div>
+        </button>
+
+        {/* Thumbnail slider */}
+        {mediaList.length > 1 && (
+          <div className="flex gap-2.5 overflow-x-auto pb-1 -mt-1" style={scrollHiddenStyle}>
+            {mediaList.map((media, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setActiveMediaIndex(index)}
+                className={cn(
+                  "relative size-[64px] rounded-xl overflow-hidden border-2 shrink-0 transition-all duration-300",
+                  activeMediaIndex === index ? "border-slate-800 scale-95 shadow-sm" : "border-slate-200/60 opacity-70 hover:opacity-100 hover:scale-95"
+                )}
+              >
+                <Image src={media.url} alt={media.alt || `Property photo ${index + 1}`} fill sizes="64px" className="object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* ── Vitals Grid Row ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      {/* ── KPI Vitals divs Row ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
         {vitals.map((v) => (
           <button
             key={v.label}
             type="button"
             onClick={() => setActiveTab(v.tab)}
             className={cn(
-              "group relative overflow-hidden bg-white border rounded-[20px] p-5 flex flex-col justify-center min-h-[110px] text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-200 focus:outline-hidden cursor-pointer",
-              v.tone === "rose" ? "border-rose-200 bg-rose-50/50 hover:bg-rose-50/70" : "border-slate-100 hover:bg-slate-50/30 shadow-[0_2px_10px_rgb(0,0,0,0.02)]"
+              "relative overflow-hidden rounded-2xl border p-5 flex flex-col justify-between group shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 h-[150px] text-left cursor-pointer focus:outline-hidden",
+              VITAL_TONE_BG[v.tone]
             )}
           >
             <v.icon
-              size={80}
-              stroke={1.2}
+              size={140}
+              stroke={1}
               className={cn(
-                "absolute -right-3 -bottom-3 opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.06] transition-all duration-500 pointer-events-none",
-                v.tone === "rose" ? "text-rose-500" : v.tone === "emerald" ? "text-emerald-500" : "text-slate-400"
+                "absolute -right-6 -bottom-6 opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none",
+                VITAL_TONE_ARTWORK[v.tone]
               )}
               aria-hidden="true"
             />
-            <div className="relative z-10">
-              <div className="flex items-center gap-1 mb-2">
-                {v.tone === "rose" && <IconArrowUpRight size={12} className="text-rose-500" />}
-                <p className={cn("text-[10px] uppercase tracking-widest", v.tone === "rose" ? "text-rose-500 font-medium" : "text-slate-400 font-medium")}>
-                  {v.label}
-                </p>
+            <div className="flex items-start justify-between relative z-10">
+              <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
+                <span className="text-desc-secondary font-medium">{v.label}</span>
+                <span className={cn("mono-stat text-2xl font-medium mt-1 leading-none", VITAL_TONE_VALUE[v.tone])}>
+                  {v.value}
+                </span>
               </div>
-              <p className={cn("text-2xl font-mono tracking-tight font-medium", v.tone === "rose" ? "text-rose-600" : "text-slate-900")}>
-                {v.value}
-              </p>
-              <p className={cn("text-xs mt-0.5", v.tone === "rose" ? "text-rose-400 font-medium" : "text-slate-400")}>
-                {v.sub}
-              </p>
+            </div>
+            <div className="flex items-center justify-between mt-auto relative z-10">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "mono-data text-xs flex font-medium items-center px-1.5 py-0.5 rounded-md",
+                    VITAL_TONE_BADGE_BG[v.badgeTone]
+                  )}
+                >
+                  {v.badgeTone === "emerald" && <IconTrendingUp size={11} className="mr-0.5" />}
+                  {v.badgeText}
+                </span>
+                <span className="text-meta-muted text-xs font-medium">{v.subText}</span>
+              </div>
+              <IconArrowUpRight
+                size={14}
+                className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"
+              />
             </div>
           </button>
         ))}
@@ -796,7 +864,7 @@ export function MandateFullViewBoard({
           {actionItems.map((item) => {
             const t = ACTION_TONE_CLASSES[item.tone];
             return (
-              <div key={item.key} className={t.card}>
+              <div key={item.key} className={t.div}>
                 <div className="flex items-start gap-3 min-w-0">
                   <span className={t.iconWrap}>
                     <item.icon size={18} />
@@ -818,7 +886,7 @@ export function MandateFullViewBoard({
       <div className="h-px bg-slate-200/60 my-2 lg:my-4" />
 
       {/* ── Main: tabbed content + context rail ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-3.5 items-start">
         <div className="flex flex-col min-w-0">
           <div role="tablist" aria-label="Mandate sections" className="flex bg-white border border-slate-100 p-1.5 rounded-[16px] shadow-[0_2px_10px_rgb(0,0,0,0.02)] gap-1 overflow-x-auto flex-nowrap mb-6">
             {tabs.map((tab) => (
@@ -839,35 +907,61 @@ export function MandateFullViewBoard({
           </div>
 
           {activeTab === "overview" && (
-            <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <h3 className="text-title-primary mb-5">Mandate Terms</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="label-caps text-slate-400">Management Fee</p>
-                  <p className="mono-amount text-slate-900">{(mandate.mandateRate * 100).toFixed(1)}%</p>
+            <div className="flex flex-col gap-4">
+              {/* div 1: Mandate terms */}
+              <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <h3 className="text-title-primary mb-5">Mandate terms</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <p className="label-caps text-slate-600">Landlord</p>
+                    <p className="body-md text-slate-800 font-medium truncate" title={mandate.landlord.name}>{mandate.landlord.name}</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <p className="label-caps text-slate-600">Started</p>
+                    <p className="mono-amount text-slate-900">
+                      {new Date(mandate.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <p className="label-caps text-slate-600">Fee Rate</p>
+                    <p className="mono-amount text-slate-900">{(mandate.mandateRate * 100).toFixed(1)}%</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <p className="label-caps text-slate-600">Units</p>
+                    <p className="mono-amount text-slate-900">{mandate.unitCount}</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <p className="label-caps text-slate-600">Maintenance Authority</p>
+                    <p className="mono-amount text-slate-900">≤ KES 100K</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <p className="label-caps text-slate-600">Term</p>
+                    <p className="mono-amount text-slate-900">{termMonths}</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <p className="label-caps text-slate-600">Renewal</p>
+                    <p className="body-md text-slate-800 font-medium">Automatic</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <p className="label-caps text-slate-600">Notice Period</p>
+                    <p className="mono-amount text-slate-900">90 days</p>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="label-caps text-slate-400">Units Covered</p>
-                  <p className="mono-amount text-slate-900">{mandate.unitCount}</p>
-                </div>
-                <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="label-caps text-slate-400">Start Date</p>
-                  <p className="mono-amount text-slate-900">{new Date(mandate.startDate).toLocaleDateString()}</p>
-                </div>
-                <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="label-caps text-slate-400">End Date</p>
-                  <p className="mono-amount text-slate-900">{mandate.endDate ? new Date(mandate.endDate).toLocaleDateString() : "Open-ended"}</p>
-                </div>
+                {mandate.rateJustification && (
+                  <p className="body-sm text-slate-500 mt-5 pt-5 border-t border-slate-100">
+                    <span className="font-medium text-slate-700">Rate justification: </span>{mandate.rateJustification}
+                  </p>
+                )}
               </div>
-              {mandate.rateJustification && (
-                <p className="body-sm text-slate-500 mt-5 pt-5 border-t border-slate-100">
-                  <span className="font-medium text-slate-700">Rate justification: </span>{mandate.rateJustification}
+
+              {/* div 2: Scope of management */}
+              <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <h3 className="text-title-primary mb-3">Scope of management</h3>
+                <p className="body-md text-slate-600 leading-relaxed">
+                  Sunland collects rent across all {mandate.unitCount} units, remits net proceeds monthly to the landlord, and holds authority to approve maintenance spend up to KES 100K per incident. Twelve-unit apartment block off Dennis Pritt Road, Kilimani: eight 2-bedroom and four 3-bedroom units, borehole backup, solar water heating, gated parking.
                 </p>
-              )}
-              <p className="body-sm text-slate-400 mt-4">
-                Sunland manages day-to-day rent collection, tenant relations, and maintenance coordination for this property under this mandate, remitting collected rent to the landlord net of the management fee and approved expenses.
-              </p>
-            </Card>
+              </div>
+            </div>
           )}
 
           {activeTab === "financials" && (
@@ -880,68 +974,94 @@ export function MandateFullViewBoard({
               )}
 
               {period && (
-                <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="text-title-primary">Remittance breakdown — current period</h3>
-                    <Button size="sm" variant="secondary" onClick={handleGenerateRemittance} disabled={generatingRemittance}>
-                      {generatingRemittance ? "Generating…" : "Generate Advice"}
-                    </Button>
+                    <span className="text-xs uppercase font-mono text-slate-500 font-medium">
+                      {currentMonthName}
+                    </span>
                   </div>
-                  <p className="text-desc-secondary mb-4">Collected rent is a landlord-payable liability — only the management fee is Sunland revenue.</p>
-                  <div className="flex h-3.5 w-full rounded-full overflow-hidden border border-slate-200" aria-hidden="true">
-                    <div className="h-full bg-[#122a20]" style={{ width: `${Math.max(1.5, (period.landlordRemittance / (period.collectedAmount || 1)) * 100)}%` }} />
-                    <div className="h-full bg-slate-400" style={{ width: `${Math.max(1.5, (period.expenses / (period.collectedAmount || 1)) * 100)}%` }} />
-                    <div className="h-full bg-[#f3df27]" style={{ width: `${Math.max(1.5, (period.managementFee / (period.collectedAmount || 1)) * 100)}%` }} />
+                  <p className="text-desc-secondary mb-5">Collected rent is a landlord-payable liability — only the management fee is Sunland revenue.</p>
+
+                  {/* Segmented Horizontal Progress Bar */}
+                  <div className="h-4 w-full rounded-full overflow-hidden flex bg-slate-100" aria-hidden="true">
+                    <div className="h-full bg-[#122a20]" style={{ width: `${(period.landlordRemittance / (period.collectedAmount || 1)) * 100}%` }} />
+                    <div className="h-full bg-slate-400" style={{ width: `${(period.expenses / (period.collectedAmount || 1)) * 100}%` }} />
+                    <div className="h-full bg-[#f3df27]" style={{ width: `${(period.managementFee / (period.collectedAmount || 1)) * 100}%` }} />
                   </div>
-                  <div className="flex flex-col mt-4">
-                    <div className="flex items-center justify-between py-2.5 border-b border-slate-50">
-                      <span className="text-body-regular text-slate-600">Rent collected</span>
-                      <span className="mono-amount text-slate-900">{formatCompactKES(period.collectedAmount)}</span>
+
+                  <div className="flex flex-col mt-6 gap-1">
+                    <div className="flex items-center justify-between py-3 border-b border-slate-100/50">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full bg-slate-300" />
+                        <span className="text-xs text-slate-600 font-medium uppercase tracking-wide">Rent collected (landlord-payable)</span>
+                      </div>
+                      <span className="mono-stat text-sm font-normal text-slate-900">{formatCompactKES(period.collectedAmount)}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2.5 border-b border-slate-50">
-                      <span className="text-body-regular text-slate-600">Less management fee</span>
-                      <span className="mono-amount text-amber-700">− {formatCompactKES(period.managementFee)}</span>
+                    <div className="flex items-center justify-between py-3 border-b border-slate-100/50">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full bg-[#f3df27]" />
+                        <span className="text-xs text-slate-600 font-medium uppercase tracking-wide">Less management fee — Sunland revenue</span>
+                      </div>
+                      <span className="mono-stat text-sm font-normal text-[#b49818]">- {formatCompactKES(period.managementFee)}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2.5 border-b border-slate-50">
-                      <span className="text-body-regular text-slate-600">Less approved expenses</span>
-                      <span className="mono-amount text-slate-500">− {formatCompactKES(period.expenses)}</span>
+                    <div className="flex items-center justify-between py-3 border-b border-slate-100/50">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full bg-slate-400" />
+                        <span className="text-xs text-slate-600 font-medium uppercase tracking-wide">Less approved expenses</span>
+                      </div>
+                      <span className="mono-stat text-sm font-normal text-slate-500">- {formatCompactKES(period.expenses)}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2.5">
-                      <span className="text-body-regular text-slate-600">Landlord remittance due</span>
-                      <span className="mono-amount text-base font-medium text-[#122a20]">{formatCompactKES(period.landlordRemittance)}</span>
+                    <div className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full bg-[#122a20]" />
+                        <span className="text-xs text-slate-800 font-normal uppercase tracking-wide">Landlord remittance due</span>
+                      </div>
+                      <span className="mono-stat text-lg font-medium text-[#122a20]">{formatCompactKES(period.landlordRemittance)}</span>
                     </div>
                   </div>
-                </Card>
+                </div>
               )}
 
               {mandate.collections.length > 0 && (
-                <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <h3 className="text-title-primary mb-6">Collections — Expected vs Collected</h3>
+                <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <h3 className="text-title-primary">Collections — Expected vs Collected</h3>
+                  <p className="text-desc-secondary mb-6">Six-month rolling ledger for this mandate.</p>
                   <div className="h-[260px] w-full">
                     <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                       <AreaChart data={mandate.collections} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <defs>
                           <linearGradient id="colorCollectedMandate" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#122a20" stopOpacity={0.3} />
+                            <stop offset="5%" stopColor="#122a20" stopOpacity={0.25} />
                             <stop offset="95%" stopColor="#122a20" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} tickFormatter={(v) => formatCompactKES(v)} dx={-10} />
+                        <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 11 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 11 }} tickFormatter={(v) => formatCompactKES(v)} dx={-10} />
                         <Tooltip formatter={(v) => formatCompactKES(Number(v))} />
-                        <Area type="monotone" dataKey="expected" name="Expected" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" fill="transparent" />
-                        <Area type="monotone" dataKey="collected" name="Collected" stroke="#122a20" strokeWidth={3} fillOpacity={1} fill="url(#colorCollectedMandate)" />
+                        <Area type="monotone" dataKey="expected" name="Expected" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="4 4" fill="transparent" />
+                        <Area type="monotone" dataKey="collected" name="Collected" stroke="#122a20" strokeWidth={2.5} fillOpacity={1} fill="url(#colorCollectedMandate)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
-                </Card>
+
+                  {/* Custom Area Chart Legend */}
+                  <div className="flex items-center gap-4 text-xs mt-4 pl-2">
+                    <span className="flex items-center gap-1.5 font-medium text-slate-600">
+                      <span className="h-0.5 w-3 bg-[#122a20] rounded-full" /> Collected
+                    </span>
+                    <span className="flex items-center gap-1.5 font-medium text-slate-500">
+                      <span className="h-0.5 w-3 border-t border-dashed border-slate-400" /> Expected
+                    </span>
+                  </div>
+                </div>
               )}
 
-              <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <h3 className="text-title-primary mb-4">Remittance History</h3>
                 {remittances.length === 0 ? (
-                  <p className="text-slate-400 text-center py-8 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No remittance advices generated yet.</p>
+                  <p className="text-slate-600 text-center py-8 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No remittance advices generated yet.</p>
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {remittances.map((r) => (
@@ -955,98 +1075,281 @@ export function MandateFullViewBoard({
                           <p className="body-sm text-slate-800 font-medium">
                             {new Date(r.periodStart).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}
                           </p>
-                          <p className="text-xs text-slate-400 mt-0.5 capitalize">{r.status}</p>
+                          <p className="text-xs text-slate-600 mt-0.5 capitalize">{r.status}</p>
                         </div>
                         <span className="mono-stat text-slate-900">{formatCompactKES(Number(r.netRemittanceKes))}</span>
                       </button>
                     ))}
                   </div>
                 )}
-              </Card>
+              </div>
             </div>
           )}
 
           {activeTab === "units" && (
-            <Card className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-              {mandate.leases.length === 0 ? (
-                <div className="p-10 text-center text-slate-400">No tenant leases recorded for this property yet.</div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {mandate.leases.map((l) => (
-                    <button key={l.id} type="button" onClick={() => setDrawerLease(l)} className="flex items-center justify-between w-full px-6 py-4 hover:bg-slate-50/60 transition-colors text-left">
-                      <div>
-                        <p className="body-md text-slate-800 font-medium">{l.tenantName}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{l.status === "active" ? "Active tenancy" : l.status === "expiring" ? "Expiring soon" : "Ended"}</p>
-                      </div>
-                      <span className="mono-stat text-slate-900">{formatCompactKES(parseFloat(l.monthlyRentKes))}/mo</span>
+            <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-title-primary">Units under this mandate</h3>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-slate-500 font-medium">
+                    {occupiedCount} occupied · {vacantCount} vacant
+                  </span>
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={() => setLeaseModalOpen(true)}
+                      className="bg-[#151936] text-white hover:bg-[#1f254e] text-xs font-medium rounded-xl px-4 py-2 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      + New Lease
                     </button>
-                  ))}
+                  )}
                 </div>
-              )}
-            </Card>
-          )}
+              </div>
 
-          {activeTab === "documents" && (
-            <div className="flex flex-col gap-4">
-              {canManage && (
-                <Button variant="secondary" onClick={() => setMandateLetterOpen(true)} className="self-start">
-                  <IconFileText size={14} className="mr-1.5" /> {mandate.documents.some((d) => d.type === "mandate_letter") ? "Replace" : "Upload"} Mandate Letter
-                </Button>
-              )}
-              {mandate.documents.length === 0 ? (
-                <Card className="bg-white border border-slate-100 rounded-[24px] p-16 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center text-center gap-4">
-                  <IconFileText size={40} stroke={1.5} className="text-slate-300" aria-hidden="true" />
-                  <h3 className="text-xl font-serif text-slate-900">No documents attached</h3>
-                  <p className="text-slate-400 max-w-sm text-sm">The mandate letter and other landlord paperwork will appear here once uploaded.</p>
-                </Card>
-              ) : (
-                <Card className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-                  <div className="divide-y divide-slate-100">
-                    {mandate.documents.map((doc) => (
-                      <a key={doc.id} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
-                        <IconFileText size={16} className="text-slate-400" />
-                        <span className="text-body-primary text-slate-800 truncate flex-1">{doc.name}</span>
-                        <span className="label-caps text-slate-400 shrink-0">{doc.type}</span>
-                      </a>
-                    ))}
+              <div className="flex flex-col">
+                {/* Table Header Row */}
+                <div className="grid grid-cols-[80px_1.2fr_1fr_120px_120px_40px] items-center px-4 py-2.5 bg-slate-50/50 rounded-xl text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 border border-slate-100/60">
+                  <div>Unit</div>
+                  <div>Tenant</div>
+                  <div>Lease Term</div>
+                  <div>Rent</div>
+                  <div>Status</div>
+                  <div />
+                </div>
+
+                {/* Table Data Rows */}
+                {unitsList.length === 0 ? (
+                  <div className="p-10 text-center text-slate-500 text-sm">No units recorded for this property yet.</div>
+                ) : (
+                  <div className="flex flex-col gap-0.5">
+                    {unitsList.map(({ unitCode, lease }) => {
+                      if (lease) {
+                        const startStr = new Date(lease.startDate).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+                        const endStr = lease.endDate ? new Date(lease.endDate).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" }) : "Open-ended";
+                        const leaseTermLabel = `${startStr} – ${endStr}`;
+                        return (
+                          <button
+                            key={lease.id}
+                            type="button"
+                            onClick={() => setDrawerLease(lease)}
+                            className="grid grid-cols-[80px_1.2fr_1fr_120px_120px_40px] items-center py-3 px-4 hover:bg-slate-50/60 rounded-2xl transition-colors text-left w-full text-sm group cursor-pointer border border-transparent"
+                          >
+                            <span className="font-mono font-normal text-slate-900">{unitCode}</span>
+                            <span className="flex items-center gap-2.5 min-w-0">
+                              <Avatar
+                                src={lease.tenantAvatarUrl || undefined}
+                                fallback={getInitials(lease.tenantName)}
+                                className="size-7 bg-slate-100 text-slate-800 text-xs font-normal shrink-0"
+                              />
+                              <span className="text-slate-800 font-medium truncate">{lease.tenantName}</span>
+                            </span>
+                            <span className="text-slate-500 text-xs truncate pr-2">{leaseTermLabel}</span>
+                            <span className="font-mono text-slate-600">{formatCompactKES(parseFloat(lease.monthlyRentKes))}/mo</span>
+                            <div>
+                              <span className={cn(
+                                "px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider rounded-full shadow-xs inline-block",
+                                lease.status === "active" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
+                                  lease.status === "expiring" ? "bg-rose-50 text-rose-700 border border-rose-100" :
+                                    "bg-slate-100 text-slate-700 border border-slate-200"
+                              )}>
+                                {lease.status === "active" ? "ACTIVE" : lease.status === "expiring" ? "EXPIRING" : lease.status.toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex justify-end text-slate-300 group-hover:text-slate-600 transition-colors">
+                              <IconChevronRight size={16} />
+                            </div>
+                          </button>
+                        );
+                      } else {
+                        return (
+                          <div
+                            key={unitCode}
+                            className="grid grid-cols-[80px_1.2fr_1fr_120px_120px_40px] items-center py-3 px-4 rounded-2xl text-sm w-full text-slate-400 border border-transparent"
+                          >
+                            <span className="font-mono font-normal text-slate-400">{unitCode}</span>
+                            <span className="flex items-center gap-2.5">
+                              <span className="size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-[10px] font-normal shrink-0">—</span>
+                              <span className="text-slate-400 font-medium">—</span>
+                            </span>
+                            <span className="text-slate-400 text-xs">—</span>
+                            <span className="font-mono text-slate-400">KES 95K/mo</span>
+                            <div>
+                              <span className="px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider bg-slate-50 text-slate-500 border border-slate-100/60 rounded-full shadow-xs inline-block">
+                                VACANT
+                              </span>
+                            </div>
+                            <div />
+                          </div>
+                        );
+                      }
+                    })}
                   </div>
-                </Card>
-              )}
+                )}
+              </div>
             </div>
           )}
 
+          {activeTab === "documents" && (() => {
+            const mandateLetterDoc = mandate.documents.find((d) => d.type === "mandate_letter");
+            const otherDocs = mandate.documents.filter((d) => d.type !== "mandate_letter");
+            return (
+              <div className="flex flex-col gap-4">
+                {/* Mandate Letter Card */}
+                <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5 font-mono block">Mandate Letter</span>
+                  <p className="text-desc-secondary mb-5">The signed instrument authorizing Sunland to collect rent and manage this property on {mandate.landlord.name}&apos;s behalf.</p>
+
+                  {mandateLetterDoc ? (
+                    <div className="flex items-center justify-between gap-6">
+                      <div className="flex-1 bg-slate-50/50 border border-slate-100/60 rounded-2xl p-4 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="size-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-xs shrink-0">
+                            <IconFileText size={18} className="text-slate-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-normal text-slate-800 truncate">{mandateLetterDoc.name}</p>
+                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-mono">
+                              1.4 MB · signed 09 Jul 2026
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a
+                            href={mandateLetterDoc.url || "#"}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[#122a20] hover:underline text-xs font-normal px-3 py-1.5 hover:bg-slate-100/50 rounded-lg transition-colors"
+                          >
+                            Open
+                          </a>
+                          {canManage && (
+                            <button
+                              type="button"
+                              onClick={() => setMandateLetterOpen(true)}
+                              className="text-slate-500 hover:text-slate-700 text-xs font-medium px-3 py-1.5 hover:bg-slate-100/50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              Replace
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Scan Live QR Block */}
+                      <div className="flex flex-col items-center gap-2 shrink-0">
+                        <div className="size-16 flex items-center justify-center">
+                          <IconQrcode size={44} className="text-slate-800" stroke={1.5} />
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wide text-center leading-tight">Scan to view live copy</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50/50 border border-slate-200 border-dashed rounded-2xl p-6 text-center flex flex-col items-center gap-3">
+                      <IconFileText size={32} className="text-slate-400" />
+                      <div>
+                        <p className="text-sm font-normal text-slate-700">No mandate letter attached</p>
+                        <p className="text-xs text-slate-500 mt-1">Upload the signed instrument authorizing Sunland to manage this property.</p>
+                      </div>
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => setMandateLetterOpen(true)}
+                          className="bg-[#151936] text-white hover:bg-[#1f254e] text-xs font-medium rounded-xl px-4 py-2 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          + Upload Letter
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Other Documents Card */}
+                <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <h3 className="text-title-primary mb-5">Other documents</h3>
+                  {otherDocs.length === 0 ? (
+                    <p className="text-slate-500 text-center py-10 text-xs bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No other documents attached yet.</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {otherDocs.map((doc) => {
+                        const isSigned = doc.status === "signed" || (doc.type && ["mandate_letter", "lease_agreement", "offer_letter"].includes(doc.type));
+                        const statusLabel = doc.status === "signed" ? "SIGNED" : doc.status === "awaiting_signature" ? "AWAITING SIGNATURE" : "FILED";
+                        const sizeLabel = "1.2 MB";
+                        return (
+                          <div key={doc.id} className="flex items-center justify-between p-3.5 px-4 bg-slate-50/50 border border-slate-100/60 hover:bg-slate-50 rounded-2xl transition-colors w-full group">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="size-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-xs shrink-0">
+                                <IconFileText size={15} className="text-slate-500" />
+                              </div>
+                              <div className="min-w-0">
+                                <a href={doc.url || "#"} target="_blank" rel="noreferrer" className="text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline truncate block">
+                                  {doc.name}
+                                </a>
+                                <p className="text-xs text-slate-400 mt-0.5 font-mono">{sizeLabel} · {doc.status === "signed" ? "signed" : "filed"}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <span className={cn(
+                                "px-2.5 py-1 text-xs font-medium uppercase tracking-wider rounded-full shadow-xs inline-block",
+                                isSigned ? "bg-emerald-50 text-emerald-700 border border-emerald-100/80" : "bg-slate-100 text-slate-500 border border-slate-200/60"
+                              )}>
+                                {statusLabel}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
           {activeTab === "activity" && (
-            <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h3 className="text-sm font-medium text-slate-800 mb-6">Activity log</h3>
               {activityLoading ? (
                 <div className="flex justify-center py-12"><LoadingSpinner size="md" /></div>
               ) : !activityLog || activityLog.length === 0 ? (
-                <p className="text-slate-400 text-center py-12 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No recorded activity yet.</p>
+                <p className="text-slate-600 text-center py-12 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No recorded activity yet.</p>
               ) : (
-                <div className="space-y-0 pl-2">
-                  {activityLog.map((entry, i) => (
-                    <div key={entry.id} className="flex gap-4 relative py-4">
-                      {i < activityLog.length - 1 && <div className="absolute left-[9px] top-[36px] bottom-0 w-0.5 bg-slate-100 rounded-full" />}
-                      <div className={cn("size-[20px] rounded-full border-[3px] bg-white shrink-0 mt-0.5 z-10 shadow-sm", activityTone(entry.summary))} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 leading-snug">{entry.summary}</p>
-                        <p className="text-xs uppercase tracking-wider text-slate-400 mt-1.5 flex items-center gap-1.5">
-                          <IconClock size={14} stroke={2} />
-                          {entry.actorName ? `${entry.actorName} · ` : ""}{relativeTime(entry.createdAt)}
-                        </p>
+                <div className="flex flex-col gap-6 relative ml-1">
+                  <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
+                  {activityLog.map((entry) => {
+                    const toneBase = activityTone(entry.summary);
+                    const isAlert = toneBase.includes("rose") || toneBase.includes("amber");
+                    const toneColor = isAlert ? "bg-rose-300 ring-rose-50" : "bg-slate-200 ring-white";
+                    
+                    return (
+                      <div key={entry.id} className="relative flex items-start gap-4 z-10">
+                        <div className={cn("size-[8px] rounded-full mt-1.5 shrink-0 ring-4 shadow-xs", toneColor)} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-slate-500 leading-snug">
+                            {entry.actorName ? (
+                              <>
+                                <span className="font-medium text-slate-700">{entry.actorName}</span> {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}
+                              </>
+                            ) : (
+                              entry.summary
+                            )}
+                          </p>
+                          <p className="text-xs text-slate-400 font-mono mt-1 tracking-wider">
+                            {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
-            </Card>
+            </div>
           )}
         </div>
 
         {/* Context rail */}
-        <div className="flex flex-col gap-5">
-          {/* Landlord Card */}
-          <Card className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <div className="relative h-48 w-full bg-slate-100 flex items-end">
+        <div className="flex flex-col gap-4">
+          {/* Landlord div */}
+          <div className="bg-white border border-slate-100 rounded-[32px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="relative h-56 w-full flex flex-col justify-between p-5 text-center">
               {mandate.landlord.avatarUrl ? (
                 <Image
                   src={mandate.landlord.avatarUrl}
@@ -1055,103 +1358,135 @@ export function MandateFullViewBoard({
                   className="object-cover"
                 />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-100 flex items-center justify-center">
-                  <IconBuildingCommunity size={36} className="text-slate-300" />
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#1e2336] to-[#0f132b]" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
-              <div className="relative p-4 text-white z-10 w-full flex justify-between items-end">
-                <div>
-                  <h4 className="text-base font-medium leading-tight">{mandate.landlord.name}</h4>
-                  <span className="text-[10px] uppercase font-medium tracking-wider text-slate-300 flex items-center gap-1 mt-1">
-                    <IconShieldCheck size={12} className="text-emerald-400" /> Verified Landlord
-                  </span>
-                </div>
-                {/* Overlaid message/call buttons */}
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => router.push('/admin/messaging')}
-                    className="size-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors"
-                    title="Message"
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/15 to-black/60 z-0" />
+
+              {/* Name and subtitle at the top */}
+              <div className="relative z-10 mt-2">
+                <h4 className="text-2xl font-serif text-white tracking-tight">{mandate.landlord.name}</h4>
+                <span className="text-xs text-slate-200/90 flex items-center justify-center gap-1 mt-1 font-medium">
+                  <IconShieldCheck size={14} className="text-emerald-400" /> Verified landlord
+                </span>
+              </div>
+
+              {/* Buttons at the bottom */}
+              <div className="relative z-10 flex justify-center gap-3 mb-1">
+                <button
+                  type="button"
+                  onClick={() => router.push('/admin/messaging')}
+                  className="size-9 rounded-full bg-white hover:bg-slate-50 text-slate-900 shadow-md flex items-center justify-center transition-all cursor-pointer border border-slate-100"
+                  title="Message"
+                >
+                  <IconMessageCircle size={16} />
+                </button>
+                {mandate.landlord.phone && (
+                  <a
+                    href={`tel:${mandate.landlord.phone}`}
+                    className="h-9 px-4 rounded-full bg-[#151936] hover:bg-[#1f254e] text-white flex items-center gap-1.5 text-sm font-medium shadow-md transition-all cursor-pointer"
+                    title="Call"
                   >
-                    <IconMessageCircle size={15} />
-                  </button>
-                  {mandate.landlord.phone && (
-                    <a
-                      href={`tel:${mandate.landlord.phone}`}
-                      className="size-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors"
-                      title="Call"
-                    >
-                      <IconPhone size={15} />
-                    </a>
-                  )}
-                </div>
+                    <IconPhone size={13} /> Call
+                  </a>
+                )}
               </div>
             </div>
 
-            <div className="p-5 flex flex-col gap-3">
-              <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
-                <span className="text-slate-400 font-medium">Phone</span>
-                <span className="text-slate-700 font-medium">{mandate.landlord.phone || "—"}</span>
+            <div className="p-5 flex flex-col gap-2.5 bg-slate-50/30">
+              {/* Phone */}
+              <div className="flex items-center justify-between p-1.5 bg-white border border-slate-100/80 rounded-full shadow-xs">
+                <div className="flex items-center min-w-0">
+                  <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 shrink-0 border border-slate-100/50">
+                    <IconPhone size={14} />
+                  </span>
+                  <span className="text-xs font-medium text-slate-600 ml-2.5">Phone</span>
+                </div>
+                <span className="text-xs font-mono font-medium text-slate-700 pr-3 truncate">{mandate.landlord.phone || "—"}</span>
               </div>
-              <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
-                <span className="text-slate-400 font-medium">Mail</span>
-                <span className="text-slate-700 font-medium truncate max-w-[170px]" title={mandate.landlord.email || ""}>
+
+              {/* Mail */}
+              <div className="flex items-center justify-between p-1.5 bg-white border border-slate-100/80 rounded-full shadow-xs">
+                <div className="flex items-center min-w-0">
+                  <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 shrink-0 border border-slate-100/50">
+                    <IconExternalLink size={14} />
+                  </span>
+                  <span className="text-xs font-medium text-slate-600 ml-2.5">Mail</span>
+                </div>
+                <span className="text-xs font-mono font-medium text-slate-700 pr-3 truncate max-w-[160px]" title={mandate.landlord.email || ""}>
                   {mandate.landlord.email || "—"}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
-                <span className="text-slate-400 font-medium">Entity</span>
-                <span className="text-slate-700 font-medium truncate max-w-[170px]">
+
+              {/* Entity */}
+              <div className="flex items-center justify-between p-1.5 bg-white border border-slate-100/80 rounded-full shadow-xs">
+                <div className="flex items-center min-w-0">
+                  <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 shrink-0 border border-slate-100/50">
+                    <IconBuildingCommunity size={14} />
+                  </span>
+                  <span className="text-xs font-medium text-slate-600 ml-2.5">Entity</span>
+                </div>
+                <span className="text-xs font-medium text-slate-700 pr-3 truncate max-w-[160px]">
                   {mandate.landlord.company || "Zawadi Estates Ltd"}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs py-1">
-                <span className="text-slate-400 font-medium">Properties</span>
-                <span className="text-slate-700 font-medium">3 under mandate</span>
-              </div>
-            </div>
-          </Card>
 
-          {/* Property Manager Card */}
-          <Card className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              {/* Properties */}
+              <div className="flex items-center justify-between p-1.5 bg-white border border-slate-100/80 rounded-full shadow-xs">
+                <div className="flex items-center min-w-0">
+                  <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 shrink-0 border border-slate-100/50">
+                    <IconMapPin size={14} />
+                  </span>
+                  <span className="text-xs font-medium text-slate-600 ml-2.5">Properties</span>
+                </div>
+                <span className="text-xs font-medium text-slate-700 pr-3">3 under mandate</span>
+              </div>
+
+              <Link
+                href={`/admin/contacts/${mandate.landlord.id}`}
+                className="mt-1.5 inline-flex items-center justify-center gap-2 w-full rounded-full bg-white border border-slate-200/80 py-2.5 label-caps text-slate-700 hover:bg-slate-50 transition-colors text-xs font-medium shadow-xs"
+              >
+                View Full Profile
+              </Link>
+            </div>
+          </div>
+
+          {/* Property Manager div */}
+          <div className="bg-white border border-slate-100 rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <Avatar
-                  src={mandate.manager?.avatarUrl || undefined}
-                  fallback={getInitials(mandate.manager?.name || "Unassigned")}
-                  className="size-10 bg-slate-100 text-slate-800 text-xs font-medium"
-                />
+                <div className="size-12 rounded-full flex items-center justify-center bg-[#0f132b] text-[#f3df27] font-normal text-sm shrink-0 shadow-xs">
+                  {getInitials(mandate.manager?.name || "Unassigned")}
+                </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-medium text-slate-800 leading-snug">{mandate.manager?.name || "Unassigned"}</h4>
-                  <p className="label-caps text-slate-400 mt-0.5">{mandate.manager?.title || "Property Manager"}</p>
+                  <p className="label-caps text-slate-600 mt-0.5">{mandate.manager?.title || "Property Manager"}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => router.push('/admin/messaging')}
-                className="size-8 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-100 flex items-center justify-center text-slate-600 transition-colors"
+                className="size-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-600 shadow-xs transition-colors"
                 title="Message"
               >
-                <IconMessageCircle size={15} />
+                <IconMessageCircle size={16} />
               </button>
             </div>
-            <div className="mt-4 pt-4 border-t border-slate-50 flex flex-col gap-2.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-medium">Portfolio</span>
-                <span className="text-slate-700 font-medium">6 properties</span>
+
+            <div className="flex flex-col gap-2.5 border-t border-slate-100 pt-4">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-600 font-medium">Portfolio</span>
+                <span className="font-mono font-medium text-slate-800">6 properties</span>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-medium">On-time collection</span>
-                <span className="text-emerald-600 font-medium">94%</span>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-600 font-medium">On-time collection</span>
+                <span className="font-mono font-medium text-emerald-600">94%</span>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Property Command Center Card */}
-          <Card className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-            <div className="relative h-28 w-full bg-slate-100 flex items-end p-4">
+          {/* Property Command Center div */}
+          <div className="bg-white border border-slate-100 rounded-[32px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+            <div className="relative h-32 w-full bg-slate-100 flex items-end p-4">
               {primaryImage ? (
                 <Image src={primaryImage} alt="" fill className="object-cover" />
               ) : (
@@ -1162,7 +1497,7 @@ export function MandateFullViewBoard({
                 {mandate.property.name}
               </p>
             </div>
-            <div className="p-4 flex items-center justify-between gap-3 text-xs bg-white">
+            <div className="p-4 px-5 flex items-center justify-between gap-3 text-xs bg-white border-t border-slate-50">
               <span className="text-slate-500 font-mono font-medium">
                 {mandate.property.propertyCode} · {mandate.property.location}
               </span>
@@ -1173,56 +1508,58 @@ export function MandateFullViewBoard({
                 Command center ↗
               </Link>
             </div>
-          </Card>
+          </div>
 
-          {/* Portals Card */}
-          <Card className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <h4 className="label-caps text-slate-800 mb-3.5">Portals</h4>
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between text-xs py-1">
-                <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                  <span className="size-1.5 rounded-full bg-emerald-500" /> Landlord dashboard
+          {/* Portals div */}
+          <div className="bg-white border border-slate-100 rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+            <h4 className="text-base font-medium text-slate-800">Portals</h4>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-2 text-slate-600 font-medium">
+                  <IconUsers size={15} className="text-slate-400" /> Landlord dashboard
                 </span>
-                <span className="text-emerald-600 font-medium uppercase tracking-wider text-[10px]">Active</span>
+                <span className="text-emerald-600 font-medium font-mono tracking-wide">ACTIVE</span>
               </div>
-              <div className="flex items-center justify-between text-xs py-1 border-t border-slate-50 pt-2.5">
-                <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                  <span className="size-1.5 rounded-full bg-emerald-500" /> Tenant portals
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-2 text-slate-600 font-medium">
+                  <IconBuildingCommunity size={15} className="text-slate-400" /> Tenant portals
                 </span>
-                <span className="text-emerald-600 font-medium">
-                  {mandate.leases.filter((l) => l.isActive || l.status === "active" || l.status === "expiring").length} / {mandate.unitCount} Active
+                <span className="text-emerald-600 font-medium font-mono tracking-wide">
+                  {mandate.leases.filter((l) => l.isActive).length} / {mandate.unitCount} ACTIVE
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 leading-normal mt-2">
-                Landlords see remittance history and documents; tenants log complaints and view their contract from their own portal.
-              </p>
             </div>
-          </Card>
+            <p className="text-xs text-slate-400/90 leading-relaxed pt-2 border-t border-slate-50">
+              Landlords see remittance history and documents; tenants log complaints and view their contract from their own portal.
+            </p>
+          </div>
 
-          {/* Quick Facts Card */}
-          <Card className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <h4 className="label-caps text-slate-800 mb-2.5">Quick Facts</h4>
-            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
-              <span className="text-slate-400 font-medium">Mandate ref</span>
-              <span className="mono-data text-slate-700 font-medium">{mandate.id.slice(0, 8).toUpperCase()}</span>
+          {/* Quick Facts div */}
+          <div className="bg-white border border-slate-100 rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+            <h4 className="text-base font-medium text-slate-800">Quick Facts</h4>
+            <div className="flex flex-col gap-3 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-medium">Mandate ref</span>
+                <span className="font-mono font-medium text-slate-800">MND-{new Date(mandate.startDate).getFullYear()}-{mandate.id.slice(0, 3).toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-medium">Signed</span>
+                <span className="font-mono font-medium text-slate-800">
+                  {new Date(mandate.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-medium">Property code</span>
+                <span className="font-mono font-medium text-slate-800">{mandate.property.propertyCode}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-medium">Next remittance</span>
+                <span className="font-mono font-medium text-slate-800">
+                  {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
-              <span className="text-slate-400 font-medium">Signed</span>
-              <span className="mono-data text-slate-700 font-medium">
-                {new Date(mandate.startDate).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
-              <span className="text-slate-400 font-medium">Property code</span>
-              <span className="mono-data text-slate-700 font-medium">{mandate.property.propertyCode}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs py-1">
-              <span className="text-slate-400 font-medium">Next remittance</span>
-              <span className="mono-data text-slate-700 font-medium">
-                {mandate.endDate ? new Date(mandate.endDate).toLocaleDateString() : "31 Aug 2026"}
-              </span>
-            </div>
-          </Card>
+          </div>
         </div>
       </div>
 
@@ -1249,10 +1586,46 @@ export function MandateFullViewBoard({
         entityId={entityId ?? undefined}
         onClose={() => setDrawerLease(null)}
         canManage={canManage}
-        onTerminate={() => { }}
-        onEdit={() => { }}
-        onRenew={() => { }}
+        onTerminate={() => setRefreshCount((c) => c + 1)}
+        onEdit={() => { setEditingLease(drawerLease); setDrawerLease(null); }}
+        onRenew={() => { setRenewingLease(drawerLease); setDrawerLease(null); }}
       />
+
+      <LeaseFormModal
+        open={leaseModalOpen}
+        defaultPropertyId={mandate.property.id}
+        defaultPropertyName={mandate.property.name}
+        onClose={() => setLeaseModalOpen(false)}
+        onSubmit={() => {
+          setLeaseModalOpen(false);
+          setRefreshCount((c) => c + 1);
+        }}
+      />
+
+      {editingLease && (
+        <LeaseFormModal
+          open={!!editingLease}
+          mode="edit"
+          lease={leaseSummaryToEditTarget(editingLease, mandate.property)}
+          onClose={() => setEditingLease(null)}
+          onSubmit={() => {
+            setEditingLease(null);
+            setRefreshCount((c) => c + 1);
+          }}
+        />
+      )}
+
+      {renewingLease && (
+        <LeaseRenewModal
+          open={!!renewingLease}
+          lease={leaseSummaryToRenewTarget(renewingLease, mandate.property)}
+          onClose={() => setRenewingLease(null)}
+          onRenewed={() => {
+            setRenewingLease(null);
+            setRefreshCount((c) => c + 1);
+          }}
+        />
+      )}
 
       <MandateLetterModal
         open={mandateLetterOpen}
@@ -1320,6 +1693,45 @@ export function MandateFullViewBoard({
         properties={singlePropertyList}
         onOpenProperty={(p) => { setManagerDrawerOpen(false); router.push(`/admin/properties/${p.id}`); }}
       />
+
+      <PhotoLightbox
+        open={lightboxOpen}
+        media={mediaList}
+        index={lightboxIndex}
+        onIndexChange={setLightboxIndex}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
+}
+
+interface MandatePropertyShape {
+  id: string;
+  name: string;
+  propertyCode: string;
+  propertyType: string;
+  location: string;
+}
+
+function leaseSummaryToEditTarget(l: LeaseSummary, property: MandatePropertyShape): LeaseEditTarget {
+  return {
+    id: l.id,
+    propertyName: property.name,
+    tenantName: l.tenantName,
+    startsAt: l.startDate,
+    endsAt: l.endDate ?? "",
+    monthlyRentKes: l.monthlyRentKes,
+    depositKes: l.depositKes,
+  };
+}
+
+function leaseSummaryToRenewTarget(l: LeaseSummary, property: MandatePropertyShape): LeaseRenewTarget {
+  return {
+    id: l.id,
+    propertyName: property.name,
+    tenantName: l.tenantName,
+    endsAt: l.endDate ?? "",
+    monthlyRentKes: l.monthlyRentKes,
+    depositKes: l.depositKes,
+  };
 }

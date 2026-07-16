@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   IconAlertTriangle,
   IconCalendarClock,
+  IconClock,
   IconHistory,
   IconPlus,
   IconRefresh,
@@ -79,6 +80,9 @@ interface Lease {
   managerId?: string | null;
   managerName?: string | null;
   managerAvatarUrl?: string | null;
+  landlordId?: string | null;
+  landlordName?: string | null;
+  landlordAvatarUrl?: string | null;
 }
 
 interface Mandate {
@@ -120,6 +124,7 @@ interface AuditEntry {
   summary: string;
   createdAt: string;
   actorName?: string | null;
+  associatedId?: string | null;
 }
 
 const MANDATE_STATUS_TONE: Record<Mandate["status"], "success" | "warning" | "neutral"> = {
@@ -135,6 +140,13 @@ const MANDATE_STATUS_LABEL: Record<Mandate["status"], string> = {
   draft: "Draft",
   terminated: "Terminated",
 };
+
+function activityTone(action: string): string {
+  const lower = action.toLowerCase();
+  if (lower.includes("terminat") || lower.includes("reject") || lower.includes("flag") || lower.includes("complaint")) return "bg-rose-300";
+  if (lower.includes("override")) return "bg-amber-400";
+  return "bg-slate-300";
+}
 
 export function LeasesBoard({ entityId }: { entityId: string }) {
   const router = useRouter();
@@ -257,7 +269,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     if (!entityId || mode !== "leases" || leaseActivityLoaded) return;
     const timer = setTimeout(() => {
       setLeaseActivityLoading(true);
-      fetch(`/api/audit?entityId=${entityId}&associatedType=lease&limit=6`)
+      fetch(`/api/audit?entityId=${entityId}&associatedType=lease&limit=10`)
         .then((res) => (res.ok ? res.json() : { entries: [] }))
         .then((data) => setLeaseActivity(data.entries ?? []))
         .catch(() => setLeaseActivity([]))
@@ -274,7 +286,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     if (!entityId || mode !== "mandates" || mandateActivityLoaded) return;
     const timer = setTimeout(() => {
       setMandateActivityLoading(true);
-      fetch(`/api/audit?entityId=${entityId}&associatedType=property_mandate&limit=6`)
+      fetch(`/api/audit?entityId=${entityId}&associatedType=property_mandate&limit=10`)
         .then((res) => (res.ok ? res.json() : { entries: [] }))
         .then((data) => setMandateActivity(data.entries ?? []))
         .catch(() => setMandateActivity([]))
@@ -892,9 +904,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <div className="relative z-10 flex flex-col h-full justify-between">
                   {/* Status & Management Fee Row */}
                   <div className="flex items-center gap-3">
-                    <span className="border border-emerald-500/85 bg-emerald-500/10 text-emerald-900 text-[9px] px-2 py-0.5 rounded-full font-medium tracking-wider uppercase flex items-center gap-1.5">
-                      <span className="size-1.5 rounded-full bg-emerald-400" /> Active
-                    </span>
+                    <Badge tone="success">Active</Badge>
                     <span className="text-xs text-slate-600 font-mono tracking-wider uppercase">
                       {(parseFloat(featuredMandates[safeFeaturedIndex].mandateRate) * 100).toFixed(1)}% Management Fee
                     </span>
@@ -1182,7 +1192,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 );
               })() : (
                 <div className="relative z-10 flex items-center justify-center h-full">
-                  <p className="text-slate-400 text-sm">No active leases found.</p>
+                  <p className="text-slate-600 text-sm">No active leases found.</p>
                 </div>
               )}
             </div>
@@ -1287,7 +1297,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         <div className="gsap-stagger mb-8 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
-              <IconHistory size={16} className="text-slate-400" /> Recent Mandate Activity
+              <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Mandate Activity
             </h3>
           </div>
           {mandateActivityLoading ? (
@@ -1295,20 +1305,43 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
               <LoadingSpinner size="sm" />
             </div>
           ) : mandateActivity.length === 0 ? (
-            <p className="text-xs text-slate-400 py-2">No recorded mandate activity yet.</p>
+            <p className="text-xs text-slate-600 py-2">No recorded mandate activity yet.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2.5">
-              {mandateActivity.slice(0, 6).map((entry) => (
-                <div key={entry.id} className="flex items-start gap-2.5 min-w-0">
-                  <span className="size-1.5 rounded-full bg-slate-300 shrink-0 mt-1.5" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <p className="text-sm text-slate-700 leading-snug truncate">{entry.summary}</p>
-                    <p className="text-xs text-slate-600 mt-0.5">
-                      {entry.actorName ? `${entry.actorName} · ` : ""}{relativeTime(entry.createdAt)}
-                    </p>
+            <div className="flex flex-col gap-6 relative ml-1">
+              <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
+              {mandateActivity.slice(0, 10).map((entry) => {
+                const toneBase = activityTone(entry.summary);
+                const isAlert = toneBase.includes("rose") || toneBase.includes("amber");
+                const toneColor = isAlert ? "bg-rose-300 ring-rose-50" : "bg-slate-200 ring-white";
+
+                return (
+                  <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
+                    <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
+                    <Link
+                      href={entry.associatedId ? `/admin/mandates/${entry.associatedId}` : "#"}
+                      className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/50 -my-1.5 -mx-3 p-1.5 px-3 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
+                        {entry.actorName ? (
+                          <>
+                            <span className="font-medium text-slate-700">{entry.actorName}</span> {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}
+                          </>
+                        ) : (
+                          entry.summary
+                        )}
+                      </p>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
+                          {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <Badge tone="neutral">
+                          {relativeTime(entry.createdAt)}
+                        </Badge>
+                      </div>
+                    </Link>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1319,7 +1352,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         <div className="gsap-stagger mb-8 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
-              <IconHistory size={16} className="text-slate-400" /> Recent Lease Activity
+              <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Lease Activity
             </h3>
           </div>
           {leaseActivityLoading ? (
@@ -1327,20 +1360,43 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
               <LoadingSpinner size="sm" />
             </div>
           ) : leaseActivity.length === 0 ? (
-            <p className="text-xs text-slate-400 py-2">No recorded lease activity yet.</p>
+            <p className="text-xs text-slate-600 py-2">No recorded lease activity yet.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2.5">
-              {leaseActivity.slice(0, 6).map((entry) => (
-                <div key={entry.id} className="flex items-start gap-2.5 min-w-0">
-                  <span className="size-1.5 rounded-full bg-slate-300 shrink-0 mt-1.5" aria-hidden="true" />
-                  <div className="min-w-0">
-                    <p className="text-sm text-slate-700 leading-snug truncate">{entry.summary}</p>
-                    <p className="text-xs text-slate-600 mt-0.5">
-                      {entry.actorName ? `${entry.actorName} · ` : ""}{relativeTime(entry.createdAt)}
-                    </p>
+            <div className="flex flex-col gap-6 relative ml-1">
+              <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
+              {leaseActivity.slice(0, 10).map((entry) => {
+                const toneBase = activityTone(entry.summary);
+                const isAlert = toneBase.includes("rose") || toneBase.includes("amber");
+                const toneColor = isAlert ? "bg-rose-300 ring-rose-50" : "bg-slate-200 ring-white";
+
+                return (
+                  <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
+                    <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
+                    <Link
+                      href={entry.associatedId ? `/admin/leases/${entry.associatedId}` : "#"}
+                      className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/50 -my-1.5 -mx-3 p-1.5 px-3 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
+                        {entry.actorName ? (
+                          <>
+                            <span className="font-medium text-slate-700">{entry.actorName}</span> {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}
+                          </>
+                        ) : (
+                          entry.summary
+                        )}
+                      </p>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
+                          {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <Badge tone="neutral">
+                          {relativeTime(entry.createdAt)}
+                        </Badge>
+                      </div>
+                    </Link>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1545,111 +1601,99 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         : MANDATE_STATUS_LABEL[m.status].toUpperCase();
                       const pmInitials = m.managerName ? getInitials(m.managerName) : "??";
                       const pctColor = pct >= 100 ? "bg-emerald-500" : pct >= 80 ? "bg-emerald-400" : pct >= 50 ? "bg-amber-400" : pct > 0 ? "bg-red-400" : "bg-transparent";
-                      const pctTextColor = pct >= 100 ? "text-emerald-600" : pct >= 80 ? "text-emerald-500" : pct >= 50 ? "text-amber-500" : pct > 0 ? "text-red-500" : "text-slate-400";
+                      const pctTextColor = pct >= 100 ? "text-emerald-600" : pct >= 80 ? "text-emerald-500" : pct >= 50 ? "text-amber-500" : pct > 0 ? "text-red-500" : "text-slate-600";
 
                       return (
                         <div
                           key={m.id}
                           onClick={() => router.push(`/admin/mandates/${m.id}`)}
-                          className="bg-white border border-slate-100/80 rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col cursor-pointer group relative overflow-hidden"
+                          className="bg-white border border-slate-200/60 rounded-[24px] p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-slate-300/60 transition-all duration-300 flex flex-col cursor-pointer group relative"
                         >
-                          {/* Card Header — Dark gradient with property thumbnail */}
-                          <div className="relative h-[88px] bg-gradient-to-br from-[#0f1a2e] to-[#1a2e4a] overflow-hidden shrink-0">
-                            {m.propertyMedia?.[0]?.url ? (
-                              <Image
-                                src={m.propertyMedia[0].url}
-                                alt={m.propertyName}
-                                fill
-                                sizes="400px"
-                                className="object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-500"
-                              />
-                            ) : null}
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0f1a2e]/80 to-transparent" />
-                            {/* Property type icon — background art */}
-                            <div className="absolute -right-3 -top-3 opacity-10">
-                              <IconBuildingCommunity size={72} stroke={1} className="text-white" />
+                          {/* Header: Identity & Status */}
+                          <div className="flex items-start justify-between gap-4 mb-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {m.propertyMedia?.[0]?.url ? (
+                                <div className="size-12 rounded-[14px] overflow-hidden shrink-0 shadow-sm relative">
+                                  <Image src={m.propertyMedia[0].url} alt={m.propertyName} fill className="object-cover" sizes="48px" />
+                                </div>
+                              ) : (
+                                <div className="size-12 rounded-[14px] bg-slate-50 border border-slate-100 shrink-0 flex items-center justify-center text-slate-300 shadow-sm">
+                                  <IconBuildingCommunity size={20} stroke={1.5} />
+                                </div>
+                              )}
+                              <div className="flex flex-col min-w-0">
+                                <h4 className="text-sm font-medium text-slate-800 leading-tight truncate">{m.propertyName}</h4>
+                                <span className="text-[10px] font-mono text-slate-400 mt-0.5 tracking-wider uppercase">{getMandateDisplayCode(m)}</span>
+                              </div>
                             </div>
-                            {/* Status pill top-right */}
-                            <div className="absolute top-3 right-3">
-                              <span className={cn(
-                                "text-[9px] font-medium px-2 py-0.5 rounded-full tracking-wider uppercase backdrop-blur-sm border",
-                                m.status === "active"
-                                  ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-300"
-                                  : m.status === "pending_approval"
-                                    ? "border-amber-400/30 bg-amber-400/20 text-amber-300"
-                                    : "border-slate-500/30 bg-slate-500/20 text-slate-300"
-                              )}>
+                            <div className="flex items-center gap-2">
+                              <Badge tone={m.status === "active" ? "success" : m.status === "pending_approval" ? "warning" : "neutral"}>
                                 {statusLabel}
-                              </span>
-                            </div>
-                            {/* Property name bottom-left */}
-                            <div className="absolute bottom-3 left-4 right-14">
-                              <p className="text-white text-sm font-medium leading-tight truncate">{m.propertyName}</p>
-                              <p className="text-white/50 text-[10px] font-mono tracking-wide mt-0.5">{getMandateDisplayCode(m)}</p>
+                              </Badge>
                             </div>
                           </div>
 
-                          {/* Card Body */}
-                          <div className="px-4 pb-4 pt-3.5 flex flex-col gap-3 flex-1">
-                            {/* Landlord & Manager row */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Avatar
-                                  src={m.landlordAvatarUrl || undefined}
-                                  fallback={getInitials(m.landlordName)}
-                                  className="size-6 text-[10px] bg-slate-100 text-slate-700 border border-slate-200/80 shrink-0"
-                                />
-                                <span className="text-xs font-medium text-slate-600 truncate">{m.landlordName}</span>
-                              </div>
-                              {m.managerName && (
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <Avatar
-                                    src={m.managerAvatarUrl || undefined}
-                                    fallback={pmInitials}
-                                    className="size-6 text-[10px] bg-[#151936] text-white border border-[#151936]/20 shrink-0"
-                                  />
-                                </div>
-                              )}
+                          {/* Actors Info */}
+                          <div className="flex items-center gap-2.5 mb-4 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
+                            <Avatar src={m.landlordAvatarUrl || undefined} fallback={getInitials(m.landlordName)} className="size-7 text-[10px] bg-white text-slate-700 border border-slate-200 shrink-0 shadow-sm" />
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="text-xs font-medium text-slate-700 truncate">{m.landlordName}</span>
+                              <span className="text-[10px] text-slate-400 truncate">Landlord Account</span>
                             </div>
+                            {m.managerName && (
+                              <>
+                                <div className="w-px h-6 bg-slate-200 mx-1" />
+                                <Avatar src={m.managerAvatarUrl || undefined} fallback={pmInitials} className="size-7 text-[10px] bg-[#151936] text-white border border-[#151936]/20 shrink-0 shadow-sm" />
+                              </>
+                            )}
+                          </div>
 
-                            {/* Collection Progress */}
-                            <div>
-                              <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[10px] text-slate-500 font-mono tracking-wider uppercase">Collection MTD</span>
-                                <span className={cn("text-[10px] font-mono font-medium", pctTextColor)}>{pct}%</span>
-                              </div>
-                              <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                  style={{ width: `${pct}%` }}
-                                  className={cn("h-full rounded-full transition-all duration-500", pctColor)}
-                                />
+                          {/* Data Viz: Collection MTD */}
+                          <div className="flex flex-col gap-1.5 mb-4">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-slate-500 font-mono tracking-wider uppercase">Collection MTD</span>
+                              <span className={cn("text-[10px] font-mono font-medium", pctTextColor)}>{pct}% Collected</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                              <div style={{ width: `${pct}%` }} className={cn("h-full rounded-full transition-all duration-500", pctColor)} />
+                            </div>
+                            <div className="flex items-center justify-between mt-0.5">
+                              <span className="text-[9px] text-slate-400 font-mono">01 {new Date().toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}</span>
+                              <span className="text-[9px] text-slate-400 font-mono">31 {new Date().toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}</span>
+                            </div>
+                          </div>
+
+                          {/* Financials Footer */}
+                          <div className="mt-auto pt-4 border-t border-slate-100/80 flex items-end justify-between gap-4">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Management Fee</span>
+                              <div className="flex items-baseline gap-1">
+                                <span className="font-mono text-sm font-medium text-slate-800">{(parseFloat(m.mandateRate) * 100).toFixed(1)}%</span>
                               </div>
                             </div>
-
-                            {/* Fee & Remittance footer */}
-                            <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-slate-100/80 mt-auto">
-                              <span className="text-[10px] text-slate-500 font-mono tracking-wider">
-                                {(parseFloat(m.mandateRate) * 100).toFixed(1)}% fee
+                            
+                            <div className="flex flex-col items-end gap-0.5 text-right">
+                              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Remittance Due</span>
+                              <span className={cn("font-mono text-sm font-medium", m.status === "active" && collected > 0 ? "text-emerald-600" : "text-slate-500")}>
+                                {remittanceDisplay}
                               </span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-slate-800 font-mono">{remittanceDisplay}</span>
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <DropdownMenu label="Mandate actions" align="right" trigger={
-                                    <span className="size-6 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors opacity-0 group-hover:opacity-100">
-                                      <IconDotsVertical size={13} />
-                                    </span>
-                                  }>
-                                    <DropdownItem icon={IconUserCircle} onClick={() => openLandlordProfile(m)}>Landlord Profile</DropdownItem>
-                                    <Link href="/admin/messages"><DropdownItem icon={IconMessageCircle}>Message Manager</DropdownItem></Link>
-                                    {m.status === "active" && (
-                                      <DropdownItem icon={IconFileText} onClick={() => openRemittanceAdvice(m)}>Remittance Advice</DropdownItem>
-                                    )}
-                                    {(m.status === "active" || m.status === "pending_approval") && (
-                                      <DropdownItem icon={IconBan} variant="danger" onClick={() => setTerminatingMandate(m)}>Terminate Mandate</DropdownItem>
-                                    )}
-                                  </DropdownMenu>
-                                </div>
-                              </div>
+                            </div>
+
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu label="Mandate actions" align="right" trigger={
+                                <span className="size-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-xs transition-colors">
+                                  <IconDotsVertical size={14} />
+                                </span>
+                              }>
+                                <DropdownItem icon={IconUserCircle} onClick={() => openLandlordProfile(m)}>Landlord Profile</DropdownItem>
+                                <Link href="/admin/messages"><DropdownItem icon={IconMessageCircle}>Message Manager</DropdownItem></Link>
+                                {m.status === "active" && (
+                                  <DropdownItem icon={IconFileText} onClick={() => openRemittanceAdvice(m)}>Remittance Advice</DropdownItem>
+                                )}
+                                {(m.status === "active" || m.status === "pending_approval") && (
+                                  <DropdownItem icon={IconBan} variant="danger" onClick={() => setTerminatingMandate(m)}>Terminate Mandate</DropdownItem>
+                                )}
+                              </DropdownMenu>
                             </div>
                           </div>
                         </div>
@@ -1770,16 +1814,9 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
 
                               {/* Status Column */}
                               <td className="px-3 py-4 text-center">
-                                <span className={cn(
-                                  "text-[10px] font-medium px-2 py-0.5 rounded-full tracking-wider uppercase",
-                                  m.status === "active"
-                                    ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-600"
-                                    : m.status === "pending_approval"
-                                      ? "border border-amber-500/20 bg-amber-500/10 text-amber-600"
-                                      : "border border-slate-200 bg-slate-50 text-slate-500"
-                                )}>
+                                <Badge tone={m.status === "active" ? "success" : m.status === "pending_approval" ? "warning" : "neutral"}>
                                   {statusLabel}
-                                </span>
+                                </Badge>
                               </td>
 
                               {/* Actions Column */}
@@ -2058,96 +2095,115 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                       const tenurePct = getLeaseTenurePct(l);
                       const daysLeft = getDaysRemaining(l.endsAt);
                       const tenurePctColor = !l.isActive ? "bg-slate-300" : tenurePct <= 50 ? "bg-emerald-500" : tenurePct <= 75 ? "bg-amber-400" : tenurePct <= 90 ? "bg-orange-400" : "bg-red-400";
-                      const tenurePctTextColor = !l.isActive ? "text-slate-400" : tenurePct <= 50 ? "text-emerald-600" : tenurePct <= 75 ? "text-amber-500" : "text-red-500";
+                      const tenurePctTextColor = !l.isActive ? "text-slate-600" : tenurePct <= 50 ? "text-emerald-600" : tenurePct <= 75 ? "text-amber-500" : "text-red-500";
                       return (
                         <div
                           key={l.id}
                           onClick={() => router.push(`/admin/leases/${l.id}`)}
-                          className="bg-white border border-slate-100/80 rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col cursor-pointer group relative overflow-hidden"
+                          className="bg-white border border-slate-200/60 rounded-[24px] p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-slate-300/60 transition-all duration-300 flex flex-col cursor-pointer group relative"
                         >
-                          {/* Card Header — Dark gradient with property thumbnail */}
-                          <div className="relative h-[88px] bg-gradient-to-br from-[#0f1a2e] to-[#1a2e4a] overflow-hidden shrink-0">
-                            {l.propertyMedia?.[0]?.url ? (
-                              <Image
-                                src={l.propertyMedia[0].url}
-                                alt={l.propertyName}
-                                fill
-                                sizes="400px"
-                                className="object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-500"
-                              />
-                            ) : null}
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0f1a2e]/80 to-transparent" />
-                            <div className="absolute -right-3 -top-3 opacity-10">
-                              <IconBuildingCommunity size={72} stroke={1} className="text-white" />
+                          {/* Header: Identity & Status */}
+                          <div className="flex items-start justify-between gap-4 mb-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {l.propertyMedia?.[0]?.url ? (
+                                <div className="size-12 rounded-[14px] overflow-hidden shrink-0 shadow-sm relative">
+                                  <Image src={l.propertyMedia[0].url} alt={l.propertyName} fill className="object-cover" sizes="48px" />
+                                </div>
+                              ) : (
+                                <div className="size-12 rounded-[14px] bg-slate-50 border border-slate-100 shrink-0 flex items-center justify-center text-slate-300 shadow-sm">
+                                  <IconBuildingCommunity size={20} stroke={1.5} />
+                                </div>
+                              )}
+                              <div className="flex flex-col min-w-0">
+                                <h4 className="text-sm font-medium text-slate-800 leading-tight truncate">{l.propertyName}</h4>
+                                <span className="text-[10px] font-mono text-slate-400 mt-0.5 tracking-wider uppercase">{l.id.slice(0, 8)}</span>
+                              </div>
                             </div>
-                            <div className="absolute top-3 right-3">
-                              <span className={cn(
-                                "text-[9px] font-medium px-2 py-0.5 rounded-full tracking-wider uppercase backdrop-blur-sm border",
-                                l.isActive
-                                  ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-300"
-                                  : "border-slate-500/30 bg-slate-500/20 text-slate-300"
-                              )}>
-                                {l.isActive ? "ACTIVE" : "TERMINATED"}
-                              </span>
-                            </div>
-                            <div className="absolute bottom-3 left-4 right-14">
-                              <p className="text-white text-sm font-medium leading-tight truncate">{l.propertyName}</p>
-                              <p className="text-white/50 text-[10px] font-mono tracking-wide mt-0.5">{l.id.slice(0, 8).toUpperCase()}</p>
+                            <div className="flex items-center gap-2">
+                              <Badge tone={l.isActive ? "success" : "neutral"}>
+                                {l.isActive ? "Active" : "Ended"}
+                              </Badge>
                             </div>
                           </div>
 
-                          {/* Card Body */}
-                          <div className="px-4 pb-4 pt-3.5 flex flex-col gap-3 flex-1">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Avatar
-                                src={l.tenantAvatarUrl || undefined}
-                                fallback={getInitials(l.tenantName)}
-                                className="size-6 text-[10px] bg-slate-100 text-slate-700 border border-slate-200/80 shrink-0"
-                              />
-                              <span className="text-xs font-medium text-slate-600 truncate">{l.tenantName}</span>
+                          {/* Actors Info */}
+                          <div className="flex items-center gap-2.5 mb-4 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
+                            <Avatar src={l.tenantAvatarUrl || undefined} fallback={getInitials(l.tenantName)} className="size-7 text-[10px] bg-white text-slate-700 border border-slate-200 shrink-0 shadow-sm" />
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="text-xs font-medium text-slate-700 truncate">{l.tenantName}</span>
+                              <span className="text-[10px] text-slate-400 truncate">Tenant Account</span>
                             </div>
+                            
+                            {(l.landlordName || l.managerName) && (
+                              <>
+                                <div className="w-px h-6 bg-slate-200 mx-1" />
+                                <div className="flex -space-x-2">
+                                  {l.landlordName && (
+                                    <Avatar src={l.landlordAvatarUrl || undefined} fallback={getInitials(l.landlordName)} className="size-7 text-[10px] bg-white text-slate-600 border border-white shrink-0 shadow-sm relative z-10" />
+                                  )}
+                                  {l.managerName && (
+                                    <Avatar src={l.managerAvatarUrl || undefined} fallback={getInitials(l.managerName)} className="size-7 text-[10px] bg-[#151936] text-white border border-white shrink-0 shadow-sm relative z-0" />
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
 
-                            {/* Tenure Progress */}
-                            <div>
-                              <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[10px] text-slate-500 font-mono tracking-wider uppercase">Lease Tenure</span>
-                                <span className={cn("text-[10px] font-mono font-medium", tenurePctTextColor)}>{l.isActive ? `${daysLeft}d left` : "ended"}</span>
-                              </div>
-                              <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                  style={{ width: `${tenurePct}%` }}
-                                  className={cn("h-full rounded-full transition-all duration-500", tenurePctColor)}
-                                />
+                          {/* Data Viz: Lease Tenure */}
+                          <div className="flex flex-col gap-1.5 mb-4">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-slate-500 font-mono tracking-wider uppercase">Lease Tenure</span>
+                              <span className={cn("text-[10px] font-mono font-medium", tenurePctTextColor)}>{l.isActive ? `${daysLeft}d left` : "Ended"}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                              <div style={{ width: `${tenurePct}%` }} className={cn("h-full rounded-full transition-all duration-500", tenurePctColor)} />
+                            </div>
+                            <div className="flex items-center justify-between mt-0.5">
+                              <span className="text-[9px] text-slate-400 font-mono">{new Date(l.startsAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
+                              <span className="text-[9px] text-slate-400 font-mono">{new Date(l.endsAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
+                            </div>
+                          </div>
+
+                          {/* Financials Footer */}
+                          <div className="mt-auto pt-4 border-t border-slate-100/80 flex items-end justify-between gap-4">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Contracted Rent</span>
+                              <div className="flex items-baseline gap-1">
+                                <span className="font-mono text-sm font-medium text-slate-800">{formatCompactKES(parseFloat(l.monthlyRentKes))}</span>
+                                <span className="text-[10px] text-slate-400">/mo</span>
                               </div>
                             </div>
+                            
+                            {(l.balanceKes ?? 0) > 0 ? (
+                              <div className="flex flex-col items-end gap-0.5 text-right">
+                                <span className="text-[10px] text-rose-500/80 font-medium uppercase tracking-wider">Arrears</span>
+                                <span className="font-mono text-sm font-medium text-rose-600">{formatCompactKES(l.balanceKes ?? 0)}</span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-end gap-0.5 text-right">
+                                <span className="text-[10px] text-emerald-500/80 font-medium uppercase tracking-wider">Status</span>
+                                <span className="font-mono text-sm font-medium text-emerald-600">Up to date</span>
+                              </div>
+                            )}
 
-                            {/* Rent & Actions footer */}
-                            <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-slate-100/80 mt-auto">
-                              <div className="flex flex-col">
-                                <span className="text-xs font-medium text-slate-800 font-mono">{formatCompactKES(parseFloat(l.monthlyRentKes))}/mo</span>
-                                {(l.balanceKes ?? 0) > 0 && (
-                                  <span className="text-[9px] font-medium text-rose-600 uppercase tracking-wider mt-0.5">{formatCompactKES(l.balanceKes ?? 0)} overdue</span>
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu label="Lease actions" align="right" trigger={
+                                <span className="size-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-xs transition-colors">
+                                  <IconDotsVertical size={14} />
+                                </span>
+                              }>
+                                <DropdownItem icon={IconUserCircle} onClick={() => setTenantDrawerId(l.tenantContactId)}>Tenant Profile</DropdownItem>
+                                <Link href="/admin/messages"><DropdownItem icon={IconMessageCircle}>Message Manager</DropdownItem></Link>
+                                <DropdownItem icon={IconEye} onClick={() => setDrawerLease(l)}>View Details</DropdownItem>
+                                <Link href={`/admin/leases/${l.id}`}><DropdownItem icon={IconFileText}>View Lease File</DropdownItem></Link>
+                                {l.isActive && (
+                                  <DropdownItem icon={IconRefresh} onClick={() => setRenewingLease(l)}>Renew Lease</DropdownItem>
                                 )}
-                              </div>
-                              <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenu label="Lease actions" align="right" trigger={
-                                  <span className="size-6 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors opacity-0 group-hover:opacity-100">
-                                    <IconDotsVertical size={13} />
-                                  </span>
-                                }>
-                                  <DropdownItem icon={IconUserCircle} onClick={() => setTenantDrawerId(l.tenantContactId)}>Tenant Profile</DropdownItem>
-                                  <Link href="/admin/messages"><DropdownItem icon={IconMessageCircle}>Message Manager</DropdownItem></Link>
-                                  <DropdownItem icon={IconEye} onClick={() => setDrawerLease(l)}>View Details</DropdownItem>
-                                  <Link href={`/admin/leases/${l.id}`}><DropdownItem icon={IconFileText}>View Lease File</DropdownItem></Link>
-                                  {l.isActive && (
-                                    <DropdownItem icon={IconRefresh} onClick={() => setRenewingLease(l)}>Renew Lease</DropdownItem>
-                                  )}
-                                  <DropdownItem icon={IconCalendarClock} onClick={() => setEditingLease(l)}>Edit Lease</DropdownItem>
-                                  {l.isActive && (
-                                    <DropdownItem icon={IconBan} variant="danger" onClick={() => handleTerminate(l.id)}>Terminate Lease</DropdownItem>
-                                  )}
-                                </DropdownMenu>
-                              </div>
+                                <DropdownItem icon={IconCalendarClock} onClick={() => setEditingLease(l)}>Edit Lease</DropdownItem>
+                                {l.isActive && (
+                                  <DropdownItem icon={IconBan} variant="danger" onClick={() => handleTerminate(l.id)}>Terminate Lease</DropdownItem>
+                                )}
+                              </DropdownMenu>
                             </div>
                           </div>
                         </div>
@@ -2262,14 +2318,9 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                 {l.depositKes ? formatCompactKES(parseFloat(l.depositKes)) : "-"}
                               </td>
                               <td className="px-3 py-4 text-center">
-                                <span className={cn(
-                                  "text-[10px] font-medium px-2 py-0.5 rounded-full tracking-wider uppercase",
-                                  l.isActive
-                                    ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-600"
-                                    : "border border-slate-200 bg-slate-50 text-slate-500"
-                                )}>
+                                <Badge tone={l.isActive ? "success" : "neutral"}>
                                   {l.isActive ? "Active" : "Terminated"}
-                                </span>
+                                </Badge>
                               </td>
                               <td className="px-3 py-4" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center justify-end gap-1">

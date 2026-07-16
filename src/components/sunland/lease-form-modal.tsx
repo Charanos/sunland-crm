@@ -37,6 +37,8 @@ export function LeaseFormModal({
   lease,
   onClose,
   onSubmit,
+  defaultPropertyId,
+  defaultPropertyName,
 }: {
   open: boolean;
   mode?: "create" | "edit";
@@ -44,6 +46,8 @@ export function LeaseFormModal({
   lease?: LeaseEditTarget | null;
   onClose: () => void;
   onSubmit: () => void;
+  defaultPropertyId?: string;
+  defaultPropertyName?: string;
 }) {
   const { pushToast } = useToast();
   const { activeEntityId } = useUIStore();
@@ -76,11 +80,18 @@ export function LeaseFormModal({
           depositKes: lease.depositKes ?? "",
         });
       } else {
-        setForm({ propertyId: "", tenantContactId: "", startsAt: "", endsAt: "", monthlyRentKes: "", depositKes: "" });
+        setForm({
+          propertyId: defaultPropertyId || "",
+          tenantContactId: "",
+          startsAt: "",
+          endsAt: "",
+          monthlyRentKes: "",
+          depositKes: "",
+        });
       }
       setErrors({});
     });
-  }, [open, isEdit, lease]);
+  }, [open, isEdit, lease, defaultPropertyId]);
 
   // Load available properties & tenants - only needed for create mode, since
   // edit mode keeps the property/tenant fixed (reassigning either is a new
@@ -100,6 +111,10 @@ export function LeaseFormModal({
           const available = propData.properties
             .filter((p: { id: string; name: string; status: string; monthlyRentKes: string | null }) => p.status === "available")
             .map((p: { id: string; name: string; monthlyRentKes: string | null }) => ({ id: p.id, name: p.name, monthlyRentKes: p.monthlyRentKes }));
+          
+          if (defaultPropertyId && defaultPropertyName && !available.some((p: { id: string }) => p.id === defaultPropertyId)) {
+            available.unshift({ id: defaultPropertyId, name: defaultPropertyName, monthlyRentKes: null });
+          }
           setProperties(available);
         }
         if (tenantData.contacts) {
@@ -111,7 +126,7 @@ export function LeaseFormModal({
     };
 
     loadOptions();
-  }, [open, activeEntityId, isEdit]);
+  }, [open, activeEntityId, isEdit, defaultPropertyId, defaultPropertyName]);
 
   const updateField = <K extends keyof LeaseFormData>(
     field: K,
@@ -213,9 +228,9 @@ export function LeaseFormModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label-caps text-slate-400 mb-1.5 block">Property Unit</label>
-              {isEdit ? (
+              {isEdit || defaultPropertyId ? (
                 <p className="h-10 flex items-center px-3 rounded-lg border border-slate-200 bg-slate-100 text-body-primary text-slate-600">
-                  {lease!.propertyName}
+                  {isEdit ? lease!.propertyName : (defaultPropertyName || "Current Property")}
                 </p>
               ) : (
                 <select

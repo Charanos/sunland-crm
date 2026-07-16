@@ -441,6 +441,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
         tenantName: contacts.displayName,
         tenantPhone: contacts.phone,
         tenantEmail: contacts.email,
+        tenantAvatarUrl: contacts.avatarUrl,
       })
       .from(leases)
       .innerJoin(contacts, eq(leases.tenantContactId, contacts.id))
@@ -548,6 +549,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     tenantName: l.tenantName,
     tenantPhone: l.tenantPhone ?? undefined,
     tenantEmail: l.tenantEmail ?? undefined,
+    tenantAvatarUrl: l.tenantAvatarUrl ?? undefined,
     startDate: toISOStringSafe(l.startsAt) || "",
     endDate: toISOStringSafe(l.endsAt),
     status: !l.isActive

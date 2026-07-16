@@ -59,6 +59,7 @@ export interface LeaseSummary {
   tenantName: string;
   tenantPhone?: string;
   tenantEmail?: string;
+  tenantAvatarUrl?: string | null;
   startDate: string;
   endDate?: string | null;
   status: "active" | "expiring" | "ended" | "pending_renewal";
