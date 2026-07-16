@@ -269,4 +269,17 @@ Structured identically to `property-full-view-board.tsx`: command header (adapti
 - No per-mandate chat FAB (design has one) — duplicates the existing global Messages module.
 - No landlord/tenant portal status rail card — those portals are still stub `ModulePage` placeholders.
 
+---
 
+## 14. Top Navigation Bar & Global Dropdowns Revamp
+
+A rigorous aesthetic synchronization was applied across the entire Top Navigation Bar to establish a pristine, minimalist, enterprise-grade look and feel.
+
+### 14.1 Dropdown Menus (User Profile, Notifications, Quick Create, Calendar)
+- **Aesthetic Synchronization:** All heavy dark-mode gradients, massive box shadows, and inconsistent background colors were completely purged.
+- **Pristine White Pattern:** Every panel now uniformly employs a clean `bg-white` layout, utilizing subtle `border-slate-100/60` borders and `shadow-sm` or `shadow-md` drops, matching the Quick Create standard layout identically.
+- **Icon Boxes:** Menu item icons strictly utilize a consistent `bg-white border border-slate-100 text-slate-500 shadow-sm` container pattern. Colorful backgrounds (indigo, emerald) were removed to maintain executive coherence.
+
+### 14.2 Trigger Animations & Typography
+- **Triggers:** Standardized all top-bar trigger elements (including the user pill) to feature elegant `hover:bg-slate-100/80` state transitions. Over-designed animations (such as 180-degree chevron spins and heavy scaling) were replaced with minimal, tactile `translate-y-px` interactions.
+- **Role Badges:** Substituted arbitrary pixel-based sizing (e.g., `text-[10px]`, `rounded-[14px]`) with strict semantic Tailwind sizes (`text-xs`, `rounded-xl`). Used the native `<Badge tone="neutral">` component within the user profile card to guarantee structural and typography consistency.

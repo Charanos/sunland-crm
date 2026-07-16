@@ -15,6 +15,8 @@ import {
   startOfMonth,
   startOfWeek,
   subMonths,
+  addYears,
+  subYears,
 } from "date-fns";
 import {
   IconBell,
@@ -26,7 +28,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconCircleCheckFilled,
-  IconClockHour4,
+  IconClock,
   IconFileAnalytics,
   IconMenu2,
   IconPlus,
@@ -41,14 +43,17 @@ import {
   IconShieldLock,
   type Icon,
   IconChevronDown,
+  IconInfoCircle,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore, type ModalType } from "@/store/ui";
 import { getEntityById } from "@/data/entities";
 import { getActiveNavItem, navSections } from "@/components/layout/nav-model";
-import { useCalendarStore, type CalendarEvent } from "@/store/calendar";
+import { CommandPalette } from "./command-palette";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,18 +94,28 @@ const QUICK_ACTIONS: QuickAction[] = [
   { icon: IconFileAnalytics, label: "New Report", shortcut: "R", href: "/admin/reports" },
 ];
 
-const EVENT_COLORS: Record<CalendarEvent["type"], string> = {
-  meeting: "bg-[var(--tertiary)]",
-  viewing: "bg-[var(--primary)]",
-  deadline: "bg-[var(--error)]",
-  other: "bg-slate-400",
+interface ApiEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  startsAt: string;
+  endsAt: string;
+  type: "internal" | "external" | "legal" | "maintenance";
+  location: string | null;
+}
+
+const EVENT_COLORS: Record<ApiEvent["type"], string> = {
+  internal: "bg-[var(--primary)] shadow-[0_0_8px_rgba(14,165,233,0.6)]",
+  external: "bg-[var(--success)] shadow-[0_0_8px_rgba(16,185,129,0.6)]",
+  legal: "bg-[var(--warning)] shadow-[0_0_8px_rgba(245,158,11,0.6)]",
+  maintenance: "bg-[var(--error)] shadow-[0_0_8px_rgba(243,62,98,0.6)]",
 };
 
-const EVENT_LABEL_COLORS: Record<CalendarEvent["type"], string> = {
-  meeting: "text-[var(--tertiary)]",
-  viewing: "text-[var(--warning)]",
-  deadline: "text-[var(--error)]",
-  other: "text-slate-400",
+const EVENT_BADGE_TONE: Record<ApiEvent["type"], "primary" | "success" | "warning" | "risk"> = {
+  internal: "primary",
+  external: "success",
+  legal: "warning",
+  maintenance: "risk",
 };
 
 // ─── Hook: panel (click-outside + escape) ─────────────────────────────────────
@@ -138,10 +153,25 @@ const panelVariants = {
 
 // ─── Tone colours ──────────────────────────────────────────────────────────────
 
-const toneRing: Record<NotificationTone, string> = {
-  info: "bg-[var(--tertiary)]",
-  success: "bg-[var(--success)]",
-  warning: "bg-[var(--warning)]",
+const toneConfig: Record<
+  NotificationTone,
+  { icon: Icon; bg: string; badgeTone: "primary" | "warning" | "success" }
+> = {
+  info: {
+    icon: IconInfoCircle,
+    bg: "bg-blue-50/80 text-blue-600 border-blue-100/50 shadow-sm",
+    badgeTone: "primary",
+  },
+  warning: {
+    icon: IconAlertTriangle,
+    bg: "bg-amber-50/80 text-amber-600 border-amber-100/50 shadow-sm",
+    badgeTone: "warning",
+  },
+  success: {
+    icon: IconCircleCheckFilled,
+    bg: "bg-emerald-50/80 text-emerald-600 border-emerald-100/50 shadow-sm",
+    badgeTone: "success",
+  },
 };
 
 // ─── Shared panel shell ────────────────────────────────────────────────────────
@@ -223,24 +253,25 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
   const unread = items.filter((n) => !n.read).length;
 
   return (
-    <PanelShell width="w-[22rem]">
+    <PanelShell width="w-96">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-label text-slate-800">Notifications</span>
+      <div className="flex items-center justify-between border-b border-slate-100/60 px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <span className="text-sm font-medium text-slate-800">Notifications</span>
           {unread > 0 && (
-            <span className="text-tiny flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 text-white">
-              {unread}
-            </span>
+            <Badge tone="risk" className="px-2 py-0.5 text-xs font-medium tracking-wide">
+              {unread} New
+            </Badge>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {unread > 0 && (
             <button
               type="button"
               onClick={() => setItems((p) => p.map((n) => ({ ...n, read: true })))}
-              className="text-caption rounded-lg px-2 py-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="text-xs font-medium text-slate-400 transition-colors hover:text-slate-700 flex items-center gap-1"
             >
+              <IconCheck size={12} stroke={2} />
               Mark all read
             </button>
           )}
@@ -250,54 +281,91 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="flex size-6 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100"
           >
-            <IconX size={13} aria-hidden />
+            <IconX size={14} stroke={2} aria-hidden />
           </button>
         </div>
       </div>
 
       {/* List */}
-      <div className="max-h-[20rem] overflow-y-auto [scrollbar-width:thin]">
+      <div className="max-h-[22rem] overflow-y-auto p-2 space-y-1 [scrollbar-width:thin]">
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-            <IconCircleCheckFilled size={28} className="mb-2 text-slate-200" aria-hidden />
-            <p className="text-caption">You&apos;re all caught up</p>
+          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+            <IconCircleCheckFilled size={32} className="mb-3 text-slate-200" aria-hidden />
+            <p className="text-sm font-medium text-slate-500">You&apos;re all caught up</p>
           </div>
         ) : (
-          items.map((n) => (
-            <button
-              key={n.id}
-              type="button"
-              onClick={() => setItems((p) => p.map((x) => x.id === n.id ? { ...x, read: true } : x))}
-              className={cn(
-                "flex w-[calc(100%-16px)] mx-2 gap-3 px-3 py-2.5 mb-1 rounded-xl text-left transition-all border border-transparent",
-                !n.read ? "bg-slate-50/80 border-slate-100" : "hover:bg-slate-50 hover:border-slate-100",
-              )}
-            >
-              <span className={cn("mt-[6px] size-[6px] shrink-0 rounded-full transition-opacity", toneRing[n.tone], n.read && "opacity-0")} />
-              <div className="min-w-0 flex-1">
-                <p className={cn("text-caption leading-snug", n.read ? "text-slate-600 font-medium" : "text-slate-900 font-medium")}>
-                  {n.title}
-                </p>
-                <p className="text-tiny mt-0.5 text-slate-400 line-clamp-2 leading-relaxed">{n.body}</p>
-                <p className="text-[10px] mt-1.5 flex items-center gap-1 text-slate-400 font-mono">
-                  <IconClockHour4 size={10} aria-hidden />
-                  {n.time}
-                </p>
-              </div>
-            </button>
-          ))
+          items.map((n) => {
+            const toneData = toneConfig[n.tone];
+            const IconComponent = toneData.icon;
+            return (
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => setItems((p) => p.map((x) => x.id === n.id ? { ...x, read: true } : x))}
+                className={cn(
+                  "group relative flex w-full gap-3 rounded-xl p-3 text-left transition-all border border-transparent",
+                  !n.read
+                    ? "bg-slate-50/70 border-slate-100/50 hover:bg-slate-50"
+                    : "hover:bg-slate-50/60"
+                )}
+              >
+                {/* Left Icon with pulsating unread dot */}
+                <div className="relative shrink-0 mt-0.5">
+                  <span className={cn(
+                    "flex size-8 items-center justify-center rounded-[10px] border transition-all",
+                    toneData.bg
+                  )}>
+                    <IconComponent size={14} stroke={2} aria-hidden />
+                  </span>
+                  {!n.read && (
+                    <span className="absolute -top-1 -right-1 flex size-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full size-2 bg-blue-500 border border-white"></span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Body Details */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className={cn(
+                      "text-sm transition-colors group-hover:text-slate-900 leading-snug",
+                      !n.read ? "text-slate-800 font-medium" : "text-slate-600 font-medium"
+                    )}>
+                      {n.title}
+                    </p>
+                    <span className="text-xs font-mono font-medium text-slate-400 shrink-0 mt-0.5">
+                      {n.time}
+                    </span>
+                  </div>
+                  <p className="text-xs mt-1 text-slate-500 line-clamp-2 leading-relaxed">
+                    {n.body}
+                  </p>
+                </div>
+
+                {/* Inline Mark as Read Action on Hover */}
+                {!n.read && (
+                  <div className="absolute right-3 bottom-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[10px] font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-100 transition-colors">
+                      Mark read
+                    </span>
+                  </div>
+                )}
+              </button>
+            );
+          })
         )}
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-100 px-4 py-2.5">
+      <div className="border-t border-slate-100/60 p-2">
         <Link
           href={`${portalPrefix}/notifications`}
           onClick={onClose}
-          className="text-caption flex items-center gap-1 text-[var(--tertiary)] transition-opacity hover:opacity-70"
+          className="flex items-center justify-center w-full gap-1.5 rounded-xl bg-slate-50/50 py-2.5 text-xs font-medium text-[var(--sidebar)] transition-colors hover:bg-slate-50 hover:text-slate-900"
         >
           View all notifications
-          <IconChevronRight size={13} aria-hidden />
+          <IconChevronRight size={14} stroke={2} aria-hidden />
         </Link>
       </div>
     </PanelShell>
@@ -308,27 +376,27 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
 
 function QuickCreatePanel({ onClose }: { onClose: () => void }) {
   return (
-    <PanelShell width="w-60" align="right">
-      <div className="border-b border-slate-100 px-4 py-3">
-        <p className="text-label text-slate-800">Quick Create</p>
-        <p className="text-caption text-slate-400">Start something new</p>
+    <PanelShell width="w-64" align="right">
+      <div className="border-b border-slate-100/60 px-5 py-4">
+        <p className="text-sm font-medium text-slate-800">Quick Create</p>
+        <p className="text-xs text-slate-400 mt-0.5">Start something new</p>
       </div>
-      <div className="p-1.5">
+      <div className="p-2 space-y-0.5">
         {QUICK_ACTIONS.map((action) => {
           const content = (
             <>
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-                <action.icon size={14} aria-hidden />
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white border border-slate-100 text-slate-500 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all group-hover:border-slate-200 group-hover:text-slate-800 group-hover:shadow-sm">
+                <action.icon size={14} stroke={2} aria-hidden />
               </span>
-              <span className="text-label flex-1 text-slate-700 text-left">{action.label}</span>
+              <span className="text-sm font-medium flex-1 text-slate-600 text-left transition-colors group-hover:text-slate-900">{action.label}</span>
               {action.shortcut && (
-                <kbd className="text-tiny select-none rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-slate-400">
+                <kbd className="text-[10px] select-none rounded-[6px] border border-slate-200/80 bg-white px-1.5 py-0.5 font-mono font-medium text-slate-400 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors group-hover:border-slate-300 group-hover:text-slate-500">
                   ⌘{action.shortcut}
                 </kbd>
               )}
             </>
           );
-          const className = "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-slate-50";
+          const className = "group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 transition-all hover:bg-slate-50/80";
 
           if (action.action) {
             return (
@@ -366,14 +434,32 @@ function QuickCreatePanel({ onClose }: { onClose: () => void }) {
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 function CalendarPanel({ onClose }: { onClose: () => void }) {
-  const { events, addEvent, deleteEvent } = useCalendarStore();
+  const [events, setEvents] = useState<ApiEvent[]>([]);
   const [month, setMonth] = useState(new Date());
+  const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
   const [selected, setSelected] = useState(new Date());
   const [isAdding, setIsAdding] = useState(false);
-  const [form, setForm] = useState<Partial<CalendarEvent>>({ title: "", time: "", type: "meeting", description: "" });
+  const [form, setForm] = useState<Partial<{ title: string; time: string; type: ApiEvent["type"]; description: string }>>({ title: "", time: "", type: "internal", description: "" });
+
+  const loadEvents = useCallback(() => {
+    fetch("/api/scheduling/events?entityId=group&scope=all")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.events)) setEvents(data.events);
+      })
+      .catch((e) => console.error(e));
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
 
   const selectedStr = format(selected, "yyyy-MM-dd");
-  const dayEvents = events.filter((e) => e.date === selectedStr);
+  const dayEvents = events.filter((e) => {
+    const d = new Date(e.startsAt);
+    return d.getFullYear() === selected.getFullYear() && d.getMonth() === selected.getMonth() && d.getDate() === selected.getDate();
+  }).sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+
   const monthStart = startOfMonth(month);
   const monthEnd = endOfMonth(month);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -384,126 +470,202 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
   let cursor = calStart;
   while (cursor <= calEnd) { cells.push(cursor); cursor = addDays(cursor, 1); }
 
-  function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title?.trim()) return;
-    addEvent({ title: form.title, date: selectedStr, time: form.time, type: (form.type ?? "meeting") as CalendarEvent["type"], description: form.description });
-    setForm({ title: "", time: "", type: "meeting", description: "" });
-    setIsAdding(false);
+    if (!form.title?.trim() || !form.time || !form.type) return;
+
+    const startsAt = new Date(`${selectedStr}T${form.time}:00`);
+    const endsAt = new Date(startsAt.getTime() + 60 * 60_000); // Default 1 hour
+
+    try {
+      const res = await fetch("/api/scheduling/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityId: "group",
+          title: form.title,
+          description: form.description || undefined,
+          type: form.type,
+          startsAt: startsAt.toISOString(),
+          endsAt: endsAt.toISOString(),
+          location: "TBD",
+          attendees: [],
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to schedule event");
+      const { event } = await res.json();
+      setEvents((prev) => [...prev, event]);
+      setForm({ title: "", time: "", type: "internal", description: "" });
+      setIsAdding(false);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function deleteEvent(id: string) {
+    try {
+      await fetch(`/api/scheduling/events?id=${id}`, { method: "DELETE" });
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
-    <PanelShell width="w-[40rem]" align="right" className="overflow-visible">
+    <PanelShell width="w-[44rem]" align="right" className="overflow-hidden !rounded-[24px]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-        <div className="flex items-center gap-2">
-          <IconCalendar size={15} className="text-slate-400" aria-hidden />
-          <span className="text-label text-slate-800">Schedule</span>
+      <div className="flex items-center justify-between border-b border-slate-100/60 bg-white px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex size-8 items-center justify-center rounded-xl bg-slate-50 text-slate-500 shadow-sm ring-1 ring-slate-200/50">
+            <IconCalendar size={16} aria-hidden />
+          </div>
+          <span className="text-lg font-light text-slate-800 tracking-tight">Calendar</span>
         </div>
         <button
           type="button"
           aria-label="Close calendar"
           onClick={onClose}
-          className="flex size-6 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100"
+          className="flex size-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
         >
-          <IconX size={13} aria-hidden />
+          <IconX size={18} aria-hidden />
         </button>
       </div>
 
-      <div className="flex">
+      <div className="flex h-[420px]">
         {/* Left - mini calendar */}
-        <div className="w-[56%] border-r border-slate-100 px-5 py-4">
+        <div className="w-[55%] border-r border-slate-100/60 bg-white px-6 py-5 flex flex-col">
           {/* Month nav */}
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between px-2">
             <button
               type="button"
-              aria-label="Previous month"
-              onClick={() => setMonth(subMonths(month, 1))}
-              className="flex size-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Previous"
+              onClick={() => setMonth(viewMode === "monthly" ? subMonths(month, 1) : subYears(month, 1))}
+              className="flex size-8 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-800"
             >
-              <IconChevronLeft size={14} aria-hidden />
+              <IconChevronLeft size={18} aria-hidden />
             </button>
-            <span className="text-label text-slate-700">
-              {format(month, "MMMM yyyy")}
-            </span>
             <button
               type="button"
-              aria-label="Next month"
-              onClick={() => setMonth(addMonths(month, 1))}
-              className="flex size-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              onClick={() => setViewMode(viewMode === "monthly" ? "yearly" : "monthly")}
+              className="text-sm font-medium text-slate-800 tracking-wide hover:text-[var(--sidebar)] transition-colors px-2 py-1 rounded-md hover:bg-slate-50"
             >
-              <IconChevronRight size={14} aria-hidden />
+              {viewMode === "monthly" ? format(month, "MMMM yyyy") : format(month, "yyyy")}
+            </button>
+            <button
+              type="button"
+              aria-label="Next"
+              onClick={() => setMonth(viewMode === "monthly" ? addMonths(month, 1) : addYears(month, 1))}
+              className="flex size-8 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-800"
+            >
+              <IconChevronRight size={18} aria-hidden />
             </button>
           </div>
 
-          {/* Day labels */}
-          <div className="mb-2 grid grid-cols-7">
-            {WEEKDAYS.map((d) => (
-              <div key={d} className="text-tiny text-center font-medium uppercase tracking-wider text-slate-400">
-                {d}
+          {viewMode === "monthly" ? (
+            <>
+              {/* Day labels */}
+              <div className="mb-4 grid grid-cols-7 gap-1">
+                {WEEKDAYS.map((d) => (
+                  <div key={d} className="text-center text-[11px] font-medium uppercase tracking-widest text-slate-400">
+                    {d}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Cells */}
-          <div className="grid grid-cols-7 gap-y-1">
-            {cells.map((day) => {
-              const dateStr = format(day, "yyyy-MM-dd");
-              const dayEvts = events.filter((e) => e.date === dateStr);
-              const isSelected = isSameDay(day, selected);
-              const isToday = isSameDay(day, new Date());
-              const isCurrentM = isSameMonth(day, month);
+              {/* Cells */}
+              <div className="grid grid-cols-7 gap-y-2 gap-x-1">
+                {cells.map((day) => {
+                  const dateStr = format(day, "yyyy-MM-dd");
+                  const hasEvents = events.some((e) => {
+                    const d = new Date(e.startsAt);
+                    return d.getFullYear() === day.getFullYear() && d.getMonth() === day.getMonth() && d.getDate() === day.getDate();
+                  });
+                  const isSelected = isSameDay(day, selected);
+                  const isToday = isSameDay(day, new Date());
+                  const isCurrentM = isSameMonth(day, month);
 
-              return (
-                <button
-                  key={dateStr}
-                  type="button"
-                  aria-label={format(day, "MMMM d yyyy")}
-                  onClick={() => { setSelected(day); setIsAdding(false); }}
-                  className={cn(
-                    "relative mx-auto flex h-8 w-8 flex-col items-center justify-center rounded-xl transition-colors",
-                    isSelected
-                      ? "bg-[var(--sidebar)] text-white"
-                      : isToday
-                        ? "border border-[var(--sidebar)]/30 text-slate-800 hover:bg-slate-50"
-                        : isCurrentM
-                          ? "text-slate-700 hover:bg-slate-100"
-                          : "text-slate-400 hover:bg-slate-50",
-                  )}
-                >
-                  <span className="text-label">{format(day, "d")}</span>
-                  {dayEvts.length > 0 && (
-                    <span className={cn(
-                      "absolute bottom-1 size-[4px] rounded-full",
-                      isSelected ? "bg-white/60" : "bg-[var(--sidebar)]/40",
-                    )} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                  return (
+                    <button
+                      key={dateStr}
+                      type="button"
+                      aria-label={format(day, "MMMM d yyyy")}
+                      onClick={() => { setSelected(day); setIsAdding(false); }}
+                      className={cn(
+                        "relative mx-auto flex size-9 flex-col items-center justify-center rounded-full transition-all duration-200",
+                        isSelected
+                          ? "bg-[var(--sidebar)] text-white shadow-md shadow-slate-900/10 scale-110"
+                          : isToday
+                            ? "bg-slate-100/80 text-[var(--sidebar)] font-medium hover:bg-slate-200/60"
+                            : isCurrentM
+                              ? "text-slate-700 hover:bg-slate-50"
+                              : "text-slate-300 hover:bg-slate-50",
+                      )}
+                    >
+                      <span className={cn("text-[13px]", isSelected || isToday ? "font-medium" : "font-normal")}>
+                        {format(day, "d")}
+                      </span>
+                      {hasEvents && (
+                        <span className={cn(
+                          "absolute bottom-1.5 size-[3.5px] rounded-full",
+                          isSelected ? "bg-white/90" : "bg-[var(--sidebar)]/60",
+                        )} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="grid grid-cols-3 gap-3 mt-2 flex-1 content-start">
+              {Array.from({ length: 12 }).map((_, i) => {
+                const m = new Date(month.getFullYear(), i, 1);
+                const isCurrentMonth = isSameMonth(m, new Date());
+                const isSelectedMonth = isSameMonth(m, month);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => { setMonth(m); setViewMode("monthly"); }}
+                    className={cn(
+                      "flex h-[3.25rem] items-center justify-center rounded-[14px] text-[13px] transition-all",
+                      isSelectedMonth
+                        ? "bg-[var(--sidebar)] text-white shadow-md shadow-slate-900/10 font-medium scale-105"
+                        : isCurrentMonth
+                          ? "bg-slate-100 text-[var(--sidebar)] font-medium hover:bg-slate-200/60"
+                          : "text-slate-600 hover:bg-slate-50"
+                    )}
+                  >
+                    {format(m, "MMM")}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Today shortcut */}
-          <div className="mt-4 border-t border-slate-100 pt-3">
+          <div className="mt-auto border-t border-slate-100/60 pt-4">
             <button
               type="button"
               onClick={() => { setMonth(new Date()); setSelected(new Date()); }}
-              className="text-caption text-[var(--tertiary)] transition-opacity hover:opacity-70"
+              className="flex items-center gap-2 text-[13px] font-medium text-slate-500 transition-colors hover:text-[var(--sidebar)]"
             >
+              <span className="flex size-5 items-center justify-center rounded-full bg-slate-100">
+                <span className="size-1.5 rounded-full bg-[var(--sidebar)]" />
+              </span>
               Jump to today
             </button>
           </div>
         </div>
 
         {/* Right - events for selected day */}
-        <div className="flex w-[44%] flex-col px-4 py-4">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <p className="text-label text-slate-800">
-                {format(selected, "EEE, MMM d")}
+        <div className="flex w-[45%] flex-col bg-slate-50/50 px-6 py-5">
+          <div className="mb-5 flex items-start justify-between">
+            <div className="flex flex-col gap-1">
+              <p className="text-base font-medium text-slate-800">
+                {format(selected, "EEEE, MMMM d")}
               </p>
-              <p className="text-caption text-slate-400">
-                {dayEvents.length === 0 ? "No events" : `${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""}`}
+              <p className="text-xs font-medium text-slate-400">
+                {dayEvents.length === 0 ? "No events scheduled" : `${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""} today`}
               </p>
             </div>
             {!isAdding && (
@@ -511,52 +673,58 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                 type="button"
                 aria-label="Add event"
                 onClick={() => setIsAdding(true)}
-                className="flex size-7 items-center justify-center rounded-xl bg-[var(--sidebar)] text-white transition hover:opacity-80"
+                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-[var(--sidebar)] shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-[var(--sidebar)] hover:text-white hover:ring-transparent"
               >
-                <IconPlus size={13} aria-hidden />
+                <IconPlus size={18} aria-hidden />
               </button>
             )}
           </div>
 
           {/* Events list */}
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto [scrollbar-width:none]">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200">
             {dayEvents.length === 0 && !isAdding ? (
-              <div className="flex flex-col items-center justify-center py-8 text-slate-300">
-                <IconCalendar size={24} aria-hidden className="mb-2" />
-                <p className="text-caption text-slate-400">No events scheduled</p>
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <div className="flex size-14 items-center justify-center rounded-full bg-slate-100/80 text-slate-300 mb-4 ring-1 ring-slate-200/50">
+                  <IconCalendar size={24} stroke={1.5} aria-hidden />
+                </div>
+                <p className="text-sm font-medium text-slate-600">Your day is clear</p>
+                <p className="text-[13px] text-slate-400 mt-1 max-w-[180px]">Enjoy the free time or schedule a new event.</p>
               </div>
             ) : (
-              dayEvents.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="group flex items-start gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5"
-                >
-                  <span className={cn("mt-[3px] size-[7px] shrink-0 rounded-full", EVENT_COLORS[ev.type])} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-label text-slate-800">{ev.title}</p>
-                    {ev.time && (
-                      <p className="text-tiny mt-0.5 flex items-center gap-1 text-slate-400">
-                        <IconClockHour4 size={9} aria-hidden />
-                        {ev.time}
-                      </p>
-                    )}
-                    {ev.description && (
-                      <p className="text-caption mt-1 text-slate-600">{ev.description}</p>
-                    )}
-                    <p className={cn("text-tiny mt-1 uppercase tracking-wide", EVENT_LABEL_COLORS[ev.type])}>
-                      {ev.type}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="Delete event"
-                    onClick={() => deleteEvent(ev.id)}
-                    className="flex size-5 shrink-0 items-center justify-center rounded-lg text-slate-300 opacity-0 transition-all hover:bg-red-50 hover:text-red-400 group-hover:opacity-100"
+              dayEvents.map((ev) => {
+                const timeStr = new Date(ev.startsAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" });
+                return (
+                  <div
+                    key={ev.id}
+                    className="group relative flex items-start gap-3.5 bg-white my-2"
                   >
-                    <IconTrash size={11} aria-hidden />
-                  </button>
-                </div>
-              ))
+                    <span className={cn("mt-[6px] size-2.5 shrink-0 rounded-full", EVENT_COLORS[ev.type])} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-medium text-slate-800 leading-snug">{ev.title}</p>
+                      <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[11px] font-medium tracking-tight text-slate-400">
+                        <IconClock size={13} aria-hidden />
+                        {timeStr}
+                      </p>
+                      {ev.description && (
+                        <p className="mt-2 text-[13px] leading-relaxed text-slate-500 line-clamp-2">{ev.description}</p>
+                      )}
+                      <div className="mt-3 flex items-center">
+                        <Badge tone={EVENT_BADGE_TONE[ev.type]}>
+                          {ev.type === "internal" ? "Internal Sync" : ev.type === "external" ? "Client Meeting" : ev.type === "legal" ? "Legal Deadline" : "Maintenance"}
+                        </Badge>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Delete event"
+                      onClick={() => deleteEvent(ev.id)}
+                      className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-full bg-slate-50 text-slate-300 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                    >
+                      <IconTrash size={14} aria-hidden />
+                    </button>
+                  </div>
+                )
+              })
             )}
           </div>
 
@@ -564,17 +732,17 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
           <AnimatePresence>
             {isAdding && (
               <motion.form
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 6 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0, scale: 0.96, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 10 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 onSubmit={handleAdd}
-                className="mt-2 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3"
+                className="mt-3 flex flex-col gap-3 rounded-[20px] bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.08)] ring-1 ring-slate-200/60"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-caption text-slate-700">New event</span>
-                  <button type="button" onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600">
-                    <IconX size={13} aria-hidden />
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-slate-800">Create Event</span>
+                  <button type="button" onClick={() => setIsAdding(false)} className="flex size-7 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+                    <IconX size={14} aria-hidden />
                   </button>
                 </div>
 
@@ -584,25 +752,26 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   placeholder="Event title"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="text-label w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200/80 bg-slate-50/50 px-3.5 py-2.5 text-[14px] font-medium text-slate-800 placeholder:text-slate-400 placeholder:font-normal transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
                 />
 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <input
                     type="time"
+                    required
                     value={form.time}
                     onChange={(e) => setForm({ ...form, time: e.target.value })}
-                    className="text-caption flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-700 focus:border-slate-300 focus:outline-none"
+                    className="w-full flex-1 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 text-[13px] font-medium text-slate-700 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
                   />
                   <select
                     value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value as CalendarEvent["type"] })}
-                    className="text-caption flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-700 focus:border-slate-300 focus:outline-none"
+                    onChange={(e) => setForm({ ...form, type: e.target.value as ApiEvent["type"] })}
+                    className="w-full flex-1 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 text-[13px] font-medium text-slate-700 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
                   >
-                    <option value="meeting">Meeting</option>
-                    <option value="viewing">Viewing</option>
-                    <option value="deadline">Deadline</option>
-                    <option value="other">Other</option>
+                    <option value="internal">Internal Sync</option>
+                    <option value="external">External Meeting</option>
+                    <option value="legal">Legal Deadline</option>
+                    <option value="maintenance">Maintenance</option>
                   </select>
                 </div>
 
@@ -611,23 +780,23 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={2}
-                  className="text-caption w-full resize-none rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:outline-none"
+                  className="w-full resize-none rounded-xl border border-slate-200/80 bg-slate-50/50 px-3.5 py-2.5 text-[13px] text-slate-700 placeholder:text-slate-400 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
                 />
 
-                <div className="flex gap-2">
+                <div className="mt-2 flex items-center justify-end gap-2.5">
                   <button
                     type="button"
                     onClick={() => setIsAdding(false)}
-                    className="text-caption flex-1 rounded-lg border border-slate-200 bg-white py-1.5 text-slate-600 transition-colors hover:bg-slate-50"
+                    className="rounded-full px-4 py-2 text-[13px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="text-caption flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--sidebar)] py-1.5 text-white transition-opacity hover:opacity-80"
+                    className="flex items-center gap-1.5 rounded-full bg-[var(--sidebar)] px-5 py-2 text-[13px] font-medium text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow"
                   >
-                    <IconCheck size={12} aria-hidden />
-                    Save
+                    <IconCheck size={14} aria-hidden />
+                    Save Event
                   </button>
                 </div>
               </motion.form>
@@ -642,54 +811,53 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
 // ─── Search bar ───────────────────────────────────────────────────────────────
 
 function SearchBar() {
+  const openSearch = useUIStore((s) => s.openSearch);
   const [focused, setFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        inputRef.current?.focus();
+        openSearch();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [openSearch]);
 
   return (
-    <label
+    <button
+      type="button"
+      onClick={openSearch}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       className={cn(
-        "relative flex w-full max-w-[26rem] cursor-text items-center gap-2 rounded-xl px-3 py-[7px]",
-        "border transition-all duration-200",
+        "group relative flex w-full max-w-[22rem] cursor-pointer items-center gap-2.5 rounded-xl px-3.5 py-1.5 text-left",
+        "border transition-all duration-300",
         focused
-          ? "border-slate-300 bg-white shadow-[0_0_0_3px_rgba(49,91,232,0.07)]"
-          : "border-slate-200/80 bg-slate-50/80 hover:bg-slate-100/50 hover:border-slate-200",
+          ? "border-slate-300 bg-white shadow-sm ring-4 ring-slate-100"
+          : "border-slate-200/60 bg-slate-50/50 hover:bg-white hover:border-slate-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
       )}
     >
       <span className="sr-only">Search clients, properties, payments</span>
       <IconSearch
         aria-hidden
-        size={13}
-        stroke={1.8}
-        className={cn("shrink-0 transition-colors", focused ? "text-slate-400" : "text-slate-400")}
+        size={14}
+        stroke={1.5}
+        className={cn("shrink-0 transition-colors", focused ? "text-slate-600" : "text-slate-400 group-hover:text-slate-500")}
       />
-      <input
-        ref={inputRef}
-        type="search"
-        placeholder="Search anything..."
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className="text-caption flex-1 bg-transparent text-slate-700 placeholder:text-slate-400/80 focus:outline-none"
-      />
+      <span className={cn("text-sm flex-1 transition-colors", focused ? "text-slate-700" : "text-slate-400 group-hover:text-slate-500")}>
+        Search anything...
+      </span>
       <kbd
         className={cn(
-          "text-tiny pointer-events-none select-none rounded border px-1.5 py-0.5 font-mono transition-opacity",
-          focused ? "opacity-0" : "border-slate-200 bg-white text-slate-400",
+          "pointer-events-none select-none rounded-[6px] border px-1.5 py-0.5 text-[10px] font-medium tracking-widest transition-opacity shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
+          focused ? "opacity-0" : "border-slate-200 bg-white text-slate-400 group-hover:border-slate-300 group-hover:text-slate-500",
         )}
       >
         ⌘K
       </kbd>
-    </label>
+    </button>
   );
 }
 
@@ -741,24 +909,24 @@ function Breadcrumb() {
     <nav aria-label="Breadcrumb" className="hidden items-center gap-1.5 xl:flex">
       {activeSection && !isFlat && (
         <>
-          <span className="text-caption text-slate-400">{activeSection.label}</span>
-          <IconChevronRight size={10} className="text-slate-300" aria-hidden />
+          <span className="text-sm font-medium text-slate-400">{activeSection.label}</span>
+          <IconChevronRight size={12} className="text-slate-300" aria-hidden />
         </>
       )}
       {dynamicLabel ? (
         <Link
           href={activeItem.href}
-          className="text-caption text-slate-400 hover:text-slate-900 transition-colors"
+          className="text-sm font-medium text-slate-400 hover:text-slate-900 transition-colors"
         >
           {activeItem.label}
         </Link>
       ) : (
-        <span className="text-caption text-slate-700">{activeItem.label}</span>
+        <span className="text-sm font-medium text-slate-700">{activeItem.label}</span>
       )}
       {dynamicLabel && (
         <>
-          <IconChevronRight size={10} className="text-slate-300" aria-hidden />
-          <span className="text-caption text-slate-700 font-medium">{dynamicLabel}</span>
+          <IconChevronRight size={12} className="text-slate-300" aria-hidden />
+          <span className="text-sm font-medium text-slate-700">{dynamicLabel}</span>
         </>
       )}
     </nav>
@@ -793,15 +961,6 @@ export function TopNav() {
       })
       .catch(() => { });
   }, []);
-
-  const formatRole = (role: string) => {
-    return role
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ")
-      .replace("Ceo", "CEO")
-      .replace("Gm", "GM");
-  };
 
   const handleLogout = async () => {
     try {
@@ -905,42 +1064,70 @@ export function TopNav() {
             align="right"
             label="User menu"
             trigger={
-              <div className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 hover:bg-slate-50 transition cursor-pointer select-none">
+              <div className="flex items-center gap-3 rounded-xl pl-2 pr-3 py-1.5 hover:bg-slate-100/80 transition-colors cursor-pointer select-none group/profile">
                 <Avatar
                   src={currentUser.avatarUrl}
                   fallback={currentUser.name ? currentUser.name.split(" ").map((n) => n[0]).join("") : "DM"}
                   status="online"
-                  className="size-7 shrink-0"
+                  className="size-9 ring-1 ring-slate-200/60 shadow-sm"
                 />
-                <div className="hidden flex-col leading-tight xl:flex text-left">
-                  <span className="text-label text-slate-800">{currentUser.name}</span>
-                  <span className="text-tiny text-slate-400">{formatRole(currentUser.role)}</span>
+                <div className="hidden flex-col items-start leading-tight xl:flex justify-center">
+                  <span className="text-sm font-medium text-slate-800 transition-colors group-hover/profile:text-slate-950">{currentUser.name}</span>
+                  <span className="text-xs font-medium uppercase tracking-widest text-slate-500 transition-colors group-hover/profile:text-slate-700 mt-0.5">
+                    {currentUser.role.replace(/_/g, " ")}
+                  </span>
                 </div>
-                <IconChevronDown size={14} className="text-slate-400 ml-1 hidden xl:block" />
+                <IconChevronDown size={14} stroke={2} className="text-slate-400 ml-1 transition-transform group-hover/profile:translate-y-px hidden xl:block" />
               </div>
             }
           >
-            <div className="px-3 py-2 border-b border-slate-100 mb-1">
-              <p className="text-base font-medium text-slate-800 truncate">{currentUser.name}</p>
-              <p className="text-sm  text-slate-450 truncate mt-0.5">{formatRole(currentUser.role)}</p>
+            {/* Clean White Profile Header */}
+            <div className="flex items-center gap-3.5 p-3 mb-1.5 border-b border-slate-100/80 mx-1">
+              <Avatar
+                src={currentUser.avatarUrl}
+                fallback={currentUser.name ? currentUser.name.split(" ").map((n) => n[0]).join("") : "DM"}
+                className="size-10 shadow-sm ring-1 ring-slate-200 shrink-0"
+              />
+              <div className="flex flex-col min-w-0">
+                <p className="text-sm font-medium text-slate-800 truncate">{currentUser.name}</p>
+                <div className="mt-1 flex items-center">
+                  <Badge tone="neutral" className="text-xs uppercase tracking-widest bg-white border-slate-200/60 shadow-sm">
+                    {currentUser.role.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+              </div>
             </div>
-            <DropdownItem onClick={() => window.location.href = `${portalPrefix}/profile`}>
-              <IconUser size={15} stroke={1.8} className="text-slate-400" />
-              <span>My Profile</span>
-            </DropdownItem>
-            <DropdownItem onClick={() => window.location.href = `${portalPrefix}/settings`}>
-              <IconSettings size={15} stroke={1.8} className="text-slate-400" />
-              <span>System Settings</span>
-            </DropdownItem>
-            <DropdownItem onClick={() => window.location.href = `${portalPrefix}/security`}>
-              <IconShieldLock size={15} stroke={1.8} className="text-slate-400" />
-              <span>Security & Keys</span>
-            </DropdownItem>
-            <div className="my-1 border-t border-slate-100" />
-            <DropdownItem onClick={handleLogout}>
-              <IconLogout size={15} stroke={1.8} className="text-rose-500" />
-              <span className="text-rose-600">Logout</span>
-            </DropdownItem>
+
+            {/* Menu Items */}
+            <div className="pb-1 space-y-0.5">
+              <DropdownItem onClick={() => window.location.href = `${portalPrefix}/profile`}>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-100 text-slate-500 shadow-sm transition-all">
+                  <IconUser size={14} stroke={2} aria-hidden />
+                </span>
+                <span className="text-sm font-medium flex-1 text-slate-600 text-left transition-colors ml-1.5">My Profile</span>
+              </DropdownItem>
+              <DropdownItem onClick={() => window.location.href = `${portalPrefix}/settings`}>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-100 text-slate-500 shadow-sm transition-all">
+                  <IconSettings size={14} stroke={2} aria-hidden />
+                </span>
+                <span className="text-sm font-medium flex-1 text-slate-600 text-left transition-colors ml-1.5">System Settings</span>
+              </DropdownItem>
+              <DropdownItem onClick={() => window.location.href = `${portalPrefix}/security`}>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-100 text-slate-500 shadow-sm transition-all">
+                  <IconShieldLock size={14} stroke={2} aria-hidden />
+                </span>
+                <span className="text-sm font-medium flex-1 text-slate-600 text-left transition-colors ml-1.5">Security & Keys</span>
+              </DropdownItem>
+
+              <div className="my-1.5 border-t border-slate-100/80 mx-2" />
+
+              <DropdownItem onClick={handleLogout} variant="danger">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white border border-rose-100 text-rose-500 shadow-sm transition-all">
+                  <IconLogout size={14} stroke={2} aria-hidden />
+                </span>
+                <span className="text-sm font-medium flex-1 text-rose-600 text-left transition-colors ml-1.5">Logout</span>
+              </DropdownItem>
+            </div>
           </DropdownMenu>
         </div>
       </div>
@@ -960,20 +1147,20 @@ export function TopNav() {
           <IconMenu2 aria-hidden size={18} />
         </button>
 
-        <label className="relative min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={() => useUIStore.getState().openSearch()}
+          className="relative min-w-0 flex-1 text-left flex items-center h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/80 pl-3 pr-3 transition-all hover:bg-white focus:border-slate-300 focus:bg-white focus:outline-none"
+        >
           <span className="sr-only">Search Sunland ERP</span>
           <IconSearch
             aria-hidden
             size={13}
             stroke={1.8}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="text-slate-400 mr-2 shrink-0"
           />
-          <input
-            type="search"
-            placeholder="Search..."
-            className="text-caption h-9 w-full rounded-xl border border-slate-200/80 bg-slate-50/80 pl-8 pr-3 text-slate-700 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-none transition-all"
-          />
-        </label>
+          <span className="text-caption text-slate-400">Search...</span>
+        </button>
 
         {/* Mobile notifications - navigates to notifications page */}
         <button
@@ -1002,6 +1189,8 @@ export function TopNav() {
           />
         </Link>
       </div>
+
+      <CommandPalette />
     </header>
   );
 }

@@ -22,6 +22,7 @@ type UIStore = {
   dashboardLoading: boolean;
   chatOpen: boolean;
   selectedChatDMId: string | null;
+  searchOpen: boolean;
   // Actions
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -39,6 +40,9 @@ type UIStore = {
   openChat: () => void;
   closeChat: () => void;
   setSelectedChatDMId: (id: string | null, openChat?: boolean) => void;
+  openSearch: () => void;
+  closeSearch: () => void;
+  toggleSearch: () => void;
 };
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -54,6 +58,7 @@ export const useUIStore = create<UIStore>((set) => ({
   dashboardLoading: false,
   chatOpen: false,
   selectedChatDMId: null,
+  searchOpen: false,
   toggleSidebar: () =>
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -81,4 +86,7 @@ export const useUIStore = create<UIStore>((set) => ({
       selectedChatDMId: id,
       chatOpen: openChat !== undefined ? openChat : (id !== null),
     })),
+  openSearch: () => set({ searchOpen: true }),
+  closeSearch: () => set({ searchOpen: false }),
+  toggleSearch: () => set((state) => ({ searchOpen: !state.searchOpen })),
 }));

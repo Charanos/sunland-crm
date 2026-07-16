@@ -317,15 +317,15 @@ export function SecurityPageContent({ entityId = "group" }: { entityId?: string 
 
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-2.5">
                 <div className="flex gap-2 text-caption">
-                  <span className="font-mono text-[var(--sidebar)] font-bold">1.</span>
+                  <span className="font-mono text-[var(--sidebar)] font-medium">1.</span>
                   <span>Install an authenticator program from your app catalog.</span>
                 </div>
                 <div className="flex gap-2 text-caption">
-                  <span className="font-mono text-[var(--sidebar)] font-bold">2.</span>
+                  <span className="font-mono text-[var(--sidebar)] font-medium">2.</span>
                   <span>Scan the target setup barcode presented in the next step.</span>
                 </div>
                 <div className="flex gap-2 text-caption">
-                  <span className="font-mono text-[var(--sidebar)] font-bold">3.</span>
+                  <span className="font-mono text-[var(--sidebar)] font-medium">3.</span>
                   <span>Enter the output 6-digit TOTP pin code to confirm connection.</span>
                 </div>
               </div>
@@ -420,7 +420,7 @@ export function SecurityPageContent({ entityId = "group" }: { entityId?: string 
                   placeholder="000000"
                   value={mfaCode}
                   onChange={e => setMfaCode(e.target.value.replace(/\D/g, ""))}
-                  className="w-full text-center tracking-[8px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-lg font-mono font-bold text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all"
+                  className="w-full text-center tracking-[8px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-lg font-mono font-medium text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all"
                 />
                 <p className="text-[10px] text-center text-slate-400 mt-2">Preview only - any 6 digits will proceed, no backend verification exists yet.</p>
               </div>

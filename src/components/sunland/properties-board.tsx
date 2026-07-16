@@ -706,7 +706,7 @@ export function PropertiesBoard({
               <span className="font-mono text-4xl text-white">
                 KES {formatCompactKES(kpis.rentPool).replace('KES ', '')}
               </span>
-              <p className="text-xs font-medium uppercase tracking-widest text-slate-600 mt-2">Contracted · occupied only</p>
+              <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mt-2">Contracted · occupied only</p>
             </div>
           </div>
         </div>

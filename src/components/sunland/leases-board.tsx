@@ -663,32 +663,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   return (
     <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-4">
       <BoardHeader
-        eyebrow={
-          <div className="flex bg-slate-100 p-0.5 rounded-full border border-slate-200/40 shadow-sm">
-            <button
-              onClick={() => { setMode("mandates"); setPage(1); }}
-              className={cn(
-                "px-3 py-1 text-xs uppercase tracking-wider rounded-full transition-all font-medium flex items-center gap-1.5",
-                mode === "mandates"
-                  ? "bg-[#151936] text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
-              )}
-            >
-              <IconFileCertificate size={12} /> Mandates
-            </button>
-            <button
-              onClick={() => { setMode("leases"); setPage(1); }}
-              className={cn(
-                "px-3 py-1 text-xs uppercase tracking-wider rounded-full transition-all font-medium flex items-center gap-1.5",
-                mode === "leases"
-                  ? "bg-[#151936] text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
-              )}
-            >
-              <IconUserCircle size={12} /> Tenant Leases
-            </button>
-          </div>
-        }
+        eyebrow={<Badge tone="primary">Leases & Management Mandates</Badge>}
         title="Management Mandates & Leases"
         description="Manage property inventory, tenancies, and owner portfolios."
         actions={
@@ -713,7 +688,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
           </div>
         }
       />
-      <PortfolioHubNav active="leases" />
+      <PortfolioHubNav active="leases" mode={mode} onModeChange={(m) => { setMode(m); setPage(1); }} />
 
       <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />

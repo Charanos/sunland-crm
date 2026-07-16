@@ -24,7 +24,9 @@ import { BoardPanel } from "@/components/ui/erp-primitives";
 import { EventFormModal } from "./event-form-modal";
 import { ProjectDetailModal } from "./project-detail-modal";
 import { CalendarModal } from "@/components/ui/calendar-modal";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
+import Image from "next/image";
 
 // Matches the real /api/scheduling/events response shape (calendar_events
 // table) - startsAt/endsAt are full ISO timestamps, not separate date/time
@@ -147,9 +149,6 @@ export function InternalOperationsBoard({
       isSameCalendarDay(e.startsAt, selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()),
     )
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-
-  const _hasEvents = (day: number) =>
-    events.some((e) => isSameCalendarDay(e.startsAt, currentDate.getFullYear(), currentDate.getMonth(), day));
 
   // "30m"/"1h"/"1.5h"/"2h"/"3h"/"4h"/"All Day" from EventFormModal's duration
   // select, converted to minutes to compute endsAt from the chosen startsAt.
@@ -312,7 +311,7 @@ export function InternalOperationsBoard({
 
         <button
           onClick={() => setEventModalOpen(true)}
-          className="group flex items-center gap-2 bg-tertiary-gradient text-white px-5 py-2.5 rounded-xl text-sm shadow-sm hover:shadow hover:opacity-95 transition-all"
+          className="group flex items-center w-fit gap-2 bg-tertiary-gradient text-white px-5 py-2.5 rounded-xl text-sm shadow-sm hover:shadow hover:opacity-95 transition-all"
         >
           <IconPlus size={18} stroke={2} className="group-hover:scale-110 transition-transform" />
           <span>Schedule Event</span>
@@ -326,7 +325,7 @@ export function InternalOperationsBoard({
           {/* Department Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Link href="/admin/pipeline" className="group">
-              <div className="bg-gradient-to-br from-white to-teal-50/30 p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 hover:to-teal-50/60 transition-all relative overflow-hidden flex flex-col justify-between h-[155px] cursor-pointer">
+              <div className="bg-gradient-to-br from-white to-teal-50/30 p-5 rounded-[24px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all relative overflow-hidden flex flex-col justify-between h-[155px] cursor-pointer">
                 <IconBriefcase size={120} stroke={1} className="absolute -right-4 -bottom-4 text-teal-600 opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.06] transition-all duration-500 pointer-events-none" />
                 <div className="absolute -right-4 -top-4 size-20 bg-teal-50/50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="flex items-center justify-between relative z-10">
@@ -336,25 +335,27 @@ export function InternalOperationsBoard({
                     </div>
                     <span className="text-sm font-medium text-slate-700">Sales</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-white border border-teal-100 px-2 py-1 rounded-lg text-xs text-teal-700 shadow-sm">
-                    <span className="size-1.5 rounded-full bg-teal-500 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)]" />
-                    <span className="label-caps">Active</span>
-                  </div>
+                  <Badge tone="success" className="text-[10px] font-medium uppercase tracking-widest px-2 py-0.5">
+                    <span className="size-1.5 rounded-full bg-teal-500 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)] mr-1.5 inline-block" />
+                    Active
+                  </Badge>
                 </div>
                 <div className="mt-auto flex items-end justify-between relative z-10">
                   <div>
-                    <h3 className="text-4xl font-mono font-medium text-slate-900">{departmentStats.sales}</h3>
-                    <p className="text-desc-secondary mt-1">Active Pipeline</p>
+                    <h3 className="text-4xl leading-none font-mono font-medium text-slate-900 tracking-tight">{departmentStats.sales}</h3>
+                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-2">Active Pipeline</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-teal-600 mono-data bg-teal-50/80 px-2 py-1 rounded-md border border-teal-100">Deals</p>
+                  <div className="text-right pb-1">
+                    <span className="text-[11px] font-medium uppercase tracking-widest text-teal-600/70">
+                      Deals
+                    </span>
                   </div>
                 </div>
               </div>
             </Link>
 
             <Link href="/admin/maintenance" className="group">
-              <div className="bg-gradient-to-br from-white to-amber-50/30 p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 hover:to-amber-50/60 transition-all relative overflow-hidden flex flex-col justify-between h-[155px] cursor-pointer">
+              <div className="bg-gradient-to-br from-white to-amber-50/30 p-5 rounded-[24px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all relative overflow-hidden flex flex-col justify-between h-[155px] cursor-pointer">
                 <IconUsers size={120} stroke={1} className="absolute -right-4 -bottom-4 text-amber-600 opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.06] transition-all duration-500 pointer-events-none" />
                 <div className="absolute -right-4 -top-4 size-20 bg-amber-50/50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="flex items-center justify-between relative z-10">
@@ -364,25 +365,27 @@ export function InternalOperationsBoard({
                     </div>
                     <span className="text-sm font-medium text-slate-700">Ops</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-white border border-amber-100 px-2 py-1 rounded-lg text-xs text-amber-700 shadow-sm">
-                    <span className="size-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
-                    <span className="label-caps">Capacity</span>
-                  </div>
+                  <Badge tone="warning" className="text-[10px] font-medium uppercase tracking-widest px-2 py-0.5">
+                    <span className="size-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)] mr-1.5 inline-block" />
+                    Capacity
+                  </Badge>
                 </div>
                 <div className="mt-auto flex items-end justify-between relative z-10">
                   <div>
-                    <h3 className="text-4xl font-mono font-medium text-slate-900">{departmentStats.ops}</h3>
-                    <p className="text-desc-secondary mt-1">Open Maintenance</p>
+                    <h3 className="text-4xl leading-none font-mono font-medium text-slate-900 tracking-tight">{departmentStats.ops}</h3>
+                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-2">Open Maintenance</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-amber-600 mono-data bg-amber-50/80 px-2 py-1 rounded-md border border-amber-100">Active</p>
+                  <div className="text-right pb-1">
+                    <span className="text-[11px] font-medium uppercase tracking-widest text-amber-600/70">
+                      Active
+                    </span>
                   </div>
                 </div>
               </div>
             </Link>
 
             <Link href="/admin/leases" className="group">
-              <div className="bg-gradient-to-br from-white to-indigo-50/30 p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 hover:to-indigo-50/60 transition-all relative overflow-hidden flex flex-col justify-between h-[155px] cursor-pointer">
+              <div className="bg-gradient-to-br from-white to-indigo-50/30 p-5 rounded-[24px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all relative overflow-hidden flex flex-col justify-between h-[155px] cursor-pointer">
                 <IconGavel size={120} stroke={1} className="absolute -right-4 -bottom-4 text-indigo-600 opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.06] transition-all duration-500 pointer-events-none" />
                 <div className="absolute -right-4 -top-4 size-20 bg-indigo-50/50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="flex items-center justify-between relative z-10">
@@ -392,17 +395,19 @@ export function InternalOperationsBoard({
                     </div>
                     <span className="text-sm font-medium text-slate-700">Legal</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs text-slate-400 shadow-sm">
-                    <span className="label-caps">Processing</span>
-                  </div>
+                  <Badge tone="neutral" className="text-[10px] font-medium uppercase tracking-widest px-2 py-0.5">
+                    Processing
+                  </Badge>
                 </div>
                 <div className="mt-auto flex items-end justify-between relative z-10">
                   <div>
-                    <h3 className="text-4xl font-mono font-medium text-slate-900">{departmentStats.legal}</h3>
-                    <p className="text-desc-secondary mt-1">Active Leases</p>
+                    <h3 className="text-4xl leading-none font-mono font-medium text-slate-900 tracking-tight">{departmentStats.legal}</h3>
+                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-2">Active Leases</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-indigo-600 mono-data bg-indigo-50/80 px-2 py-1 rounded-md border border-indigo-100">Pending</p>
+                  <div className="text-right pb-1">
+                    <span className="text-[11px] font-medium uppercase tracking-widest text-indigo-600/70">
+                      Pending
+                    </span>
                   </div>
                 </div>
               </div>
@@ -410,14 +415,14 @@ export function InternalOperationsBoard({
           </div>
 
           {/* Active Workflows Timeline */}
-          <BoardPanel className="flex flex-1 flex-col py-4 px-6">
-            <div className="flex items-center justify-between mb-6 border-b border-slate-200/60 pb-4">
-              <h3 className="text-title-secondary text-slate-900 flex items-center gap-2">
+          <BoardPanel className="flex flex-1 flex-col my-4 lg:px-6">
+            <div className="flex items-center justify-between my-6 border-b border-slate-200/60 lg:pb-4">
+              <h3 className="text-title-secondary text-slate-900 flex font-medium items-center gap-2">
                 Cross-Department Operations
               </h3>
               <Link
                 href="/admin/projects"
-                className="text-meta-muted-strong hover:text-slate-800 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow"
+                className="text-meta-muted-strong font-medium hover:text-slate-800 transition-colors bg-white px-3 py-1.5 my-2 rounded-lg border border-slate-200 shadow-sm hover:shadow"
               >
                 View All Projects
               </Link>
@@ -433,61 +438,83 @@ export function InternalOperationsBoard({
                   <p className="text-meta-muted mt-1">Create one from the Projects page to track it here.</p>
                 </div>
               ) : (
-                projects.slice(0, 3).map((project, i) => {
+                projects.slice(0, 3).map((project) => {
                   const style = PROJECT_DEPARTMENT_STYLES[project.department];
-                  const isLast = i === Math.min(projects.length, 3) - 1;
                   return (
-                    <div key={project.id} className="flex gap-4 relative group cursor-pointer" onClick={() => setSelectedProject(project)}>
-                      {!isLast && (
-                        <div className={cn("absolute left-[15px] top-[32px] bottom-[-24px] w-px bg-slate-200 transition-colors group-hover:bg-slate-300")} />
-                      )}
-                      <div className={cn("size-8 rounded-full bg-white border flex items-center justify-center shrink-0 z-10 shadow-sm group-hover:scale-110 transition-transform", style.ring)}>
-                        <div className={cn("size-2.5 rounded-full", style.dot)} />
-                      </div>
-                      <div className="flex-1 bg-white hover:bg-slate-50 p-4 rounded-xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h4 className="text-body-primary text-slate-900">{project.title}</h4>
-                            {project.description && (
-                              <p className="text-body-regular text-slate-400 mt-1">{project.description}</p>
-                            )}
+                    <div key={project.id} className="relative group cursor-pointer" onClick={() => setSelectedProject(project)}>
+                      <div className="flex-1 bg-white hover:bg-slate-50 p-5 rounded-[20px] border border-slate-100 shadow-[0_2px_12px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex gap-3 items-start">
+                            <div className={cn("mt-1.5 size-2.5 rounded-full shadow-sm group-hover:scale-125 transition-transform", style.dot)} />
+                            <div>
+                              <h4 className="text-body-primary text-slate-900 font-medium tracking-tight">{project.title}</h4>
+                              {project.description && (
+                                <p className="text-sm text-slate-500 mt-1">{project.description}</p>
+                              )}
+                            </div>
                           </div>
-                          <span className="bg-slate-50 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md shadow-sm label-caps capitalize">
-                            {project.department.replace("_", " ")}
-                          </span>
+                          <div className="flex flex-col items-end gap-3 mt-0.5 shrink-0 ml-4">
+                            <Badge tone="neutral" className="text-[10px] font-medium uppercase tracking-widest px-2 py-0.5 capitalize">
+                              {project.department.replace("_", " ")}
+                            </Badge>
+                          </div>
                         </div>
 
                         {project.status === "in_progress" && project.progressPercent !== null ? (
-                          <div className="flex items-center gap-4 mt-4 bg-slate-50/50 p-3 rounded-lg border border-slate-100">
-                            <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                              <div className={cn("h-full rounded-full", style.bar)} style={{ width: `${project.progressPercent}%` }} />
+                          <div className="flex flex-col gap-3.5 mt-5 bg-slate-50/50 p-4 rounded-xl border border-slate-100/80">
+                            <div className="flex items-center justify-between">
+                              <div className="flex -space-x-1.5">
+                                {project.assigneeIds.slice(0, 3).map((id) => (
+                                  <Image key={id} src={`https://i.pravatar.cc/150?u=${id}`} alt="assignee" width={26} height={26} className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-100 shadow-sm object-cover" />
+                                ))}
+                                {project.assigneeIds.length > 3 && (
+                                  <div className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-[10px] font-medium text-slate-600 shadow-sm z-10">
+                                    +{project.assigneeIds.length - 3}
+                                  </div>
+                                )}
+                              </div>
+                              <span className={cn("mono-data whitespace-nowrap px-2.5 py-1 rounded-md text-[11px] font-medium shadow-sm border bg-white", style.badge)}>
+                                {project.progressPercent}% Complete
+                              </span>
                             </div>
-                            <span className={cn("mono-data whitespace-nowrap px-2 py-0.5 rounded border", style.badge)}>
-                              {project.progressPercent}% Complete
-                            </span>
+                            <div className="w-full h-1.5 bg-slate-200/60 rounded-full overflow-hidden shadow-inner">
+                              <div className={cn("h-full rounded-full transition-all duration-1000", style.bar)} style={{ width: `${project.progressPercent}%` }} />
+                            </div>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-between mt-4 bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                          <div className="flex items-center justify-between mt-5 bg-slate-50/50 p-3.5 rounded-xl border border-slate-100/80">
                             {project.dueDate ? (
-                              <span className="text-meta-muted-strong flex items-center gap-1.5">
+                              <span className="text-sm font-medium text-slate-500 flex items-center gap-2">
                                 <IconClock size={16} stroke={2} className="text-slate-400" />
                                 {new Date(project.dueDate).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
                               </span>
                             ) : (
-                              <span className="text-meta-muted-strong">{project.assigneeIds.length} assignee{project.assigneeIds.length === 1 ? "" : "s"}</span>
+                              <div className="flex items-center gap-3">
+                                <div className="flex -space-x-1.5">
+                                  {project.assigneeIds.slice(0, 3).map((id) => (
+                                    <Image key={id} src={`https://i.pravatar.cc/150?u=${id}`} alt="assignee" width={26} height={26} className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-100 shadow-sm object-cover" />
+                                  ))}
+                                  {project.assigneeIds.length > 3 && (
+                                    <div className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-[10px] font-medium text-slate-600 shadow-sm z-10">
+                                      +{project.assigneeIds.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-[12px] font-medium text-slate-400">{project.assigneeIds.length} Assignees</span>
+                              </div>
                             )}
-                            <span className={cn("mono-data px-2.5 py-1 rounded-md border", style.badge)}>
+                            <span className={cn("mono-data px-2.5 py-1 rounded-md text-[11px] font-medium shadow-sm border bg-white", style.badge)}>
                               {PROJECT_STATUS_LABEL[project.status]}
                             </span>
                           </div>
                         )}
                         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                          <Link href={`/admin/projects`} className="p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-50 shadow-sm transition-colors" title="Edit">
+                          <Link href={`/admin/projects`} className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-50 shadow-sm transition-colors" title="Edit">
                             <IconBriefcase size={16} />
                           </Link>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }}
-                            className="p-1.5 bg-rose-50 border border-rose-200 rounded-md text-rose-500 hover:text-rose-700 hover:bg-white shadow-sm transition-colors"
+                            className="p-1.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-white shadow-sm transition-colors"
                             title="Delete"
                           >
                             <IconTrash size={16} />
@@ -562,20 +589,20 @@ export function InternalOperationsBoard({
                   onClick={() => day && setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day, 12))}
                   disabled={!day}
                   className={cn(
-                    "h-10 sm:h-12 w-full flex flex-col items-center justify-center text-[15px] rounded-xl sm:rounded-[14px] transition-all relative outline-none group",
-                    !day ? "text-transparent pointer-events-none" : "hover:-translate-y-0.5",
+                    "relative mx-auto flex size-10 sm:size-12 flex-col items-center justify-center rounded-full transition-all duration-200 outline-none group",
+                    !day ? "text-transparent pointer-events-none" : "",
                     isSelected
-                      ? "bg-slate-900 text-white shadow-md font-medium"
+                      ? "bg-[var(--sidebar)] text-white shadow-md shadow-slate-900/10 scale-110"
                       : isToday
-                        ? "bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200/50"
-                        : "bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-100"
+                        ? "bg-slate-100/80 text-[var(--sidebar)] font-medium hover:bg-slate-200/60"
+                        : "text-slate-700 hover:bg-slate-50"
                   )}
                 >
-                  <span className={cn("relative z-10 leading-none", dayEvents.length > 0 ? "mb-1.5" : "")}>{day}</span>
+                  <span className={cn("relative z-10 leading-none text-[14px] sm:text-[15px]", isSelected || isToday ? "font-medium" : "font-normal", dayEvents.length > 0 ? "mb-1.5" : "")}>{day}</span>
 
                   {/* Event Indicators */}
                   {dayEvents.length > 0 && (
-                    <div className="absolute bottom-1.5 flex gap-1 justify-center items-center z-10 w-full px-1">
+                    <div className="absolute bottom-1.5 flex gap-0.5 justify-center items-center z-10 w-full px-1">
                       {dayEvents.slice(0, 3).map((evt, idx) => {
                         let dotColor = "bg-emerald-500";
                         if (evt.type === "external") dotColor = "bg-sky-500";
@@ -583,10 +610,10 @@ export function InternalOperationsBoard({
                         else if (evt.type === "maintenance") dotColor = "bg-amber-500";
 
                         if (isSelected) {
-                          dotColor = "bg-white/80";
+                          dotColor = "bg-white/90";
                         }
                         return (
-                          <div key={idx} className={cn("size-1.5 rounded-full shadow-sm", dotColor)} />
+                          <div key={idx} className={cn("size-[3.5px] rounded-full shadow-sm", dotColor)} />
                         );
                       })}
                     </div>
@@ -604,7 +631,7 @@ export function InternalOperationsBoard({
                   ? 'Today\'s Itinerary'
                   : selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </span>
-              <span className="text-desc-secondary bg-slate-50 border border-slate-200/60 rounded-lg px-2.5 py-1 shadow-sm">{selectedDateEvents.length} events</span>
+              <span className="text-[10px] font-medium font-mono bg-slate-50 border border-slate-200/60 rounded-lg px-2.5 py-1 shadow-sm">{selectedDateEvents.length} Event(s)</span>
             </h4>
 
             <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
@@ -614,15 +641,18 @@ export function InternalOperationsBoard({
                   .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
                   .split(" ");
                 return (
-                  <div key={evt.id} className="p-5 rounded-[20px] bg-white border border-slate-100 flex gap-5 relative overflow-hidden group shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md hover:-translate-y-0.5 transition-all">
-                    <div className={cn("absolute left-0 top-0 bottom-0 w-1", style.accent)} />
-                    <div className={cn("flex flex-col items-center justify-center shrink-0 pr-5 border-r border-slate-100/80 min-w-[70px]", style.text)}>
-                      <span className="mono-stat text-[22px] leading-none mb-1">{timePart}</span>
-                      <span className="label-caps opacity-70">{periodPart ?? ""}</span>
+                  <div key={evt.id} className="lg:p-5 my-4 border-b pb-4 border-slate-200/60 lg:rounded-[20px] lg:bg-white lg:border lg:border-slate-100 flex gap-5 relative overflow-hidden group lg:shadow-[0_2px_12px_rgba(0,0,0,0.03)] lg:hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] lg:hover:-translate-y-0.5 transition-all">
+                    <div className={cn("absolute inset-0 opacity-[0.02] pointer-events-none transition-opacity group-hover:opacity-[0.04]", style.bg)} />
+
+                    {/* Minimal Time Block with Right Border */}
+                    <div className="w-16 shrink-0 flex flex-col items-center justify-center px-2 border-r border-slate-100/80 bg-slate-50/30">
+                      <span className="mono-stat text-[22px] leading-none mb-1 font-medium tracking-tight">{timePart}</span>
+                      <span className="text-[10px] font-medium tracking-widest opacity-70 uppercase">{periodPart ?? ""}</span>
                     </div>
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <h5 className="text-body-primary text-slate-900 truncate mb-1.5">{evt.title}</h5>
-                      <div className="flex items-center gap-2 flex-wrap">
+
+                    <div className="flex-1 w-full flex flex-col justify-center relative z-10 py-1">
+                      <h5 className="text-body-primary text-slate-900 truncate mb-2">{evt.title}</h5>
+                      <div className="flex items-center gap-2.5 flex-wrap">
                         <div className="flex items-center gap-1.5 body-sm text-slate-400">
                           <IconClock size={14} className={style.iconColor} />
                           <span>{formatEventTime(evt.endsAt)}</span>
@@ -630,13 +660,33 @@ export function InternalOperationsBoard({
                         <span className="text-slate-300">•</span>
                         <div className="flex items-center gap-1.5 body-sm text-slate-400">
                           <style.icon size={14} className={style.iconColor} />
-                          <span className="capitalize">{evt.type}</span>
+                          <div className={cn("capitalize text-xs font-medium uppercase tracking-widest", style.text)}>
+                            {evt.type}
+                          </div>
                         </div>
-                        {evt.needsDisposition && (
-                          <span className="ml-auto bg-rose-50 text-rose-600 border border-rose-100/60 px-2 py-0.5 rounded-md label-caps shrink-0 shadow-sm">
-                            Needs disposition
-                          </span>
+
+                        {/* Attendees Avatars */}
+                        {evt.attendees && evt.attendees.length > 0 && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <div className="flex -space-x-1.5">
+                              {evt.attendees.slice(0, 3).map((attendee, idx) => (
+                                <Image key={idx} src={`https://i.pravatar.cc/150?u=${attendee.name}`} alt={attendee.name} width={22} height={22} className="w-[22px] h-[22px] rounded-full ring-2 ring-white bg-slate-100 shadow-sm object-cover" title={attendee.name} />
+                              ))}
+                              {evt.attendees.length > 3 && (
+                                <div className="w-[22px] h-[22px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-[9px] font-medium text-slate-600 shadow-sm z-10">
+                                  +{evt.attendees.length - 3}
+                                </div>
+                              )}
+                            </div>
+                          </>
                         )}
+
+                        {/* {evt.needsDisposition && (
+                          <Badge tone="risk" className="ml-auto text-[10px] uppercase tracking-widest px-2 py-0.5 shadow-sm">
+                            Needs disposition
+                          </Badge>
+                        )} */}
                       </div>
                       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                         {evt.needsDisposition && (

@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   IconX,
   IconChevronDown,
-  IconUser,
   IconShieldLock,
   IconSettings,
   IconLogout,
@@ -152,6 +151,29 @@ export function MobileNavigationDrawer() {
   const activeSection = findSectionByPath(pathname);
   const navRef = useRef<HTMLDivElement>(null);
 
+  const [currentUser, setCurrentUser] = useState({
+    name: "Paul Amos",
+    email: "ceo@sunlandre.co.ke",
+    role: "ceo",
+    avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
+  });
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user) {
+          setCurrentUser({
+            name: data.user.name,
+            email: data.user.email,
+            role: data.user.role,
+            avatarUrl: data.user.avatarUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
+          });
+        }
+      })
+      .catch(() => { });
+  }, []);
+
   const isFinRoute = pathname.startsWith("/fin");
   const filteredSections = navSections
     .filter((section) => {
@@ -172,15 +194,13 @@ export function MobileNavigationDrawer() {
       return { ...section, items };
     });
 
-  // Accordion: allow multiple open sections, auto-open active one
-  const [openSections, setOpenSections] = useState<string[]>([activeSection.id]);
+  // Accordion: only one open at a time, auto-open active one
+  const [openSection, setOpenSection] = useState<string>(activeSection.id);
 
   // Re-sync open sections when drawer opens or pathname changes
   useEffect(() => {
     if (mobileNavOpen) {
-      Promise.resolve().then(() => setOpenSections((prev) =>
-        prev.includes(activeSection.id) ? prev : [...prev, activeSection.id],
-      ));
+      Promise.resolve().then(() => setOpenSection(activeSection.id));
     }
   }, [mobileNavOpen, activeSection.id]);
 
@@ -195,18 +215,10 @@ export function MobileNavigationDrawer() {
   }, [mobileNavOpen]);
 
   const toggleSection = (sectionId: string) => {
-    setOpenSections((prev) =>
-      prev.includes(sectionId)
-        ? prev.filter((id) => id !== sectionId)
-        : [...prev, sectionId],
-    );
+    setOpenSection((prev) => (prev === sectionId ? "" : sectionId));
   };
 
   const { members: teamMembers } = useTeamMembers();
-  const contextLabel = isFinRoute ? "Finance" : "Operations";
-  const contextColor = isFinRoute
-    ? "bg-emerald-400/20 text-emerald-300 border-emerald-400/30"
-    : "bg-[var(--primary)]/20 text-[var(--primary)] border-[var(--primary)]/30";
 
   if (!mobileNavOpen) return null;
 
@@ -234,15 +246,11 @@ export function MobileNavigationDrawer() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png"
-              className="h-8 w-auto max-w-[160px] object-contain pl-1"
+              className="h-10 w-auto max-w-[160px] object-contain pl-1"
               alt="Sunland ERP Logo"
             />
           </Link>
           <div className="flex items-center gap-2">
-            {/* Context pill */}
-            <span className={cn("label-caps rounded-full border px-2.5 py-1", contextColor)}>
-              {contextLabel}
-            </span>
             <IconButton
               aria-label="Close navigation"
               className="size-9 border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
@@ -258,7 +266,7 @@ export function MobileNavigationDrawer() {
           <div className="space-y-1">
             {filteredSections.map((section) => {
               const SectionIcon = section.icon;
-              const isOpen = openSections.includes(section.id);
+              const isOpen = openSection === section.id;
               const isSingleItem = section.items.length === 1;
 
               // Single-item sections render as a direct link (no accordion wrapper)
@@ -289,9 +297,9 @@ export function MobileNavigationDrawer() {
                     )}
                     <span className="relative z-10 flex w-full items-center gap-3">
                       <IconComponent aria-hidden size={17} stroke={1.8} />
-                      <span className="text-caption">{item.label}</span>
+                      <span className="text-sm font-medium">{item.label}</span>
                       {item.badge && (
-                        <span className="ml-auto rounded-full bg-[var(--primary)]/20 px-2 py-0.5 text-tiny text-[var(--primary)]">
+                        <span className="ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-[9px] font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
                           {item.badge}
                         </span>
                       )}
@@ -353,15 +361,15 @@ export function MobileNavigationDrawer() {
                                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                   />
                                 )}
-                                <span className="relative z-10 flex w-full items-center gap-3">
-                                  <IconComponent aria-hidden size={16} stroke={1.8} />
-                                  <span className="text-caption">{item.label}</span>
-                                  {item.badge && (
-                                    <span className="ml-auto rounded-full bg-[var(--primary)]/20 px-2 py-0.5 text-tiny text-[var(--primary)]">
-                                      {item.badge}
-                                    </span>
-                                  )}
-                                </span>
+                                  <span className="relative z-10 flex w-full items-center gap-3">
+                                    <IconComponent aria-hidden size={16} stroke={1.8} />
+                                    <span className="text-sm font-medium">{item.label}</span>
+                                    {item.badge && (
+                                      <span className="ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-[9px] font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
+                                        {item.badge}
+                                      </span>
+                                    )}
+                                  </span>
                               </Link>
                             );
                           })}
@@ -395,13 +403,16 @@ export function MobileNavigationDrawer() {
                   <Avatar
                     src={member.avatarUrl ?? undefined}
                     fallback={member.name.substring(0, 2)}
-                    className="size-8 shrink-0"
+                    status="online"
+                    className="size-9 shrink-0 border border-white/10 shadow-sm"
                   />
                   <div className="min-w-0 flex-1 text-left">
-                    <p className="truncate text-caption text-white/75 transition-colors group-hover:text-white/95">
+                    <p className="truncate text-sm font-medium text-white/80 transition-colors group-hover:text-white/95">
                       {member.name}
                     </p>
-                    <p className="truncate text-tiny text-white/40">{member.role.replace("_", " ")}</p>
+                    <p className="truncate text-[10px] font-medium uppercase tracking-wider text-white/40 mt-0.5">
+                      {member.role.replace(/_/g, " ")}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -417,12 +428,15 @@ export function MobileNavigationDrawer() {
               onClick={closeMobileNav}
               className="flex flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-white/[0.06]"
             >
-              <div className="size-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center">
-                <IconUser size={15} className="text-white/60" aria-hidden />
-              </div>
+              <Avatar
+                src={currentUser.avatarUrl}
+                fallback={currentUser.name.substring(0, 2).toUpperCase()}
+                status="online"
+                className="size-10 shrink-0 border border-white/10 shadow-sm"
+              />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-caption text-white/75">My Profile</p>
-                <p className="truncate text-tiny text-white/40">Account & preferences</p>
+                <p className="truncate text-sm font-medium text-white/95">{currentUser.name}</p>
+                <p className="truncate text-[10px] font-medium uppercase tracking-widest text-white/40 mt-0.5">{currentUser.role.replace(/_/g, " ")}</p>
               </div>
             </Link>
             <div className="flex items-center gap-1">

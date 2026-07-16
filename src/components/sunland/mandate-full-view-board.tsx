@@ -595,6 +595,11 @@ export function MandateFullViewBoard({
   const expectedAmount = lastCollection?.expected ?? 0;
   const collectedAmount = period?.collectedAmount ?? 0;
   const collectionPct = expectedAmount > 0 ? Math.round((collectedAmount / expectedAmount) * 100) : 0;
+  // Displayed/ring-stroke value is capped at 100 - an uncapped ratio (e.g.
+  // from a double-counted payment) would otherwise wrap the SVG stroke
+  // around again, which renders indistinguishably from an ordinary full
+  // ring instead of surfacing the anomaly.
+  const collectionPctDisplay = Math.min(100, collectionPct);
 
   const occupiedUnits = mandate.leases.filter((l) => l.isActive).length;
 
@@ -861,14 +866,16 @@ export function MandateFullViewBoard({
                       stroke="#151936"
                       strokeWidth="5"
                       strokeDasharray={2 * Math.PI * 18}
-                      strokeDashoffset={(2 * Math.PI * 18) - (collectionPct / 100) * (2 * Math.PI * 18)}
+                      strokeDashoffset={(2 * Math.PI * 18) - (collectionPctDisplay / 100) * (2 * Math.PI * 18)}
                       strokeLinecap="round"
                     />
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Collection</p>
-                  <p className="text-lg font-medium text-slate-900 mt-0.5 font-mono leading-none">{collectionPct}%</p>
+                  <p className="text-lg font-medium text-slate-900 mt-0.5 font-mono leading-none">
+                    {collectionPctDisplay}%{collectionPct > 100 && <span className="text-emerald-600"> +over</span>}
+                  </p>
                   <p className="text-xs text-slate-600">of {currentMonthName} rent</p>
                 </div>
               </div>

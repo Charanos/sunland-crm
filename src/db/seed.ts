@@ -84,6 +84,13 @@ async function runSeed() {
     await db.delete(projects);
     await db.delete(approvalRequests);
     await db.delete(transactions);
+    // property_units.currentLeaseId <-> leases.unitId is a circular FK (added
+    // when property_units was introduced) - break BOTH sides before either
+    // table can be deleted, otherwise deleting either one fails with a
+    // foreign key violation the moment any unit has ever been occupied.
+    await db.update(propertyUnits).set({ currentLeaseId: null });
+    await db.update(leases).set({ unitId: null });
+    await db.delete(propertyUnits);
     await db.delete(leases);
     await db.delete(maintenanceRequests);
     await db.delete(leads);
@@ -285,6 +292,7 @@ async function runSeed() {
         avatarUrl: "https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=400&q=80",
         source: "Direct Referral",
         assignedToId: ceoUser.id,
+        verifiedAt: new Date(Date.now() - 90 * 86_400_000),
       },
       {
         entityId: groupEntity.id,
@@ -319,11 +327,16 @@ async function runSeed() {
       },
     ];
 
-    for (let i = 5; i <= 20; i++) {
+    // Grown from i<=20 to i<=60 (56 generated + 4 explicit = 60 contacts) so
+    // the much larger property/lease pool below (D2) has enough distinct
+    // landlords/tenants to avoid unrealistic over-reuse of the same tenant
+    // across many simultaneous active leases.
+    for (let i = 5; i <= 60; i++) {
+      const isLandlord = i % 2 === 0;
       contactsToInsert.push({
         entityId: groupEntity.id,
-        type: i % 2 === 0 ? "landlord" : "tenant",
-        displayName: i % 2 === 0 ? `Landlord Corp ${i}` : `Tenant Client ${i}`,
+        type: isLandlord ? "landlord" : "tenant",
+        displayName: isLandlord ? `Landlord Corp ${i}` : `Tenant Client ${i}`,
         companyName: i % 3 === 0 ? `Company ${i} Ltd` : null as unknown as string,
         email: `contact${i}@example.co.ke`,
         phone: `+2547000000${i.toString().padStart(2, '0')}`,
@@ -339,15 +352,19 @@ async function runSeed() {
         ][i % 8],
         source: i % 4 === 0 ? "Listing Portal" : "Direct Referral",
         assignedToId: i % 2 === 0 ? pmUser.id : financeOfficerUser.id,
+        // Variety for the landlord "Verified" badge - roughly a third of
+        // generated landlords are verified, the rest (and every tenant) are not.
+        verifiedAt: isLandlord && i % 6 === 0 ? new Date(Date.now() - (30 + i) * 86_400_000) : undefined,
       });
     }
 
-    const [landlordA, landlordB, tenantA, tenantB] = await db
+    const insertedContacts = await db
       .insert(contacts)
       .values(contactsToInsert)
       .returning();
+    const [landlordA, landlordB, tenantA, tenantB] = insertedContacts;
 
-    console.log("Created 20 contacts.");
+    console.log(`Created ${insertedContacts.length} contacts.`);
 
     // 5. Create Properties
     console.log("Step 5: Logging managed properties...");
@@ -467,7 +484,14 @@ async function runSeed() {
       "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80"
     ];
 
-    for (let i = 2; i <= 60; i++) {
+    // Real landlord pool (not just landlordA/landlordB) so ownership - and
+    // therefore mandate/expense attribution downstream in Step 7 - is spread
+    // across many distinct contacts, matching the larger property count below.
+    const allLandlordsForOwnership = await db.select().from(contacts).where(eq(contacts.type, "landlord"));
+
+    // Grown from i<=60 to i<=130 (129 auto-generated + 3 explicit = 132
+    // properties total, up from 62) per the D2 "grow meaningfully larger" pass.
+    for (let i = 2; i <= 130; i++) {
       const type = propertyTypes[i % propertyTypes.length];
       const primaryImg = typeImages[type][i % typeImages[type].length];
       const secImg = secondaryImages[i % secondaryImages.length];
@@ -494,6 +518,20 @@ async function runSeed() {
         propAmenities.push(shuffled[j]);
       }
 
+      // Media variety: most properties get the usual 2 photos, but ~10% get
+      // just 1 and ~10% get none at all - previously every property had
+      // exactly 2 (or 5, for the explicit penthouse), with zero coverage of
+      // the 0/1-photo states the property card/hero fallback logic handles.
+      const media =
+        i % 10 === 0
+          ? []
+          : i % 10 === 5
+            ? [{ url: primaryImg, alt: `${type} exterior view`, isPrimary: true }]
+            : [
+              { url: primaryImg, alt: `${type} exterior view`, isPrimary: true },
+              { url: secImg, alt: "Interior view" },
+            ];
+
       propsToInsert.push({
         entityId: groupEntity.id,
         propertyCode: `PROP-AUTO-${i.toString().padStart(3, '0')}`,
@@ -502,7 +540,7 @@ async function runSeed() {
         listingType: i % 3 === 0 ? "sale" : "let",
         status: randomStatus,
         location: i % 2 === 0 ? "Kilimani, Nairobi" : "Nairobi CBD",
-        ownerContactId: i % 2 === 0 ? landlordB.id : landlordA.id,
+        ownerContactId: allLandlordsForOwnership[i % allLandlordsForOwnership.length].id,
         monthlyRentKes: (Math.floor(Math.random() * 20) * 10000 + 50000).toString() + ".00",
         bedrooms: hasBuilding && !isCommercial ? Math.floor(Math.random() * 5) + 1 : null,
         bathrooms: hasBuilding && !isCommercial ? Math.floor(Math.random() * 4) + 1 : null,
@@ -512,10 +550,7 @@ async function runSeed() {
         parkingSpaces: hasBuilding ? Math.floor(Math.random() * 10) : null,
         amenities: propAmenities,
         description: `This exceptional ${type.toLowerCase()} offers unparalleled value in a highly sought-after location. Ideal for discerning clients looking for premium real estate.`,
-        media: [
-          { url: primaryImg, alt: `${type} exterior view`, isPrimary: true },
-          { url: secImg, alt: "Interior view" }
-        ]
+        media,
       });
     }
 
@@ -527,7 +562,7 @@ async function runSeed() {
     const propComm = insertedProps[0];
     const propRes = insertedProps[1];
 
-    console.log("Created 2 properties.");
+    console.log(`Created ${insertedProps.length} properties.`);
 
     // 5a. Management mandates + Property Manager assignments - permanent (not
     // an ephemeral enrichment script) since assignedPmId backs the Properties
@@ -540,7 +575,17 @@ async function runSeed() {
     console.log("Step 5a: Establishing management mandates and PM assignments...");
     const pmRoster = [lineManagerUser, propertyManager1User, propertyManager2User, salesAgent1User, salesAgent2User];
     const featuredExtraIdx = [5, 12, 20, 30, 42];
-    const mandatedExtraIdx = [...featuredExtraIdx, 7, 15, 25];
+
+    // D2: grown from 8 fixed active-mandate indices to a much larger pool so
+    // a realistic majority of the (also grown) property list actually carries
+    // a mandate, plus dedicated pools for the previously-zero-representation
+    // draft/pending/terminated states.
+    const draftExtraIdx = [50, 58, 66];
+    const pendingExtraIdx2 = [74, 82];
+    const terminatedExtraIdx2 = [90, 98];
+    const reservedIdx = new Set([35, 45, ...draftExtraIdx, ...pendingExtraIdx2, ...terminatedExtraIdx2]);
+    const additionalActiveIdx = Array.from({ length: 44 }, (_, k) => 3 + k * 2).filter((i) => !reservedIdx.has(i));
+    const mandatedExtraIdx = Array.from(new Set([...featuredExtraIdx, ...additionalActiveIdx]));
 
     await db.update(properties).set({ isFeatured: true }).where(
       inArray(properties.id, [propComm.id, propRes.id, ...featuredExtraIdx.map((i) => insertedProps[i].id)]),
@@ -560,19 +605,53 @@ async function runSeed() {
     ];
     await db.update(properties).set({ unitBreakdown: propResUnitBreakdown }).where(eq(properties.id, propRes.id));
 
-    const activeMandatesToInsert: (typeof propertyMandates.$inferInsert)[] = activeMandateProps.map((p, i) => ({
-      entityId: groupEntity.id,
-      propertyId: p.id,
-      landlordContactId: p.ownerContactId!,
-      // Every 5th mandate stays unassigned so the "Unassigned" empty state
-      // (grid card / table / drawer trigger) also has real data to exercise.
-      assignedPmId: i % 5 === 4 ? null : pmRoster[i % pmRoster.length].id,
-      mandateRate: "0.1000",
-      unitCount: p.id === propRes.id ? 12 : 1,
-      startDate: mandateStartDate,
-      status: "active",
-    }));
+    // Renewal-type/notice-period vocabulary for the optional mandate term
+    // fields - previously populated on zero mandates anywhere in the seed.
+    const renewalTypes = ["automatic", "manual", "negotiated"] as const;
+    const activeMandatesToInsert: (typeof propertyMandates.$inferInsert)[] = activeMandateProps.map((p, i) => {
+      // Every 4th non-propRes mandate gets its optional term fields populated,
+      // so the Overview tab's term cards have real (not "Not yet configured")
+      // data on a meaningful subset, not just the one property this was
+      // previously retrofitted onto.
+      const withTerms = p.id !== propRes.id && i % 4 === 0;
+      return {
+        entityId: groupEntity.id,
+        propertyId: p.id,
+        landlordContactId: p.ownerContactId!,
+        // Every 5th mandate stays unassigned so the "Unassigned" empty state
+        // (grid card / table / drawer trigger) also has real data to exercise.
+        assignedPmId: i % 5 === 4 ? null : pmRoster[i % pmRoster.length].id,
+        mandateRate: "0.1000",
+        unitCount: p.id === propRes.id ? 12 : 1,
+        startDate: mandateStartDate,
+        status: "active",
+        maintenanceAuthorityKes: withTerms ? (Math.floor(Math.random() * 8) * 25000 + 50000).toFixed(2) : undefined,
+        renewalType: withTerms ? renewalTypes[i % renewalTypes.length] : undefined,
+        noticePeriodDays: withTerms ? [30, 60, 90][i % 3] : undefined,
+        scopeDescription: withTerms
+          ? "Full rent collection, tenant sourcing/vetting, routine maintenance coordination, and monthly remittance reporting to the landlord."
+          : undefined,
+      };
+    });
     const insertedActiveMandates = await db.insert(propertyMandates).values(activeMandatesToInsert).returning();
+
+    // Draft mandates - proposed but not yet submitted for approval. Zero
+    // representation previously; "draft" is the mandateStatus column default
+    // but nothing ever actually inserted one.
+    const draftMandatesToInsert: (typeof propertyMandates.$inferInsert)[] = draftExtraIdx.map((idx) => {
+      const p = insertedProps[idx];
+      return {
+        entityId: groupEntity.id,
+        propertyId: p.id,
+        landlordContactId: p.ownerContactId!,
+        assignedPmId: null,
+        mandateRate: "0.1000",
+        unitCount: 1,
+        startDate: new Date(),
+        status: "draft",
+      };
+    });
+    await db.insert(propertyMandates).values(draftMandatesToInsert);
 
     // Real property_units rows for propRes, generated the same way
     // generateUnitsFromBreakdown would - the first "2 Bedroom" unit is
@@ -658,65 +737,56 @@ async function runSeed() {
     });
 
     const terminatedProp = insertedProps[45];
-    await db.insert(propertyMandates).values({
+    const terminatedMandatesToInsert: (typeof propertyMandates.$inferInsert)[] = [terminatedProp, ...terminatedExtraIdx2.map((i) => insertedProps[i])].map((p, i) => ({
       entityId: groupEntity.id,
-      propertyId: terminatedProp.id,
-      landlordContactId: terminatedProp.ownerContactId!,
+      propertyId: p.id,
+      landlordContactId: p.ownerContactId!,
       assignedPmId: salesAgent2User.id,
       mandateRate: "0.1000",
       unitCount: 1,
       startDate: mandateStartDate,
-      endDate: new Date(),
+      // Spread termination dates so they're not all "today".
+      endDate: new Date(Date.now() - (i * 20 + 5) * 86_400_000),
       status: "terminated",
-    });
+    }));
+    await db.insert(propertyMandates).values(terminatedMandatesToInsert);
 
-    console.log(`Created ${activeMandatesToInsert.length + 3} management mandates (active/pending/terminated) with PM assignments, and marked ${2 + featuredExtraIdx.length} properties as featured.`);
-
-    // 5a2. Seed one pending remittance advice against the first active
-    // mandate (propRes) so the Mandate File's remittance panel / release-
-    // flag flow, and the Leases Board's "remittance pending" indicator, are
-    // both exercisable without generating one by hand first.
-    const remittancePeriodStart = new Date();
-    remittancePeriodStart.setDate(1);
-    const remittanceCollected = 285000;
-    const remittanceFee = remittanceCollected * 0.1;
-    const remittanceExpenses = 12500;
-    const remittanceToken = randomBytes(24).toString("base64url");
-    const [seededRemittance] = await db
-      .insert(remittanceAdvices)
-      .values({
+    // Two more pending_approval mandates beyond the original propComm +
+    // insertedProps[35], for more Decision Queue variety.
+    const extraPendingMandatesToInsert: (typeof propertyMandates.$inferInsert)[] = pendingExtraIdx2.map((idx) => {
+      const p = insertedProps[idx];
+      return {
         entityId: groupEntity.id,
-        mandateId: insertedActiveMandates[0].id,
-        periodStart: remittancePeriodStart,
-        periodEnd: new Date(),
-        collectedKes: remittanceCollected.toFixed(2),
-        managementFeeKes: remittanceFee.toFixed(2),
-        expensesKes: remittanceExpenses.toFixed(2),
-        netRemittanceKes: (remittanceCollected - remittanceFee - remittanceExpenses).toFixed(2),
-        status: "pending",
-        verificationToken: remittanceToken,
-        generatedById: propertyManager1User.id,
-      })
-      .returning();
-    await db.insert(reportExports).values({
-      entityId: groupEntity.id,
-      reportType: "remittance_advice",
-      generatedById: propertyManager1User.id,
-      verificationToken: remittanceToken,
-      snapshot: {
-        remittanceAdviceId: seededRemittance.id,
-        mandateId: insertedActiveMandates[0].id,
-        property: propRes.name,
-        periodStart: remittancePeriodStart.toISOString().split("T")[0],
-        periodEnd: new Date().toISOString().split("T")[0],
-        collectedKes: remittanceCollected,
-        managementFeeKes: remittanceFee,
-        expensesKes: remittanceExpenses,
-        netRemittanceKes: remittanceCollected - remittanceFee - remittanceExpenses,
-        generatedBy: propertyManager1User.name,
-      },
+        propertyId: p.id,
+        landlordContactId: p.ownerContactId!,
+        assignedPmId: propertyManager2User.id,
+        mandateRate: "0.1100",
+        unitCount: 1,
+        startDate: new Date(),
+        status: "pending_approval",
+      };
     });
-    console.log("Seeded 1 pending remittance advice.");
+    const insertedExtraPendingMandates = await db.insert(propertyMandates).values(extraPendingMandatesToInsert).returning();
+    await db.insert(approvalRequests).values(
+      insertedExtraPendingMandates.map((m) => ({
+        entityId: groupEntity.id,
+        requestType: "mandate_activation" as const,
+        relatedTable: "property_mandates",
+        relatedId: m.id,
+        requestedById: propertyManager2User.id,
+        requiredApproverRole: "gm" as const,
+        status: "pending" as const,
+      })),
+    );
+
+    console.log(
+      `Created ${activeMandatesToInsert.length} active, ${draftMandatesToInsert.length} draft, ${2 + extraPendingMandatesToInsert.length} pending, and ${terminatedMandatesToInsert.length} terminated management mandates, and marked ${2 + featuredExtraIdx.length} properties as featured.`,
+    );
+
+    // 5a2. The pending remittance advice against propRes's mandate used to be
+    // seeded here with hardcoded collected/fee/expense figures that had no
+    // relationship to any real transaction - moved to after Step 7 (below),
+    // once real transactions exist, so its numbers are genuinely derived.
 
     // 5b. Create pipeline leads - spans this-week/this-month/last-month so the
     // executive overview's CRM metrics (closed deals, active pipeline, new
@@ -824,25 +894,49 @@ async function runSeed() {
     const expiringSoonEndsAt = new Date();
     expiringSoonEndsAt.setDate(expiringSoonEndsAt.getDate() + 18);
 
-    const leasesToInsert = activeMandateProps.map((p, idx) => {
+    // D2 lease variety: a mandate no longer automatically implies a lease
+    // (some mandated properties are legitimately awaiting a tenant), and the
+    // leases that do exist are tagged into profiles so the previously
+    // zero-representation states (terminated, already-expired-while-still-
+    // marked-active-elsewhere, null deposit) each get real rows.
+    const leasesToInsert: (typeof leases.$inferInsert)[] = [];
+    activeMandateProps.forEach((p, idx) => {
       const tenant = allTenants[idx % allTenants.length];
       const isPropRes = p.id === propRes.id;
-      // propRes's lease rents the real occupied unit specifically, not the
-      // property-level flat rent field, now that it has real per-unit rents.
+
+      if (!isPropRes && idx % 6 === 0) {
+        // Mandated but still vacant - no lease row at all for this property.
+        return;
+      }
+
       const rentAmount = isPropRes ? propResOccupiedUnit.monthlyRentKes! : (p.monthlyRentKes || "120000.00");
       const depositAmount = (parseFloat(rentAmount) * 2).toString() + ".00";
+      const isTerminated = !isPropRes && idx % 11 === 1;
+      const isExpiringSoon = !isPropRes && idx % 13 === 2;
+      const isNullDeposit = !isPropRes && idx % 17 === 3;
 
-      return {
+      let leaseStartsAt = startsAt;
+      let leaseEndsAt = isPropRes ? expiringSoonEndsAt : endsAt;
+      let leaseIsActive = true;
+      if (isTerminated) {
+        leaseStartsAt = new Date(Date.now() - (240 + idx) * 86_400_000);
+        leaseEndsAt = new Date(Date.now() - (10 + (idx % 50)) * 86_400_000);
+        leaseIsActive = false;
+      } else if (isExpiringSoon) {
+        leaseEndsAt = new Date(Date.now() + (8 + (idx % 22)) * 86_400_000);
+      }
+
+      leasesToInsert.push({
         entityId: groupEntity.id,
         propertyId: p.id,
         unitId: isPropRes ? propResOccupiedUnit.id : undefined,
         tenantContactId: tenant.id,
-        startsAt,
-        endsAt: isPropRes ? expiringSoonEndsAt : endsAt,
+        startsAt: leaseStartsAt,
+        endsAt: leaseEndsAt,
         monthlyRentKes: rentAmount,
-        depositKes: depositAmount,
-        isActive: true,
-      };
+        depositKes: isNullDeposit ? null : depositAmount,
+        isActive: leaseIsActive,
+      });
     });
 
     if (!activeMandateProps.some(p => p.id === propComm.id)) {
@@ -876,16 +970,30 @@ async function runSeed() {
       .set({ status: "occupied", currentLeaseId: leaseB.id })
       .where(eq(propertyUnits.id, propResOccupiedUnit.id));
 
-    console.log(`Created ${insertedLeases.length} active leases (1 unit-scoped for propRes; 11 other propRes units remain vacant).`);
+    const activeLeaseCount = insertedLeases.filter((l) => l.isActive).length;
+    console.log(`Created ${insertedLeases.length} leases (${activeLeaseCount} active, ${insertedLeases.length - activeLeaseCount} terminated; 1 unit-scoped for propRes, 11 other propRes units remain vacant).`);
 
     // 7. Create Transactions
     console.log("Step 7: Generating ledger transactions...");
     const txs: (typeof transactions.$inferInsert)[] = [];
 
-    // Add a rent payment for this current month for every active lease EXCEPT
+    // D1 fix: real property owner per expense, instead of always landlordA.
+    const propertyOwnerMap = new Map(insertedProps.map((p) => [p.id, p.ownerContactId!]));
+    // D1 fix: track which (lease, calendar-month) pairs already have a rent
+    // transaction so the random loop below can never create a second one in
+    // the same month for the same lease - this was the root cause of a
+    // lease's current-month collected total exceeding its monthly rent.
+    const monthKeyOf = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
+    const usedLeaseMonths = new Set<string>();
+
+    // Add a rent payment for this current month for every ACTIVE lease EXCEPT
     // propComm's, which is deliberately left unpaid so the Leases Board's
     // "overdue balance" Needs Attention branch + KPI have real data in dev.
+    // Terminated leases (isActive: false) never get a "current month" rent -
+    // they're not being actively collected against anymore.
+    const nowForRent = new Date();
     insertedLeases.forEach((l) => {
+      if (!l.isActive) return;
       if (l.propertyId === propComm.id) return;
       const collectedAmount = parseFloat(l.monthlyRentKes);
       txs.push({
@@ -895,40 +1003,118 @@ async function runSeed() {
         propertyId: l.propertyId,
         leaseId: l.id,
         amountKes: collectedAmount.toFixed(2),
-        occurredAt: new Date(), // Today (this month)
+        occurredAt: nowForRent, // Today (this month)
         recordedById: financeOfficerUser.id,
         notes: `Rent payment - current month`,
       });
+      usedLeaseMonths.add(`${l.id}:${monthKeyOf(nowForRent)}`);
     });
 
-    // Add some random historical rent/expense transactions distributed across all mandated properties
-    for (let i = 0; i < 40; i++) {
-      const dt = new Date();
-      dt.setDate(dt.getDate() - (Math.floor(Math.random() * 120) + 5)); // 5 to 125 days ago
+    // Random historical rent/expense transactions distributed across all
+    // leased properties. D1 fixes applied here: (a) a candidate date is
+    // always within [lease.startsAt, lease.isActive ? now : lease.endsAt] -
+    // never before the lease started, never after a terminated lease ended;
+    // (b) a "rent" candidate that would land in a (lease, month) pair already
+    // used (including the guaranteed current-month row above) is skipped
+    // rather than pushed, so no lease can ever accumulate more than one rent
+    // transaction in the same calendar month.
+    for (let i = 0; i < 200; i++) {
       const randomLease = insertedLeases[i % insertedLeases.length];
       // leaseA (propComm) is deliberately left unpaid for the current month above;
-      // never let this loop backfill a "rent" entry for it, since a randomly-picked
-      // recent date could still fall inside the current month and mask the arrears.
-      const isRent = randomLease.id === leaseA.id ? false : Math.random() > 0.3;
-      const rentVal = parseFloat(randomLease.monthlyRentKes);
-      const val = isRent ? rentVal : Math.floor(Math.random() * 15) * 5000 + 5000;
+      // never let this loop backfill a "rent" entry for it.
+      const isRentCandidate = randomLease.id === leaseA.id ? false : Math.random() > 0.3;
 
-      txs.push({
-        entityId: groupEntity.id,
-        type: isRent ? "rent" : "expense",
-        contactId: isRent ? randomLease.tenantContactId : landlordA.id,
-        propertyId: randomLease.propertyId,
-        leaseId: isRent ? randomLease.id : null,
-        amountKes: val.toFixed(2),
-        occurredAt: dt,
-        recordedById: financeOfficerUser.id,
-        notes: `Auto-generated historical ${isRent ? "rent" : "expense"} ` + i,
-      });
+      const earliestMs = randomLease.startsAt.getTime();
+      const latestMs = randomLease.isActive ? nowForRent.getTime() : randomLease.endsAt.getTime();
+      if (latestMs <= earliestMs) continue;
+      const dt = new Date(earliestMs + Math.random() * (latestMs - earliestMs));
+
+      if (isRentCandidate) {
+        const key = `${randomLease.id}:${monthKeyOf(dt)}`;
+        if (usedLeaseMonths.has(key)) continue;
+        usedLeaseMonths.add(key);
+        txs.push({
+          entityId: groupEntity.id,
+          type: "rent",
+          contactId: randomLease.tenantContactId,
+          propertyId: randomLease.propertyId,
+          leaseId: randomLease.id,
+          amountKes: parseFloat(randomLease.monthlyRentKes).toFixed(2),
+          occurredAt: dt,
+          recordedById: financeOfficerUser.id,
+          notes: `Auto-generated historical rent ${i}`,
+        });
+      } else {
+        const val = Math.floor(Math.random() * 15) * 5000 + 5000;
+        txs.push({
+          entityId: groupEntity.id,
+          type: "expense",
+          contactId: propertyOwnerMap.get(randomLease.propertyId) ?? landlordA.id,
+          propertyId: randomLease.propertyId,
+          leaseId: null,
+          amountKes: val.toFixed(2),
+          occurredAt: dt,
+          recordedById: financeOfficerUser.id,
+          notes: `Auto-generated historical expense ${i}`,
+        });
+      }
     }
 
     await db.insert(transactions).values(txs);
 
-    console.log("Created all transactions and rent ledger entries.");
+    console.log(`Created ${txs.length} transactions and rent ledger entries.`);
+
+    // 5a2 (moved here from before Step 6/7). Seed one pending remittance
+    // advice against propRes's mandate, with figures genuinely derived from
+    // the real transactions just inserted - previously this used unrelated
+    // hardcoded numbers (285000 collected against a mandate whose actual
+    // property earned 45000/mo), so the remittance panel and the ledger it's
+    // supposedly summarizing never reconciled.
+    const remittancePeriodStart = new Date(nowForRent.getFullYear(), nowForRent.getMonth(), 1);
+    const remittanceCollected = txs
+      .filter((t) => t.propertyId === propRes.id && t.type === "rent" && (t.occurredAt as Date) >= remittancePeriodStart)
+      .reduce((sum, t) => sum + parseFloat(t.amountKes as string), 0);
+    const remittanceExpenses = txs
+      .filter((t) => t.propertyId === propRes.id && t.type === "expense" && (t.occurredAt as Date) >= remittancePeriodStart)
+      .reduce((sum, t) => sum + parseFloat(t.amountKes as string), 0);
+    const remittanceRate = parseFloat(insertedActiveMandates[0].mandateRate);
+    const remittanceFee = remittanceCollected * remittanceRate;
+    const remittanceToken = randomBytes(24).toString("base64url");
+    const [seededRemittance] = await db
+      .insert(remittanceAdvices)
+      .values({
+        entityId: groupEntity.id,
+        mandateId: insertedActiveMandates[0].id,
+        periodStart: remittancePeriodStart,
+        periodEnd: new Date(),
+        collectedKes: remittanceCollected.toFixed(2),
+        managementFeeKes: remittanceFee.toFixed(2),
+        expensesKes: remittanceExpenses.toFixed(2),
+        netRemittanceKes: (remittanceCollected - remittanceFee - remittanceExpenses).toFixed(2),
+        status: "pending",
+        verificationToken: remittanceToken,
+        generatedById: propertyManager1User.id,
+      })
+      .returning();
+    await db.insert(reportExports).values({
+      entityId: groupEntity.id,
+      reportType: "remittance_advice",
+      generatedById: propertyManager1User.id,
+      verificationToken: remittanceToken,
+      snapshot: {
+        remittanceAdviceId: seededRemittance.id,
+        mandateId: insertedActiveMandates[0].id,
+        property: propRes.name,
+        periodStart: remittancePeriodStart.toISOString().split("T")[0],
+        periodEnd: new Date().toISOString().split("T")[0],
+        collectedKes: remittanceCollected,
+        managementFeeKes: remittanceFee,
+        expensesKes: remittanceExpenses,
+        netRemittanceKes: remittanceCollected - remittanceFee - remittanceExpenses,
+        generatedBy: propertyManager1User.name,
+      },
+    });
+    console.log("Seeded 1 pending remittance advice, reconciled to real transactions.");
 
     // 7b. Create Maintenance Requests and Documents
     console.log("Step 7b: Generating maintenance requests and property documents...");
@@ -955,7 +1141,11 @@ async function runSeed() {
       }
     ]);
 
-    await db.insert(documents).values([
+    // D2: previously a single mandate_letter document existed in the entire
+    // dataset (no fileSizeBytes, no other document types) - added variety
+    // across types, and a mix of real fileSizeBytes (simulating the
+    // Cloudinary upload-time capture) vs. legitimately-null (pre-dating it).
+    const documentsToInsert: (typeof documents.$inferInsert)[] = [
       {
         entityId: groupEntity.id,
         propertyId: propComm.id,
@@ -966,10 +1156,136 @@ async function runSeed() {
         uploadedById: financeOfficerUser.id,
         metadata: { status: "signed" },
         createdAt: new Date(Date.now() - 180 * 86_400_000),
-      }
-    ]);
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propRes.id,
+        ownerContactId: landlordB.id,
+        title: "Signed Management Mandate - Lavington Heights",
+        type: "mandate_letter",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/mandate_lavington.pdf",
+        uploadedById: financeOfficerUser.id,
+        fileSizeBytes: 1_468_302,
+        metadata: { status: "signed" },
+        createdAt: new Date(Date.now() - 175 * 86_400_000),
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propComm.id,
+        leaseId: leaseA.id,
+        ownerContactId: landlordA.id,
+        title: "Executed Lease Agreement - Nexus Office Plaza",
+        type: "lease_agreement",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/lease_nexus.pdf",
+        uploadedById: financeOfficerUser.id,
+        fileSizeBytes: 892_114,
+        metadata: { status: "signed" },
+        createdAt: new Date(Date.now() - 60 * 86_400_000),
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propRes.id,
+        leaseId: leaseB.id,
+        ownerContactId: landlordB.id,
+        title: "Executed Lease Agreement - Lavington Heights Unit 4B",
+        type: "lease_agreement",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/lease_lavington.pdf",
+        uploadedById: financeOfficerUser.id,
+        metadata: { status: "signed" },
+        createdAt: new Date(Date.now() - 58 * 86_400_000),
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propRes.id,
+        ownerContactId: landlordB.id,
+        title: "Title Deed - Lavington Heights",
+        type: "title_deed",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/title_lavington.pdf",
+        uploadedById: financeOfficerUser.id,
+        fileSizeBytes: 2_114_884,
+        metadata: {},
+        createdAt: new Date(Date.now() - 300 * 86_400_000),
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propComm.id,
+        leaseId: leaseA.id,
+        ownerContactId: landlordA.id,
+        title: "Tenant ID - Nexus Tech Solutions",
+        type: "identification",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/id_nexus.pdf",
+        uploadedById: financeOfficerUser.id,
+        fileSizeBytes: 214_509,
+        metadata: {},
+        createdAt: new Date(Date.now() - 61 * 86_400_000),
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propRes.id,
+        leaseId: leaseB.id,
+        ownerContactId: landlordB.id,
+        title: "Rent Receipt - Lavington Heights, Current Month",
+        type: "rent_receipt",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/receipt_lavington_current.pdf",
+        uploadedById: financeOfficerUser.id,
+        fileSizeBytes: 98_442,
+        metadata: {},
+        createdAt: new Date(Date.now() - 1 * 86_400_000),
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propRes.id,
+        ownerContactId: landlordB.id,
+        title: "Owner Statement - Lavington Heights, Last Quarter",
+        type: "statement",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/statement_lavington_q.pdf",
+        uploadedById: financeOfficerUser.id,
+        metadata: {},
+        createdAt: new Date(Date.now() - 90 * 86_400_000),
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: pendingProp1.id,
+        ownerContactId: pendingProp1.ownerContactId!,
+        title: "Landlord Offer Letter - Nexus Office Plaza",
+        type: "offer_letter",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/offer_nexus.pdf",
+        uploadedById: propertyManager1User.id,
+        fileSizeBytes: 156_720,
+        metadata: {},
+        createdAt: new Date(Date.now() - 200 * 86_400_000),
+      },
+    ];
+    if (insertedLeases[5]) {
+      documentsToInsert.push({
+        entityId: groupEntity.id,
+        propertyId: insertedLeases[5].propertyId,
+        leaseId: insertedLeases[5].id,
+        title: "Executed Lease Agreement",
+        type: "lease_agreement",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/lease_generic_5.pdf",
+        uploadedById: financeOfficerUser.id,
+        fileSizeBytes: 745_003,
+        metadata: { status: "signed" },
+        createdAt: new Date(Date.now() - 45 * 86_400_000),
+      });
+    }
+    if (insertedLeases[10]) {
+      documentsToInsert.push({
+        entityId: groupEntity.id,
+        propertyId: insertedLeases[10].propertyId,
+        leaseId: insertedLeases[10].id,
+        title: "Rent Receipt",
+        type: "rent_receipt",
+        fileUrl: "https://sunland-crm.s3.amazonaws.com/documents/receipt_generic_10.pdf",
+        uploadedById: financeOfficerUser.id,
+        metadata: {},
+        createdAt: new Date(Date.now() - 3 * 86_400_000),
+      });
+    }
+    await db.insert(documents).values(documentsToInsert);
 
-    console.log("Created maintenance requests and documents.");
+    console.log(`Created maintenance requests and ${documentsToInsert.length} documents.`);
 
     // 8. Create Approval Requests
     console.log("Step 8: Populating dynamic approvals queue...");

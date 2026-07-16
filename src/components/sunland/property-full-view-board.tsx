@@ -495,7 +495,7 @@ export function PropertyFullViewBoard({
                   label="Change status"
                   align="left"
                   trigger={
-                    <div role="button" className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider shadow-sm transition-colors hover:opacity-80 cursor-pointer", statusConfig.pill)}>
+                    <div role="button" className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wider shadow-sm transition-colors hover:opacity-80 cursor-pointer", statusConfig.pill)}>
                       <span className={cn("size-1.5 rounded-full", statusConfig.dot)} aria-hidden="true" />
                       {statusConfig.label}
                       <IconChevronDown size={14} className="opacity-70 ml-0.5" aria-hidden="true" />
@@ -509,13 +509,13 @@ export function PropertyFullViewBoard({
                     >
                       <div className="flex items-center gap-2.5">
                         <span className={cn("size-2 rounded-full", STATUS_CONFIG[s].dot)} aria-hidden="true" />
-                        <span className="uppercase text-xs font-bold tracking-wider text-slate-700">{STATUS_CONFIG[s].label}</span>
+                        <span className="uppercase text-xs font-medium tracking-wider text-slate-700">{STATUS_CONFIG[s].label}</span>
                       </div>
                     </DropdownItem>
                   ))}
                 </DropdownMenu>
               ) : (
-                <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider", statusConfig.pill)}>
+                <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wider", statusConfig.pill)}>
                   <span className={cn("size-1.5 rounded-full", statusConfig.dot)} aria-hidden="true" />
                   {statusConfig.label}
                 </span>

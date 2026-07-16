@@ -394,7 +394,7 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
         {/* Unread Badge */}
         {!chatOpen && totalUnread > 0 && (
           <div className="absolute top-0 right-0 size-4 bg-rose-500 rounded-full border-2 border-[#151936] flex items-center justify-center">
-            <span className="text-[9px] font-bold text-white">{totalUnread > 9 ? "9+" : totalUnread}</span>
+            <span className="text-[9px] font-medium text-white">{totalUnread > 9 ? "9+" : totalUnread}</span>
           </div>
         )}
       </motion.button>

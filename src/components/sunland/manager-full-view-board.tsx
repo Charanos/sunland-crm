@@ -178,7 +178,7 @@ export function ManagerFullViewBoard({ entityId, managerId }: { entityId: string
         <div className="flex flex-col gap-2.5 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl lg:text-4xl font-serif tracking-tight text-slate-950 truncate">{manager.name}</h1>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-600">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium uppercase tracking-wider text-slate-600">
               {manager.title || "Property Manager"}
             </span>
           </div>

@@ -293,6 +293,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
           </div>
         }
       />
+      <PortfolioHubNav active="maintenance" />
 
       <div className="flex items-center gap-4 mt-2">
         <hr className="flex-1 border-slate-200/60" />

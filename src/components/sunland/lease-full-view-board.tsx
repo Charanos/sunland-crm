@@ -524,6 +524,11 @@ export function LeaseFullViewBoard({
   const depositNum = lease.depositKes ? parseFloat(lease.depositKes) : null;
   const collectedThisMonth = Math.max(0, monthlyRentNum - lease.balanceKes);
   const paymentStatusPct = monthlyRentNum > 0 ? Math.round((collectedThisMonth / monthlyRentNum) * 100) : 0;
+  // Mirrors mandate-full-view-board.tsx's collectionPctDisplay - collectedThisMonth
+  // is already floor-clamped via balanceKes server-side so this can't exceed
+  // 100 today, but capping the ring/text display here too keeps both gauges
+  // defensively consistent if that server-side guarantee ever changes.
+  const paymentStatusPctDisplay = Math.min(100, paymentStatusPct);
   const daysRemaining = Math.max(0, Math.ceil((new Date(lease.endsAt).getTime() - renderTimestamp) / 86_400_000));
   const tenurePct = getLeaseTenurePct(lease, renderTimestamp);
 
@@ -730,14 +735,16 @@ export function LeaseFullViewBoard({
                       stroke="#151936"
                       strokeWidth="5"
                       strokeDasharray={2 * Math.PI * 18}
-                      strokeDashoffset={(2 * Math.PI * 18) - (Math.min(100, paymentStatusPct) / 100) * (2 * Math.PI * 18)}
+                      strokeDashoffset={(2 * Math.PI * 18) - (paymentStatusPctDisplay / 100) * (2 * Math.PI * 18)}
                       strokeLinecap="round"
                     />
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Payment Status</p>
-                  <p className="text-lg font-medium text-slate-900 mt-0.5 font-mono leading-none">{paymentStatusPct}%</p>
+                  <p className="text-lg font-medium text-slate-900 mt-0.5 font-mono leading-none">
+                    {paymentStatusPctDisplay}%{paymentStatusPct > 100 && <span className="text-emerald-600"> +over</span>}
+                  </p>
                   <p className="text-xs text-slate-600">of rent this month</p>
                 </div>
               </div>

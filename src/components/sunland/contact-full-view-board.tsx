@@ -322,11 +322,11 @@ export function ContactFullViewBoard({ entityId, contactId }: { entityId: string
         <div className="flex flex-col gap-2.5 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl lg:text-4xl font-serif tracking-tight text-slate-950 truncate">{contact.displayName}</h1>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-600">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium uppercase tracking-wider text-slate-600">
               {TYPE_LABEL[contact.type] ?? "Contact"}
             </span>
             {contact.verifiedAt && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-medium uppercase tracking-wider text-emerald-700">
                 <IconShieldCheck size={12} /> Verified
               </span>
             )}

@@ -18,7 +18,6 @@ import {
   IconShield,
   IconUserCircle,
   IconUsersGroup,
-  type Icon,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore } from "@/store/ui";
@@ -455,8 +454,8 @@ export function SunlandNav() {
                 ) : (
                   <div key={section.id} className="group/collapsed relative">
                     <NavTooltip label={section.label}>
-                      <button
-                        type="button"
+                      <Link
+                        href={section.items[0].href}
                         aria-label={section.label}
                         title={section.label}
                         className={cn(
@@ -467,7 +466,7 @@ export function SunlandNav() {
                         )}
                       >
                         <SectionIcon size={19} stroke={1.5} aria-hidden />
-                      </button>
+                      </Link>
                     </NavTooltip>
                     <CollapsedFlyout section={section} activeHref={activeNavItem?.href} />
                   </div>
@@ -501,9 +500,9 @@ export function SunlandNav() {
                       size={18}
                       stroke={1.5}
                       aria-hidden
-                      className={cn("relative z-10 transition-colors", isActive ? "text-white" : "group-hover:text-white/75")}
+                      className={cn("relative z-10 transition-colors", isActive ? "text-white" : "opacity-60 group-hover:opacity-100")}
                     />
-                    <span className="relative z-10 body-md">{section.label}</span>
+                    <span className="relative z-10 text-sm font-medium">{section.label}</span>
                   </Link>
                 );
               }
@@ -525,13 +524,13 @@ export function SunlandNav() {
                       size={18}
                       stroke={1.5}
                       aria-hidden
-                      className={cn("transition-colors", open ? "text-white/80" : "group-hover:text-white/75")}
+                      className={cn("transition-colors", open ? "text-white/80" : "opacity-60 group-hover:opacity-100")}
                     />
-                    <span className="flex-1 body-md">{section.label}</span>
+                    <span className="flex-1 text-sm font-medium">{section.label}</span>
                     <IconChevronDown
                       size={13}
                       aria-hidden
-                      className={cn("transition-transform text-white/25 group-hover:text-white/45", open && "rotate-180")}
+                      className={cn("transition-transform text-white/30 group-hover:text-white/60", open && "rotate-180")}
                     />
                   </button>
 
@@ -563,10 +562,10 @@ export function SunlandNav() {
                                 <Link
                                   href={item.href}
                                   className={cn(
-                                    "focus-ring relative flex h-8 items-center rounded-lg pl-5 pr-3 text-base transition-colors",
+                                    "focus-ring group/item relative flex h-9 items-center rounded-lg pl-5 pr-3 transition-colors",
                                     isActive
                                       ? "text-white"
-                                      : "text-white/52 hover:text-white/80",
+                                      : "text-white/60 hover:text-white/95 hover:bg-white/[0.02]",
                                   )}
                                 >
                                   {/* Horizontal connector */}
@@ -578,16 +577,16 @@ export function SunlandNav() {
                                   {isActive && (
                                     <motion.div
                                       layoutId="sidebar-child-pill"
-                                      className="absolute inset-0 rounded-lg bg-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]"
+                                      className="absolute inset-0 rounded-lg bg-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]"
                                       initial={false}
                                       transition={{ type: "spring", stiffness: 400, damping: 32 }}
                                     />
                                   )}
 
-                                  <span className="relative z-10 truncate">{item.label}</span>
+                                  <span className="relative z-10 text-sm font-medium truncate transition-colors">{item.label}</span>
 
                                   {item.badge && (
-                                    <span className="relative z-10 ml-auto rounded-full bg-white/[0.07] px-2 py-0.5 text-sm  text-white/50 font-medium">
+                                    <span className="relative z-10 ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-[9px] font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
                                       {item.badge}
                                     </span>
                                   )}
@@ -640,7 +639,8 @@ export function SunlandNav() {
                     <Avatar
                       src={member.avatarUrl ?? undefined}
                       fallback={member.name.substring(0, 2)}
-                      className="size-8"
+                      status="online"
+                      className="size-8 shrink-0 border border-white/10 shadow-sm"
                     />
                   </button>
                 </NavTooltip>
@@ -655,13 +655,16 @@ export function SunlandNav() {
                   <Avatar
                     src={member.avatarUrl ?? undefined}
                     fallback={member.name.substring(0, 2)}
-                    className="size-8 shrink-0"
+                    status="online"
+                    className="size-9 shrink-0 border border-white/10 shadow-sm"
                   />
                   <div className="min-w-0 text-left">
-                    <p className="truncate text-base text-white/75 group-hover:text-white/95 transition-colors">
+                    <p className="truncate text-sm font-medium text-white/80 group-hover:text-white transition-colors">
                       {member.name}
                     </p>
-                    <p className="truncate text-sm text-white/40">{member.role.replace("_", " ")}</p>
+                    <p className="truncate text-[10px] font-medium uppercase tracking-wider text-white/40 mt-0.5">
+                      {member.role.replace(/_/g, " ")}
+                    </p>
                   </div>
                 </button>
               )
@@ -695,77 +698,76 @@ export function SunlandNav() {
               )}
             >
               {/* Profile header */}
-              <div className="flex items-start gap-2.5 border-b border-white/[0.05] px-3 py-2.5">
+              <div className="flex items-center gap-3 border-b border-white/[0.05] p-3 bg-white/[0.02]">
                 <Avatar
                   src={currentUser.avatarUrl}
                   fallback={currentUser.name.substring(0, 2).toUpperCase()}
                   status="online"
-                  className="size-8 shrink-0 mt-0.5"
+                  className="size-10 shrink-0 border border-white/10 shadow-sm"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-base text-white/92">{currentUser.name}</p>
-                  <p className="truncate text-sm  text-white/50">{currentUser.email}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-medium text-white/95">{currentUser.name}</p>
+                    <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-[9px] font-medium text-white/50 tracking-widest uppercase ring-1 ring-white/10 shrink-0">
+                      {currentUser.role.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  <p className="truncate text-[11px] font-mono text-white/40 mt-1">{currentUser.email}</p>
                 </div>
-                <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-white/45 mt-0.5 shrink-0 label-caps">
-                  {currentUser.role}
-                </span>
               </div>
 
               {/* Actions */}
-              <div className="p-1">
+              <div className="p-1.5 space-y-0.5">
                 <Link
                   href={`${portalPrefix}/profile`}
                   onClick={() => setIsProfileOpen(false)}
-                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all hover:bg-white/[0.06]"
                 >
-                  <IconUserCircle size={14} aria-hidden className="shrink-0 opacity-65" />
-                  My Profile
+                  <IconUserCircle size={15} aria-hidden className="shrink-0 text-white/40 transition-colors group-hover:text-white/90" />
+                  <span className="text-sm font-medium text-white/70 transition-colors group-hover:text-white/95">My Profile</span>
                 </Link>
                 <Link
                   href={`${portalPrefix}/settings`}
                   onClick={() => setIsProfileOpen(false)}
-                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all hover:bg-white/[0.06]"
                 >
-                  <IconSettings size={14} aria-hidden className="shrink-0 opacity-65" />
-                  Settings & Preferences
+                  <IconSettings size={15} aria-hidden className="shrink-0 text-white/40 transition-colors group-hover:text-white/90" />
+                  <span className="text-sm font-medium text-white/70 transition-colors group-hover:text-white/95">Settings & Preferences</span>
                 </Link>
                 <Link
                   href={`${portalPrefix}/messages`}
                   onClick={() => setIsProfileOpen(false)}
-                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all hover:bg-white/[0.06]"
                 >
-                  <IconUsersGroup size={14} aria-hidden className="shrink-0 opacity-65" />
-                  Team Messages
+                  <IconUsersGroup size={15} aria-hidden className="shrink-0 text-white/40 transition-colors group-hover:text-white/90" />
+                  <span className="text-sm font-medium text-white/70 transition-colors group-hover:text-white/95">Team Messages</span>
                 </Link>
                 <Link
                   href={`${portalPrefix}/security`}
                   onClick={() => setIsProfileOpen(false)}
-                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all hover:bg-white/[0.06]"
                 >
-                  <IconShield size={14} aria-hidden className="shrink-0 opacity-65" />
-                  Security & Access
+                  <IconShield size={15} aria-hidden className="shrink-0 text-white/40 transition-colors group-hover:text-white/90" />
+                  <span className="text-sm font-medium text-white/70 transition-colors group-hover:text-white/95">Security & Access</span>
                 </Link>
                 <a
                   href="mailto:support@sunland.co.ke"
-                  className="text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-white/68 transition-colors hover:bg-white/[0.05] hover:text-white/92"
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all hover:bg-white/[0.06]"
                 >
-                  <IconHelp size={14} aria-hidden className="shrink-0 opacity-65" />
-                  Help & Support
+                  <IconHelp size={15} aria-hidden className="shrink-0 text-white/40 transition-colors group-hover:text-white/90" />
+                  <span className="text-sm font-medium text-white/70 transition-colors group-hover:text-white/95">Help & Support</span>
                 </a>
               </div>
 
               {/* Log out */}
-              <div className="border-t border-white/[0.05] p-1">
+              <div className="border-t border-white/[0.05] p-1.5 bg-black/10">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className={cn(
-                    "text-label flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 transition-colors",
-                    "text-[var(--error)] hover:bg-[var(--error)]/10 hover:text-red-300",
-                  )}
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all hover:bg-red-500/10"
                 >
-                  <IconLogout size={14} aria-hidden />
-                  Log out of Sunland ERP
+                  <IconLogout size={15} aria-hidden className="text-red-400/60 transition-colors group-hover:text-red-400" />
+                  <span className="text-sm font-medium text-red-400/80 transition-colors group-hover:text-red-400">Log out of Sunland ERP</span>
                 </button>
               </div>
             </motion.div>
@@ -810,7 +812,7 @@ export function SunlandNav() {
               src={currentUser.avatarUrl}
               fallback={currentUser.name.substring(0, 2).toUpperCase()}
               status="online"
-              className="size-9 shrink-0"
+              className="size-10 shrink-0 border border-white/10 shadow-md"
             />
             <AnimatePresence>
               <motion.div
@@ -821,8 +823,8 @@ export function SunlandNav() {
                 className="flex flex-1 items-start justify-between min-w-0"
               >
                 <div className="min-w-0 text-left">
-                  <p className="truncate text-base text-white/92">{currentUser.name}</p>
-                  <p className="truncate text-sm text-white/40 lowercase leading-none mt-1">{currentUser.email}</p>
+                  <p className="truncate text-sm font-medium text-white/95 group-hover:text-white transition-colors">{currentUser.name}</p>
+                  <p className="truncate text-xs font-mono text-white/40 leading-none mt-1.5">{currentUser.email}</p>
                 </div>
                 <IconChevronDown
                   size={13}
