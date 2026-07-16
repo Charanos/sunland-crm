@@ -52,6 +52,7 @@ import {
   valuations,
   propertyMandates,
   remittanceAdvices,
+  propertyUnits,
 } from "@/db/schema";
 import { randomBytes } from "crypto";
 import { hashPassword } from "@/lib/auth/password";
@@ -549,6 +550,16 @@ async function runSeed() {
     mandateStartDate.setMonth(mandateStartDate.getMonth() - 6);
     // Removed propComm from activeMandateProps so it can be pending_approval instead
     const activeMandateProps = [propRes, ...mandatedExtraIdx.map((i) => insertedProps[i])];
+    // propRes is deliberately the one active, real multi-unit mandate in dev
+    // data (every other active mandate below is unitCount 1) - gives the
+    // Mandate File's Units & Tenants tab a genuine multi-unit, mixed
+    // occupied/vacant scenario to render against real property_units rows.
+    const propResUnitBreakdown = [
+      { unitType: "2 Bedroom", count: 8, monthlyRentKes: "45000.00" },
+      { unitType: "3 Bedroom", count: 4, monthlyRentKes: "65000.00" },
+    ];
+    await db.update(properties).set({ unitBreakdown: propResUnitBreakdown }).where(eq(properties.id, propRes.id));
+
     const activeMandatesToInsert: (typeof propertyMandates.$inferInsert)[] = activeMandateProps.map((p, i) => ({
       entityId: groupEntity.id,
       propertyId: p.id,
@@ -557,11 +568,33 @@ async function runSeed() {
       // (grid card / table / drawer trigger) also has real data to exercise.
       assignedPmId: i % 5 === 4 ? null : pmRoster[i % pmRoster.length].id,
       mandateRate: "0.1000",
-      unitCount: 1,
+      unitCount: p.id === propRes.id ? 12 : 1,
       startDate: mandateStartDate,
       status: "active",
     }));
     const insertedActiveMandates = await db.insert(propertyMandates).values(activeMandatesToInsert).returning();
+
+    // Real property_units rows for propRes, generated the same way
+    // generateUnitsFromBreakdown would - the first "2 Bedroom" unit is
+    // reserved here to be occupied by the real lease Step 6 creates below;
+    // the other 11 stay vacant with their own real rent figures.
+    const propResUnitsToInsert: (typeof propertyUnits.$inferInsert)[] = [];
+    let propResUnitCounter = 1;
+    for (const entry of propResUnitBreakdown) {
+      for (let i = 0; i < entry.count; i++) {
+        propResUnitsToInsert.push({
+          entityId: groupEntity.id,
+          propertyId: propRes.id,
+          unitLabel: `${entry.unitType} ${propResUnitCounter}`,
+          unitType: entry.unitType,
+          monthlyRentKes: entry.monthlyRentKes,
+          status: "vacant",
+        });
+        propResUnitCounter++;
+      }
+    }
+    const insertedPropResUnits = await db.insert(propertyUnits).values(propResUnitsToInsert).returning();
+    const propResOccupiedUnit = insertedPropResUnits[0];
 
     // Make propComm have a pending mandate and critical maintenance request
     const pendingProp1 = propComm;
@@ -793,15 +826,19 @@ async function runSeed() {
 
     const leasesToInsert = activeMandateProps.map((p, idx) => {
       const tenant = allTenants[idx % allTenants.length];
-      const rentAmount = p.monthlyRentKes || "120000.00";
+      const isPropRes = p.id === propRes.id;
+      // propRes's lease rents the real occupied unit specifically, not the
+      // property-level flat rent field, now that it has real per-unit rents.
+      const rentAmount = isPropRes ? propResOccupiedUnit.monthlyRentKes! : (p.monthlyRentKes || "120000.00");
       const depositAmount = (parseFloat(rentAmount) * 2).toString() + ".00";
 
       return {
         entityId: groupEntity.id,
         propertyId: p.id,
+        unitId: isPropRes ? propResOccupiedUnit.id : undefined,
         tenantContactId: tenant.id,
         startsAt,
-        endsAt: p.id === propRes.id ? expiringSoonEndsAt : endsAt,
+        endsAt: isPropRes ? expiringSoonEndsAt : endsAt,
         monthlyRentKes: rentAmount,
         depositKes: depositAmount,
         isActive: true,
@@ -812,6 +849,7 @@ async function runSeed() {
       leasesToInsert.push({
         entityId: groupEntity.id,
         propertyId: propComm.id,
+        unitId: undefined,
         tenantContactId: tenantA.id,
         startsAt,
         endsAt,
@@ -829,7 +867,16 @@ async function runSeed() {
     const leaseA = insertedLeases.find(l => l.propertyId === propComm.id) || insertedLeases[0];
     const leaseB = insertedLeases.find(l => l.propertyId === propRes.id) || insertedLeases[1];
 
-    console.log(`Created ${insertedLeases.length} active leases.`);
+    // Sync the occupied unit's status/currentLeaseId to the real lease id
+    // now that it exists - mirrors what createLease's service-layer logic
+    // does for a unit-scoped lease, done directly here since seed data
+    // bypasses the service layer entirely.
+    await db
+      .update(propertyUnits)
+      .set({ status: "occupied", currentLeaseId: leaseB.id })
+      .where(eq(propertyUnits.id, propResOccupiedUnit.id));
+
+    console.log(`Created ${insertedLeases.length} active leases (1 unit-scoped for propRes; 11 other propRes units remain vacant).`);
 
     // 7. Create Transactions
     console.log("Step 7: Generating ledger transactions...");

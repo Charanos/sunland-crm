@@ -12,7 +12,7 @@ import { getUser } from "@/lib/services/identity/users";
 import { listAuditLog } from "@/lib/services/audit-log";
 import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
-import { assignMandateManagerSchema, createMandateSchema, terminateMandateSchema } from "@/lib/validation/mandates";
+import { assignMandateManagerSchema, createMandateSchema, terminateMandateSchema, updateMandateTermsSchema } from "@/lib/validation/mandates";
 import { parseInput } from "@/lib/validation/parse";
 
 // Mandates reuse the properties.property.* permission keys deliberately, same
@@ -154,6 +154,10 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
       managerTitle: users.title,
       managerEmail: users.email,
       managerAvatarUrl: users.avatarUrl,
+      maintenanceAuthorityKes: propertyMandates.maintenanceAuthorityKes,
+      renewalType: propertyMandates.renewalType,
+      noticePeriodDays: propertyMandates.noticePeriodDays,
+      scopeDescription: propertyMandates.scopeDescription,
     })
     .from(propertyMandates)
     .innerJoin(contacts, eq(propertyMandates.landlordContactId, contacts.id))
@@ -165,6 +169,52 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
   await authorize(ctx, "properties.property.read", mandateRow.entityId);
 
   const property = await getPropertyWithDetails(ctx, mandateRow.propertyId);
+
+  // Landlord's real property count (same aggregation shape as
+  // getContactProfile in crm.ts) - "under mandate" reads broader than the
+  // PM's count below since a landlord relationship starts at mandate
+  // creation, not activation.
+  const landlordMandateRows = await db
+    .select({ propertyId: propertyMandates.propertyId })
+    .from(propertyMandates)
+    .where(and(eq(propertyMandates.landlordContactId, mandateRow.landlordContactId), inArray(propertyMandates.status, ["active", "pending_approval"])));
+  const landlordPropertiesUnderMandate = new Set(landlordMandateRows.map((r) => r.propertyId)).size;
+
+  // PM's real assigned-property count + a real on-time-collection rate (this
+  // month's collected vs expected across every property they actively
+  // manage) - "fetch then reduce in JS", same convention used throughout
+  // this service layer, no SQL groupBy.
+  let pmAssignedPropertyCount = 0;
+  let pmOnTimeCollectionPct: number | null = null;
+  if (mandateRow.assignedPmId) {
+    const pmMandateRows = await db
+      .select({ propertyId: propertyMandates.propertyId, monthlyRentKes: properties.monthlyRentKes })
+      .from(propertyMandates)
+      .innerJoin(properties, eq(propertyMandates.propertyId, properties.id))
+      .where(and(eq(propertyMandates.assignedPmId, mandateRow.assignedPmId), eq(propertyMandates.status, "active")));
+    pmAssignedPropertyCount = pmMandateRows.length;
+
+    const pmPropertyIds = pmMandateRows.map((m) => m.propertyId);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const pmPeriodTx = pmPropertyIds.length
+      ? await db
+        .select({ propertyId: transactions.propertyId, amountKes: transactions.amountKes })
+        .from(transactions)
+        .where(and(inArray(transactions.propertyId, pmPropertyIds), eq(transactions.type, "rent"), gte(transactions.occurredAt, monthStart)))
+      : [];
+
+    let eligible = 0;
+    let onTime = 0;
+    for (const m of pmMandateRows) {
+      const expected = m.monthlyRentKes ? parseFloat(m.monthlyRentKes) : 0;
+      if (expected <= 0) continue;
+      eligible++;
+      const collected = pmPeriodTx.filter((t) => t.propertyId === m.propertyId).reduce((sum, t) => sum + parseFloat(t.amountKes), 0);
+      if (collected >= expected) onTime++;
+    }
+    pmOnTimeCollectionPct = eligible > 0 ? Math.round((onTime / eligible) * 100) : null;
+  }
 
   let pendingApproverRole: "gm" | "ceo" | "department_head" | null = null;
   let approvalRequestId: string | null = null;
@@ -203,6 +253,10 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
     approvalRequestId,
     currentPeriod,
     pendingRemittance,
+    maintenanceAuthorityKes: mandateRow.maintenanceAuthorityKes,
+    renewalType: mandateRow.renewalType,
+    noticePeriodDays: mandateRow.noticePeriodDays,
+    scopeDescription: mandateRow.scopeDescription,
     landlord: {
       id: mandateRow.landlordContactId,
       name: mandateRow.landlordName,
@@ -211,6 +265,7 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
       verifiedAt: toISOStringSafe(mandateRow.landlordVerifiedAt),
       avatarUrl: mandateRow.landlordAvatarUrl,
       company: mandateRow.landlordCompany,
+      propertiesUnderMandateCount: landlordPropertiesUnderMandate,
     },
     manager: mandateRow.assignedPmId
       ? {
@@ -219,6 +274,8 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
         title: mandateRow.managerTitle,
         email: mandateRow.managerEmail,
         avatarUrl: mandateRow.managerAvatarUrl,
+        assignedPropertyCount: pmAssignedPropertyCount,
+        onTimeCollectionPct: pmOnTimeCollectionPct,
       }
       : null,
     property: {
@@ -486,6 +543,10 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
         startDate,
         endDate,
         status: selfApproves ? "active" : "pending_approval",
+        maintenanceAuthorityKes: input.maintenanceAuthorityKes ?? null,
+        renewalType: input.renewalType ?? null,
+        noticePeriodDays: input.noticePeriodDays ?? null,
+        scopeDescription: input.scopeDescription?.trim() || null,
       })
       .returning();
 
@@ -622,6 +683,47 @@ export async function assignMandateManager(ctx: CallerContext, mandateId: string
       summary: input.assignedPmId
         ? `${ctx.user.name} assigned a property manager to the mandate`
         : `${ctx.user.name} unassigned the property manager from the mandate`,
+      entityId: existing.entityId,
+      before: existing,
+      after: updated,
+    });
+
+    return updated;
+  });
+}
+
+/**
+ * Descriptive mandate terms only (maintenance authority, renewal type,
+ * notice period, scope of management) - deliberately separate from
+ * createMandate's rate/approval-routed fields, so editing these never
+ * triggers or bypasses the mandate-activation approval flow.
+ */
+export async function updateMandateTerms(ctx: CallerContext, mandateId: string, rawInput: unknown) {
+  const input = parseInput(updateMandateTermsSchema, rawInput);
+
+  const [existing] = await db.select().from(propertyMandates).where(eq(propertyMandates.id, mandateId)).limit(1);
+  if (!existing) throw new NotFoundError("Mandate not found");
+
+  await authorize(ctx, "properties.property.write", existing.entityId);
+
+  const updatable: Partial<typeof propertyMandates.$inferInsert> = {};
+  if (input.maintenanceAuthorityKes !== undefined) updatable.maintenanceAuthorityKes = input.maintenanceAuthorityKes;
+  if (input.renewalType !== undefined) updatable.renewalType = input.renewalType;
+  if (input.noticePeriodDays !== undefined) updatable.noticePeriodDays = input.noticePeriodDays;
+  if (input.scopeDescription !== undefined) updatable.scopeDescription = input.scopeDescription?.trim() || null;
+
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(propertyMandates)
+      .set({ ...updatable, updatedAt: new Date() })
+      .where(eq(propertyMandates.id, mandateId))
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "properties.mandate.update_terms",
+      associatedType: "property_mandate",
+      associatedId: mandateId,
+      summary: `${ctx.user.name} updated the mandate's terms`,
       entityId: existing.entityId,
       before: existing,
       after: updated,

@@ -5,7 +5,6 @@ import {
   IconAlertTriangle,
   IconCalendarClock,
   IconClock,
-  IconHistory,
   IconPlus,
   IconRefresh,
   IconSearch,
@@ -14,7 +13,6 @@ import {
   IconStarFilled,
   IconChevronLeft,
   IconChevronRight,
-  IconEye,
   IconFilter,
   IconFileCertificate,
   IconDotsVertical,
@@ -29,6 +27,7 @@ import {
   IconArrowUpRight,
   IconFileText,
   IconBan,
+  IconMoodEmpty,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -42,7 +41,6 @@ import {
 } from "@/components/ui/erp-primitives";
 import { LeaseFormModal, type LeaseEditTarget } from "./lease-form-modal";
 import { LeaseRenewModal, type LeaseRenewTarget } from "./lease-renew-modal";
-import { LeaseDetailDrawer } from "./lease-detail-drawer";
 import { PortfolioHubNav } from "./portfolio-hub-nav";
 import { MandateFormModal } from "./mandate-form-modal";
 import { PropertyOwnerProfileDrawer } from "./property-owner-profile-drawer";
@@ -141,12 +139,7 @@ const MANDATE_STATUS_LABEL: Record<Mandate["status"], string> = {
   terminated: "Terminated",
 };
 
-function activityTone(action: string): string {
-  const lower = action.toLowerCase();
-  if (lower.includes("terminat") || lower.includes("reject") || lower.includes("flag") || lower.includes("complaint")) return "bg-rose-300";
-  if (lower.includes("override")) return "bg-amber-400";
-  return "bg-slate-300";
-}
+
 
 export function LeasesBoard({ entityId }: { entityId: string }) {
   const router = useRouter();
@@ -162,7 +155,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [expiryFilter, setExpiryFilter] = useState<"all" | "30" | "60" | "90">("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [drawerLease, setDrawerLease] = useState<Lease | null>(null);
   const [editingLease, setEditingLease] = useState<Lease | null>(null);
   const [renewingLease, setRenewingLease] = useState<Lease | null>(null);
 
@@ -197,10 +189,21 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const [leaseActivityLoading, setLeaseActivityLoading] = useState(true);
   const [leaseActivityLoaded, setLeaseActivityLoaded] = useState(false);
 
-  // Management Mandates mode: board-level recent activity feed (associatedType=property_mandate)
+  // Management Mandates mode: recent activity feed
   const [mandateActivity, setMandateActivity] = useState<AuditEntry[]>([]);
   const [mandateActivityLoading, setMandateActivityLoading] = useState(true);
   const [mandateActivityLoaded, setMandateActivityLoaded] = useState(false);
+
+  // Advanced Activity States for Leases & Mandates
+  const [mandateActivitySearchQuery, setMandateActivitySearchQuery] = useState("");
+  const [mandateActivityFilter, setMandateActivityFilter] = useState("all");
+  const [mandateActivityPage, setMandateActivityPage] = useState(1);
+
+  const [leaseActivitySearchQuery, setLeaseActivitySearchQuery] = useState("");
+  const [leaseActivityFilter, setLeaseActivityFilter] = useState("all");
+  const [leaseActivityPage, setLeaseActivityPage] = useState(1);
+
+  const ACTIVITY_PER_PAGE = 10;
 
   // Carousel state
   const [featuredIndex, setFeaturedIndex] = useState(0);
@@ -262,14 +265,12 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     return () => clearTimeout(timer);
   }, [entityId, mode, mandatesLoaded, loadMandates]);
 
-  // Recent lease activity loads lazily on first switch into leases mode -
-  // reuses the generic /api/audit endpoint filtered to associatedType=lease
-  // with no associatedId, i.e. every lease-related audit row entity-wide.
+  // Recent lease activity loads lazily on first switch into leases mode
   useEffect(() => {
     if (!entityId || mode !== "leases" || leaseActivityLoaded) return;
     const timer = setTimeout(() => {
       setLeaseActivityLoading(true);
-      fetch(`/api/audit?entityId=${entityId}&associatedType=lease&limit=10`)
+      fetch(`/api/audit?entityId=${entityId}&associatedType=lease&limit=100`)
         .then((res) => (res.ok ? res.json() : { entries: [] }))
         .then((data) => setLeaseActivity(data.entries ?? []))
         .catch(() => setLeaseActivity([]))
@@ -286,7 +287,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     if (!entityId || mode !== "mandates" || mandateActivityLoaded) return;
     const timer = setTimeout(() => {
       setMandateActivityLoading(true);
-      fetch(`/api/audit?entityId=${entityId}&associatedType=property_mandate&limit=10`)
+      fetch(`/api/audit?entityId=${entityId}&associatedType=property_mandate&limit=100`)
         .then((res) => (res.ok ? res.json() : { entries: [] }))
         .then((data) => setMandateActivity(data.entries ?? []))
         .catch(() => setMandateActivity([]))
@@ -298,7 +299,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     return () => clearTimeout(timer);
   }, [entityId, mode, mandateActivityLoaded]);
 
-  // Handle lease termination (from drawer)
   const handleTerminate = async (id: string) => {
     try {
       const res = await fetch(`/api/leases/${id}`, {
@@ -314,7 +314,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         title: "Lease Terminated",
         body: "Lease has been set to inactive, and property status updated back to available.",
       });
-      setDrawerLease(null);
       loadLeases();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Termination failed.";
@@ -504,6 +503,59 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const featuredItems = mode === "mandates" ? featuredMandates : latestLeases;
   const safeFeaturedIndex = featuredItems.length === 0 ? 0 : Math.min(featuredIndex, featuredItems.length - 1);
 
+  // Advanced Activity filtering & pagination
+  const filteredMandateActivity = useMemo(() => {
+    let filtered = mandateActivity;
+    if (mandateActivitySearchQuery) {
+      const q = mandateActivitySearchQuery.toLowerCase();
+      filtered = filtered.filter(a => a.summary.toLowerCase().includes(q));
+    }
+    if (mandateActivityFilter !== "all") {
+      filtered = filtered.filter(a => {
+        const lower = a.summary.toLowerCase();
+        if (mandateActivityFilter === "edits") return lower.includes("updat") || lower.includes("chang") || lower.includes("edit");
+        if (mandateActivityFilter === "terminations") return lower.includes("terminat") || lower.includes("delet");
+        if (mandateActivityFilter === "system") return lower.includes("system") || lower.includes("auto");
+        return true;
+      });
+    }
+    return filtered;
+  }, [mandateActivity, mandateActivitySearchQuery, mandateActivityFilter]);
+
+  const mandateActivityTotalPages = Math.max(1, Math.ceil(filteredMandateActivity.length / ACTIVITY_PER_PAGE));
+  const safeMandateActivityPage = Math.min(mandateActivityPage, mandateActivityTotalPages);
+  const paginatedMandateActivity = filteredMandateActivity.slice((safeMandateActivityPage - 1) * ACTIVITY_PER_PAGE, safeMandateActivityPage * ACTIVITY_PER_PAGE);
+
+  const filteredLeaseActivity = useMemo(() => {
+    let filtered = leaseActivity;
+    if (leaseActivitySearchQuery) {
+      const q = leaseActivitySearchQuery.toLowerCase();
+      filtered = filtered.filter(a => a.summary.toLowerCase().includes(q));
+    }
+    if (leaseActivityFilter !== "all") {
+      filtered = filtered.filter(a => {
+        const lower = a.summary.toLowerCase();
+        if (leaseActivityFilter === "edits") return lower.includes("updat") || lower.includes("chang") || lower.includes("edit");
+        if (leaseActivityFilter === "terminations") return lower.includes("terminat") || lower.includes("delet");
+        if (leaseActivityFilter === "system") return lower.includes("system") || lower.includes("auto");
+        return true;
+      });
+    }
+    return filtered;
+  }, [leaseActivity, leaseActivitySearchQuery, leaseActivityFilter]);
+
+  const leaseActivityTotalPages = Math.max(1, Math.ceil(filteredLeaseActivity.length / ACTIVITY_PER_PAGE));
+  const safeLeaseActivityPage = Math.min(leaseActivityPage, leaseActivityTotalPages);
+  const paginatedLeaseActivity = filteredLeaseActivity.slice((safeLeaseActivityPage - 1) * ACTIVITY_PER_PAGE, safeLeaseActivityPage * ACTIVITY_PER_PAGE);
+
+  const getActivityTone = (summary: string) => {
+    const lower = summary.toLowerCase();
+    if (lower.includes("terminat") || lower.includes("delet") || lower.includes("reject") || lower.includes("complaint")) return "bg-rose-300 ring-rose-50";
+    if (lower.includes("override")) return "bg-amber-400 ring-amber-50";
+    if (lower.includes("updat") || lower.includes("chang") || lower.includes("edit")) return "bg-indigo-300 ring-indigo-50";
+    return "bg-slate-200 ring-white";
+  };
+
   const getMandateDisplayCode = (m: Mandate) => {
     if (m.propertyCode) {
       return m.propertyCode.replace(/^PROP-/i, "MND-");
@@ -611,7 +663,32 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   return (
     <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-4">
       <BoardHeader
-        eyebrow={<Badge tone="primary">Leases & Management Mandates</Badge>}
+        eyebrow={
+          <div className="flex bg-slate-100 p-0.5 rounded-full border border-slate-200/40 shadow-sm">
+            <button
+              onClick={() => { setMode("mandates"); setPage(1); }}
+              className={cn(
+                "px-3 py-1 text-xs uppercase tracking-wider rounded-full transition-all font-medium flex items-center gap-1.5",
+                mode === "mandates"
+                  ? "bg-[#151936] text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
+              )}
+            >
+              <IconFileCertificate size={12} /> Mandates
+            </button>
+            <button
+              onClick={() => { setMode("leases"); setPage(1); }}
+              className={cn(
+                "px-3 py-1 text-xs uppercase tracking-wider rounded-full transition-all font-medium flex items-center gap-1.5",
+                mode === "leases"
+                  ? "bg-[#151936] text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
+              )}
+            >
+              <IconUserCircle size={12} /> Tenant Leases
+            </button>
+          </div>
+        }
         title="Management Mandates & Leases"
         description="Manage property inventory, tenancies, and owner portfolios."
         actions={
@@ -671,13 +748,13 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         )}
                       </div>
                       <div className="mt-2 flex items-center gap-2.5 flex-wrap">
-                        <span className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-emerald-400">
+                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-emerald-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{mandateStatusBreakdown.active} active
                         </span>
-                        <span className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-amber-400">
+                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-amber-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />{mandateStatusBreakdown.pending} pending
                         </span>
-                        <span className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-slate-400">
+                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />{mandateStatusBreakdown.terminated} terminated
                         </span>
                       </div>
@@ -694,7 +771,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <span className="text-xs font-medium text-slate-300 relative z-10">Expected Rent Roll</span>
                 <div className="flex flex-col relative z-10 mt-4">
                   <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(mandatesSummary?.expectedRentRollKes ?? 0)}</span>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-emerald-400 mt-1">CONTRACTED THIS PERIOD</p>
+                  <p className="text-xs font-medium uppercase tracking-widest text-emerald-400 mt-1">CONTRACTED THIS PERIOD</p>
                 </div>
               </div>
 
@@ -708,7 +785,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                   <div className="flex flex-col py-1 w-full">
                     <p className="text-xs font-medium text-slate-300">Collected MTD</p>
                     <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(mandatesSummary?.collectedMtdKes ?? 0)}</span>
-                    <p className="text-[10px] font-medium uppercase tracking-widest text-emerald-400">{mandatesSummary?.expectedRentRollKes ? Math.round(((mandatesSummary?.collectedMtdKes ?? 0) / mandatesSummary.expectedRentRollKes) * 100) : 0}% OF EXPECTED</p>
+                    <p className="text-xs font-medium uppercase tracking-widest text-emerald-400">{mandatesSummary?.expectedRentRollKes ? Math.round(((mandatesSummary?.collectedMtdKes ?? 0) / mandatesSummary.expectedRentRollKes) * 100) : 0}% OF EXPECTED</p>
                   </div>
                 </div>
               </div>
@@ -721,7 +798,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <span className="text-xs font-medium text-slate-300 relative z-10">Management Fee MTD</span>
                 <div className="flex flex-col relative z-10 mt-4">
                   <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(mandatesSummary?.managementFeeMtdKes ?? 0)}</span>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400 mt-1">SUNLAND REVENUE — NOT LANDLORD FUNDS</p>
+                  <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mt-1">SUNLAND REVENUE — NOT LANDLORD FUNDS</p>
                 </div>
               </div>
 
@@ -733,7 +810,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <span className="text-xs font-medium text-slate-300 relative z-10">Remittances Pending</span>
                 <div className="flex flex-col relative z-10 mt-4">
                   <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(mandatesSummary?.remittancesPendingKes ?? 0)}</span>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-rose-400 mt-1">{mandatesSummary?.remittancesPendingCount ?? 0} LANDLORD{(mandatesSummary?.remittancesPendingCount !== 1) ? "S" : ""} AWAITING TRANSFER</p>
+                  <p className="text-xs font-medium uppercase tracking-widest text-rose-400 mt-1">{mandatesSummary?.remittancesPendingCount ?? 0} LANDLORD{(mandatesSummary?.remittancesPendingCount !== 1) ? "S" : ""} AWAITING TRANSFER</p>
                 </div>
               </div>
             </>
@@ -764,13 +841,13 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         )}
                       </div>
                       <div className="mt-2 flex items-center gap-2.5 flex-wrap">
-                        <span className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-rose-400">
+                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-rose-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />{kpis.statusBreakdown.overdue} overdue
                         </span>
-                        <span className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-amber-400">
+                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-amber-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />{kpis.statusBreakdown.expiringSoon} expiring
                         </span>
-                        <span className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider text-emerald-400">
+                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-emerald-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{kpis.statusBreakdown.healthy} healthy
                         </span>
                       </div>
@@ -786,8 +863,8 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 </div>
                 <span className="text-xs font-medium text-slate-300 relative z-10">Active Tenancies</span>
                 <div className="flex flex-col relative z-10 mt-4">
-                  <span className="font-mono text-3xl font-medium text-white">{kpis.active}</span>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-emerald-400 mt-1">{kpis.rate.toFixed(1)}% OF PORTFOLIO</p>
+                  <span className="font-mono text-4xl font-medium text-white">{kpis.active}</span>
+                  <p className="text-xs font-medium uppercase tracking-widest text-emerald-400 mt-1">{kpis.rate.toFixed(1)}% OF PORTFOLIO</p>
                 </div>
               </div>
 
@@ -801,7 +878,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                   <div className="flex flex-col py-1 w-full">
                     <p className="text-xs font-medium text-slate-300">Occupancy Rate</p>
                     <span className="font-mono text-3xl font-medium text-white">{kpis.rate.toFixed(0)}%</span>
-                    <p className="text-[10px] font-medium uppercase tracking-widest text-emerald-400">{kpis.active} OF {kpis.total} LEASES</p>
+                    <p className="text-xs font-medium uppercase tracking-widest text-emerald-400">{kpis.active} OF {kpis.total} LEASES</p>
                   </div>
                 </div>
               </div>
@@ -814,7 +891,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <span className="text-xs font-medium text-slate-300 relative z-10">Monthly Rent Pool</span>
                 <div className="flex flex-col relative z-10 mt-4">
                   <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(kpis.rentPool)}</span>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400 mt-1">CONTRACTED — ACTIVE ONLY</p>
+                  <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mt-1">CONTRACTED — ACTIVE ONLY</p>
                 </div>
               </div>
 
@@ -826,7 +903,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <span className="text-xs font-medium text-slate-300 relative z-10">Overdue Balance</span>
                 <div className="flex flex-col relative z-10 mt-4">
                   <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(kpis.overdueBalance)}</span>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-rose-400 mt-1">{kpis.overdueCount} TENANT{kpis.overdueCount === 1 ? "" : "S"} IN ARREARS</p>
+                  <p className="text-xs font-medium uppercase tracking-widest text-rose-400 mt-1">{kpis.overdueCount} TENANT{kpis.overdueCount === 1 ? "" : "S"} IN ARREARS</p>
                 </div>
               </div>
             </>
@@ -1178,9 +1255,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                             </button>
                           </div>
                         )}
-                        <Button variant="secondary" size="sm" onClick={() => setDrawerLease(fl)} className="h-9 px-4 rounded-xl font-medium">
-                          Details
-                        </Button>
                         <Link href={`/admin/leases/${fl.id}`}>
                           <Button className="bg-[#151936] text-white hover:bg-[#151936]/90 px-4 h-9 rounded-xl font-medium flex items-center gap-1.5">
                             View <IconArrowRight size={16} />
@@ -1295,25 +1369,73 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       {/* ── Recent Mandate Activity ── */}
       {mode === "mandates" && (
         <div className="gsap-stagger mb-8 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
-              <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Mandate Activity
-            </h3>
+          <div className="flex flex-col gap-5 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
+                <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Mandate Activity
+              </h3>
+            </div>
+
+            {/* Advanced Search & Filter Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search activity logs..."
+                  value={mandateActivitySearchQuery}
+                  onChange={(e) => {
+                    setMandateActivitySearchQuery(e.target.value);
+                    setMandateActivityPage(1);
+                  }}
+                  className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400"
+                />
+              </div>
+              <div className="relative shrink-0">
+                <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <select
+                  value={mandateActivityFilter}
+                  onChange={(e) => {
+                    setMandateActivityFilter(e.target.value);
+                    setMandateActivityPage(1);
+                  }}
+                  className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer"
+                >
+                  <option value="all">All Events</option>
+                  <option value="edits">Modifications</option>
+                  <option value="terminations">Terminations</option>
+                  <option value="system">System Actions</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <IconChevronRight size={14} className="text-slate-400 rotate-90" />
+                </div>
+              </div>
+            </div>
           </div>
+
           {mandateActivityLoading ? (
-            <div className="flex items-center justify-center py-6">
-              <LoadingSpinner size="sm" />
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="md" />
             </div>
           ) : mandateActivity.length === 0 ? (
-            <p className="text-xs text-slate-600 py-2">No recorded mandate activity yet.</p>
+            <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+              <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1">
+                <IconMoodEmpty size={32} className="text-slate-300" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-700">No recorded activity yet.</h3>
+              <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, and mandate events will safely log here.</p>
+            </div>
+          ) : paginatedMandateActivity.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-center">
+              <IconSearch size={24} className="text-slate-300 mb-3" />
+              <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
+              <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
+            </div>
           ) : (
             <div className="flex flex-col gap-6 relative ml-1">
               <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
-              {mandateActivity.slice(0, 10).map((entry) => {
-                const toneBase = activityTone(entry.summary);
-                const isAlert = toneBase.includes("rose") || toneBase.includes("amber");
-                const toneColor = isAlert ? "bg-rose-300 ring-rose-50" : "bg-slate-200 ring-white";
-
+              {paginatedMandateActivity.map((entry) => {
+                const toneColor = getActivityTone(entry.summary);
                 return (
                   <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
                     <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
@@ -1344,31 +1466,106 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
               })}
             </div>
           )}
+
+          {/* Pagination Controls */}
+          {mandateActivityTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+              <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                Page {safeMandateActivityPage} of {mandateActivityTotalPages} <span className="mx-1">·</span> {filteredMandateActivity.length} logs
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setMandateActivityPage(Math.max(1, safeMandateActivityPage - 1))}
+                  disabled={safeMandateActivityPage <= 1}
+                  className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                >
+                  <IconChevronLeft size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMandateActivityPage(Math.min(mandateActivityTotalPages, safeMandateActivityPage + 1))}
+                  disabled={safeMandateActivityPage >= mandateActivityTotalPages}
+                  className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                >
+                  <IconChevronRight size={15} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* ── Recent Lease Activity ── */}
       {mode === "leases" && (
         <div className="gsap-stagger mb-8 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
-              <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Lease Activity
-            </h3>
+          <div className="flex flex-col gap-5 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
+                <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Lease Activity
+              </h3>
+            </div>
+
+            {/* Advanced Search & Filter Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search activity logs..."
+                  value={leaseActivitySearchQuery}
+                  onChange={(e) => {
+                    setLeaseActivitySearchQuery(e.target.value);
+                    setLeaseActivityPage(1);
+                  }}
+                  className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400"
+                />
+              </div>
+              <div className="relative shrink-0">
+                <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <select
+                  value={leaseActivityFilter}
+                  onChange={(e) => {
+                    setLeaseActivityFilter(e.target.value);
+                    setLeaseActivityPage(1);
+                  }}
+                  className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer"
+                >
+                  <option value="all">All Events</option>
+                  <option value="edits">Modifications</option>
+                  <option value="terminations">Terminations</option>
+                  <option value="system">System Actions</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <IconChevronRight size={14} className="text-slate-400 rotate-90" />
+                </div>
+              </div>
+            </div>
           </div>
+
           {leaseActivityLoading ? (
-            <div className="flex items-center justify-center py-6">
-              <LoadingSpinner size="sm" />
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="md" />
             </div>
           ) : leaseActivity.length === 0 ? (
-            <p className="text-xs text-slate-600 py-2">No recorded lease activity yet.</p>
+            <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+              <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1">
+                <IconMoodEmpty size={32} className="text-slate-300" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-700">No recorded activity yet.</h3>
+              <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, and lease events will safely log here.</p>
+            </div>
+          ) : paginatedLeaseActivity.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-center">
+              <IconSearch size={24} className="text-slate-300 mb-3" />
+              <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
+              <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
+            </div>
           ) : (
             <div className="flex flex-col gap-6 relative ml-1">
               <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
-              {leaseActivity.slice(0, 10).map((entry) => {
-                const toneBase = activityTone(entry.summary);
-                const isAlert = toneBase.includes("rose") || toneBase.includes("amber");
-                const toneColor = isAlert ? "bg-rose-300 ring-rose-50" : "bg-slate-200 ring-white";
-
+              {paginatedLeaseActivity.map((entry) => {
+                const toneColor = getActivityTone(entry.summary);
                 return (
                   <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
                     <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
@@ -1399,6 +1596,33 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
               })}
             </div>
           )}
+
+          {/* Pagination Controls */}
+          {leaseActivityTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+              <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                Page {safeLeaseActivityPage} of {leaseActivityTotalPages} <span className="mx-1">·</span> {filteredLeaseActivity.length} logs
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setLeaseActivityPage(Math.max(1, safeLeaseActivityPage - 1))}
+                  disabled={safeLeaseActivityPage <= 1}
+                  className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                >
+                  <IconChevronLeft size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeaseActivityPage(Math.min(leaseActivityTotalPages, safeLeaseActivityPage + 1))}
+                  disabled={safeLeaseActivityPage >= leaseActivityTotalPages}
+                  className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                >
+                  <IconChevronRight size={15} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1410,35 +1634,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
-      <div className="bg-transparent lg:bg-white border-transparent lg:border-slate-100 p-0 lg:p-8 rounded-none lg:rounded-[24px] shadow-none lg:shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
-        {/* Page Mode Switcher inside the card container */}
-        <div className="flex justify-between items-center pb-4 mb-5 border-b border-slate-100">
-          <div className="flex bg-slate-100/80 p-1 rounded-xl">
-            <button
-              onClick={() => { setMode("mandates"); setPage(1); }}
-              className={cn(
-                "px-4 py-1.5 text-xs rounded-lg transition-all font-medium flex items-center gap-1.5",
-                mode === "mandates"
-                  ? "bg-[#151936] text-white shadow-sm font-medium"
-                  : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              <IconFileCertificate size={14} /> Management Mandates
-            </button>
-            <button
-              onClick={() => { setMode("leases"); setPage(1); }}
-              className={cn(
-                "px-4 py-1.5 text-xs rounded-lg transition-all font-medium flex items-center gap-1.5",
-                mode === "leases"
-                  ? "bg-[#151936] text-white shadow-sm font-medium"
-                  : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              <IconUserCircle size={14} /> Tenant Leases
-            </button>
-          </div>
-        </div>
-
+      <div className="bg-transparent lg:bg-white/70 border-transparent lg:border-slate-100 p-0 lg:p-8 rounded-none lg:rounded-[24px] shadow-none lg:shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
         {mode === "mandates" ? (
           <div className="flex flex-col">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 lg:pb-5 mb-4 lg:mb-5">
@@ -1477,7 +1673,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         mandateStatusFilter === pill.key ? "bg-[#151936] text-white shadow-sm font-medium" : "text-slate-600 hover:text-slate-700"
                       )}
                     >
-                      {pill.label} <span className={cn("text-[9px] font-mono px-1 py-0.2 rounded bg-slate-200/80 text-slate-600", mandateStatusFilter === pill.key && "bg-white/20 text-white")}>{pill.count}</span>
+                      {pill.label} <span className={cn("text-[10px] font-mono px-1 py-0.2 rounded bg-slate-200/80 text-slate-600", mandateStatusFilter === pill.key && "bg-white/20 text-white")}>{pill.count}</span>
                     </button>
                   ))}
                 </div>
@@ -1623,7 +1819,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                               )}
                               <div className="flex flex-col min-w-0">
                                 <h4 className="text-sm font-medium text-slate-800 leading-tight truncate">{m.propertyName}</h4>
-                                <span className="text-[10px] font-mono text-slate-400 mt-0.5 tracking-wider uppercase">{getMandateDisplayCode(m)}</span>
+                                <span className="text-xs font-mono text-slate-500 mt-0.5 tracking-wider uppercase">{getMandateDisplayCode(m)}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1635,15 +1831,15 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
 
                           {/* Actors Info */}
                           <div className="flex items-center gap-2.5 mb-4 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
-                            <Avatar src={m.landlordAvatarUrl || undefined} fallback={getInitials(m.landlordName)} className="size-7 text-[10px] bg-white text-slate-700 border border-slate-200 shrink-0 shadow-sm" />
+                            <Avatar src={m.landlordAvatarUrl || undefined} fallback={getInitials(m.landlordName)} className="size-7 text-xs bg-white text-slate-700 border border-slate-200 shrink-0 shadow-sm" />
                             <div className="flex flex-col min-w-0 flex-1">
-                              <span className="text-xs font-medium text-slate-700 truncate">{m.landlordName}</span>
-                              <span className="text-[10px] text-slate-400 truncate">Landlord Account</span>
+                              <span className="text-sm font-medium text-slate-700 truncate">{m.landlordName}</span>
+                              <span className="text-xs text-slate-400 truncate">Landlord Account</span>
                             </div>
                             {m.managerName && (
                               <>
                                 <div className="w-px h-6 bg-slate-200 mx-1" />
-                                <Avatar src={m.managerAvatarUrl || undefined} fallback={pmInitials} className="size-7 text-[10px] bg-[#151936] text-white border border-[#151936]/20 shrink-0 shadow-sm" />
+                                <Avatar src={m.managerAvatarUrl || undefined} fallback={pmInitials} className="size-7 text-xs bg-[#151936] text-white border border-[#151936]/20 shrink-0 shadow-sm" />
                               </>
                             )}
                           </div>
@@ -1651,29 +1847,29 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           {/* Data Viz: Collection MTD */}
                           <div className="flex flex-col gap-1.5 mb-4">
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-slate-500 font-mono tracking-wider uppercase">Collection MTD</span>
-                              <span className={cn("text-[10px] font-mono font-medium", pctTextColor)}>{pct}% Collected</span>
+                              <span className="text-xs text-slate-500 font-mono tracking-wider uppercase">Collection MTD</span>
+                              <span className={cn("text-xs font-mono font-medium", pctTextColor)}>{pct}% Collected</span>
                             </div>
                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                               <div style={{ width: `${pct}%` }} className={cn("h-full rounded-full transition-all duration-500", pctColor)} />
                             </div>
                             <div className="flex items-center justify-between mt-0.5">
-                              <span className="text-[9px] text-slate-400 font-mono">01 {new Date().toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}</span>
-                              <span className="text-[9px] text-slate-400 font-mono">31 {new Date().toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}</span>
+                              <span className="text-xs text-slate-400 font-mono">01 {new Date().toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}</span>
+                              <span className="text-xs text-slate-400 font-mono">31 {new Date().toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}</span>
                             </div>
                           </div>
 
                           {/* Financials Footer */}
                           <div className="mt-auto pt-4 border-t border-slate-100/80 flex items-end justify-between gap-4">
                             <div className="flex flex-col gap-0.5">
-                              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Management Fee</span>
+                              <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Management Fee</span>
                               <div className="flex items-baseline gap-1">
-                                <span className="font-mono text-sm font-medium text-slate-800">{(parseFloat(m.mandateRate) * 100).toFixed(1)}%</span>
+                                <span className="font-mono text-md font-medium text-slate-800">{(parseFloat(m.mandateRate) * 100).toFixed(1)}%</span>
                               </div>
                             </div>
-                            
+
                             <div className="flex flex-col items-end gap-0.5 text-right">
-                              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Remittance Due</span>
+                              <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Remittance Due</span>
                               <span className={cn("font-mono text-sm font-medium", m.status === "active" && collected > 0 ? "text-emerald-600" : "text-slate-500")}>
                                 {remittanceDisplay}
                               </span>
@@ -1738,7 +1934,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                   />
                                   <div>
                                     <p className="body-md text-slate-800 font-medium">{m.landlordName}</p>
-                                    <p className="text-[10px] text-slate-600 font-mono tracking-wider uppercase mt-0.5">{(m.landlordCompanyName || "Individual Landlord").toUpperCase()}</p>
+                                    <p className="text-xs text-slate-600 font-mono tracking-wider uppercase mt-0.5">{(m.landlordCompanyName || "Individual Landlord").toUpperCase()}</p>
                                   </div>
                                 </div>
                               </td>
@@ -1761,7 +1957,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                   </div>
                                   <div>
                                     <p className="body-md text-slate-800 font-medium">{m.propertyName}</p>
-                                    <p className="mono-data text-[10px] text-slate-600 font-mono tracking-wide mt-0.5">{getMandateDisplayCode(m)}</p>
+                                    <p className="mono-data text-xs text-slate-600 font-mono tracking-wide mt-0.5">{getMandateDisplayCode(m)}</p>
                                   </div>
                                 </div>
                               </td>
@@ -1774,7 +1970,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                       <Avatar
                                         src={m.managerAvatarUrl || undefined}
                                         fallback={getInitials(m.managerName)}
-                                        className="size-6 text-[10px] bg-slate-100 text-slate-700 border border-slate-200/80 shrink-0"
+                                        className="size-6 text-xs bg-slate-100 text-slate-700 border border-slate-200/80 shrink-0"
                                       />
                                       <span className="body-sm text-slate-700 font-medium">{m.managerName}</span>
                                     </>
@@ -1785,7 +1981,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                               </td>
 
                               {/* Rate Column */}
-                              <td className="px-3 py-4 text-xs font-mono font-medium text-slate-700">{(parseFloat(m.mandateRate) * 100).toFixed(1)}%</td>
+                              <td className="px-3 py-4 text-sm font-mono font-medium text-slate-700">{(parseFloat(m.mandateRate) * 100).toFixed(1)}%</td>
 
                               {/* Collection Column (Progress bar) */}
                               <td className="px-3 py-4">
@@ -1799,7 +1995,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                       )}
                                     />
                                   </div>
-                                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-600 font-mono">
+                                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600 font-mono">
                                     <span>{pct}%</span>
                                     <span>·</span>
                                     <span>{m.status === "active" ? formatCompactKES(m.currentPeriodCollected ?? 0) : "KES 0"}</span>
@@ -1892,7 +2088,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         statusFilter === pill.key ? "bg-[#151936] text-white shadow-sm font-medium" : "text-slate-600 hover:text-slate-700"
                       )}
                     >
-                      {pill.label} <span className={cn("text-[9px] font-mono px-1 py-0.2 rounded bg-slate-200/80 text-slate-600", statusFilter === pill.key && "bg-white/20 text-white")}>{pill.count}</span>
+                      {pill.label} <span className={cn("text-[10px] font-mono px-1 py-0.2 rounded bg-slate-200/80 text-slate-600", statusFilter === pill.key && "bg-white/20 text-white")}>{pill.count}</span>
                     </button>
                   ))}
                 </div>
@@ -2022,7 +2218,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                             />
                             <div>
                               <p className="body-md text-slate-800 font-medium">{l.tenantName}</p>
-                              <span className="mono-data text-[10px] text-slate-600">{l.id.slice(0, 8).toUpperCase()}</span>
+                              <span className="mono-data text-xs text-slate-600">{l.id.slice(0, 8).toUpperCase()}</span>
                             </div>
                           </div>
                           <Badge tone={l.isActive ? "success" : "neutral"}>
@@ -2053,7 +2249,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                             {(l.balanceKes ?? 0) > 0 ? (
                               <span className="body-sm font-mono text-rose-600 block">{formatCompactKES(l.balanceKes ?? 0)} overdue</span>
                             ) : (
-                              <span className="text-[10px] font-medium text-emerald-600 uppercase tracking-wider">Current</span>
+                              <span className="text-xs font-medium text-emerald-600 uppercase tracking-wider">Current</span>
                             )}
                           </div>
                         </div>
@@ -2061,7 +2257,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-50 mt-1" onClick={(e) => e.stopPropagation()}>
                           <span className="mono-data text-xs text-slate-600 flex flex-col">
                             <span>{formatDate(l.startsAt)}</span>
-                            <span className="text-[10px] text-slate-500 font-mono">to {formatDate(l.endsAt)}</span>
+                            <span className="text-xs text-slate-500 font-mono">to {formatDate(l.endsAt)}</span>
                           </span>
                           <div className="flex items-center gap-2">
                             <DropdownMenu label="Lease actions" align="right" trigger={
@@ -2071,7 +2267,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                             }>
                               <DropdownItem icon={IconUserCircle} onClick={() => setTenantDrawerId(l.tenantContactId)}>Tenant Profile</DropdownItem>
                               <Link href="/admin/messages"><DropdownItem icon={IconMessageCircle}>Message Manager</DropdownItem></Link>
-                              <DropdownItem icon={IconEye} onClick={() => setDrawerLease(l)}>View Details</DropdownItem>
                               <Link href={`/admin/leases/${l.id}`}><DropdownItem icon={IconFileText}>View Lease File</DropdownItem></Link>
                               {l.isActive && (
                                 <DropdownItem icon={IconRefresh} onClick={() => setRenewingLease(l)}>Renew Lease</DropdownItem>
@@ -2116,7 +2311,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                               )}
                               <div className="flex flex-col min-w-0">
                                 <h4 className="text-sm font-medium text-slate-800 leading-tight truncate">{l.propertyName}</h4>
-                                <span className="text-[10px] font-mono text-slate-400 mt-0.5 tracking-wider uppercase">{l.id.slice(0, 8)}</span>
+                                <span className="text-xs font-mono text-slate-400 mt-0.5 tracking-wider uppercase">{l.id.slice(0, 8)}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -2128,21 +2323,21 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
 
                           {/* Actors Info */}
                           <div className="flex items-center gap-2.5 mb-4 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
-                            <Avatar src={l.tenantAvatarUrl || undefined} fallback={getInitials(l.tenantName)} className="size-7 text-[10px] bg-white text-slate-700 border border-slate-200 shrink-0 shadow-sm" />
+                            <Avatar src={l.tenantAvatarUrl || undefined} fallback={getInitials(l.tenantName)} className="size-7 text-xs bg-white text-slate-700 border border-slate-200 shrink-0 shadow-sm" />
                             <div className="flex flex-col min-w-0 flex-1">
-                              <span className="text-xs font-medium text-slate-700 truncate">{l.tenantName}</span>
-                              <span className="text-[10px] text-slate-400 truncate">Tenant Account</span>
+                              <span className="text-sm font-medium text-slate-700 truncate">{l.tenantName}</span>
+                              <span className="text-xs text-slate-400 truncate">Tenant Account</span>
                             </div>
-                            
+
                             {(l.landlordName || l.managerName) && (
                               <>
                                 <div className="w-px h-6 bg-slate-200 mx-1" />
                                 <div className="flex -space-x-2">
                                   {l.landlordName && (
-                                    <Avatar src={l.landlordAvatarUrl || undefined} fallback={getInitials(l.landlordName)} className="size-7 text-[10px] bg-white text-slate-600 border border-white shrink-0 shadow-sm relative z-10" />
+                                    <Avatar src={l.landlordAvatarUrl || undefined} fallback={getInitials(l.landlordName)} className="size-7 text-xs bg-white text-slate-600 border border-white shrink-0 shadow-sm relative z-10" />
                                   )}
                                   {l.managerName && (
-                                    <Avatar src={l.managerAvatarUrl || undefined} fallback={getInitials(l.managerName)} className="size-7 text-[10px] bg-[#151936] text-white border border-white shrink-0 shadow-sm relative z-0" />
+                                    <Avatar src={l.managerAvatarUrl || undefined} fallback={getInitials(l.managerName)} className="size-7 text-xs bg-[#151936] text-white border border-white shrink-0 shadow-sm relative z-0" />
                                   )}
                                 </div>
                               </>
@@ -2152,36 +2347,36 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           {/* Data Viz: Lease Tenure */}
                           <div className="flex flex-col gap-1.5 mb-4">
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-slate-500 font-mono tracking-wider uppercase">Lease Tenure</span>
-                              <span className={cn("text-[10px] font-mono font-medium", tenurePctTextColor)}>{l.isActive ? `${daysLeft}d left` : "Ended"}</span>
+                              <span className="text-sm text-slate-500 font-mono tracking-wider uppercase">Lease Tenure</span>
+                              <span className={cn("text-xs font-mono font-medium", tenurePctTextColor)}>{l.isActive ? `${daysLeft}d left` : "Ended"}</span>
                             </div>
                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                               <div style={{ width: `${tenurePct}%` }} className={cn("h-full rounded-full transition-all duration-500", tenurePctColor)} />
                             </div>
                             <div className="flex items-center justify-between mt-0.5">
-                              <span className="text-[9px] text-slate-400 font-mono">{new Date(l.startsAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
-                              <span className="text-[9px] text-slate-400 font-mono">{new Date(l.endsAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
+                              <span className="text-xs text-slate-400 font-mono">{new Date(l.startsAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
+                              <span className="text-xs text-slate-400 font-mono">{new Date(l.endsAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}</span>
                             </div>
                           </div>
 
                           {/* Financials Footer */}
                           <div className="mt-auto pt-4 border-t border-slate-100/80 flex items-end justify-between gap-4">
                             <div className="flex flex-col gap-0.5">
-                              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Contracted Rent</span>
+                              <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Contracted Rent</span>
                               <div className="flex items-baseline gap-1">
-                                <span className="font-mono text-sm font-medium text-slate-800">{formatCompactKES(parseFloat(l.monthlyRentKes))}</span>
-                                <span className="text-[10px] text-slate-400">/mo</span>
+                                <span className="font-mono text-md font-medium text-slate-800">{formatCompactKES(parseFloat(l.monthlyRentKes))}</span>
+                                <span className="text-xs text-slate-400">/mo</span>
                               </div>
                             </div>
-                            
+
                             {(l.balanceKes ?? 0) > 0 ? (
                               <div className="flex flex-col items-end gap-0.5 text-right">
-                                <span className="text-[10px] text-rose-500/80 font-medium uppercase tracking-wider">Arrears</span>
+                                <span className="text-xs text-rose-500/80 font-medium uppercase tracking-wider">Arrears</span>
                                 <span className="font-mono text-sm font-medium text-rose-600">{formatCompactKES(l.balanceKes ?? 0)}</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-end gap-0.5 text-right">
-                                <span className="text-[10px] text-emerald-500/80 font-medium uppercase tracking-wider">Status</span>
+                                <span className="text-xs text-emerald-500/80 font-medium uppercase tracking-wider">Status</span>
                                 <span className="font-mono text-sm font-medium text-emerald-600">Up to date</span>
                               </div>
                             )}
@@ -2194,7 +2389,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                               }>
                                 <DropdownItem icon={IconUserCircle} onClick={() => setTenantDrawerId(l.tenantContactId)}>Tenant Profile</DropdownItem>
                                 <Link href="/admin/messages"><DropdownItem icon={IconMessageCircle}>Message Manager</DropdownItem></Link>
-                                <DropdownItem icon={IconEye} onClick={() => setDrawerLease(l)}>View Details</DropdownItem>
                                 <Link href={`/admin/leases/${l.id}`}><DropdownItem icon={IconFileText}>View Lease File</DropdownItem></Link>
                                 {l.isActive && (
                                   <DropdownItem icon={IconRefresh} onClick={() => setRenewingLease(l)}>Renew Lease</DropdownItem>
@@ -2231,7 +2425,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           const tenurePct = getLeaseTenurePct(l);
                           const daysLeft = getDaysRemaining(l.endsAt);
                           return (
-                            <tr key={l.id} className="transition-colors hover:bg-slate-50/40 group">
+                            <tr key={l.id} onClick={() => router.push(`/admin/leases/${l.id}`)} className="transition-colors hover:bg-slate-50/40 group cursor-pointer">
                               <td className="px-3 py-4">
                                 <div className="flex items-center gap-3">
                                   <Avatar
@@ -2277,7 +2471,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                       <Avatar
                                         src={l.managerAvatarUrl || undefined}
                                         fallback={getInitials(l.managerName)}
-                                        className="size-6 text-[10px] bg-slate-100 text-slate-700 border border-slate-200/80 shrink-0"
+                                        className="size-6 text-xs bg-slate-100 text-slate-700 border border-slate-200/80 shrink-0"
                                       />
                                       <span className="body-sm text-slate-700 font-medium group-hover/pm:underline group-hover/pm:text-[#151936]">{l.managerName}</span>
                                     </button>
@@ -2297,7 +2491,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                       )}
                                     />
                                   </div>
-                                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-600 font-mono">
+                                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600 font-mono">
                                     <span>{formatDate(l.startsAt)}</span>
                                     <span>·</span>
                                     <span>{l.isActive ? `${daysLeft}d left` : formatDate(l.endsAt)}</span>
@@ -2311,7 +2505,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                 {(l.balanceKes ?? 0) > 0 ? (
                                   <span className="mono-amount text-rose-600">{formatCompactKES(l.balanceKes ?? 0)}</span>
                                 ) : (
-                                  <span className="text-[10px] font-medium text-emerald-600 uppercase tracking-wider">Current</span>
+                                  <span className="text-xs font-medium text-emerald-600 uppercase tracking-wider">Current</span>
                                 )}
                               </td>
                               <td className="px-3 py-4 text-right mono-amount text-slate-600">
@@ -2331,7 +2525,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                   }>
                                     <DropdownItem icon={IconUserCircle} onClick={() => setTenantDrawerId(l.tenantContactId)}>Tenant Profile</DropdownItem>
                                     <Link href="/admin/messages"><DropdownItem icon={IconMessageCircle}>Message Manager</DropdownItem></Link>
-                                    <DropdownItem icon={IconEye} onClick={() => setDrawerLease(l)}>View Details</DropdownItem>
                                     <Link href={`/admin/leases/${l.id}`}><DropdownItem icon={IconFileText}>View Lease File</DropdownItem></Link>
                                     {l.isActive && (
                                       <DropdownItem icon={IconRefresh} onClick={() => setRenewingLease(l)}>Renew Lease</DropdownItem>
@@ -2362,17 +2555,6 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
           </div>
         )}
       </div>
-
-      <LeaseDetailDrawer
-        lease={drawerLease}
-        open={!!drawerLease}
-        entityId={entityId}
-        onClose={() => setDrawerLease(null)}
-        canManage={true}
-        onTerminate={handleTerminate}
-        onEdit={(l) => { setDrawerLease(null); setEditingLease(l); }}
-        onRenew={(l) => { setDrawerLease(null); setRenewingLease(l); }}
-      />
 
       {
         isModalOpen && (

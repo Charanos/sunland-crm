@@ -21,6 +21,14 @@ interface PropertyOption {
   owner: { name: string | null; verifiedAt: string | null } | null;
 }
 
+interface EditableMandateTerms {
+  id: string;
+  maintenanceAuthorityKes: string | null;
+  renewalType: string | null;
+  noticePeriodDays: number | null;
+  scopeDescription: string | null;
+}
+
 interface MandateFormModalProps {
   open: boolean;
   entityId: string | null;
@@ -30,11 +38,21 @@ interface MandateFormModalProps {
   landlordName?: string;
   landlordVerified?: boolean;
   defaultUnitCount?: number;
+  /** When set, the modal edits only this mandate's descriptive terms
+   * (maintenance authority/renewal/notice period/scope) instead of creating
+   * a new mandate - rate/unitCount/dates/PM assignment stay untouched since
+   * those have separate approval-routing implications. */
+  editMandate?: EditableMandateTerms | null;
   onClose: () => void;
   onCreated: () => void;
 }
 
 const DEFAULT_RATE_PERCENT = 10;
+const RENEWAL_TYPE_OPTIONS = [
+  { value: "automatic", label: "Automatic" },
+  { value: "manual", label: "Manual" },
+  { value: "negotiated", label: "Negotiated" },
+];
 
 export function MandateFormModal({
   open,
@@ -44,10 +62,12 @@ export function MandateFormModal({
   landlordName,
   landlordVerified = false,
   defaultUnitCount = 1,
+  editMandate = null,
   onClose,
   onCreated,
 }: MandateFormModalProps) {
   const { pushToast } = useToast();
+  const isEditingTerms = !!editMandate;
   const [ratePercent, setRatePercent] = useState(String(DEFAULT_RATE_PERCENT));
   const [rateJustification, setRateJustification] = useState("");
   const [unitCount, setUnitCount] = useState(String(Math.max(1, defaultUnitCount)));
@@ -56,6 +76,21 @@ export function MandateFormModal({
   const [assignedPmId, setAssignedPmId] = useState("");
   const [managers, setManagers] = useState<ManagerOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const [maintenanceAuthorityKes, setMaintenanceAuthorityKes] = useState("");
+  const [renewalType, setRenewalType] = useState("");
+  const [noticePeriodDays, setNoticePeriodDays] = useState("");
+  const [scopeDescription, setScopeDescription] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    Promise.resolve().then(() => {
+      setMaintenanceAuthorityKes(editMandate?.maintenanceAuthorityKes ?? "");
+      setRenewalType(editMandate?.renewalType ?? "");
+      setNoticePeriodDays(editMandate?.noticePeriodDays != null ? String(editMandate.noticePeriodDays) : "");
+      setScopeDescription(editMandate?.scopeDescription ?? "");
+    });
+  }, [open, editMandate]);
 
   const [propertyOptions, setPropertyOptions] = useState<PropertyOption[]>([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(propertyId ?? "");
@@ -119,8 +154,42 @@ export function MandateFormModal({
   const rateValue = parseFloat(ratePercent);
   const rateDiffersFromDefault = Number.isFinite(rateValue) && Math.abs(rateValue - DEFAULT_RATE_PERCENT) > 0.01;
 
+  const handleSubmitTerms = async () => {
+    if (!editMandate) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/mandates/${editMandate.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_terms",
+          entityId,
+          maintenanceAuthorityKes: maintenanceAuthorityKes.trim() || null,
+          renewalType: renewalType || null,
+          noticePeriodDays: noticePeriodDays.trim() ? parseInt(noticePeriodDays, 10) : null,
+          scopeDescription: scopeDescription.trim() || null,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Failed to update mandate terms");
+
+      pushToast({ tone: "success", title: "Mandate terms updated" });
+      onCreated();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Could not update mandate terms." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEditingTerms) {
+      await handleSubmitTerms();
+      return;
+    }
     if (!selectedPropertyId) {
       pushToast({ tone: "warning", title: "Select a property", body: "Choose which property this mandate covers." });
       return;
@@ -148,6 +217,10 @@ export function MandateFormModal({
           startDate: new Date(startDate).toISOString(),
           endDate: endDate ? new Date(endDate).toISOString() : null,
           assignedPmId: assignedPmId || null,
+          maintenanceAuthorityKes: maintenanceAuthorityKes.trim() || null,
+          renewalType: renewalType || null,
+          noticePeriodDays: noticePeriodDays.trim() ? parseInt(noticePeriodDays, 10) : null,
+          scopeDescription: scopeDescription.trim() || null,
         }),
       });
 
@@ -183,12 +256,18 @@ export function MandateFormModal({
     <Modal
       open={open}
       onClose={submitting ? () => { } : onClose}
-      title="Create Management Mandate"
-      description={resolvedPropertyName ? `${resolvedPropertyName}${resolvedLandlordName ? ` · ${resolvedLandlordName}` : ""}` : "Choose a property to begin"}
+      title={isEditingTerms ? "Edit Mandate Terms" : "Create Management Mandate"}
+      description={
+        isEditingTerms
+          ? "Descriptive terms only - rate, dates, and manager assignment are edited elsewhere."
+          : resolvedPropertyName
+            ? `${resolvedPropertyName}${resolvedLandlordName ? ` · ${resolvedLandlordName}` : ""}`
+            : "Choose a property to begin"
+      }
       size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {!propertyId && (
+        {!isEditingTerms && !propertyId && (
           <div>
             <label className="label-caps text-slate-400 mb-1.5 block">Property</label>
             <select
@@ -206,7 +285,7 @@ export function MandateFormModal({
             </select>
           </div>
         )}
-        {selectedPropertyId && !resolvedLandlordVerified && (
+        {!isEditingTerms && selectedPropertyId && !resolvedLandlordVerified && (
           <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-3">
             <IconAlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
             <p className="body-sm text-amber-800">
@@ -216,100 +295,159 @@ export function MandateFormModal({
             </p>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Management Fee Rate (%)</label>
-            <input
-              required
-              type="number"
-              min="0.1"
-              max="100"
-              step="0.1"
-              value={ratePercent}
-              onChange={(e) => setRatePercent(e.target.value)}
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            />
-          </div>
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Unit Count</label>
-            <input
-              required
-              type="number"
-              min="1"
-              step="1"
-              value={unitCount}
-              onChange={(e) => setUnitCount(e.target.value)}
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            />
-          </div>
-        </div>
+        {!isEditingTerms && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label-caps text-slate-400 mb-1.5 block">Management Fee Rate (%)</label>
+                <input
+                  required
+                  type="number"
+                  min="0.1"
+                  max="100"
+                  step="0.1"
+                  value={ratePercent}
+                  onChange={(e) => setRatePercent(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                />
+              </div>
+              <div>
+                <label className="label-caps text-slate-400 mb-1.5 block">Unit Count</label>
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={unitCount}
+                  onChange={(e) => setUnitCount(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                />
+              </div>
+            </div>
 
-        {rateDiffersFromDefault && (
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Rate Justification</label>
-            <textarea
-              required
-              rows={2}
-              placeholder="Why does this mandate use a non-standard rate?"
-              value={rateJustification}
-              onChange={(e) => setRateJustification(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm resize-none"
-            />
-          </div>
+            {rateDiffersFromDefault && (
+              <div>
+                <label className="label-caps text-slate-400 mb-1.5 block">Rate Justification</label>
+                <textarea
+                  required
+                  rows={2}
+                  placeholder="Why does this mandate use a non-standard rate?"
+                  value={rateJustification}
+                  onChange={(e) => setRateJustification(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm resize-none"
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label-caps text-slate-400 mb-1.5 block">Start Date</label>
+                <input
+                  required
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                />
+              </div>
+              <div>
+                <label className="label-caps text-slate-400 mb-1.5 block">End Date (optional)</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="label-caps text-slate-400 mb-1.5 block">Property Manager (optional)</label>
+              <div className="relative">
+                <IconUserCog size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" aria-hidden="true" />
+                <select
+                  value={assignedPmId}
+                  onChange={(e) => setAssignedPmId(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm appearance-none"
+                >
+                  <option value="">Unassigned</option>
+                  {managers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}{m.title ? ` · ${m.title}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Start Date</label>
-            <input
-              required
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            />
+        <div className="space-y-4 border-t border-slate-100 pt-4">
+          <p className="label-caps text-slate-400">Additional Terms (optional)</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label-caps text-slate-400 mb-1.5 block">Maintenance Authority (KES)</label>
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                placeholder="e.g. 100000"
+                value={maintenanceAuthorityKes}
+                onChange={(e) => setMaintenanceAuthorityKes(e.target.value)}
+                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+              />
+            </div>
+            <div>
+              <label className="label-caps text-slate-400 mb-1.5 block">Notice Period (days)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g. 90"
+                value={noticePeriodDays}
+                onChange={(e) => setNoticePeriodDays(e.target.value)}
+                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+              />
+            </div>
           </div>
           <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">End Date (optional)</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="label-caps text-slate-400 mb-1.5 block">Property Manager (optional)</label>
-          <div className="relative">
-            <IconUserCog size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" aria-hidden="true" />
+            <label className="label-caps text-slate-400 mb-1.5 block">Renewal Type</label>
             <select
-              value={assignedPmId}
-              onChange={(e) => setAssignedPmId(e.target.value)}
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm appearance-none"
+              value={renewalType}
+              onChange={(e) => setRenewalType(e.target.value)}
+              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm appearance-none"
             >
-              <option value="">Unassigned</option>
-              {managers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}{m.title ? ` · ${m.title}` : ""}
-                </option>
+              <option value="">Not yet configured</option>
+              {RENEWAL_TYPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
           </div>
+          <div>
+            <label className="label-caps text-slate-400 mb-1.5 block">Scope of Management</label>
+            <textarea
+              rows={3}
+              placeholder="Describe what Sunland is authorized to manage under this mandate..."
+              value={scopeDescription}
+              onChange={(e) => setScopeDescription(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm resize-none"
+            />
+          </div>
         </div>
 
-        <p className="body-sm text-slate-400">
-          Mandate activation always requires GM sign-off; mandates covering more than 10 units, or an
-          annualized collectible value above KES 5M, additionally require CEO approval.
-        </p>
+        {!isEditingTerms && (
+          <p className="body-sm text-slate-400">
+            Mandate activation always requires GM sign-off; mandates covering more than 10 units, or an
+            annualized collectible value above KES 5M, additionally require CEO approval.
+          </p>
+        )}
 
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
           <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
           <Button type="submit" disabled={submitting}>
-            {submitting ? "Submitting..." : "Submit Mandate"}
+            {submitting ? "Saving..." : isEditingTerms ? "Save Terms" : "Submit Mandate"}
           </Button>
         </div>
       </form>

@@ -33,6 +33,14 @@ export const propertyMandates = pgTable(
     startDate: timestamp("start_date", { withTimezone: true }).notNull(),
     endDate: timestamp("end_date", { withTimezone: true }),
     status: mandateStatus("status").default("draft").notNull(),
+    // Descriptive mandate terms - all nullable/optional, settable at
+    // creation or via updateMandateTerms afterward. Kept separate from the
+    // rate/approval-routed fields above since editing these never triggers
+    // the mandate-activation approval flow.
+    maintenanceAuthorityKes: numeric("maintenance_authority_kes", { precision: 14, scale: 2 }),
+    renewalType: text("renewal_type"),
+    noticePeriodDays: integer("notice_period_days"),
+    scopeDescription: text("scope_description"),
     ...timestamps,
   },
   (table) => ({

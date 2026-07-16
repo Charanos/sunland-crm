@@ -39,6 +39,7 @@ export function MandateLetterModal({
   const { pushToast } = useToast();
   const [url, setUrl] = useState("");
   const [stagedName, setStagedName] = useState<string | null>(null);
+  const [stagedSizeBytes, setStagedSizeBytes] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,6 +56,7 @@ export function MandateLetterModal({
           title: `${propertyName} - Mandate Letter`,
           fileUrl: url.trim(),
           ownerContactId,
+          fileSizeBytes: stagedSizeBytes,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -64,6 +66,7 @@ export function MandateLetterModal({
       onAttached();
       onClose();
       setUrl("");
+      setStagedSizeBytes(null);
     } catch (err) {
       pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Could not attach mandate letter." });
     } finally {
@@ -90,7 +93,7 @@ export function MandateLetterModal({
             <span className="flex-1 min-w-0 body-sm text-slate-800 truncate">{stagedName ?? url}</span>
             <button
               type="button"
-              onClick={() => { setUrl(""); setStagedName(null); }}
+              onClick={() => { setUrl(""); setStagedName(null); setStagedSizeBytes(null); }}
               aria-label="Remove selected file"
               className="text-slate-300 hover:text-rose-500 shrink-0"
             >
@@ -106,6 +109,7 @@ export function MandateLetterModal({
               if (info && typeof info === "object" && "secure_url" in info) {
                 setUrl(info.secure_url as string);
                 setStagedName("original_filename" in info ? String(info.original_filename) : null);
+                setStagedSizeBytes("bytes" in info && typeof info.bytes === "number" ? info.bytes : null);
               }
             }}
             className="flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 py-8 text-center cursor-pointer hover:border-[#f3df27] hover:bg-[#fffdf0] transition-colors"

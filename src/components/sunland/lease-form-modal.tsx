@@ -15,6 +15,7 @@ export interface LeaseFormData {
   endsAt: string;
   monthlyRentKes: string;
   depositKes: string;
+  notes: string;
 }
 
 export interface LeaseEditTarget {
@@ -25,6 +26,7 @@ export interface LeaseEditTarget {
   endsAt: string;
   monthlyRentKes: string;
   depositKes: string | null;
+  notes?: string | null;
 }
 
 function toDateInput(iso: string): string {
@@ -39,6 +41,7 @@ export function LeaseFormModal({
   onSubmit,
   defaultPropertyId,
   defaultPropertyName,
+  defaultUnitId,
 }: {
   open: boolean;
   mode?: "create" | "edit";
@@ -48,6 +51,8 @@ export function LeaseFormModal({
   onSubmit: () => void;
   defaultPropertyId?: string;
   defaultPropertyName?: string;
+  /** Ties the new lease to one specific property_units row (multi-unit properties only). */
+  defaultUnitId?: string;
 }) {
   const { pushToast } = useToast();
   const { activeEntityId } = useUIStore();
@@ -64,6 +69,7 @@ export function LeaseFormModal({
     endsAt: "",
     monthlyRentKes: "",
     depositKes: "",
+    notes: "",
   });
 
   // Populate the form from the lease being edited, or reset for a fresh create.
@@ -78,6 +84,7 @@ export function LeaseFormModal({
           endsAt: toDateInput(lease.endsAt),
           monthlyRentKes: lease.monthlyRentKes,
           depositKes: lease.depositKes ?? "",
+          notes: lease.notes ?? "",
         });
       } else {
         setForm({
@@ -87,6 +94,7 @@ export function LeaseFormModal({
           endsAt: "",
           monthlyRentKes: "",
           depositKes: "",
+          notes: "",
         });
       }
       setErrors({});
@@ -175,6 +183,7 @@ export function LeaseFormModal({
             endsAt: form.endsAt,
             monthlyRentKes: form.monthlyRentKes,
             depositKes: form.depositKes || null,
+            notes: form.notes || null,
           }),
         })
         : await fetch("/api/leases", {
@@ -183,6 +192,7 @@ export function LeaseFormModal({
           body: JSON.stringify({
             entityId: activeEntityId,
             propertyId: form.propertyId,
+            unitId: defaultUnitId || undefined,
             tenantContactId: form.tenantContactId,
             startsAt: form.startsAt,
             endsAt: form.endsAt,
@@ -337,6 +347,20 @@ export function LeaseFormModal({
             </div>
           </div>
         </div>
+
+        {/* Section 4: Notes (edit only - a persisted lease record isn't a general note-taking surface for a not-yet-created one) */}
+        {isEdit && (
+          <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
+            <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Notes (optional)</h3>
+            <textarea
+              rows={3}
+              placeholder="Any tenancy-specific notes worth keeping on file..."
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm resize-none"
+              value={form.notes}
+              onChange={(e) => updateField("notes", e.target.value)}
+            />
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">

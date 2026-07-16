@@ -13,6 +13,22 @@ export const createMandateSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().nullable().optional(),
   assignedPmId: z.string().uuid().nullable().optional(),
+  maintenanceAuthorityKes: z.string().nullable().optional(),
+  renewalType: z.enum(["automatic", "manual", "negotiated"]).nullable().optional(),
+  noticePeriodDays: z.coerce.number().int().min(0).nullable().optional(),
+  scopeDescription: z.string().nullable().optional(),
+});
+
+// Descriptive terms only - deliberately excludes mandateRate/rateJustification
+// (those changes have no approval-routing implications today, but keeping
+// this schema narrow means a future rate-change flow can't accidentally
+// piggyback on it and skip approval).
+export const updateMandateTermsSchema = z.object({
+  entityId: z.string().min(1),
+  maintenanceAuthorityKes: z.string().nullable().optional(),
+  renewalType: z.enum(["automatic", "manual", "negotiated"]).nullable().optional(),
+  noticePeriodDays: z.coerce.number().int().min(0).nullable().optional(),
+  scopeDescription: z.string().nullable().optional(),
 });
 
 export const terminateMandateSchema = z.object({

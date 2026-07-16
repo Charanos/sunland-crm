@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DomainValidationError, handleRouteError } from "@/lib/authz/errors";
-import { assignMandateManager, getMandateWithDetails, terminateMandate } from "@/lib/services/mandates";
+import { assignMandateManager, getMandateWithDetails, terminateMandate, updateMandateTerms } from "@/lib/services/mandates";
 import { requireCallerContext } from "@/lib/services/types";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -31,6 +31,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (body.action === "assign_manager") {
       const mandate = await assignMandateManager(ctx, id, body);
+      return NextResponse.json({ success: true, mandate });
+    }
+
+    if (body.action === "update_terms") {
+      const mandate = await updateMandateTerms(ctx, id, body);
       return NextResponse.json({ success: true, mandate });
     }
 

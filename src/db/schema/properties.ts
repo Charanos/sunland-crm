@@ -10,6 +10,7 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { entities, timestamps } from "@/db/schema/platform";
 import { contacts } from "@/db/schema/crm";
@@ -35,6 +36,13 @@ export const maintenanceStatus = pgEnum("maintenance_status", [
   "in_progress",
   "resolved",
   "closed",
+]);
+
+export const unitStatus = pgEnum("unit_status", [
+  "vacant",
+  "occupied",
+  "reserved",
+  "maintenance",
 ]);
 
 export const properties = pgTable(
@@ -90,17 +98,52 @@ export const leases = pgTable(
     entityId: uuid("entity_id").references(() => entities.id).notNull(),
     propertyId: uuid("property_id").references(() => properties.id).notNull(),
     tenantContactId: uuid("tenant_contact_id").references(() => contacts.id).notNull(),
+    // Nullable - single-unit properties don't need an explicit unit
+    // assignment; multi-unit properties can tie a lease to one specific
+    // property_units row so the Units & Tenants tab can show which real
+    // unit each tenant occupies instead of a synthetic, unaddressable slot.
+    unitId: uuid("unit_id").references((): AnyPgColumn => propertyUnits.id),
     startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
     endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
     monthlyRentKes: numeric("monthly_rent_kes", { precision: 14, scale: 2 }).notNull(),
     depositKes: numeric("deposit_kes", { precision: 14, scale: 2 }),
     isActive: boolean("is_active").default(true).notNull(),
+    // Free-text notes about this specific tenancy - editable via the lease
+    // edit flow, shown on the tenant lease detail page's Overview tab
+    // instead of any invented descriptive text.
+    notes: text("notes"),
     ...timestamps,
   },
   (table) => ({
     propertyIdx: index("leases_property_idx").on(table.propertyId),
     entityIdx: index("leases_entity_idx").on(table.entityId),
     expiryIdx: index("leases_expiry_idx").on(table.endsAt),
+    unitIdx: index("leases_unit_idx").on(table.unitId),
+  }),
+);
+
+export const propertyUnits = pgTable(
+  "property_units",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    entityId: uuid("entity_id").references(() => entities.id).notNull(),
+    propertyId: uuid("property_id").references(() => properties.id).notNull(),
+    unitLabel: text("unit_label").notNull(),
+    // Matches unitBreakdown's unitType vocabulary (e.g. "Bedsitter", "1 Bedroom").
+    unitType: text("unit_type"),
+    monthlyRentKes: numeric("monthly_rent_kes", { precision: 14, scale: 2 }),
+    status: unitStatus("status").default("vacant").notNull(),
+    // Kept in sync by createLease/terminateLease when a lease carries a
+    // unitId - not the sole source of truth for "occupied" (a unit can be
+    // reserved/under maintenance with no active lease), but always cleared
+    // back to null when its lease ends.
+    currentLeaseId: uuid("current_lease_id").references((): AnyPgColumn => leases.id),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (table) => ({
+    propertyIdx: index("property_units_property_idx").on(table.propertyId),
+    entityIdx: index("property_units_entity_idx").on(table.entityId),
   }),
 );
 

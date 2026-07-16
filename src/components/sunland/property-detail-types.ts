@@ -93,6 +93,8 @@ export interface PropertyDocumentSummary {
   status: "draft" | "awaiting_signature" | "signed";
   url?: string;
   type?: "mandate_letter" | "lease_agreement" | "rent_receipt" | "statement" | "title_deed" | "identification" | "offer_letter";
+  createdAt?: string | null;
+  fileSizeBytes?: number | null;
 }
 
 export interface ActivityLogEntry {

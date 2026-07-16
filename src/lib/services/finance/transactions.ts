@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, properties, reportExports, transactions } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
@@ -88,7 +88,7 @@ export async function recordTransaction(ctx: CallerContext, rawInput: unknown) {
   });
 }
 
-export async function listTransactions(ctx: CallerContext, filters: { entityId?: string } = {}) {
+export async function listTransactions(ctx: CallerContext, filters: { entityId?: string; leaseId?: string } = {}) {
   const entityIdParam = filters.entityId ?? ctx.entityId;
   if (!entityIdParam) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(entityIdParam);
@@ -97,6 +97,6 @@ export async function listTransactions(ctx: CallerContext, filters: { entityId?:
   return db
     .select()
     .from(transactions)
-    .where(eq(transactions.entityId, entityId))
+    .where(and(eq(transactions.entityId, entityId), filters.leaseId ? eq(transactions.leaseId, filters.leaseId) : undefined))
     .orderBy(desc(transactions.occurredAt));
 }

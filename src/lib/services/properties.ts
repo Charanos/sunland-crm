@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { eq, and, ne, or, desc, gte, inArray, getTableColumns, SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { properties, leases, documents, transactions, contacts, maintenanceRequests, leads, propertyMandates, approvalRequests, users } from "@/db/schema";
+import { properties, leases, documents, transactions, contacts, maintenanceRequests, leads, propertyMandates, approvalRequests, users, propertyUnits } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -635,6 +635,8 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     status: ((d.metadata as Record<string, unknown> | null)?.status as "draft" | "awaiting_signature" | "signed") ?? "signed",
     url: d.fileUrl,
     type: d.type,
+    createdAt: toISOStringSafe(d.createdAt),
+    fileSizeBytes: d.fileSizeBytes,
   }));
 
   // A pending mandate's own status doesn't say who it's waiting on - that
@@ -851,6 +853,7 @@ export async function getLeaseById(ctx: CallerContext, leaseId: string) {
       monthlyRentKes: leases.monthlyRentKes,
       depositKes: leases.depositKes,
       isActive: leases.isActive,
+      notes: leases.notes,
       createdAt: leases.createdAt,
       updatedAt: leases.updatedAt,
       propertyName: properties.name,
@@ -858,9 +861,11 @@ export async function getLeaseById(ctx: CallerContext, leaseId: string) {
       propertyType: properties.propertyType,
       propertyLocation: properties.location,
       propertyAskingPrice: properties.askingPriceKes,
+      propertyMedia: properties.media,
       tenantName: contacts.displayName,
       tenantEmail: contacts.email,
       tenantPhone: contacts.phone,
+      tenantAvatarUrl: contacts.avatarUrl,
     })
     .from(leases)
     .innerJoin(properties, eq(leases.propertyId, properties.id))
@@ -870,7 +875,50 @@ export async function getLeaseById(ctx: CallerContext, leaseId: string) {
 
   if (!lease) throw new NotFoundError("Lease not found");
 
-  return lease;
+  const [prop] = await db.select({ ownerContactId: properties.ownerContactId }).from(properties).where(eq(properties.id, lease.propertyId)).limit(1);
+
+  let landlordData = null;
+  if (prop?.ownerContactId) {
+    const [l] = await db
+      .select({
+        id: contacts.id,
+        name: contacts.displayName,
+        email: contacts.email,
+        phone: contacts.phone,
+        avatarUrl: contacts.avatarUrl,
+        verifiedAt: contacts.verifiedAt,
+        companyName: contacts.companyName,
+      })
+      .from(contacts)
+      .where(eq(contacts.id, prop.ownerContactId))
+      .limit(1);
+    landlordData = l || null;
+  }
+
+  // Property managers are user accounts, not CRM contacts - same join
+  // shape as listLeases/getMandateWithDetails (assignedPmId -> users.id).
+  let managerData = null;
+  const [mandate] = await db.select({ assignedPmId: propertyMandates.assignedPmId }).from(propertyMandates).where(and(eq(propertyMandates.propertyId, lease.propertyId), eq(propertyMandates.status, "active"))).limit(1);
+  if (mandate?.assignedPmId) {
+     const [m] = await db.select({ id: users.id, name: users.name, title: users.title, email: users.email, avatarUrl: users.avatarUrl }).from(users).where(eq(users.id, mandate.assignedPmId)).limit(1);
+     managerData = m || null;
+  }
+
+  // Current-month collected-vs-expected balance - same "fetch then reduce"
+  // pattern as listLeases:821-837.
+  let balanceKes = 0;
+  if (lease.isActive) {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const periodTx = await db
+      .select({ amountKes: transactions.amountKes })
+      .from(transactions)
+      .where(and(eq(transactions.leaseId, lease.id), eq(transactions.type, "rent"), gte(transactions.occurredAt, monthStart)));
+    const collected = periodTx.reduce((sum, t) => sum + parseFloat(t.amountKes), 0);
+    balanceKes = Math.max(0, parseFloat(lease.monthlyRentKes) - collected);
+  }
+
+  return { ...lease, landlord: landlordData, manager: managerData, balanceKes };
 }
 
 export async function terminateLease(ctx: CallerContext, leaseId: string) {
@@ -898,21 +946,35 @@ export async function terminateLease(ctx: CallerContext, leaseId: string) {
       .where(eq(leases.id, leaseId))
       .returning();
 
-    // 3. Update the associated property's status back to "available"
-    const [updatedProp] = await tx
-      .update(properties)
-      .set({ status: "available" })
-      .where(eq(properties.id, lease.propertyId))
-      .returning();
+    // 3. Vacate - a unit-scoped lease only frees its own unit; a property-
+    // scoped lease (no unitId, single-unit property) frees the property.
+    let propertyName: string | undefined;
+    let propertyStatus: string | undefined;
+    if (lease.unitId) {
+      await tx
+        .update(propertyUnits)
+        .set({ status: "vacant", currentLeaseId: null, updatedAt: new Date() })
+        .where(eq(propertyUnits.id, lease.unitId));
+      const [prop] = await tx.select({ name: properties.name }).from(properties).where(eq(properties.id, lease.propertyId)).limit(1);
+      propertyName = prop?.name;
+    } else {
+      const [updatedProp] = await tx
+        .update(properties)
+        .set({ status: "available" })
+        .where(eq(properties.id, lease.propertyId))
+        .returning();
+      propertyName = updatedProp?.name;
+      propertyStatus = updatedProp?.status;
+    }
 
     await writeAudit(tx, ctx, {
       action: "properties.lease.terminate",
       associatedType: "lease",
       associatedId: lease.id,
-      summary: `Terminated lease agreement for property ${updatedProp?.name ?? lease.propertyId}`,
+      summary: `Terminated lease agreement for property ${propertyName ?? lease.propertyId}`,
       entityId,
       before: lease,
-      after: { lease: updatedLease, propertyStatus: updatedProp?.status },
+      after: { lease: updatedLease, propertyStatus },
     });
 
     return updatedLease;
@@ -924,6 +986,7 @@ export async function createLease(
   input: {
     propertyId: string;
     tenantContactId: string;
+    unitId?: string | null;
     startsAt: string;
     endsAt: string;
     monthlyRentKes: string;
@@ -943,8 +1006,18 @@ export async function createLease(
       .limit(1);
 
     if (!prop) throw new NotFoundError("Property not found");
-    if (prop.status === "occupied") {
+
+    // A specific unit is its own occupancy scope on a multi-unit property -
+    // the property-level "already occupied" guard below only applies when no
+    // unit is specified (a traditional single-unit property).
+    if (!input.unitId && prop.status === "occupied") {
       throw new DomainValidationError("Property unit is already occupied by another active lease.");
+    }
+
+    if (input.unitId) {
+      const [unit] = await tx.select().from(propertyUnits).where(eq(propertyUnits.id, input.unitId)).limit(1);
+      if (!unit || unit.propertyId !== input.propertyId) throw new NotFoundError("Unit not found on this property");
+      if (unit.status === "occupied") throw new DomainValidationError("This unit is already occupied by another active lease.");
     }
 
     // 2. Insert lease record
@@ -954,6 +1027,7 @@ export async function createLease(
         entityId,
         propertyId: input.propertyId,
         tenantContactId: input.tenantContactId,
+        unitId: input.unitId ?? null,
         startsAt: new Date(input.startsAt),
         endsAt: new Date(input.endsAt),
         monthlyRentKes: input.monthlyRentKes,
@@ -962,18 +1036,29 @@ export async function createLease(
       })
       .returning();
 
-    // 3. Flip unit status to occupied - guarded by status != occupied so a
-    // concurrent lease on the same property can't both succeed (closes the
-    // race between the check above and this write, same pattern used in
-    // decideApprovalRequest).
-    const [updatedProp] = await tx
-      .update(properties)
-      .set({ status: "occupied" })
-      .where(and(eq(properties.id, input.propertyId), ne(properties.status, "occupied")))
-      .returning();
-
-    if (!updatedProp) {
-      throw new ConflictError("Property unit is already occupied by another active lease.");
+    let propertyStatus: string | undefined;
+    if (input.unitId) {
+      // 3a. Multi-unit: flip only this unit, guarded against a concurrent
+      // lease on the same unit racing this one (same pattern as the
+      // property-level guard below).
+      const [updatedUnit] = await tx
+        .update(propertyUnits)
+        .set({ status: "occupied", currentLeaseId: inserted.id, updatedAt: new Date() })
+        .where(and(eq(propertyUnits.id, input.unitId), ne(propertyUnits.status, "occupied")))
+        .returning();
+      if (!updatedUnit) throw new ConflictError("This unit is already occupied by another active lease.");
+    } else {
+      // 3b. Single-unit property: flip the property itself, guarded by
+      // status != occupied so a concurrent lease on the same property can't
+      // both succeed (closes the race between the check above and this
+      // write, same pattern used in decideApprovalRequest).
+      const [updatedProp] = await tx
+        .update(properties)
+        .set({ status: "occupied" })
+        .where(and(eq(properties.id, input.propertyId), ne(properties.status, "occupied")))
+        .returning();
+      if (!updatedProp) throw new ConflictError("Property unit is already occupied by another active lease.");
+      propertyStatus = updatedProp.status;
     }
 
     await writeAudit(tx, ctx, {
@@ -983,7 +1068,7 @@ export async function createLease(
       summary: `Created lease for tenant on property ${prop.name}`,
       entityId,
       before: null,
-      after: { lease: inserted, propertyStatus: updatedProp.status },
+      after: { lease: inserted, propertyStatus },
     });
 
     return inserted;
@@ -998,6 +1083,7 @@ export async function updateLease(
     endsAt?: string;
     monthlyRentKes?: string;
     depositKes?: string | null;
+    notes?: string | null;
   }
 ) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
@@ -1018,6 +1104,7 @@ export async function updateLease(
   if (input.endsAt !== undefined) updatable.endsAt = new Date(input.endsAt);
   if (input.monthlyRentKes !== undefined) updatable.monthlyRentKes = input.monthlyRentKes;
   if (input.depositKes !== undefined) updatable.depositKes = input.depositKes;
+  if (input.notes !== undefined) updatable.notes = input.notes;
 
   return db.transaction(async (tx) => {
     const [updated] = await tx
@@ -1075,6 +1162,7 @@ export async function renewLease(
         entityId,
         propertyId: existing.propertyId,
         tenantContactId: existing.tenantContactId,
+        unitId: existing.unitId,
         startsAt: existing.endsAt,
         endsAt: new Date(input.endsAt),
         monthlyRentKes: input.monthlyRentKes ?? existing.monthlyRentKes,
@@ -1082,6 +1170,12 @@ export async function renewLease(
         isActive: true,
       })
       .returning();
+
+    // Same unit, new lease id - repoint currentLeaseId so the unit doesn't
+    // still reference the now-inactive prior term.
+    if (existing.unitId) {
+      await tx.update(propertyUnits).set({ currentLeaseId: renewed.id, updatedAt: new Date() }).where(eq(propertyUnits.id, existing.unitId));
+    }
 
     await writeAudit(tx, ctx, {
       action: "properties.lease.renew",
@@ -1094,6 +1188,214 @@ export async function renewLease(
     });
 
     return renewed;
+  });
+}
+
+// ─── Property Units ────────────────────────────────────────────────────────
+
+export async function listPropertyUnits(ctx: CallerContext, propertyId: string) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.read", entityId);
+
+  const units = await db
+    .select()
+    .from(propertyUnits)
+    .where(and(eq(propertyUnits.propertyId, propertyId), eq(propertyUnits.entityId, entityId)))
+    .orderBy(propertyUnits.unitLabel);
+
+  const leaseIds = units.map((u) => u.currentLeaseId).filter((id): id is string => !!id);
+  const leaseRows = leaseIds.length
+    ? await db
+      .select({
+        id: leases.id,
+        tenantContactId: leases.tenantContactId,
+        tenantName: contacts.displayName,
+        tenantAvatarUrl: contacts.avatarUrl,
+        monthlyRentKes: leases.monthlyRentKes,
+        endsAt: leases.endsAt,
+      })
+      .from(leases)
+      .innerJoin(contacts, eq(leases.tenantContactId, contacts.id))
+      .where(inArray(leases.id, leaseIds))
+    : [];
+
+  return units.map((u) => ({
+    ...u,
+    lease: u.currentLeaseId ? leaseRows.find((l) => l.id === u.currentLeaseId) ?? null : null,
+  }));
+}
+
+export async function createPropertyUnit(
+  ctx: CallerContext,
+  propertyId: string,
+  input: { unitLabel: string; unitType?: string | null; monthlyRentKes?: string | null; notes?: string | null }
+) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.write", entityId);
+
+  if (!input.unitLabel?.trim()) throw new DomainValidationError("unitLabel is required");
+
+  const [prop] = await db.select({ id: properties.id }).from(properties).where(and(eq(properties.id, propertyId), eq(properties.entityId, entityId))).limit(1);
+  if (!prop) throw new NotFoundError("Property not found");
+
+  return db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(propertyUnits)
+      .values({
+        entityId,
+        propertyId,
+        unitLabel: input.unitLabel.trim(),
+        unitType: input.unitType ?? null,
+        monthlyRentKes: input.monthlyRentKes ?? null,
+        notes: input.notes ?? null,
+      })
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "properties.unit.create",
+      associatedType: "property_unit",
+      associatedId: inserted.id,
+      summary: `Added unit ${inserted.unitLabel} to property`,
+      entityId,
+      before: null,
+      after: inserted,
+    });
+
+    return inserted;
+  });
+}
+
+export async function updatePropertyUnit(
+  ctx: CallerContext,
+  unitId: string,
+  input: {
+    unitLabel?: string;
+    unitType?: string | null;
+    monthlyRentKes?: string | null;
+    status?: "vacant" | "occupied" | "reserved" | "maintenance";
+    notes?: string | null;
+  }
+) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.write", entityId);
+
+  const [existing] = await db.select().from(propertyUnits).where(and(eq(propertyUnits.id, unitId), eq(propertyUnits.entityId, entityId))).limit(1);
+  if (!existing) throw new NotFoundError("Unit not found");
+
+  if (input.status === "occupied" && !existing.currentLeaseId) {
+    throw new DomainValidationError("A unit can only be marked occupied by assigning a lease, not directly.");
+  }
+  if (existing.currentLeaseId && input.status && input.status !== "occupied") {
+    throw new DomainValidationError("This unit has an active lease - terminate it before changing status.");
+  }
+
+  const updatable: Partial<typeof propertyUnits.$inferInsert> = {};
+  if (input.unitLabel !== undefined) updatable.unitLabel = input.unitLabel;
+  if (input.unitType !== undefined) updatable.unitType = input.unitType;
+  if (input.monthlyRentKes !== undefined) updatable.monthlyRentKes = input.monthlyRentKes;
+  if (input.status !== undefined) updatable.status = input.status;
+  if (input.notes !== undefined) updatable.notes = input.notes;
+
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(propertyUnits)
+      .set({ ...updatable, updatedAt: new Date() })
+      .where(eq(propertyUnits.id, unitId))
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "properties.unit.update",
+      associatedType: "property_unit",
+      associatedId: unitId,
+      summary: `Updated unit ${updated.unitLabel}`,
+      entityId,
+      before: existing,
+      after: updated,
+    });
+
+    return updated;
+  });
+}
+
+export async function deletePropertyUnit(ctx: CallerContext, unitId: string) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.write", entityId);
+
+  const [existing] = await db.select().from(propertyUnits).where(and(eq(propertyUnits.id, unitId), eq(propertyUnits.entityId, entityId))).limit(1);
+  if (!existing) throw new NotFoundError("Unit not found");
+  if (existing.currentLeaseId) throw new DomainValidationError("Vacate this unit (terminate its lease) before deleting it.");
+
+  return db.transaction(async (tx) => {
+    await tx.delete(propertyUnits).where(eq(propertyUnits.id, unitId));
+    await writeAudit(tx, ctx, {
+      action: "properties.unit.delete",
+      associatedType: "property_unit",
+      associatedId: unitId,
+      summary: `Removed unit ${existing.unitLabel} from property`,
+      entityId,
+      before: existing,
+      after: null,
+    });
+  });
+}
+
+/**
+ * One-shot bulk-create real property_units rows from a property's existing
+ * unitBreakdown JSON summary (N units of type X at rent Y, auto-labeled) -
+ * lets existing properties get real, individually-addressable units without
+ * manual re-entry. Idempotent: no-ops if units already exist for this
+ * property. Generated units default to vacant even if the property already
+ * has active property-scoped leases (pre-dating per-unit tracking) - there's
+ * no reliable way to know which existing tenant belongs in which generated
+ * slot, so guessing would fabricate a pairing instead of leaving an honest
+ * gap for manual reassignment.
+ */
+export async function generateUnitsFromBreakdown(ctx: CallerContext, propertyId: string) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.write", entityId);
+
+  const [prop] = await db.select().from(properties).where(and(eq(properties.id, propertyId), eq(properties.entityId, entityId))).limit(1);
+  if (!prop) throw new NotFoundError("Property not found");
+
+  const [existingUnit] = await db.select({ id: propertyUnits.id }).from(propertyUnits).where(eq(propertyUnits.propertyId, propertyId)).limit(1);
+  if (existingUnit) throw new ConflictError("This property already has units - generate is only for first-time setup.");
+
+  const breakdown = Array.isArray(prop.unitBreakdown) ? prop.unitBreakdown : [];
+  if (breakdown.length === 0) throw new DomainValidationError("This property has no unit breakdown to generate from.");
+
+  const rows: (typeof propertyUnits.$inferInsert)[] = [];
+  let counter = 1;
+  for (const entry of breakdown) {
+    for (let i = 0; i < entry.count; i++) {
+      rows.push({
+        entityId,
+        propertyId,
+        unitLabel: `${entry.unitType} ${counter}`,
+        unitType: entry.unitType,
+        monthlyRentKes: entry.monthlyRentKes ?? null,
+        status: "vacant",
+      });
+      counter++;
+    }
+  }
+
+  return db.transaction(async (tx) => {
+    const inserted = await tx.insert(propertyUnits).values(rows).returning();
+    await writeAudit(tx, ctx, {
+      action: "properties.unit.generate",
+      associatedType: "property",
+      associatedId: propertyId,
+      summary: `Generated ${inserted.length} units from unit breakdown`,
+      entityId,
+      before: null,
+      after: { count: inserted.length },
+    });
+    return inserted;
   });
 }
 
@@ -1140,6 +1442,7 @@ export async function createDocument(
     ownerContactId?: string | null;
     propertyId?: string | null;
     leaseId?: string | null;
+    fileSizeBytes?: number | null;
     metadata?: Record<string, unknown>;
   }
 ) {
@@ -1163,6 +1466,7 @@ export async function createDocument(
         ownerContactId: input.ownerContactId ?? null,
         propertyId: input.propertyId ?? null,
         leaseId: input.leaseId ?? null,
+        fileSizeBytes: input.fileSizeBytes ?? null,
         metadata: input.metadata ?? {},
       })
       .returning();

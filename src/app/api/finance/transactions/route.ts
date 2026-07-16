@@ -7,9 +7,10 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const entityId = searchParams.get("entityId") ?? null;
+    const leaseId = searchParams.get("leaseId") ?? undefined;
 
     const ctx = await requireCallerContext(entityId, request);
-    const transactionsList = await listTransactions(ctx, { entityId: entityId ?? undefined });
+    const transactionsList = await listTransactions(ctx, { entityId: entityId ?? undefined, leaseId });
 
     return NextResponse.json({ transactions: transactionsList });
   } catch (error) {

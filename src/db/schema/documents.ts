@@ -1,5 +1,6 @@
 import {
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -42,6 +43,9 @@ export const documents = pgTable(
     // rent receipts) to one tenancy so renewing a lease doesn't drag the old
     // tenancy's documents onto the new lease record.
     leaseId: uuid("lease_id").references(() => leases.id),
+    // Captured at upload time - real, not a display-only estimate. Nullable
+    // for documents uploaded before this column existed.
+    fileSizeBytes: integer("file_size_bytes"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
     ...timestamps,
   },

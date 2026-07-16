@@ -10,8 +10,8 @@ import {
   IconArrowUpRight,
   IconBolt,
   IconBuildingCommunity,
-  IconClock,
   IconDotsVertical,
+  IconEdit,
   IconExternalLink,
   IconStarFilled,
   IconFileCertificate,
@@ -29,16 +29,23 @@ import {
   IconUsers,
   IconWalletOff,
   IconChevronRight,
+  IconChevronLeft,
   IconQrcode,
+  IconSearch,
+  IconFilter,
+  IconMoodEmpty,
 } from "@tabler/icons-react";
 import { LeaseFormModal, type LeaseEditTarget } from "./lease-form-modal";
+import { UnitFormModal } from "./unit-form-modal";
 import { LeaseRenewModal, type LeaseRenewTarget } from "./lease-renew-modal";
+import { Badge } from "@/components/ui/erp-primitives";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { MandateFormModal } from "./mandate-form-modal";
 import { MandateLetterModal } from "./mandate-letter-modal";
 import { MandateOverrideModal } from "./mandate-override-modal";
 import { RemittanceAdvicePanel, type RemittanceAdvice } from "./remittance-advice-panel";
@@ -46,7 +53,7 @@ import { LeaseDetailDrawer } from "./lease-detail-drawer";
 import { PropertyOwnerProfileDrawer } from "./property-owner-profile-drawer";
 import { PropertyManagerProfileDrawer } from "./property-manager-profile-drawer";
 import { PhotoLightbox } from "./photo-lightbox";
-import { formatCompactKES } from "@/lib/utils/format";
+import { formatCompactKES, formatFileSize } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import type { Property } from "./property-constants";
 import type { LeaseSummary, PropertyDocumentSummary } from "./property-detail-types";
@@ -133,8 +140,12 @@ interface MandateDetail {
   approvalRequestId: string | null;
   currentPeriod?: { collectedAmount: number; managementFee: number; expenses: number; landlordRemittance: number };
   pendingRemittance: RemittanceAdvice | null;
-  landlord: { id: string; name: string; email: string | null; phone: string | null; verifiedAt: string | null; avatarUrl?: string | null; company?: string | null };
-  manager: { id: string; name: string | null; title: string | null; email: string | null; avatarUrl: string | null } | null;
+  maintenanceAuthorityKes: string | null;
+  renewalType: string | null;
+  noticePeriodDays: number | null;
+  scopeDescription: string | null;
+  landlord: { id: string; name: string; email: string | null; phone: string | null; verifiedAt: string | null; avatarUrl?: string | null; company?: string | null; propertiesUnderMandateCount?: number };
+  manager: { id: string; name: string | null; title: string | null; email: string | null; avatarUrl: string | null; assignedPropertyCount?: number; onTimeCollectionPct?: number | null } | null;
   property: { id: string; name: string; propertyCode: string; propertyType: string; location: string; media: Array<{ url: string; alt?: string }> };
   leases: LeaseSummary[];
   documents: PropertyDocumentSummary[];
@@ -149,12 +160,17 @@ interface AuditEntry {
   actorName?: string | null;
 }
 
-function activityTone(action: string): string {
-  const lower = action.toLowerCase();
-  if (lower.includes("terminat") || lower.includes("reject") || lower.includes("flag")) return "bg-rose-300";
-  if (lower.includes("override")) return "bg-amber-400";
-  return "bg-slate-300";
+interface PropertyUnitRow {
+  id: string;
+  unitLabel: string;
+  unitType: string | null;
+  monthlyRentKes: string | null;
+  status: "vacant" | "occupied" | "reserved" | "maintenance";
+  notes: string | null;
+  lease: { id: string; tenantContactId: string; tenantName: string; tenantAvatarUrl: string | null; monthlyRentKes: string; endsAt: string } | null;
 }
+
+
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -198,6 +214,7 @@ export function MandateFullViewBoard({
   const [drawerLease, setDrawerLease] = useState<LeaseSummary | null>(null);
   const [mandateLetterOpen, setMandateLetterOpen] = useState(false);
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
+  const [editTermsOpen, setEditTermsOpen] = useState(false);
   const [terminateOpen, setTerminateOpen] = useState(false);
   const [terminateNotes, setTerminateNotes] = useState("");
   const [terminateNotesErr, setTerminateNotesErr] = useState(false);
@@ -225,27 +242,62 @@ export function MandateFullViewBoard({
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityLoaded, setActivityLoaded] = useState(false);
 
+  // Advanced Activity State
+  const [activitySearchQuery, setActivitySearchQuery] = useState("");
+  const [activityFilter, setActivityFilter] = useState("all");
+  const [activityPage, setActivityPage] = useState(1);
+  const ACTIVITY_PER_PAGE = 10;
+
+  // Remittance History search/filter/pagination (mirrors Activity above)
+  const [remittanceSearchQuery, setRemittanceSearchQuery] = useState("");
+  const [remittanceStatusFilter, setRemittanceStatusFilter] = useState("all");
+  const [remittancePage, setRemittancePage] = useState(1);
+  const REMITTANCE_PER_PAGE = 10;
+
+  // Other Documents search/filter/pagination (mirrors Activity above)
+  const [docSearchQuery, setDocSearchQuery] = useState("");
+  const [docStatusFilter, setDocStatusFilter] = useState("all");
+  const [docPage, setDocPage] = useState(1);
+  const DOC_PER_PAGE = 10;
+
   const [leaseModalOpen, setLeaseModalOpen] = useState(false);
   const [editingLease, setEditingLease] = useState<LeaseSummary | null>(null);
   const [renewingLease, setRenewingLease] = useState<LeaseSummary | null>(null);
 
-  const occupiedCount = useMemo(() => mandate?.leases.filter((l) => l.isActive).length ?? 0, [mandate?.leases]);
-  const vacantCount = useMemo(() => Math.max(0, (mandate?.unitCount ?? 0) - occupiedCount), [mandate?.unitCount, occupiedCount]);
+  // Real property_units rows (replaces the old synthetic padded-list
+  // derivation) - lazy-loaded on first visit to the Units & Tenants tab,
+  // same convention as activity/remittances above.
+  const [units, setUnits] = useState<PropertyUnitRow[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(false);
+  const [unitsLoaded, setUnitsLoaded] = useState(false);
+  const [unitSearchQuery, setUnitSearchQuery] = useState("");
+  const [unitStatusFilter, setUnitStatusFilter] = useState("all");
+  const [unitPage, setUnitPage] = useState(1);
+  const UNITS_PER_PAGE = 10;
+  const [unitFormOpen, setUnitFormOpen] = useState(false);
+  const [editingUnit, setEditingUnit] = useState<PropertyUnitRow | null>(null);
+  const [assigningUnit, setAssigningUnit] = useState<PropertyUnitRow | null>(null);
+  const [generatingUnits, setGeneratingUnits] = useState(false);
 
-  const unitsList = useMemo(() => {
-    if (!mandate) return [];
-    const list: { unitCode: string; lease: LeaseSummary | null }[] = [];
-    const unitCount = mandate.unitCount || 12;
-    for (let i = 0; i < unitCount; i++) {
-      const floorIndex = Math.floor(i / 4);
-      const unitIndex = (i % 4) + 1;
-      const floorLetter = String.fromCharCode(65 + floorIndex);
-      const unitCode = `${floorLetter}${unitIndex}`;
-      const lease = mandate.leases[i] || null;
-      list.push({ unitCode, lease });
+  const occupiedCount = useMemo(() => units.filter((u) => u.status === "occupied").length, [units]);
+  const vacantCount = useMemo(() => units.filter((u) => u.status === "vacant").length, [units]);
+
+  const filteredUnits = useMemo(() => {
+    let result = units;
+    if (unitStatusFilter !== "all") result = result.filter((u) => u.status === unitStatusFilter);
+    if (unitSearchQuery.trim()) {
+      const q = unitSearchQuery.trim().toLowerCase();
+      result = result.filter((u) =>
+        u.unitLabel.toLowerCase().includes(q) ||
+        (u.unitType ?? "").toLowerCase().includes(q) ||
+        (u.lease?.tenantName ?? "").toLowerCase().includes(q)
+      );
     }
-    return list;
-  }, [mandate]);
+    return result;
+  }, [units, unitStatusFilter, unitSearchQuery]);
+  const unitTotalPages = Math.max(1, Math.ceil(filteredUnits.length / UNITS_PER_PAGE));
+  const safeUnitPage = Math.min(unitPage, unitTotalPages);
+  const paginatedUnits = filteredUnits.slice((safeUnitPage - 1) * UNITS_PER_PAGE, safeUnitPage * UNITS_PER_PAGE);
 
   useEffect(() => {
     let active = true;
@@ -329,6 +381,48 @@ export function MandateFullViewBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, remittancesLoaded]);
 
+  const loadUnits = () => {
+    if (!mandate) return;
+    setUnitsLoading(true);
+    fetch(`/api/properties/${mandate.property.id}/units?entityId=${entityId || ""}`)
+      .then((res) => (res.ok ? res.json() : { units: [] }))
+      .then((data) => {
+        setUnits(data.units ?? []);
+        setUnitsLoaded(true);
+      })
+      .catch(() => setUnitsLoaded(true))
+      .finally(() => setUnitsLoading(false));
+  };
+
+  useEffect(() => {
+    if (activeTab !== "units" || unitsLoaded || !mandate) return;
+    const timer = setTimeout(() => {
+      loadUnits();
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, unitsLoaded, mandate?.property.id]);
+
+  const handleGenerateUnits = async () => {
+    if (!mandate) return;
+    setGeneratingUnits(true);
+    try {
+      const res = await fetch(`/api/properties/${mandate.property.id}/units/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Failed to generate units");
+      pushToast({ tone: "success", title: `Generated ${data.units?.length ?? 0} units` });
+      loadUnits();
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Could not generate units." });
+    } finally {
+      setGeneratingUnits(false);
+    }
+  };
+
   const canDecideMandate = !!(
     mandate?.status === "pending_approval" &&
     mandate.approvalRequestId &&
@@ -400,6 +494,73 @@ export function MandateFullViewBoard({
     }
     return items;
   }, [mandate, canDecideMandate, canOverrideMandate, router]);
+
+  const filteredActivity = useMemo(() => {
+    if (!activityLog) return [];
+    let filtered = activityLog;
+    if (activitySearchQuery) {
+      const q = activitySearchQuery.toLowerCase();
+      filtered = filtered.filter(a => a.summary.toLowerCase().includes(q));
+    }
+    if (activityFilter !== "all") {
+      filtered = filtered.filter(a => {
+        const lower = a.summary.toLowerCase();
+        if (activityFilter === "edits") return lower.includes("updat") || lower.includes("chang") || lower.includes("edit");
+        if (activityFilter === "terminations") return lower.includes("terminat") || lower.includes("delet");
+        if (activityFilter === "system") return lower.includes("system") || lower.includes("auto");
+        return true;
+      });
+    }
+    return filtered;
+  }, [activityLog, activitySearchQuery, activityFilter]);
+
+  const activityTotalPages = Math.max(1, Math.ceil(filteredActivity.length / ACTIVITY_PER_PAGE));
+  const safeActivityPage = Math.min(activityPage, activityTotalPages);
+  const paginatedActivity = filteredActivity.slice((safeActivityPage - 1) * ACTIVITY_PER_PAGE, safeActivityPage * ACTIVITY_PER_PAGE);
+
+  const filteredRemittances = useMemo(() => {
+    let filtered = remittances;
+    if (remittanceSearchQuery) {
+      const q = remittanceSearchQuery.toLowerCase();
+      filtered = filtered.filter((r) =>
+        new Date(r.periodStart).toLocaleDateString("en-KE", { month: "short", year: "numeric" }).toLowerCase().includes(q) ||
+        r.status.toLowerCase().includes(q)
+      );
+    }
+    if (remittanceStatusFilter !== "all") {
+      filtered = filtered.filter((r) => r.status === remittanceStatusFilter);
+    }
+    return filtered;
+  }, [remittances, remittanceSearchQuery, remittanceStatusFilter]);
+
+  const remittanceTotalPages = Math.max(1, Math.ceil(filteredRemittances.length / REMITTANCE_PER_PAGE));
+  const safeRemittancePage = Math.min(remittancePage, remittanceTotalPages);
+  const paginatedRemittances = filteredRemittances.slice((safeRemittancePage - 1) * REMITTANCE_PER_PAGE, safeRemittancePage * REMITTANCE_PER_PAGE);
+
+  const filteredOtherDocs = useMemo(() => {
+    const otherDocs = (mandate?.documents ?? []).filter((d) => d.type !== "mandate_letter");
+    let filtered = otherDocs;
+    if (docSearchQuery) {
+      const q = docSearchQuery.toLowerCase();
+      filtered = filtered.filter((d) => d.name.toLowerCase().includes(q) || (d.type ?? "").toLowerCase().includes(q));
+    }
+    if (docStatusFilter !== "all") {
+      filtered = filtered.filter((d) => d.status === docStatusFilter);
+    }
+    return filtered;
+  }, [mandate, docSearchQuery, docStatusFilter]);
+
+  const docTotalPages = Math.max(1, Math.ceil(filteredOtherDocs.length / DOC_PER_PAGE));
+  const safeDocPage = Math.min(docPage, docTotalPages);
+  const paginatedOtherDocs = filteredOtherDocs.slice((safeDocPage - 1) * DOC_PER_PAGE, safeDocPage * DOC_PER_PAGE);
+
+  const getActivityTone = (summary: string) => {
+    const lower = summary.toLowerCase();
+    if (lower.includes("terminat") || lower.includes("delet") || lower.includes("reject")) return "bg-rose-300 ring-rose-50";
+    if (lower.includes("override")) return "bg-amber-400 ring-amber-50";
+    if (lower.includes("updat") || lower.includes("chang")) return "bg-indigo-300 ring-indigo-50";
+    return "bg-slate-200 ring-white";
+  };
 
   if (isLoading) {
     return (
@@ -688,7 +849,7 @@ export function MandateFullViewBoard({
               <span className="bg-white/10 font-mono backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">
                 {MANDATE_STATUS_LABEL[mandate.status].toUpperCase()} · {(mandate.mandateRate * 100).toFixed(1)}% FEE
               </span>
-              <div className="hidden sm:flex w-[168px] bg-white/95 backdrop-blur-md rounded-[18px] p-3.5 shadow-xl items-center gap-3 border border-white/60 text-slate-900">
+              <div className="hidden sm:flex w-fit bg-white/95 backdrop-blur-md rounded-[18px] p-3.5 shadow-xl items-center gap-3 border border-white/60 text-slate-900">
                 <div className="relative size-11 flex items-center justify-center shrink-0">
                   <svg className="size-full -rotate-90">
                     <circle cx="22" cy="22" r="18" fill="transparent" stroke="#f1f5f9" strokeWidth="5" />
@@ -910,8 +1071,19 @@ export function MandateFullViewBoard({
             <div className="flex flex-col gap-4">
               {/* div 1: Mandate terms */}
               <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                <h3 className="text-title-primary mb-5">Mandate terms</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-title-primary">Mandate terms</h3>
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={() => setEditTermsOpen(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
+                    >
+                      <IconEdit size={14} /> Edit terms
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
                     <p className="label-caps text-slate-600">Landlord</p>
                     <p className="body-md text-slate-800 font-medium truncate" title={mandate.landlord.name}>{mandate.landlord.name}</p>
@@ -932,7 +1104,9 @@ export function MandateFullViewBoard({
                   </div>
                   <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
                     <p className="label-caps text-slate-600">Maintenance Authority</p>
-                    <p className="mono-amount text-slate-900">≤ KES 100K</p>
+                    <p className={cn("mono-amount", mandate.maintenanceAuthorityKes ? "text-slate-900" : "text-slate-400 italic")}>
+                      {mandate.maintenanceAuthorityKes ? `≤ ${formatCompactKES(parseFloat(mandate.maintenanceAuthorityKes))}` : "Not yet configured"}
+                    </p>
                   </div>
                   <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
                     <p className="label-caps text-slate-600">Term</p>
@@ -940,11 +1114,15 @@ export function MandateFullViewBoard({
                   </div>
                   <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
                     <p className="label-caps text-slate-600">Renewal</p>
-                    <p className="body-md text-slate-800 font-medium">Automatic</p>
+                    <p className={cn("body-md font-medium", mandate.renewalType ? "text-slate-800" : "text-slate-400 italic")}>
+                      {mandate.renewalType ? mandate.renewalType.charAt(0).toUpperCase() + mandate.renewalType.slice(1) : "Not yet configured"}
+                    </p>
                   </div>
                   <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
                     <p className="label-caps text-slate-600">Notice Period</p>
-                    <p className="mono-amount text-slate-900">90 days</p>
+                    <p className={cn("mono-amount", mandate.noticePeriodDays != null ? "text-slate-900" : "text-slate-400 italic")}>
+                      {mandate.noticePeriodDays != null ? `${mandate.noticePeriodDays} days` : "Not yet configured"}
+                    </p>
                   </div>
                 </div>
                 {mandate.rateJustification && (
@@ -957,9 +1135,13 @@ export function MandateFullViewBoard({
               {/* div 2: Scope of management */}
               <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <h3 className="text-title-primary mb-3">Scope of management</h3>
-                <p className="body-md text-slate-600 leading-relaxed">
-                  Sunland collects rent across all {mandate.unitCount} units, remits net proceeds monthly to the landlord, and holds authority to approve maintenance spend up to KES 100K per incident. Twelve-unit apartment block off Dennis Pritt Road, Kilimani: eight 2-bedroom and four 3-bedroom units, borehole backup, solar water heating, gated parking.
-                </p>
+                {mandate.scopeDescription ? (
+                  <p className="body-md text-slate-600 leading-relaxed">{mandate.scopeDescription}</p>
+                ) : (
+                  <p className="body-md text-slate-600 leading-relaxed">
+                    Sunland manages rent collection and remittance for the {mandate.unitCount} unit{mandate.unitCount === 1 ? "" : "s"} at {mandate.property.name}, remitting collected rent to the landlord net of a {(mandate.mandateRate * 100).toFixed(1)}% management fee{mandate.rateJustification ? ` (${mandate.rateJustification})` : ""}.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -974,7 +1156,7 @@ export function MandateFullViewBoard({
               )}
 
               {period && (
-                <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="text-title-primary">Remittance breakdown — current period</h3>
                     <span className="text-xs uppercase font-mono text-slate-500 font-medium">
@@ -1024,7 +1206,7 @@ export function MandateFullViewBoard({
               )}
 
               {mandate.collections.length > 0 && (
-                <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                   <h3 className="text-title-primary">Collections — Expected vs Collected</h3>
                   <p className="text-desc-secondary mb-6">Six-month rolling ledger for this mandate.</p>
                   <div className="h-[260px] w-full">
@@ -1058,42 +1240,110 @@ export function MandateFullViewBoard({
                 </div>
               )}
 
-              <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                <h3 className="text-title-primary mb-4">Remittance History</h3>
+              <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+                <h3 className="text-title-primary">Remittance History</h3>
                 {remittances.length === 0 ? (
                   <p className="text-slate-600 text-center py-8 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No remittance advices generated yet.</p>
                 ) : (
-                  <div className="divide-y divide-slate-100">
-                    {remittances.map((r) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => { setSelectedRemittance(r); setRemittancePanelOpen(true); }}
-                        className="flex items-center justify-between w-full py-3.5 hover:bg-slate-50/60 transition-colors text-left px-2 -mx-2 rounded-lg"
-                      >
-                        <div>
-                          <p className="body-sm text-slate-800 font-medium">
-                            {new Date(r.periodStart).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}
-                          </p>
-                          <p className="text-xs text-slate-600 mt-0.5 capitalize">{r.status}</p>
+                  <>
+                    {/* Search + status filter */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <div className="relative flex-1 min-w-[200px]">
+                        <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input
+                          value={remittanceSearchQuery}
+                          onChange={(e) => { setRemittanceSearchQuery(e.target.value); setRemittancePage(1); }}
+                          placeholder="Search by period or status..."
+                          className="w-full h-9 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                        />
+                      </div>
+                      <div className="relative shrink-0">
+                        <IconFilter size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <select
+                          value={remittanceStatusFilter}
+                          onChange={(e) => { setRemittanceStatusFilter(e.target.value); setRemittancePage(1); }}
+                          className="h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-sm focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm appearance-none"
+                        >
+                          <option value="all">All statuses</option>
+                          <option value="pending">Pending</option>
+                          <option value="released">Released</option>
+                          <option value="flagged">Flagged</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {paginatedRemittances.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 text-sm">No remittances match this search/filter.</div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {paginatedRemittances.map((r) => (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => { setSelectedRemittance(r); setRemittancePanelOpen(true); }}
+                            className="flex items-center justify-between w-full py-3.5 hover:bg-slate-50/60 transition-colors text-left px-2 -mx-2 rounded-lg"
+                          >
+                            <div>
+                              <p className="body-sm text-slate-800 font-medium">
+                                {new Date(r.periodStart).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}
+                              </p>
+                              <p className="text-xs text-slate-600 mt-0.5 capitalize">{r.status}</p>
+                            </div>
+                            <span className="mono-stat text-slate-900">{formatCompactKES(Number(r.netRemittanceKes))}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {remittanceTotalPages > 1 && (
+                      <div className="flex items-center justify-between pt-4 mt-1 border-t border-slate-100">
+                        <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                          Page {safeRemittancePage} of {remittanceTotalPages} <span className="mx-1">·</span> {filteredRemittances.length} remittances
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setRemittancePage(Math.max(1, safeRemittancePage - 1))}
+                            disabled={safeRemittancePage <= 1}
+                            className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                          >
+                            <IconChevronLeft size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRemittancePage(Math.min(remittanceTotalPages, safeRemittancePage + 1))}
+                            disabled={safeRemittancePage >= remittanceTotalPages}
+                            className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                          >
+                            <IconChevronRight size={15} />
+                          </button>
                         </div>
-                        <span className="mono-stat text-slate-900">{formatCompactKES(Number(r.netRemittanceKes))}</span>
-                      </button>
-                    ))}
-                  </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
           )}
 
           {activeTab === "units" && (
-            <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
-              <div className="flex justify-between items-center mb-2">
+            <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+              <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
                 <h3 className="text-title-primary">Units under this mandate</h3>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-slate-500 font-medium">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
                     {occupiedCount} occupied · {vacantCount} vacant
                   </span>
+                  {canManage && units.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => { setEditingUnit(null); setUnitFormOpen(true); }}
+                      className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium rounded-xl px-4 py-2 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <IconEdit size={13} /> Add Unit
+                    </button>
+                  )}
                   {canManage && (
                     <button
                       type="button"
@@ -1106,92 +1356,166 @@ export function MandateFullViewBoard({
                 </div>
               </div>
 
-              <div className="flex flex-col">
-                {/* Table Header Row */}
-                <div className="grid grid-cols-[80px_1.2fr_1fr_120px_120px_40px] items-center px-4 py-2.5 bg-slate-50/50 rounded-xl text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 border border-slate-100/60">
-                  <div>Unit</div>
-                  <div>Tenant</div>
-                  <div>Lease Term</div>
-                  <div>Rent</div>
-                  <div>Status</div>
-                  <div />
+              {unitsLoading ? (
+                <div className="flex justify-center py-12"><LoadingSpinner size="md" /></div>
+              ) : units.length === 0 ? (
+                <div className="p-10 text-center flex flex-col items-center gap-3">
+                  <p className="text-slate-500 text-sm">No units recorded for this property yet.</p>
+                  {canManage && mandate.unitCount > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleGenerateUnits}
+                      disabled={generatingUnits}
+                      className="bg-[#151936] text-white hover:bg-[#1f254e] text-xs font-medium rounded-xl px-4 py-2 shadow-sm transition-all"
+                    >
+                      {generatingUnits ? "Generating…" : "Generate Units from Breakdown"}
+                    </button>
+                  )}
                 </div>
-
-                {/* Table Data Rows */}
-                {unitsList.length === 0 ? (
-                  <div className="p-10 text-center text-slate-500 text-sm">No units recorded for this property yet.</div>
-                ) : (
-                  <div className="flex flex-col gap-0.5">
-                    {unitsList.map(({ unitCode, lease }) => {
-                      if (lease) {
-                        const startStr = new Date(lease.startDate).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
-                        const endStr = lease.endDate ? new Date(lease.endDate).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" }) : "Open-ended";
-                        const leaseTermLabel = `${startStr} – ${endStr}`;
-                        return (
-                          <button
-                            key={lease.id}
-                            type="button"
-                            onClick={() => setDrawerLease(lease)}
-                            className="grid grid-cols-[80px_1.2fr_1fr_120px_120px_40px] items-center py-3 px-4 hover:bg-slate-50/60 rounded-2xl transition-colors text-left w-full text-sm group cursor-pointer border border-transparent"
-                          >
-                            <span className="font-mono font-normal text-slate-900">{unitCode}</span>
-                            <span className="flex items-center gap-2.5 min-w-0">
-                              <Avatar
-                                src={lease.tenantAvatarUrl || undefined}
-                                fallback={getInitials(lease.tenantName)}
-                                className="size-7 bg-slate-100 text-slate-800 text-xs font-normal shrink-0"
-                              />
-                              <span className="text-slate-800 font-medium truncate">{lease.tenantName}</span>
-                            </span>
-                            <span className="text-slate-500 text-xs truncate pr-2">{leaseTermLabel}</span>
-                            <span className="font-mono text-slate-600">{formatCompactKES(parseFloat(lease.monthlyRentKes))}/mo</span>
-                            <div>
-                              <span className={cn(
-                                "px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider rounded-full shadow-xs inline-block",
-                                lease.status === "active" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
-                                  lease.status === "expiring" ? "bg-rose-50 text-rose-700 border border-rose-100" :
-                                    "bg-slate-100 text-slate-700 border border-slate-200"
-                              )}>
-                                {lease.status === "active" ? "ACTIVE" : lease.status === "expiring" ? "EXPIRING" : lease.status.toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="flex justify-end text-slate-300 group-hover:text-slate-600 transition-colors">
-                              <IconChevronRight size={16} />
-                            </div>
-                          </button>
-                        );
-                      } else {
-                        return (
-                          <div
-                            key={unitCode}
-                            className="grid grid-cols-[80px_1.2fr_1fr_120px_120px_40px] items-center py-3 px-4 rounded-2xl text-sm w-full text-slate-400 border border-transparent"
-                          >
-                            <span className="font-mono font-normal text-slate-400">{unitCode}</span>
-                            <span className="flex items-center gap-2.5">
-                              <span className="size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-[10px] font-normal shrink-0">—</span>
-                              <span className="text-slate-400 font-medium">—</span>
-                            </span>
-                            <span className="text-slate-400 text-xs">—</span>
-                            <span className="font-mono text-slate-400">KES 95K/mo</span>
-                            <div>
-                              <span className="px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider bg-slate-50 text-slate-500 border border-slate-100/60 rounded-full shadow-xs inline-block">
-                                VACANT
-                              </span>
-                            </div>
-                            <div />
-                          </div>
-                        );
-                      }
-                    })}
+              ) : (
+                <>
+                  {/* Search + status filter */}
+                  <div className="flex flex-wrap items-center gap-2.5 mb-1">
+                    <div className="relative flex-1 min-w-[200px]">
+                      <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <input
+                        value={unitSearchQuery}
+                        onChange={(e) => { setUnitSearchQuery(e.target.value); setUnitPage(1); }}
+                        placeholder="Search unit, type, or tenant..."
+                        className="w-full h-9 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      />
+                    </div>
+                    <div className="relative shrink-0">
+                      <IconFilter size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <select
+                        value={unitStatusFilter}
+                        onChange={(e) => { setUnitStatusFilter(e.target.value); setUnitPage(1); }}
+                        className="h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-sm focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm appearance-none"
+                      >
+                        <option value="all">All statuses</option>
+                        <option value="vacant">Vacant</option>
+                        <option value="occupied">Occupied</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="maintenance">Maintenance</option>
+                      </select>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  <div className="flex flex-col overflow-x-auto" style={scrollHiddenStyle}>
+                    {/* Table Header Row */}
+                    <div className="grid grid-cols-[90px_1.2fr_1fr_110px_110px_80px] items-center px-4 py-2.5 bg-slate-50/50 rounded-xl text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 border border-slate-100/60 min-w-[720px]">
+                      <div>Unit</div>
+                      <div>Tenant</div>
+                      <div>Type</div>
+                      <div>Rent</div>
+                      <div>Status</div>
+                      <div className="text-right">Actions</div>
+                    </div>
+
+                    {paginatedUnits.length === 0 ? (
+                      <div className="p-10 text-center text-slate-400 text-sm">No units match this search/filter.</div>
+                    ) : (
+                      <div className="flex flex-col gap-0.5 min-w-[720px]">
+                        {paginatedUnits.map((unit) => (
+                          <div
+                            key={unit.id}
+                            className="grid grid-cols-[90px_1.2fr_1fr_110px_110px_80px] items-center py-3 px-4 hover:bg-slate-50/60 rounded-2xl transition-colors text-sm group"
+                          >
+                            <span className="font-mono font-normal text-slate-900 truncate">{unit.unitLabel}</span>
+                            {unit.lease ? (
+                              <button
+                                type="button"
+                                onClick={() => router.push(`/admin/leases/${unit.lease!.id}`)}
+                                className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-80 transition-opacity"
+                              >
+                                <Avatar
+                                  src={unit.lease.tenantAvatarUrl || undefined}
+                                  fallback={getInitials(unit.lease.tenantName)}
+                                  className="size-7 bg-slate-100 text-slate-800 text-xs font-normal shrink-0"
+                                />
+                                <span className="text-slate-800 font-medium truncate">{unit.lease.tenantName}</span>
+                              </button>
+                            ) : (
+                              <span className="flex items-center gap-2.5 min-w-0">
+                                <span className="size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-[10px] font-normal shrink-0">—</span>
+                                <span className="text-slate-400 font-medium">—</span>
+                              </span>
+                            )}
+                            <span className="text-slate-500 text-xs truncate pr-2">{unit.unitType || "—"}</span>
+                            <span className={cn("font-mono", unit.monthlyRentKes ? "text-slate-600" : "text-slate-400")}>
+                              {unit.monthlyRentKes ? `${formatCompactKES(parseFloat(unit.monthlyRentKes))}/mo` : "—"}
+                            </span>
+                            <div>
+                              <Badge
+                                tone={
+                                  unit.status === "occupied" ? "success" :
+                                    unit.status === "reserved" ? "warning" :
+                                      unit.status === "maintenance" ? "risk" :
+                                        "neutral"
+                                }
+                              >
+                                {unit.status}
+                              </Badge>
+                            </div>
+                            <div className="flex justify-end gap-1.5">
+                              {canManage && unit.status === "vacant" && (
+                                <button
+                                  type="button"
+                                  onClick={() => setAssigningUnit(unit)}
+                                  title="Assign tenant"
+                                  className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                                >
+                                  <IconUsers size={13} />
+                                </button>
+                              )}
+                              {canManage && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingUnit(unit); setUnitFormOpen(true); }}
+                                  title="Edit unit"
+                                  className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                                >
+                                  <IconEdit size={13} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {unitTotalPages > 1 && (
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xs text-slate-400">Page {safeUnitPage} of {unitTotalPages}</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setUnitPage((p) => Math.max(1, p - 1))}
+                          disabled={safeUnitPage === 1}
+                          className="size-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <IconChevronLeft size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setUnitPage((p) => Math.min(unitTotalPages, p + 1))}
+                          disabled={safeUnitPage === unitTotalPages}
+                          className="size-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <IconChevronRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
           {activeTab === "documents" && (() => {
             const mandateLetterDoc = mandate.documents.find((d) => d.type === "mandate_letter");
-            const otherDocs = mandate.documents.filter((d) => d.type !== "mandate_letter");
+            const hasAnyOtherDocs = mandate.documents.some((d) => d.type !== "mandate_letter");
             return (
               <div className="flex flex-col gap-4">
                 {/* Mandate Letter Card */}
@@ -1209,7 +1533,12 @@ export function MandateFullViewBoard({
                           <div className="min-w-0">
                             <p className="text-sm font-normal text-slate-800 truncate">{mandateLetterDoc.name}</p>
                             <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-mono">
-                              1.4 MB · signed 09 Jul 2026
+                              {[
+                                formatFileSize(mandateLetterDoc.fileSizeBytes),
+                                mandateLetterDoc.createdAt
+                                  ? `added ${new Date(mandateLetterDoc.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                                  : null,
+                              ].filter(Boolean).join(" · ") || "Details not on file"}
                             </p>
                           </div>
                         </div>
@@ -1263,41 +1592,102 @@ export function MandateFullViewBoard({
                 </div>
 
                 {/* Other Documents Card */}
-                <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <h3 className="text-title-primary mb-5">Other documents</h3>
-                  {otherDocs.length === 0 ? (
+                <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+                  <h3 className="text-title-primary">Other documents</h3>
+                  {!hasAnyOtherDocs ? (
                     <p className="text-slate-500 text-center py-10 text-xs bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No other documents attached yet.</p>
                   ) : (
-                    <div className="flex flex-col gap-2">
-                      {otherDocs.map((doc) => {
-                        const isSigned = doc.status === "signed" || (doc.type && ["mandate_letter", "lease_agreement", "offer_letter"].includes(doc.type));
-                        const statusLabel = doc.status === "signed" ? "SIGNED" : doc.status === "awaiting_signature" ? "AWAITING SIGNATURE" : "FILED";
-                        const sizeLabel = "1.2 MB";
-                        return (
-                          <div key={doc.id} className="flex items-center justify-between p-3.5 px-4 bg-slate-50/50 border border-slate-100/60 hover:bg-slate-50 rounded-2xl transition-colors w-full group">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="size-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-xs shrink-0">
-                                <IconFileText size={15} className="text-slate-500" />
+                    <>
+                      {/* Search + status filter */}
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <div className="relative flex-1 min-w-[200px]">
+                          <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                          <input
+                            value={docSearchQuery}
+                            onChange={(e) => { setDocSearchQuery(e.target.value); setDocPage(1); }}
+                            placeholder="Search documents by name or type..."
+                            className="w-full h-9 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                          />
+                        </div>
+                        <div className="relative shrink-0">
+                          <IconFilter size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                          <select
+                            value={docStatusFilter}
+                            onChange={(e) => { setDocStatusFilter(e.target.value); setDocPage(1); }}
+                            className="h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-sm focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm appearance-none"
+                          >
+                            <option value="all">All statuses</option>
+                            <option value="draft">Draft</option>
+                            <option value="awaiting_signature">Awaiting signature</option>
+                            <option value="signed">Signed</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {paginatedOtherDocs.length === 0 ? (
+                        <div className="p-10 text-center text-slate-400 text-sm">No documents match this search/filter.</div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          {paginatedOtherDocs.map((doc) => {
+                            const isSigned = doc.status === "signed" || (doc.type && ["mandate_letter", "lease_agreement", "offer_letter"].includes(doc.type));
+                            const statusLabel = doc.status === "signed" ? "SIGNED" : doc.status === "awaiting_signature" ? "AWAITING SIGNATURE" : "FILED";
+                            const sizeLabel = formatFileSize(doc.fileSizeBytes);
+                            const addedLabel = doc.createdAt
+                              ? `added ${new Date(doc.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                              : null;
+                            return (
+                              <div key={doc.id} className="flex items-center justify-between p-3.5 px-4 bg-slate-50/50 border border-slate-100/60 hover:bg-slate-50 rounded-2xl transition-colors w-full group">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="size-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-xs shrink-0">
+                                    <IconFileText size={15} className="text-slate-500" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <a href={doc.url || "#"} target="_blank" rel="noreferrer" className="text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline truncate block">
+                                      {doc.name}
+                                    </a>
+                                    <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                                      {[sizeLabel, addedLabel].filter(Boolean).join(" · ") || "Details not on file"}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <Badge tone={isSigned ? "success" : "neutral"}>
+                                    {statusLabel}
+                                  </Badge>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <a href={doc.url || "#"} target="_blank" rel="noreferrer" className="text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline truncate block">
-                                  {doc.name}
-                                </a>
-                                <p className="text-xs text-slate-400 mt-0.5 font-mono">{sizeLabel} · {doc.status === "signed" ? "signed" : "filed"}</p>
-                              </div>
-                            </div>
-                            <div>
-                              <span className={cn(
-                                "px-2.5 py-1 text-xs font-medium uppercase tracking-wider rounded-full shadow-xs inline-block",
-                                isSigned ? "bg-emerald-50 text-emerald-700 border border-emerald-100/80" : "bg-slate-100 text-slate-500 border border-slate-200/60"
-                              )}>
-                                {statusLabel}
-                              </span>
-                            </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Pagination Controls */}
+                      {docTotalPages > 1 && (
+                        <div className="flex items-center justify-between pt-4 mt-1 border-t border-slate-100">
+                          <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                            Page {safeDocPage} of {docTotalPages} <span className="mx-1">·</span> {filteredOtherDocs.length} documents
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setDocPage(Math.max(1, safeDocPage - 1))}
+                              disabled={safeDocPage <= 1}
+                              className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                            >
+                              <IconChevronLeft size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDocPage(Math.min(docTotalPages, safeDocPage + 1))}
+                              disabled={safeDocPage >= docTotalPages}
+                              className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                            >
+                              <IconChevronRight size={15} />
+                            </button>
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -1306,24 +1696,76 @@ export function MandateFullViewBoard({
 
           {activeTab === "activity" && (
             <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <h3 className="text-sm font-medium text-slate-800 mb-6">Activity log</h3>
+              <div className="flex flex-col gap-5 mb-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-slate-800">Activity log</h3>
+                </div>
+
+                {/* Advanced Search & Filter Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="relative flex-1">
+                    <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search activity logs..."
+                      value={activitySearchQuery}
+                      onChange={(e) => {
+                        setActivitySearchQuery(e.target.value);
+                        setActivityPage(1);
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div className="relative shrink-0">
+                    <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <select
+                      value={activityFilter}
+                      onChange={(e) => {
+                        setActivityFilter(e.target.value);
+                        setActivityPage(1);
+                      }}
+                      className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer"
+                    >
+                      <option value="all">All Events</option>
+                      <option value="edits">Modifications</option>
+                      <option value="terminations">Terminations</option>
+                      <option value="system">System Actions</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <IconChevronRight size={14} className="text-slate-400 rotate-90" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {activityLoading ? (
-                <div className="flex justify-center py-12"><LoadingSpinner size="md" /></div>
+                <div className="flex justify-center py-12">
+                  <LoadingSpinner size="md" />
+                </div>
               ) : !activityLog || activityLog.length === 0 ? (
-                <p className="text-slate-600 text-center py-12 text-sm bg-slate-50 rounded-2xl border border-slate-100 border-dashed">No recorded activity yet.</p>
+                <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+                  <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1">
+                    <IconMoodEmpty size={32} className="text-slate-300" />
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-700">No recorded activity yet.</h3>
+                  <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, and mandate events will safely log here.</p>
+                </div>
+              ) : paginatedActivity.length === 0 ? (
+                <div className="flex flex-col items-center py-12 text-center">
+                  <IconSearch size={24} className="text-slate-300 mb-3" />
+                  <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
+                  <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
+                </div>
               ) : (
                 <div className="flex flex-col gap-6 relative ml-1">
                   <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
-                  {activityLog.map((entry) => {
-                    const toneBase = activityTone(entry.summary);
-                    const isAlert = toneBase.includes("rose") || toneBase.includes("amber");
-                    const toneColor = isAlert ? "bg-rose-300 ring-rose-50" : "bg-slate-200 ring-white";
-                    
+                  {paginatedActivity.map((entry) => {
+                    const toneColor = getActivityTone(entry.summary);
                     return (
-                      <div key={entry.id} className="relative flex items-start gap-4 z-10">
-                        <div className={cn("size-[8px] rounded-full mt-1.5 shrink-0 ring-4 shadow-xs", toneColor)} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-500 leading-snug">
+                      <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
+                        <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
+                        <div className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 bg-slate-50/50 hover:bg-slate-100/50 -my-1.5 -mx-3 p-2 px-3 rounded-xl transition-colors">
+                          <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
                             {entry.actorName ? (
                               <>
                                 <span className="font-medium text-slate-700">{entry.actorName}</span> {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}
@@ -1332,13 +1774,45 @@ export function MandateFullViewBoard({
                               entry.summary
                             )}
                           </p>
-                          <p className="text-xs text-slate-400 font-mono mt-1 tracking-wider">
-                            {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
+                              {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <Badge tone="neutral" className="whitespace-nowrap">
+                              {relativeTime(entry.createdAt)}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {activityTotalPages > 1 && (
+                <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+                  <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+                    Page {safeActivityPage} of {activityTotalPages} <span className="mx-1">·</span> {filteredActivity.length} logs
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setActivityPage(Math.max(1, safeActivityPage - 1))}
+                      disabled={safeActivityPage <= 1}
+                      className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                    >
+                      <IconChevronLeft size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActivityPage(Math.min(activityTotalPages, safeActivityPage + 1))}
+                      disabled={safeActivityPage >= activityTotalPages}
+                      className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                    >
+                      <IconChevronRight size={15} />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1348,7 +1822,7 @@ export function MandateFullViewBoard({
         {/* Context rail */}
         <div className="flex flex-col gap-4">
           {/* Landlord div */}
-          <div className="bg-white border border-slate-100 rounded-[32px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <div className="relative h-56 w-full flex flex-col justify-between p-5 text-center">
               {mandate.landlord.avatarUrl ? (
                 <Image
@@ -1365,16 +1839,20 @@ export function MandateFullViewBoard({
               {/* Name and subtitle at the top */}
               <div className="relative z-10 mt-2">
                 <h4 className="text-2xl font-serif text-white tracking-tight">{mandate.landlord.name}</h4>
-                <span className="text-xs text-slate-200/90 flex items-center justify-center gap-1 mt-1 font-medium">
-                  <IconShieldCheck size={14} className="text-emerald-400" /> Verified landlord
-                </span>
+                {mandate.landlord.verifiedAt ? (
+                  <span className="text-xs text-slate-200/90 flex items-center justify-center gap-1 mt-1 font-medium">
+                    <IconShieldCheck size={14} className="text-emerald-400" /> Verified landlord
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-300/80 flex items-center justify-center gap-1 mt-1 font-medium">Landlord</span>
+                )}
               </div>
 
               {/* Buttons at the bottom */}
               <div className="relative z-10 flex justify-center gap-3 mb-1">
                 <button
                   type="button"
-                  onClick={() => router.push('/admin/messaging')}
+                  onClick={() => router.push('/admin/messages')}
                   className="size-9 rounded-full bg-white hover:bg-slate-50 text-slate-900 shadow-md flex items-center justify-center transition-all cursor-pointer border border-slate-100"
                   title="Message"
                 >
@@ -1417,18 +1895,20 @@ export function MandateFullViewBoard({
                 </span>
               </div>
 
-              {/* Entity */}
-              <div className="flex items-center justify-between p-1.5 bg-white border border-slate-100/80 rounded-full shadow-xs">
-                <div className="flex items-center min-w-0">
-                  <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 shrink-0 border border-slate-100/50">
-                    <IconBuildingCommunity size={14} />
+              {/* Entity - only shown when the landlord actually has a company name on file */}
+              {mandate.landlord.company && (
+                <div className="flex items-center justify-between p-1.5 bg-white border border-slate-100/80 rounded-full shadow-xs">
+                  <div className="flex items-center min-w-0">
+                    <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-600 shrink-0 border border-slate-100/50">
+                      <IconBuildingCommunity size={14} />
+                    </span>
+                    <span className="text-xs font-medium text-slate-600 ml-2.5">Entity</span>
+                  </div>
+                  <span className="text-xs font-medium text-slate-700 pr-3 truncate max-w-[160px]">
+                    {mandate.landlord.company}
                   </span>
-                  <span className="text-xs font-medium text-slate-600 ml-2.5">Entity</span>
                 </div>
-                <span className="text-xs font-medium text-slate-700 pr-3 truncate max-w-[160px]">
-                  {mandate.landlord.company || "Zawadi Estates Ltd"}
-                </span>
-              </div>
+              )}
 
               {/* Properties */}
               <div className="flex items-center justify-between p-1.5 bg-white border border-slate-100/80 rounded-full shadow-xs">
@@ -1438,7 +1918,9 @@ export function MandateFullViewBoard({
                   </span>
                   <span className="text-xs font-medium text-slate-600 ml-2.5">Properties</span>
                 </div>
-                <span className="text-xs font-medium text-slate-700 pr-3">3 under mandate</span>
+                <span className="text-xs font-medium text-slate-700 pr-3">
+                  {mandate.landlord.propertiesUnderMandateCount ?? 0} under mandate
+                </span>
               </div>
 
               <Link
@@ -1451,7 +1933,7 @@ export function MandateFullViewBoard({
           </div>
 
           {/* Property Manager div */}
-          <div className="bg-white border border-slate-100 rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="size-12 rounded-full flex items-center justify-center bg-[#0f132b] text-[#f3df27] font-normal text-sm shrink-0 shadow-xs">
@@ -1464,7 +1946,7 @@ export function MandateFullViewBoard({
               </div>
               <button
                 type="button"
-                onClick={() => router.push('/admin/messaging')}
+                onClick={() => router.push('/admin/messages')}
                 className="size-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-600 shadow-xs transition-colors"
                 title="Message"
               >
@@ -1472,20 +1954,32 @@ export function MandateFullViewBoard({
               </button>
             </div>
 
-            <div className="flex flex-col gap-2.5 border-t border-slate-100 pt-4">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-600 font-medium">Portfolio</span>
-                <span className="font-mono font-medium text-slate-800">6 properties</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-600 font-medium">On-time collection</span>
-                <span className="font-mono font-medium text-emerald-600">94%</span>
-              </div>
-            </div>
+            {mandate.manager && (
+              <>
+                <div className="flex flex-col gap-2.5 border-t border-slate-100 pt-4">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600 font-medium">Portfolio</span>
+                    <span className="font-mono font-medium text-slate-800">{mandate.manager.assignedPropertyCount ?? 0} properties</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600 font-medium">On-time collection</span>
+                    <span className={cn("font-mono font-medium", mandate.manager.onTimeCollectionPct == null ? "text-slate-400" : mandate.manager.onTimeCollectionPct >= 90 ? "text-emerald-600" : mandate.manager.onTimeCollectionPct >= 70 ? "text-amber-600" : "text-rose-600")}>
+                      {mandate.manager.onTimeCollectionPct == null ? "—" : `${mandate.manager.onTimeCollectionPct}%`}
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  href={`/admin/team/${mandate.manager.id}`}
+                  className="inline-flex items-center justify-center gap-2 w-full rounded-full bg-white border border-slate-200/80 py-2.5 label-caps text-slate-700 hover:bg-slate-50 transition-colors text-xs font-medium shadow-xs"
+                >
+                  View Full Profile
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Property Command Center div */}
-          <div className="bg-white border border-slate-100 rounded-[32px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+          <div className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
             <div className="relative h-32 w-full bg-slate-100 flex items-end p-4">
               {primaryImage ? (
                 <Image src={primaryImage} alt="" fill className="object-cover" />
@@ -1511,7 +2005,7 @@ export function MandateFullViewBoard({
           </div>
 
           {/* Portals div */}
-          <div className="bg-white border border-slate-100 rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <h4 className="text-base font-medium text-slate-800">Portals</h4>
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between text-xs">
@@ -1535,7 +2029,7 @@ export function MandateFullViewBoard({
           </div>
 
           {/* Quick Facts div */}
-          <div className="bg-white border border-slate-100 rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <h4 className="text-base font-medium text-slate-800">Quick Facts</h4>
             <div className="flex flex-col gap-3 text-xs">
               <div className="flex justify-between items-center">
@@ -1598,8 +2092,34 @@ export function MandateFullViewBoard({
         onClose={() => setLeaseModalOpen(false)}
         onSubmit={() => {
           setLeaseModalOpen(false);
+          setUnitsLoaded(false);
           setRefreshCount((c) => c + 1);
         }}
+      />
+
+      {assigningUnit && (
+        <LeaseFormModal
+          open={!!assigningUnit}
+          defaultPropertyId={mandate.property.id}
+          defaultPropertyName={mandate.property.name}
+          defaultUnitId={assigningUnit.id}
+          onClose={() => setAssigningUnit(null)}
+          onSubmit={() => {
+            setAssigningUnit(null);
+            setUnitsLoaded(false);
+            loadUnits();
+            setRefreshCount((c) => c + 1);
+          }}
+        />
+      )}
+
+      <UnitFormModal
+        open={unitFormOpen}
+        entityId={entityId}
+        propertyId={mandate.property.id}
+        unit={editingUnit}
+        onClose={() => setUnitFormOpen(false)}
+        onSaved={loadUnits}
       />
 
       {editingLease && (
@@ -1626,6 +2146,20 @@ export function MandateFullViewBoard({
           }}
         />
       )}
+
+      <MandateFormModal
+        open={editTermsOpen}
+        entityId={entityId}
+        editMandate={{
+          id: mandate.id,
+          maintenanceAuthorityKes: mandate.maintenanceAuthorityKes,
+          renewalType: mandate.renewalType,
+          noticePeriodDays: mandate.noticePeriodDays,
+          scopeDescription: mandate.scopeDescription,
+        }}
+        onClose={() => setEditTermsOpen(false)}
+        onCreated={() => setRefreshCount((c) => c + 1)}
+      />
 
       <MandateLetterModal
         open={mandateLetterOpen}
