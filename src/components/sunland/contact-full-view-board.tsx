@@ -161,8 +161,12 @@ export function ContactFullViewBoard({ entityId, contactId }: { entityId: string
 
   useEffect(() => {
     let active = true;
-    setIsLoading(true);
-    setError(null);
+    Promise.resolve().then(() => {
+      if (active) {
+        setIsLoading(true);
+        setError(null);
+      }
+    });
     fetch(`/api/contacts/${contactId}?entityId=${entityId || ""}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Request failed (${res.status})`);

@@ -36,7 +36,9 @@ export default function RevenueStreamDropdown({ entityId = "group" }: { entityId
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    Promise.resolve().then(() => {
+      if (!cancelled) setLoading(true);
+    });
     fetch(`/api/finance/revenue-streams?entityId=${entityId}`)
       .then((res) => res.json())
       .then((json) => {

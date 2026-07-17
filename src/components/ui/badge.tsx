@@ -50,7 +50,7 @@ export function MarketBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[9px] font-medium uppercase tracking-widest shadow-sm",
+        "inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xxs font-medium uppercase tracking-widest shadow-sm",
         marketTones[tone],
         className
       )}

@@ -1,8 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { leases, tenantPayments, transactions } from "@/db/schema";
+import { activityLogs, leases, tenantPayments, transactions } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
-import { writeAudit } from "@/lib/authz/audit";
 import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";
 import type { CallerContext } from "@/lib/services/types";
 import { initiateStkPushSchema } from "@/lib/validation/payments";
@@ -151,14 +150,20 @@ export async function handleMpesaCallback(rawPayload: unknown) {
       .where(eq(tenantPayments.id, payment.id))
       .returning();
 
-    await writeAudit(tx, { user: { id: "system", name: "M-Pesa Callback", email: "", role: "system" as never }, entityId: payment.entityId, requestId: crypto.randomUUID() }, {
+    // Not writeAudit(): this callback is invoked by Safaricom's servers, not
+    // an authenticated staff CallerContext, so there's no real ctx.user.id to
+    // attribute the action to. activityLogs.actorId is nullable precisely for
+    // system-triggered events like this one - inserted directly rather than
+    // fabricating a fake user id that would violate the actorId->users FK.
+    await tx.insert(activityLogs).values({
+      entityId: payment.entityId,
+      actorId: null,
       action: "payments.mpesa.confirmed",
       associatedType: "tenant_payment",
       associatedId: payment.id,
-      summary: `M-Pesa payment confirmed for lease ${payment.leaseId} (KES ${payment.amountKes}, receipt ${receiptNumber ?? "n/a"})`,
-      entityId: payment.entityId,
-      before: payment,
-      after: updated,
+      summary: `M-Pesa payment confirmed via Safaricom callback for lease ${payment.leaseId} (KES ${payment.amountKes}, receipt ${receiptNumber ?? "n/a"})`,
+      beforeData: payment,
+      afterData: updated,
     });
 
     return { status: "confirmed" as const, payment: updated, transaction: tx_ };

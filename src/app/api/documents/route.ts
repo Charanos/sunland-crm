@@ -10,10 +10,11 @@ export async function GET(request: Request) {
     const ownerContactId = searchParams.get("ownerContactId") ?? undefined;
     const propertyId = searchParams.get("propertyId") ?? undefined;
     const leaseId = searchParams.get("leaseId") ?? undefined;
-    const type = (searchParams.get("type") as "mandate_letter" | "lease_agreement" | "rent_receipt" | "statement" | null) ?? undefined;
+    const valuationId = searchParams.get("valuationId") ?? undefined;
+    const type = (searchParams.get("type") as "mandate_letter" | "lease_agreement" | "rent_receipt" | "statement" | "valuation_report" | "offer_letter" | "identification" | "title_deed" | null) ?? undefined;
 
     const ctx = await requireCallerContext(entityId, request);
-    const documentsList = await listDocuments(ctx, { ownerContactId, propertyId, leaseId, type });
+    const documentsList = await listDocuments(ctx, { ownerContactId, propertyId, leaseId, valuationId, type });
 
     return NextResponse.json({ documents: documentsList });
   } catch (error) {

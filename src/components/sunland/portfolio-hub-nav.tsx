@@ -52,7 +52,7 @@ export function PortfolioHubNav({
               >
                 <div className="flex items-center pl-3 pr-2 gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                  <span className="text-[10px] font-medium text-slate-300 uppercase tracking-widest">Leases</span>
+                  <span className="text-xxs font-medium text-slate-300 uppercase tracking-widest">Leases</span>
                 </div>
 
                 <div className="w-px h-4 bg-white/10 mx-1" />

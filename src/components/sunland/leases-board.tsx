@@ -764,13 +764,13 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         )}
                       </div>
                       <div className="mt-2 flex items-center gap-2.5 flex-wrap">
-                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-emerald-400">
+                        <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-emerald-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{mandateStatusBreakdown.active} active
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-amber-400">
+                        <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-amber-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />{mandateStatusBreakdown.pending} pending
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                        <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-slate-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />{mandateStatusBreakdown.terminated} terminated
                         </span>
                       </div>
@@ -787,7 +787,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <span className="text-xs font-medium text-slate-300 relative z-10">Expected Rent Roll</span>
                 <div className="flex flex-col relative z-10 mt-4">
                   <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(mandatesSummary?.expectedRentRollKes ?? 0)}</span>
-                  <p className="text-xs font-medium uppercase tracking-widest text-emerald-400 mt-1">CONTRACTED THIS PERIOD</p>
+                  <p className="text-xxs font-medium uppercase tracking-widest text-emerald-400 mt-1">CONTRACTED THIS PERIOD</p>
                 </div>
               </div>
 
@@ -814,7 +814,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <span className="text-xs font-medium text-slate-300 relative z-10">Management Fee MTD</span>
                 <div className="flex flex-col relative z-10 mt-4">
                   <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(mandatesSummary?.managementFeeMtdKes ?? 0)}</span>
-                  <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mt-1">SUNLAND REVENUE — NOT LANDLORD FUNDS</p>
+                  <p className="text-xxs font-medium uppercase tracking-widest text-slate-400 mt-1">SUNLAND REVENUE — NOT LANDLORD FUNDS</p>
                 </div>
               </div>
 
@@ -826,7 +826,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                 <span className="text-xs font-medium text-slate-300 relative z-10">Remittances Pending</span>
                 <div className="flex flex-col relative z-10 mt-4">
                   <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(mandatesSummary?.remittancesPendingKes ?? 0)}</span>
-                  <p className="text-xs font-medium uppercase tracking-widest text-rose-400 mt-1">{mandatesSummary?.remittancesPendingCount ?? 0} LANDLORD{(mandatesSummary?.remittancesPendingCount !== 1) ? "S" : ""} AWAITING TRANSFER</p>
+                  <p className="text-xxs font-medium uppercase tracking-widest text-rose-400 mt-1">{mandatesSummary?.remittancesPendingCount ?? 0} LANDLORD{(mandatesSummary?.remittancesPendingCount !== 1) ? "S" : ""} AWAITING TRANSFER</p>
                 </div>
               </div>
             </>
@@ -857,13 +857,13 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         )}
                       </div>
                       <div className="mt-2 flex items-center gap-2.5 flex-wrap">
-                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-rose-400">
+                        <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-rose-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />{kpis.statusBreakdown.overdue} overdue
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-amber-400">
+                        <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-amber-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />{kpis.statusBreakdown.expiringSoon} expiring
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-emerald-400">
+                        <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-emerald-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{kpis.statusBreakdown.healthy} healthy
                         </span>
                       </div>
@@ -1689,7 +1689,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         mandateStatusFilter === pill.key ? "bg-[#151936] text-white shadow-sm font-medium" : "text-slate-600 hover:text-slate-700"
                       )}
                     >
-                      {pill.label} <span className={cn("text-[10px] font-mono px-1 py-0.2 rounded bg-slate-200/80 text-slate-600", mandateStatusFilter === pill.key && "bg-white/20 text-white")}>{pill.count}</span>
+                      {pill.label} <span className={cn("text-xxs font-mono px-1 py-0.2 rounded bg-slate-200/80 text-slate-600", mandateStatusFilter === pill.key && "bg-white/20 text-white")}>{pill.count}</span>
                     </button>
                   ))}
                 </div>
@@ -2102,7 +2102,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         statusFilter === pill.key ? "bg-[#151936] text-white shadow-sm font-medium" : "text-slate-600 hover:text-slate-700"
                       )}
                     >
-                      {pill.label} <span className={cn("text-[10px] font-mono px-1 py-0.2 rounded bg-slate-200/80 text-slate-600", statusFilter === pill.key && "bg-white/20 text-white")}>{pill.count}</span>
+                      {pill.label} <span className={cn("text-xxs font-mono px-1 py-0.2 rounded bg-slate-200/80 text-slate-600", statusFilter === pill.key && "bg-white/20 text-white")}>{pill.count}</span>
                     </button>
                   ))}
                 </div>

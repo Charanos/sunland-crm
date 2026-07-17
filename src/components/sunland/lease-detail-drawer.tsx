@@ -37,6 +37,7 @@ interface Lease {
   tenantName: string;
   tenantEmail: string | null;
   tenantPhone: string | null;
+  tenantAvatarUrl?: string | null;
 }
 
 interface AuditEntry {
@@ -238,9 +239,9 @@ export function LeaseDetailDrawer({
             <p className="label-caps text-slate-400 mb-3">Principal Tenant</p>
             <div className="flex items-center gap-3">
               <Avatar
-                src={(lease as any).tenantAvatarUrl || undefined}
+                src={lease.tenantAvatarUrl || undefined}
                 fallback={getInitials(lease.tenantName)}
-                className="size-10 bg-white border border-slate-200 text-slate-400 shrink-0 text-[10px]"
+                className="size-10 bg-white border border-slate-200 text-slate-400 shrink-0 text-xxs"
               />
               <div className="flex-1 min-w-0">
                 <p className="body-sm text-slate-800 leading-none mb-1.5 truncate font-medium">{lease.tenantName}</p>

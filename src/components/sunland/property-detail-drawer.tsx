@@ -357,7 +357,7 @@ export function PropertyDetailDrawer({
                 <Avatar
                   src={property.owner?.avatarUrl || undefined}
                   fallback={ownerName.slice(0, 2).toUpperCase()}
-                  className="size-10 bg-white border border-slate-200 text-slate-400 shrink-0 text-[10px]"
+                  className="size-10 bg-white border border-slate-200 text-slate-400 shrink-0 text-xxs"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="body-sm text-slate-800 leading-none mb-1 truncate">{ownerName}</p>

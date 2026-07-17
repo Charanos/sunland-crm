@@ -11,6 +11,7 @@ import {
 import { entities, timestamps, users } from "@/db/schema/platform";
 import { contacts } from "@/db/schema/crm";
 import { properties, leases } from "@/db/schema/properties";
+import { valuations } from "@/db/schema/valuations";
 
 export const documentType = pgEnum("document_type", [
   "mandate_letter",
@@ -23,6 +24,9 @@ export const documentType = pgEnum("document_type", [
   // via the generic documents API even though the Front Office workflow that
   // would normally formalize/track it isn't built.
   "offer_letter",
+  // Valuation report attached to an acquisition-pipeline prospect (see
+  // src/db/schema/valuations.ts).
+  "valuation_report",
 ]);
 
 export const documents = pgTable(
@@ -43,6 +47,9 @@ export const documents = pgTable(
     // rent receipts) to one tenancy so renewing a lease doesn't drag the old
     // tenancy's documents onto the new lease record.
     leaseId: uuid("lease_id").references(() => leases.id),
+    // Nullable - scopes a valuation report/offer letter to one acquisition
+    // prospect (src/db/schema/valuations.ts), same pattern as propertyId/leaseId.
+    valuationId: uuid("valuation_id").references(() => valuations.id),
     // Captured at upload time - real, not a display-only estimate. Nullable
     // for documents uploaded before this column existed.
     fileSizeBytes: integer("file_size_bytes"),
@@ -54,6 +61,7 @@ export const documents = pgTable(
     ownerContactIdx: index("documents_owner_contact_idx").on(table.ownerContactId),
     propertyIdx: index("documents_property_idx").on(table.propertyId),
     leaseIdx: index("documents_lease_idx").on(table.leaseId),
+    valuationIdx: index("documents_valuation_idx").on(table.valuationId),
     typeIdx: index("documents_type_idx").on(table.type),
   }),
 );

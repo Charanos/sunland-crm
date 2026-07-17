@@ -73,7 +73,9 @@ export function TenantProfileDrawer({
       return;
     }
     let active = true;
-    setLoading(true);
+    Promise.resolve().then(() => {
+      if (active) setLoading(true);
+    });
     fetch(`/api/contacts/${contactId}?entityId=${entityId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {

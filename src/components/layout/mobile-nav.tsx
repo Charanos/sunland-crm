@@ -299,7 +299,7 @@ export function MobileNavigationDrawer() {
                       <IconComponent aria-hidden size={17} stroke={1.8} />
                       <span className="text-sm font-medium">{item.label}</span>
                       {item.badge && (
-                        <span className="ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-[9px] font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
+                        <span className="ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-xxs font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
                           {item.badge}
                         </span>
                       )}
@@ -361,15 +361,15 @@ export function MobileNavigationDrawer() {
                                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                   />
                                 )}
-                                  <span className="relative z-10 flex w-full items-center gap-3">
-                                    <IconComponent aria-hidden size={16} stroke={1.8} />
-                                    <span className="text-sm font-medium">{item.label}</span>
-                                    {item.badge && (
-                                      <span className="ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-[9px] font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
-                                        {item.badge}
-                                      </span>
-                                    )}
-                                  </span>
+                                <span className="relative z-10 flex w-full items-center gap-3">
+                                  <IconComponent aria-hidden size={16} stroke={1.8} />
+                                  <span className="text-sm font-medium">{item.label}</span>
+                                  {item.badge && (
+                                    <span className="ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-xxs font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
+                                      {item.badge}
+                                    </span>
+                                  )}
+                                </span>
                               </Link>
                             );
                           })}
@@ -410,7 +410,7 @@ export function MobileNavigationDrawer() {
                     <p className="truncate text-sm font-medium text-white/80 transition-colors group-hover:text-white/95">
                       {member.name}
                     </p>
-                    <p className="truncate text-[10px] font-medium uppercase tracking-wider text-white/40 mt-0.5">
+                    <p className="truncate text-xxs font-medium uppercase tracking-wider text-white/40 mt-0.5">
                       {member.role.replace(/_/g, " ")}
                     </p>
                   </div>
@@ -436,7 +436,7 @@ export function MobileNavigationDrawer() {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-white/95">{currentUser.name}</p>
-                <p className="truncate text-[10px] font-medium uppercase tracking-widest text-white/40 mt-0.5">{currentUser.role.replace(/_/g, " ")}</p>
+                <p className="truncate text-xxs font-medium uppercase tracking-widest text-white/40 mt-0.5">{currentUser.role.replace(/_/g, " ")}</p>
               </div>
             </Link>
             <div className="flex items-center gap-1">

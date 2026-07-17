@@ -283,9 +283,9 @@ export function SecurityPageContent({ entityId = "group" }: { entityId?: string 
                     </div>
                     <div className="flex items-center gap-2">
                       {u.isActive ? (
-                        <span className="badge-pill badge-tone-success text-[9px]">ACTIVE</span>
+                        <span className="badge-pill badge-tone-success text-xxs">ACTIVE</span>
                       ) : (
-                        <span className="badge-pill badge-tone-neutral text-[9px]">SUSPENDED</span>
+                        <span className="badge-pill badge-tone-neutral text-xxs">SUSPENDED</span>
                       )}
                       <span className={cn("size-2 rounded-full shadow-sm", u.isActive ? "bg-emerald-500" : "bg-slate-300")} title={u.isActive ? "Active" : "Suspended"} />
                     </div>
@@ -422,7 +422,7 @@ export function SecurityPageContent({ entityId = "group" }: { entityId?: string 
                   onChange={e => setMfaCode(e.target.value.replace(/\D/g, ""))}
                   className="w-full text-center tracking-[8px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-lg font-mono font-medium text-slate-800 focus:border-[var(--sidebar)] focus:outline-none transition-all"
                 />
-                <p className="text-[10px] text-center text-slate-400 mt-2">Preview only - any 6 digits will proceed, no backend verification exists yet.</p>
+                <p className="text-xxs text-center text-slate-400 mt-2">Preview only - any 6 digits will proceed, no backend verification exists yet.</p>
               </div>
 
               <div className="flex justify-between items-center pt-2 border-t border-slate-100">

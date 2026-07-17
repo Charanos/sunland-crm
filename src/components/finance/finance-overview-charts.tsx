@@ -241,7 +241,7 @@ export function FinanceOverviewCharts({ period, entityId = "group" }: FinanceOve
       <BoardPanel className="lg:col-span-3 flex flex-col h-[380px]">
         <div className="mb-4">
           <h3 className="text-title-primary">Revenue Streams</h3>
-          <p className="text-meta-muted mt-0.5">This month's income breakdown</p>
+          <p className="text-meta-muted mt-0.5">This month&apos;s income breakdown</p>
         </div>
         {!streamShares ? (
           <div className="flex-1 w-full flex items-center justify-center">

@@ -586,7 +586,7 @@ export function SunlandNav() {
                                   <span className="relative z-10 text-sm font-medium truncate transition-colors">{item.label}</span>
 
                                   {item.badge && (
-                                    <span className="relative z-10 ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-[9px] font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
+                                    <span className="relative z-10 ml-auto rounded-md bg-[#f3df27]/10 px-1.5 py-0.5 text-xxs font-medium tracking-widest uppercase text-[#f3df27]/90 ring-1 ring-[#f3df27]/20 shrink-0">
                                       {item.badge}
                                     </span>
                                   )}
@@ -662,7 +662,7 @@ export function SunlandNav() {
                     <p className="truncate text-sm font-medium text-white/80 group-hover:text-white transition-colors">
                       {member.name}
                     </p>
-                    <p className="truncate text-[10px] font-medium uppercase tracking-wider text-white/40 mt-0.5">
+                    <p className="truncate text-xxs font-medium uppercase tracking-wider text-white/40 mt-0.5">
                       {member.role.replace(/_/g, " ")}
                     </p>
                   </div>
@@ -708,11 +708,11 @@ export function SunlandNav() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-sm font-medium text-white/95">{currentUser.name}</p>
-                    <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-[9px] font-medium text-white/50 tracking-widest uppercase ring-1 ring-white/10 shrink-0">
+                    <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-xxs font-medium text-white/50 tracking-widest uppercase ring-1 ring-white/10 shrink-0">
                       {currentUser.role.replace(/_/g, " ")}
                     </span>
                   </div>
-                  <p className="truncate text-[11px] font-mono text-white/40 mt-1">{currentUser.email}</p>
+                  <p className="truncate text-ms font-mono text-white/40 mt-1">{currentUser.email}</p>
                 </div>
               </div>
 

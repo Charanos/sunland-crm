@@ -24,7 +24,7 @@ When working within the Sunland CRM Next.js codebase, please adhere to these gui
 4. **Typography Strictness**:
    - **CRITICAL: NEVER use `font-semibold` or `font-bold` under any circumstances.** These are strictly forbidden site-wide.
    - **`font-medium` inline is acceptable** for subtle weight variation where no semantic class maps precisely.
-   - **NO INLINE TEXT SIZING**: Never use arbitrary Tailwind sizing classes like `text-[11px]`, `text-[15px]`, `text-[42px]`.
+   - **NO INLINE TEXT SIZING**: Never use arbitrary Tailwind sizing classes like `text-ms`, `text-[15px]`, `text-[42px]`.
    - **USE SEMANTIC CSS** where a matching class exists in `globals.css`: `.headline-lg`, `.headline-md`, `.title-serif`, `.body-md`, `.body-sm`, `.label-caps`, `.text-heading-primary`, `.text-title-primary`, `.text-body-primary`, `.text-body-regular`, `.text-desc-secondary`, `.text-meta-muted`, `.text-meta-muted-strong`.
    - **NUMBERS USE MONO**: ALL numerals (KPIs, stats, prices) must utilize `.mono-stat`, `.mono-data`, or `.mono-amount` rather than generic font rendering.
 
@@ -97,8 +97,8 @@ To ensure consistent, premium executive-level design throughout the CRM, strictl
    - **Whitespace**: Creatively utilize card whitespace using massive, faint background watermarks (`absolute -z-10 opacity-60`) or interactive avatar stacks (for metrics like Active Users).
 
 6. **Typography Standardization (No Arbitrary Pixels)**:
-   - **NEVER use custom pixel sizing classes** like `text-[11px]`, `text-[15px]`, or `text-[42px]`.
-   - Strictly map all typography sizes to standard Tailwind semantics (`text-xs`, `text-sm`, `text-lg`, `text-5xl`).
+   - **NEVER use custom pixel sizing classes** like `text-[15px]`, `text-[28px]`, or `text-[42px]`.
+   - Strictly map all typography sizes to semantic Tailwind configurations: `text-xxs` (10px), `text-ms` (12px), `text-xs` (12px/13px), `text-sm`, `text-md`, `text-lg`.
 
 7. **Media Optimization**:
    - Comprehensively remove standard HTML `<img>` tags. Always use the `next/image` `<Image />` component with properly optimized layouts for properties, avatars, and dashboards.

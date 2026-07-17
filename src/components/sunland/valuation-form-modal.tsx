@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/components/ui/toast-provider";
 import { cn } from "@/lib/utils/cn";
-import { TYPE_META, toDatetimeLocal, type ValuationType } from "./valuation-constants";
+import { toDatetimeLocal } from "./valuation-constants";
 
 export interface ValuationEditTarget {
   id: string;
@@ -14,11 +14,11 @@ export interface ValuationEditTarget {
   propertyId: string | null;
   externalPropertyName: string | null;
   externalLocation: string | null;
-  clientContactId: string | null;
+  landlordContactId: string | null;
+  assignedManagerId: string | null;
   valuerId: string | null;
-  type: ValuationType;
-  purpose: string | null;
-  feeKes: string | null;
+  externalValuerName: string | null;
+  isLand: boolean;
   siteVisitAt: string | null;
   notes: string | null;
 }
@@ -40,15 +40,16 @@ interface UserOption {
 }
 
 const EMPTY_FORM = {
-  subjectMode: "portfolio" as "portfolio" | "external",
+  subjectMode: "external" as "portfolio" | "external",
   propertyId: "",
   externalPropertyName: "",
   externalLocation: "",
-  clientContactId: "",
+  isLand: false,
+  landlordContactId: "",
+  assignedManagerId: "",
+  valuerMode: "sunland" as "sunland" | "external",
   valuerId: "",
-  type: "market" as ValuationType,
-  purpose: "",
-  feeKes: "",
+  externalValuerName: "",
   siteVisitAt: "",
   notes: "",
 };
@@ -75,7 +76,7 @@ export function ValuationFormModal({
   const [form, setForm] = useState(EMPTY_FORM);
   const [properties, setProperties] = useState<PropertyOption[]>([]);
   const [contacts, setContacts] = useState<ContactOption[]>([]);
-  const [staff, setStaff] = useState<UserOption[]>([]);
+  const [managers, setManagers] = useState<UserOption[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -86,11 +87,12 @@ export function ValuationFormModal({
           propertyId: valuation.propertyId ?? "",
           externalPropertyName: valuation.externalPropertyName ?? "",
           externalLocation: valuation.externalLocation ?? "",
-          clientContactId: valuation.clientContactId ?? "",
+          isLand: valuation.isLand,
+          landlordContactId: valuation.landlordContactId ?? "",
+          assignedManagerId: valuation.assignedManagerId ?? "",
+          valuerMode: valuation.externalValuerName ? "external" : "sunland",
           valuerId: valuation.valuerId ?? "",
-          type: valuation.type,
-          purpose: valuation.purpose ?? "",
-          feeKes: valuation.feeKes ?? "",
+          externalValuerName: valuation.externalValuerName ?? "",
           siteVisitAt: toDatetimeLocal(valuation.siteVisitAt),
           notes: valuation.notes ?? "",
         });
@@ -118,10 +120,10 @@ export function ValuationFormModal({
         }
       })
       .catch(() => { });
-    fetch(`/api/identity/users?entityId=${entityId}`)
+    fetch(`/api/identity/users?entityId=${entityId}&role=property_manager`)
       .then((r) => r.json())
       .then((d) => {
-        if (Array.isArray(d.users)) setStaff(d.users.map((u: { id: string; name: string }) => ({ id: u.id, name: u.name })));
+        if (Array.isArray(d.users)) setManagers(d.users.map((u: { id: string; name: string }) => ({ id: u.id, name: u.name })));
       })
       .catch(() => { });
   }, [open, entityId]);
@@ -132,7 +134,7 @@ export function ValuationFormModal({
       return;
     }
     if (form.subjectMode === "external" && !form.externalPropertyName.trim()) {
-      pushToast({ tone: "warning", title: "Missing subject", body: "Name the external property being valued." });
+      pushToast({ tone: "warning", title: "Missing subject", body: "Name the prospect property or land being valued." });
       return;
     }
     setIsSaving(true);
@@ -142,11 +144,11 @@ export function ValuationFormModal({
         propertyId: form.subjectMode === "portfolio" ? form.propertyId : null,
         externalPropertyName: form.subjectMode === "external" ? form.externalPropertyName.trim() : null,
         externalLocation: form.subjectMode === "external" ? (form.externalLocation.trim() || null) : null,
-        clientContactId: form.clientContactId || null,
-        valuerId: form.valuerId || null,
-        type: form.type,
-        purpose: form.purpose.trim() || null,
-        feeKes: form.feeKes.trim() || null,
+        isLand: form.isLand,
+        landlordContactId: form.landlordContactId || null,
+        assignedManagerId: form.assignedManagerId || null,
+        valuerId: form.valuerMode === "sunland" ? (form.valuerId || null) : null,
+        externalValuerName: form.valuerMode === "external" ? (form.externalValuerName.trim() || null) : null,
         siteVisitAt: form.siteVisitAt ? new Date(form.siteVisitAt).toISOString() : null,
         notes: form.notes.trim() || null,
       };
@@ -163,8 +165,8 @@ export function ValuationFormModal({
 
       pushToast({
         tone: "success",
-        title: isEdit ? "Valuation Updated" : "Instruction Opened",
-        body: isEdit ? `${valuation!.valuationCode} has been updated.` : `Valuation ${data.valuation.valuationCode} created.`,
+        title: isEdit ? "Valuation Updated" : "Valuation Scheduled",
+        body: isEdit ? `${valuation!.valuationCode} has been updated.` : `${data.valuation.valuationCode} added to the pipeline.`,
       });
       onSubmit();
       onClose();
@@ -180,17 +182,17 @@ export function ValuationFormModal({
     <Modal
       open={open}
       onClose={() => !isSaving && onClose()}
-      title={isEdit ? `Edit ${valuation!.valuationCode}` : "New Valuation Instruction"}
-      description={isEdit ? "Update the instruction details" : "Open a chargeable valuation instruction for a portfolio or external subject"}
+      title={isEdit ? `Edit ${valuation!.valuationCode}` : "Schedule Valuation"}
+      description={isEdit ? "Update the prospect details" : "Front Office submits; the assigned property manager conducts the site visit and valuation"}
       size="lg"
     >
       <div className="space-y-5">
         {/* Subject */}
         <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-            <h3 className="text-title-primary">Subject Property</h3>
+            <h3 className="text-title-primary">Prospect Property or Land</h3>
             <div className="flex bg-slate-100 p-1 rounded-lg">
-              {(["portfolio", "external"] as const).map((m) => (
+              {(["external", "portfolio"] as const).map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -200,7 +202,7 @@ export function ValuationFormModal({
                     form.subjectMode === m ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700",
                   )}
                 >
-                  {m === "portfolio" ? "Portfolio" : "External"}
+                  {m === "portfolio" ? "Portfolio" : "New Prospect"}
                 </button>
               ))}
             </div>
@@ -221,83 +223,115 @@ export function ValuationFormModal({
               </select>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="label-caps text-slate-400 mb-1.5 block">Property Name</label>
-                <input
-                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-                  placeholder="e.g. Riverside Grove Office Park"
-                  value={form.externalPropertyName}
-                  onChange={(e) => setForm((f) => ({ ...f, externalPropertyName: e.target.value }))}
-                />
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label-caps text-slate-400 mb-1.5 block">Property or Land Name</label>
+                  <input
+                    className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                    placeholder="e.g. Riverside Apartments, Kileleshwa"
+                    value={form.externalPropertyName}
+                    onChange={(e) => setForm((f) => ({ ...f, externalPropertyName: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="label-caps text-slate-400 mb-1.5 block">Location</label>
+                  <input
+                    className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                    placeholder="e.g. Kileleshwa, Nairobi"
+                    value={form.externalLocation}
+                    onChange={(e) => setForm((f) => ({ ...f, externalLocation: e.target.value }))}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="label-caps text-slate-400 mb-1.5 block">Location</label>
+              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer w-fit">
                 <input
-                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-                  placeholder="e.g. Riverside Drive, Nairobi"
-                  value={form.externalLocation}
-                  onChange={(e) => setForm((f) => ({ ...f, externalLocation: e.target.value }))}
+                  type="checkbox"
+                  checked={form.isLand}
+                  onChange={(e) => setForm((f) => ({ ...f, isLand: e.target.checked }))}
+                  className="rounded border-slate-300"
                 />
-              </div>
-            </div>
+                This is raw land, not a built property
+              </label>
+            </>
           )}
         </div>
 
-        {/* Instruction */}
+        {/* People */}
         <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
-          <h3 className="text-title-primary border-b border-slate-200 pb-2">Instruction Details</h3>
+          <h3 className="text-title-primary border-b border-slate-200 pb-2">Landlord, Manager &amp; Valuer</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Valuation Type</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Landlord / Owner Contact</label>
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-                value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ValuationType }))}
+                value={form.landlordContactId}
+                onChange={(e) => setForm((f) => ({ ...f, landlordContactId: e.target.value }))}
               >
-                {(Object.keys(TYPE_META) as ValuationType[]).map((t) => (
-                  <option key={t} value={t}>{TYPE_META[t]}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Client</label>
-              <select
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-                value={form.clientContactId}
-                onChange={(e) => setForm((f) => ({ ...f, clientContactId: e.target.value }))}
-              >
-                <option value="">-- No client on record --</option>
+                <option value="">-- No contact on record --</option>
                 {contacts.map((c) => (
                   <option key={c.id} value={c.id}>{c.displayName}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Assigned Valuer</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Assigned Property Manager</label>
+              <select
+                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                value={form.assignedManagerId}
+                onChange={(e) => setForm((f) => ({ ...f, assignedManagerId: e.target.value }))}
+              >
+                <option value="">-- Unassigned --</option>
+                {managers.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="label-caps text-slate-400">Valuer</label>
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                {(["sunland", "external"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, valuerMode: m }))}
+                    className={cn(
+                      "px-2.5 py-0.5 text-xs font-medium rounded-md transition-colors",
+                      form.valuerMode === m ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700",
+                    )}
+                  >
+                    {m === "sunland" ? "Sunland Valuers" : "Independent Firm"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {form.valuerMode === "sunland" ? (
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 value={form.valuerId}
                 onChange={(e) => setForm((f) => ({ ...f, valuerId: e.target.value }))}
               >
-                <option value="">-- Unassigned --</option>
-                {staff.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
+                <option value="">-- Sunland Valuers Ltd (default) --</option>
+                {managers.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name} (internal)</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Professional Fee (KES)</label>
+            ) : (
               <input
-                type="number"
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-                placeholder="e.g. 150000"
-                value={form.feeKes}
-                onChange={(e) => setForm((f) => ({ ...f, feeKes: e.target.value }))}
+                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                placeholder="e.g. Knight & Kale Valuers"
+                value={form.externalValuerName}
+                onChange={(e) => setForm((f) => ({ ...f, externalValuerName: e.target.value }))}
               />
-            </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Site Visit</label>
+              <label className="label-caps text-slate-400 mb-1.5 block">Site Visit (optional)</label>
               <input
                 type="datetime-local"
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -305,21 +339,12 @@ export function ValuationFormModal({
                 onChange={(e) => setForm((f) => ({ ...f, siteVisitAt: e.target.value }))}
               />
             </div>
-            <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Purpose</label>
-              <input
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-                placeholder="e.g. Mortgage security for facility renewal"
-                value={form.purpose}
-                onChange={(e) => setForm((f) => ({ ...f, purpose: e.target.value }))}
-              />
-            </div>
           </div>
           <div>
             <label className="label-caps text-slate-400 mb-1.5 block">Notes</label>
             <textarea
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary resize-none h-20 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-              placeholder="Access arrangements, comparables, internal context…"
+              placeholder="Access arrangements, how the lead came in, internal context…"
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
             />
@@ -330,9 +355,9 @@ export function ValuationFormModal({
           <Button variant="secondary" onClick={onClose} disabled={isSaving}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSaving}>
             {isSaving ? (
-              <><LoadingSpinner size="sm" /><span className="ml-2">{isEdit ? "Saving…" : "Opening…"}</span></>
+              <><LoadingSpinner size="sm" /><span className="ml-2">{isEdit ? "Saving…" : "Scheduling…"}</span></>
             ) : (
-              isEdit ? "Save Changes" : "Open Instruction"
+              isEdit ? "Save Changes" : "Schedule & Assign"
             )}
           </Button>
         </div>

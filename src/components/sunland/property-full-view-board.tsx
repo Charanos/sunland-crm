@@ -1456,7 +1456,7 @@ function OverviewPanel({ property, handlers }: { property: PropertyDetail; handl
                         <Avatar
                           src={property.mandate.manager.avatarUrl || undefined}
                           fallback={property.mandate.manager.name.slice(0, 2).toUpperCase()}
-                          className="size-9 bg-emerald-700 text-white text-[10px]"
+                          className="size-9 bg-emerald-700 text-white text-xxs"
                         />
                         <span className="min-w-0">
                           <span className="block body-sm font-medium text-slate-900 truncate">{property.mandate.manager.name}</span>

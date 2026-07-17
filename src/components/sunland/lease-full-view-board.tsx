@@ -754,7 +754,7 @@ export function LeaseFullViewBoard({
               {lease.isActive ? "Active Tenancy" : "Terminated"}
             </span>
             <div className="flex flex-col items-end gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-              <span className="bg-white/10 font-mono backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">
+              <span className="bg-white/10 font-mono backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-xxs font-medium uppercase tracking-wider whitespace-nowrap">
                 {lease.propertyType} · UNIT {lease.propertyCode}
               </span>
               <div className="hidden sm:flex w-fit bg-white/95 backdrop-blur-md rounded-[18px] p-3.5 shadow-xl items-center gap-3 border border-white/60 text-slate-900">
@@ -801,7 +801,7 @@ export function LeaseFullViewBoard({
                 />
                 <div className="text-left leading-none">
                   <p className="text-sm font-medium text-white">{lease.tenantName}</p>
-                  <span className="text-[9px] uppercase tracking-widest text-slate-300 block">Tenant</span>
+                  <span className="text-xxs uppercase tracking-widest text-slate-300 block">Tenant</span>
                 </div>
               </button>
               {lease.landlord && (
@@ -817,7 +817,7 @@ export function LeaseFullViewBoard({
                   />
                   <div className="text-left leading-none">
                     <p className="text-sm font-medium text-white">{lease.landlord.name}</p>
-                    <span className="text-[9px] uppercase tracking-widest text-slate-300 block">Landlord</span>
+                    <span className="text-xxs uppercase tracking-widest text-slate-300 block">Landlord</span>
                   </div>
                 </button>
               )}

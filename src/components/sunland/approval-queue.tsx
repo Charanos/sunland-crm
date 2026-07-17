@@ -127,7 +127,7 @@ export function ApprovalQueue({ onActionComplete }: { onActionComplete?: () => v
               >
                 <div className="flex flex-col gap-4 w-full">
                   <div className="flex items-center gap-3 mb-1">
-                    <Badge tone="neutral" className="px-2 py-0.5 text-[10px] tracking-widest uppercase shadow-sm">
+                    <Badge tone="neutral" className="px-2 py-0.5 text-xxs tracking-widest uppercase shadow-sm">
                       {req.requestType ? req.requestType.replace(/_/g, " ") : "GENERAL"}
                     </Badge>
                     <span className="text-meta-muted text-xs">ID: <span className="mono-data ml-1">{req.id.split("-")[0]}</span></span>

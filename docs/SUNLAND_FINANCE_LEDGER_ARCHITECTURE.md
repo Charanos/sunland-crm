@@ -75,9 +75,9 @@ The hardcoded 7 accounts in `ledger/route.ts` today are a good *start*; a real p
 | 3000 | Share Capital | equity | |
 | 3100 | Retained Earnings | equity | closed to at period end - never a magic constant |
 | 4000 | Management Fee Revenue | revenue | the core P&L line |
-| 4100 | Letting / Lease Fee Revenue | revenue | |
-| 4200 | Sales Commission Revenue | revenue | |
-| 4300 | Valuation Fee Revenue | revenue | |
+| 4100 | Letting / Lease Fee Revenue | revenue | **implemented 2026-07-17** as `agreement_fee` on `transactions.type` - see below |
+| 4200 | Sales Commission Revenue | revenue | **implemented 2026-07-17** as `sales_commission` on `transactions.type` - see below |
+| 4300 | Valuation Fee Revenue | revenue | not yet a distinct account in the real ledger route - `valuation_fee` transactions still post to 4000 in `/api/finance/ledger` (pre-existing, out of scope for the 2026-07-17 revenue-streams work) |
 | 4400 | Late-Fee / Penalty Revenue | revenue | |
 | 5000 | Salaries & Wages | expense | |
 | 5100 | Office & Administrative | expense | |
@@ -86,6 +86,10 @@ The hardcoded 7 accounts in `ledger/route.ts` today are a good *start*; a real p
 | 6000 | Tax Expense | expense | |
 
 Entity scope: each of the four entities (Group, Commercial, Residential, Valuers) has its own COA instance; Group consolidates.
+
+> **Implementation note (2026-07-17):** per the client call note (`docs/SUNLAND_CLIENT_CALL_REQUIREMENTS_SPEC.md` item 1: "add agreement fees and sales" to revenue streams), `transactionType` gained two real enum values - `agreement_fee` (maps to account 4100) and `sales_commission` (maps to account 4200) - closing the gap between this table's previously-aspirational 4100/4200 rows and actual code. Both are counted as 100%-of-amount revenue in `computeIncome()` (`src/lib/services/dashboard.ts`), same treatment as `commission`/`valuation_fee`, and both are itemized in the real per-stream revenue breakdown (`getRevenueStreamBreakdown()`, `src/lib/services/finance/reports.ts`) and the real Profit & Loss report generator (`generatePnLReport()`, same file) that replaced the CEO Reports page's old "Property Mandates Summary" type.
+>
+> Also new this pass, tracked separately from this ledger's own tables since it's a payment-intent layer that sits in front of `transactions`, not a ledger account itself: `tenant_payments` (`src/db/schema/payments.ts`) scaffolds the M-Pesa/Safaricom Daraja paybill integration named in the same call note (item 6) - see `docs/SUNLAND_CLIENT_CALL_REQUIREMENTS_SPEC.md` item 6 for full status. It is not live; `initiateTenantPayment()` refuses to run without real Daraja credentials.
 
 ---
 

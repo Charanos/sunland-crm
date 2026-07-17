@@ -228,6 +228,50 @@ export function FinanceOverviewScaffold() {
   const [alerts, setAlerts] = useState(INITIAL_FINANCE_ALERTS);
   const [journalPostings, setJournalPostings] = useState(MOCK_JOURNAL_POSTINGS);
 
+  // Real Revenue (MTD) - replaces the hardcoded 14.25M/8.4M mock, which sat
+  // directly above the real revenue-by-stream breakdown built the same pass
+  // (client call note items 1/5) and visibly contradicted it (mock ~14M vs
+  // real ~1-2M at this seed scale). Net cash/receivables/payables/pending
+  // approvals below remain the pre-existing mock - a materially larger,
+  // separate gap (no real AP/AR or cash-position schema exists yet) flagged
+  // in docs/SUNLAND_CLIENT_CALL_REQUIREMENTS_SPEC.md, not fixed here.
+  useEffect(() => {
+    let cancelled = false;
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+    const fetchRevenue = async (entityId: "group" | "commercial") => {
+      const [thisMonth, lastMonth] = await Promise.all([
+        fetch(`/api/finance/revenue-streams?entityId=${entityId}&periodStart=${thisMonthStart.toISOString()}&periodEnd=${now.toISOString()}`).then((r) => r.json()),
+        fetch(`/api/finance/revenue-streams?entityId=${entityId}&periodStart=${lastMonthStart.toISOString()}&periodEnd=${lastMonthEnd.toISOString()}`).then((r) => r.json()),
+      ]);
+      const current = thisMonth.totalRevenueKes ?? 0;
+      const previous = lastMonth.totalRevenueKes ?? 0;
+      const trendPct = previous > 0 ? Math.round(((current - previous) / previous) * 1000) / 10 : current > 0 ? 100 : 0;
+      return { revenueMtd: Math.round(current), revenueTrend: `${trendPct >= 0 ? "+" : ""}${trendPct}%` };
+    };
+
+    Promise.all([fetchRevenue("group"), fetchRevenue("commercial")])
+      .then(([groupRevenue, commercialRevenue]) => {
+        if (cancelled) return;
+        setMetrics((prev) => ({
+          group: { ...prev.group, ...groupRevenue },
+          commercial: { ...prev.commercial, ...commercialRevenue },
+        }));
+      })
+      .catch(() => {
+        // Leave the mock in place rather than showing a broken/zeroed card if
+        // the fetch fails - no live credentials/network issue should crash
+        // the rest of the page.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Pending approvals state
   const [approvals, setApprovals] = useState(INITIAL_PENDING_APPROVALS);
   const [approvalConfirm, setApprovalConfirm] = useState<{ type: "approve" | "reject"; item: PendingApprovalRequest } | null>(null);

@@ -266,14 +266,14 @@ export function NotificationsPageContent({ portalPrefix = "/admin" }: { portalPr
                           {n.title}
                         </p>
                         {isUnread && (
-                          <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[9px] font-normal px-1.5 py-0.5 uppercase tracking-wide">New</span>
+                          <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-xxs font-normal px-1.5 py-0.5 uppercase tracking-wide">New</span>
                         )}
                       </div>
                       <span className="text-tiny font-mono text-slate-400">{relativeTime(n.createdAt)}</span>
                     </div>
                     <p className="text-tiny text-slate-400 mt-1.5 leading-relaxed">{n.body}</p>
                     <div className="flex items-center gap-2 mt-2.5">
-                      <span className="rounded bg-slate-100 text-slate-600 text-[9px] font-mono font-normal px-2 py-0.5 uppercase tracking-wider">{meta.label}</span>
+                      <span className="rounded bg-slate-100 text-slate-600 text-xxs font-mono font-normal px-2 py-0.5 uppercase tracking-wider">{meta.label}</span>
                       {resolvePortalPath(n.href) && (
                         <Link
                           href={resolvePortalPath(n.href)!}

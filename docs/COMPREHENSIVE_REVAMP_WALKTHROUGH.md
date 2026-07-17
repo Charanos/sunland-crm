@@ -282,4 +282,4 @@ A rigorous aesthetic synchronization was applied across the entire Top Navigatio
 
 ### 14.2 Trigger Animations & Typography
 - **Triggers:** Standardized all top-bar trigger elements (including the user pill) to feature elegant `hover:bg-slate-100/80` state transitions. Over-designed animations (such as 180-degree chevron spins and heavy scaling) were replaced with minimal, tactile `translate-y-px` interactions.
-- **Role Badges:** Substituted arbitrary pixel-based sizing (e.g., `text-[10px]`, `rounded-[14px]`) with strict semantic Tailwind sizes (`text-xs`, `rounded-xl`). Used the native `<Badge tone="neutral">` component within the user profile card to guarantee structural and typography consistency.
+- **Role Badges:** Substituted arbitrary pixel-based sizing (e.g., `text-xxs`, `rounded-[14px]`) with strict semantic Tailwind sizes (`text-xs`, `rounded-xl`). Used the native `<Badge tone="neutral">` component within the user profile card to guarantee structural and typography consistency.

@@ -195,7 +195,7 @@ function ConversationItem({ convo, active, onClick }: { convo: Conversation; act
       </div>
 
       {convo.unreadCount > 0 && (
-        <span className="shrink-0 flex size-4 items-center justify-center rounded-full bg-[#151936] text-[10px] font-mono text-white font-medium">
+        <span className="shrink-0 flex size-4 items-center justify-center rounded-full bg-[#151936] text-xxs font-mono text-white font-medium">
           {convo.unreadCount}
         </span>
       )}

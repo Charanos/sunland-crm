@@ -236,7 +236,7 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
                           )}>
                             {msg.content}
                             <div className={cn(
-                              "flex items-center justify-end gap-1 mt-1 text-[10px] font-mono",
+                              "flex items-center justify-end gap-1 mt-1 text-xxs font-mono",
                               isMe ? "text-white/50" : "text-slate-400"
                             )}>
                               {formatTime(msg.createdAt)}
@@ -314,12 +314,12 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center mb-0.5">
                             <h4 className="font-medium text-slate-800 truncate group-hover:text-[#151936] text-caption">{other?.name ?? "Unknown"}</h4>
-                            {dm.lastMessageAt && <span className="text-[10px] font-mono text-slate-400">{formatTime(dm.lastMessageAt)}</span>}
+                            {dm.lastMessageAt && <span className="text-xxs font-mono text-slate-400">{formatTime(dm.lastMessageAt)}</span>}
                           </div>
                           <p className="text-tiny text-slate-400 truncate pr-4">{dm.lastMessagePreview ?? "No messages yet"}</p>
                         </div>
                         {dm.unreadCount > 0 && (
-                          <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
+                          <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-xxs font-medium text-[#151936]">
                             {dm.unreadCount}
                           </div>
                         )}
@@ -343,7 +343,7 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
                         <p className="text-tiny text-slate-400 truncate">{ch.lastMessagePreview ?? "No messages yet"}</p>
                       </div>
                       {ch.unreadCount > 0 && (
-                        <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-[10px] font-medium text-[#151936]">
+                        <div className="shrink-0 size-[18px] rounded-full bg-[#f3df27] flex items-center justify-center text-xxs font-medium text-[#151936]">
                           {ch.unreadCount}
                         </div>
                       )}
@@ -394,7 +394,7 @@ export function GlobalChatWidget({ entityId = "group" }: { entityId?: string }) 
         {/* Unread Badge */}
         {!chatOpen && totalUnread > 0 && (
           <div className="absolute top-0 right-0 size-4 bg-rose-500 rounded-full border-2 border-[#151936] flex items-center justify-center">
-            <span className="text-[9px] font-medium text-white">{totalUnread > 9 ? "9+" : totalUnread}</span>
+            <span className="text-xxs font-medium text-white">{totalUnread > 9 ? "9+" : totalUnread}</span>
           </div>
         )}
       </motion.button>

@@ -386,7 +386,7 @@ function NotificationsPanel({
                 {/* Inline Mark as Read Action on Hover */}
                 {!n.read && (
                   <div className="absolute right-3 bottom-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-[10px] font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-100 transition-colors">
+                    <span className="text-xxs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-100 transition-colors">
                       Mark read
                     </span>
                   </div>
@@ -430,7 +430,7 @@ function QuickCreatePanel({ onClose }: { onClose: () => void }) {
               </span>
               <span className="text-sm font-medium flex-1 text-slate-600 text-left transition-colors group-hover:text-slate-900">{action.label}</span>
               {action.shortcut && (
-                <kbd className="text-[10px] select-none rounded-[6px] border border-slate-200/80 bg-white px-1.5 py-0.5 font-mono font-medium text-slate-400 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors group-hover:border-slate-300 group-hover:text-slate-500">
+                <kbd className="text-xxs select-none rounded-[6px] border border-slate-200/80 bg-white px-1.5 py-0.5 font-mono font-medium text-slate-400 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors group-hover:border-slate-300 group-hover:text-slate-500">
                   ⌘{action.shortcut}
                 </kbd>
               )}
@@ -606,7 +606,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
               {/* Day labels */}
               <div className="mb-4 grid grid-cols-7 gap-1">
                 {WEEKDAYS.map((d) => (
-                  <div key={d} className="text-center text-[11px] font-medium uppercase tracking-widest text-slate-400">
+                  <div key={d} className="text-center text-ms font-medium uppercase tracking-widest text-slate-400">
                     {d}
                   </div>
                 ))}
@@ -741,7 +741,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                     <span className={cn("mt-[6px] size-2.5 shrink-0 rounded-full", EVENT_COLORS[ev.type])} />
                     <div className="min-w-0 flex-1">
                       <p className="text-[14px] font-medium text-slate-800 leading-snug">{ev.title}</p>
-                      <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[11px] font-medium tracking-tight text-slate-400">
+                      <p className="mt-1.5 flex items-center gap-1.5 font-mono text-ms font-medium tracking-tight text-slate-400">
                         <IconClock size={13} aria-hidden />
                         {timeStr}
                       </p>
@@ -891,7 +891,7 @@ function SearchBar() {
       </span>
       <kbd
         className={cn(
-          "pointer-events-none select-none rounded-[6px] border px-1.5 py-0.5 text-[10px] font-medium tracking-widest transition-opacity shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
+          "pointer-events-none select-none rounded-[6px] border px-1.5 py-0.5 text-xxs font-medium tracking-widest transition-opacity shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
           focused ? "opacity-0" : "border-slate-200 bg-white text-slate-400 group-hover:border-slate-300 group-hover:text-slate-500",
         )}
       >
@@ -1023,12 +1023,24 @@ export function TopNav() {
   const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   useEffect(() => {
-    setNotificationsLoading(true);
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) setNotificationsLoading(true);
+    });
     fetch("/api/notifications")
       .then((res) => (res.ok ? res.json() : { notifications: [] }))
-      .then((data) => setNotifications((data.notifications ?? []).map(mapApiNotification)))
-      .catch(() => setNotifications([]))
-      .finally(() => setNotificationsLoading(false));
+      .then((data) => {
+        if (active) setNotifications((data.notifications ?? []).map(mapApiNotification));
+      })
+      .catch(() => {
+        if (active) setNotifications([]);
+      })
+      .finally(() => {
+        if (active) setNotificationsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleMarkRead = (id: string) => {

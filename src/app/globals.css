@@ -46,6 +46,8 @@
   --font-serif: var(--font-cardo);
 
   --text-xs: 12px;
+  --text-ms: 12px;
+  --text-xxs: 10px;
   --text-sm: 13.5px;
   --text-base: 15px;
   --text-lg: 17.5px;

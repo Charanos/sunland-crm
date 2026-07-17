@@ -1342,7 +1342,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                   {(["Form", "Photo", "QR"] as const).map((s, i) => (
                     <div key={s} className="flex items-center gap-1.5">
                       <div className={cn(
-                        "size-5 rounded-full flex items-center justify-center text-[10px] transition-all",
+                        "size-5 rounded-full flex items-center justify-center text-xxs transition-all",
                         (logStep === "form" && i === 0) || (logStep === "photo" && i === 1) || (logStep === "qr" && i === 2)
                           ? "bg-[var(--sidebar)] text-white"
                           : (i === 0 && logStep !== "form") || (i === 1 && logStep === "qr")

@@ -91,8 +91,12 @@ export function ManagerFullViewBoard({ entityId, managerId }: { entityId: string
 
   useEffect(() => {
     let active = true;
-    setIsLoading(true);
-    setError(null);
+    Promise.resolve().then(() => {
+      if (active) {
+        setIsLoading(true);
+        setError(null);
+      }
+    });
     fetch(`/api/identity/users/${managerId}/profile?entityId=${entityId || ""}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Request failed (${res.status})`);

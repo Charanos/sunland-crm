@@ -1920,6 +1920,152 @@ async function runSeed() {
 
     console.log("Created 7 calendar events.");
 
+    // 12. Valuations - new-mandate acquisition pipeline (2026-07-17 repurpose).
+    // Real spread across 6 of the 7 stages (mandate_signed is deliberately
+    // NOT pre-seeded here - it's reached by actually converting the
+    // "accepted" row below via signMandateFromValuation() during backend
+    // verification, so the resulting property_mandates row is genuinely
+    // real rather than a fabricated resultingMandateId). Reuses real
+    // landlords (landlordA verified, landlordB unverified) and real
+    // property_manager users rather than inventing new contacts.
+    console.log("Step 12: Populating valuation/acquisition pipeline...");
+    const valDaysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
+    const valuationsToInsert: (typeof valuations.$inferInsert)[] = [
+      {
+        entityId: groupEntity.id,
+        valuationCode: "VAL-2607-A1F3",
+        externalPropertyName: "Kestrel Ridge Land Parcel",
+        externalLocation: "Kitengela, Kajiado",
+        landlordContactId: landlordB.id,
+        isLand: true,
+        stage: "requested",
+        stageEnteredAt: valDaysAgo(4),
+        notes: "Landlord approached Front Office directly asking about management of a 2-acre parcel zoned for residential development.",
+        createdAt: valDaysAgo(4),
+      },
+      {
+        entityId: groupEntity.id,
+        valuationCode: "VAL-2607-B2E4",
+        externalPropertyName: "Acacia Grove Apartments",
+        externalLocation: "Ruaka, Kiambu",
+        landlordContactId: landlordB.id,
+        assignedManagerId: propertyManager2User.id,
+        isLand: false,
+        stage: "site_visit",
+        siteVisitAt: valDaysAgo(2),
+        stageEnteredAt: valDaysAgo(9),
+        createdAt: valDaysAgo(12),
+      },
+      {
+        entityId: groupEntity.id,
+        valuationCode: "VAL-2607-C3D5",
+        externalPropertyName: "Baraka Heights",
+        externalLocation: "Syokimau, Machakos",
+        landlordContactId: landlordA.id,
+        assignedManagerId: propertyManager1User.id,
+        valuerId: propertyManager1User.id,
+        isLand: false,
+        stage: "valued",
+        marketValueKes: "28500000.00",
+        proposedFeeRate: "0.0900",
+        methodology: "Income capitalization approach using comparable market rents for Syokimau's 2-3BR apartment segment, capped at a 9.5% yield reflecting current absorption rates along the SGR corridor.",
+        comparables: [
+          { name: "Comp A - same estate", pricePerSqft: 6800, adjustmentPct: -3, adjustedValueKes: 27700000 },
+          { name: "Comp B - 1.2km east", pricePerSqft: 7100, adjustmentPct: 4, adjustedValueKes: 29600000 },
+          { name: "Comp C - recent sale", pricePerSqft: 6950, adjustmentPct: 0, adjustedValueKes: 28500000 },
+        ],
+        siteVisitAt: valDaysAgo(14),
+        completedAt: valDaysAgo(9),
+        stageEnteredAt: valDaysAgo(9),
+        createdAt: valDaysAgo(24),
+      },
+      {
+        entityId: groupEntity.id,
+        valuationCode: "VAL-2607-D4C6",
+        externalPropertyName: "Palm Court Suites",
+        externalLocation: "Nyali, Mombasa",
+        landlordContactId: landlordA.id,
+        assignedManagerId: propertyManager2User.id,
+        externalValuerName: "Knight & Kale Valuers",
+        isLand: false,
+        stage: "offer_sent",
+        marketValueKes: "41000000.00",
+        proposedFeeRate: "0.0800",
+        methodology: "Direct comparison against three recently transacted coastal apartment blocks within 1km, adjusted for sea-view premium and finish quality.",
+        siteVisitAt: valDaysAgo(20),
+        completedAt: valDaysAgo(11),
+        stageEnteredAt: valDaysAgo(9),
+        createdAt: valDaysAgo(28),
+      },
+      {
+        // Deliberately aged past 21 days in "offer_sent" - the real, honest
+        // input to both the "Stalled > 21 days" KPI and the acquisition-fit
+        // score's freshness component (stageEnteredAt-driven, not a
+        // hardcoded flag).
+        entityId: groupEntity.id,
+        valuationCode: "VAL-2606-E5B7",
+        propertyId: insertedProps[104]?.id ?? null,
+        landlordContactId: landlordB.id,
+        assignedManagerId: propertyManager1User.id,
+        externalValuerName: "Tysons Ltd",
+        isLand: false,
+        stage: "offer_sent",
+        marketValueKes: "19800000.00",
+        proposedFeeRate: "0.1000",
+        methodology: "Rental-yield approach for an existing 8-unit walk-up, cross-checked against Tysons Ltd's internal comparable database.",
+        siteVisitAt: valDaysAgo(40),
+        completedAt: valDaysAgo(33),
+        stageEnteredAt: valDaysAgo(33),
+        createdAt: valDaysAgo(45),
+      },
+      {
+        // Ready to be converted into a real mandate - see the E2E
+        // verification note above. Has everything signMandateFromValuation()
+        // requires: a landlord contact and a proposed fee rate.
+        entityId: groupEntity.id,
+        valuationCode: "VAL-2606-F6A8",
+        externalPropertyName: "Meridian Business Park",
+        externalLocation: "Upper Hill, Nairobi",
+        landlordContactId: landlordA.id,
+        assignedManagerId: propertyManager1User.id,
+        valuerId: propertyManager1User.id,
+        isLand: false,
+        stage: "accepted",
+        marketValueKes: "56000000.00",
+        proposedFeeRate: "0.0750",
+        methodology: "Income capitalization on current 94% occupancy across 12 office suites, cross-checked against two recent Upper Hill Grade-A transactions.",
+        comparables: [
+          { name: "Comp A - same block", pricePerSqft: 9200, adjustmentPct: -2, adjustedValueKes: 54900000 },
+          { name: "Comp B - 400m away", pricePerSqft: 9600, adjustmentPct: 3, adjustedValueKes: 57700000 },
+        ],
+        siteVisitAt: valDaysAgo(30),
+        completedAt: valDaysAgo(22),
+        stageEnteredAt: valDaysAgo(6),
+        createdAt: valDaysAgo(35),
+      },
+      {
+        entityId: groupEntity.id,
+        valuationCode: "VAL-2605-G7F9",
+        externalPropertyName: "Riverbank Warehouse",
+        externalLocation: "Athi River, Machakos",
+        landlordContactId: landlordB.id,
+        assignedManagerId: propertyManager2User.id,
+        externalValuerName: "Knight & Kale Valuers",
+        isLand: false,
+        stage: "declined",
+        marketValueKes: "33000000.00",
+        proposedFeeRate: "0.0850",
+        methodology: "Direct comparison against industrial-zoned warehouse transactions in the Athi River corridor.",
+        siteVisitAt: valDaysAgo(70),
+        completedAt: valDaysAgo(60),
+        stageEnteredAt: valDaysAgo(50),
+        notes: "Landlord opted to self-manage after reviewing the offer; declined to proceed with a mandate.",
+        createdAt: valDaysAgo(75),
+      },
+    ];
+    await db.insert(valuations).values(valuationsToInsert);
+    console.log(`Created ${valuationsToInsert.length} valuations across the acquisition pipeline (requested/site_visit/valued/offer_sent x2/accepted/declined - mandate_signed reached via real conversion in backend verification).`);
+
     console.log("--------------------------------------------------");
     console.log("Database Seed Finished Successfully!");
     console.log("--------------------------------------------------");

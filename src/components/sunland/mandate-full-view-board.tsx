@@ -882,7 +882,7 @@ export function MandateFullViewBoard({
               <IconStarFilled size={14} /> FLAGSHIP MANDATE
             </span>
             <div className="flex flex-col items-end gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-              <span className="bg-white/10 font-mono backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">
+              <span className="bg-white/10 font-mono backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-xxs font-medium uppercase tracking-wider whitespace-nowrap">
                 {MANDATE_STATUS_LABEL[mandate.status].toUpperCase()} · {(mandate.mandateRate * 100).toFixed(1)}% FEE
               </span>
               <div className="hidden sm:flex w-fit bg-white/95 backdrop-blur-md rounded-[18px] p-3.5 shadow-xl items-center gap-3 border border-white/60 text-slate-900">
@@ -929,7 +929,7 @@ export function MandateFullViewBoard({
                 />
                 <div className="text-left leading-none">
                   <p className="text-sm font-medium text-white">{mandate.landlord.name}</p>
-                  <span className="text-[9px] uppercase tracking-widest text-slate-300 block">Landlord</span>
+                  <span className="text-xxs uppercase tracking-widest text-slate-300 block">Landlord</span>
                 </div>
               </button>
               {mandate.manager && (
@@ -945,7 +945,7 @@ export function MandateFullViewBoard({
                   />
                   <div className="text-left leading-none">
                     <p className="text-sm font-medium text-white">{mandate.manager.name}</p>
-                    <span className="text-[9px] uppercase tracking-widest text-slate-300 block">Property Manager</span>
+                    <span className="text-xxs uppercase tracking-widest text-slate-300 block">Property Manager</span>
                   </div>
                 </button>
               )}
@@ -1477,7 +1477,7 @@ export function MandateFullViewBoard({
                               </button>
                             ) : (
                               <span className="flex items-center gap-2.5 min-w-0">
-                                <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-[10px] font-normal shrink-0">—</span>
+                                <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-xxs font-normal shrink-0">—</span>
                                 <span className="text-slate-400 font-medium text-sm">No tenant assigned</span>
                               </span>
                             )}
@@ -1513,7 +1513,7 @@ export function MandateFullViewBoard({
 
                       {/* Desktop/tablet: dense grid */}
                       <div className="hidden sm:flex sm:flex-col overflow-x-auto" style={scrollHiddenStyle}>
-                        <div className="grid grid-cols-[90px_1.2fr_1fr_110px_110px_80px] items-center px-4 py-2.5 bg-slate-50/50 rounded-xl text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 border border-slate-100/60 min-w-[720px]">
+                        <div className="grid grid-cols-[90px_1.2fr_1fr_110px_110px_80px] items-center px-4 py-2.5 bg-slate-50/50 rounded-xl text-xxs font-medium uppercase tracking-wider text-slate-500 mb-2 border border-slate-100/60 min-w-[720px]">
                           <div>Unit</div>
                           <div>Tenant</div>
                           <div>Type</div>
@@ -1544,7 +1544,7 @@ export function MandateFullViewBoard({
                                 </button>
                               ) : (
                                 <span className="flex items-center gap-2.5 min-w-0">
-                                  <span className="size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-[10px] font-normal shrink-0">—</span>
+                                  <span className="size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-xxs font-normal shrink-0">—</span>
                                   <span className="text-slate-400 font-medium">—</span>
                                 </span>
                               )}
@@ -1676,7 +1676,7 @@ export function MandateFullViewBoard({
                         <div className="size-16 flex items-center justify-center">
                           <IconQrcode size={44} className="text-slate-800" stroke={1.5} />
                         </div>
-                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wide text-center leading-tight">Scan to view live copy</span>
+                        <span className="text-xxs text-slate-400 font-medium uppercase tracking-wide text-center leading-tight">Scan to view live copy</span>
                       </div>
                     </div>
                   ) : (

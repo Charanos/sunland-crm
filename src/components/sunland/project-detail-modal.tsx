@@ -103,13 +103,13 @@ export function ProjectDetailModal({
             <div className="flex items-center gap-2">
               <Badge tone={
                 project.department === "sales" ? "primary" :
-                project.department === "finance" ? "success" :
-                project.department === "legal" ? "neutral" :
-                "warning"
-              } className="px-2.5 py-0.5 text-[10px] tracking-widest uppercase shadow-sm">
+                  project.department === "finance" ? "success" :
+                    project.department === "legal" ? "neutral" :
+                      "warning"
+              } className="px-2.5 py-0.5 text-xxs tracking-widest uppercase shadow-sm">
                 {project.department.replace("_", " ")}
               </Badge>
-              <Badge tone="neutral" className="px-2.5 py-0.5 text-[10px] tracking-widest uppercase shadow-sm bg-white">
+              <Badge tone="neutral" className="px-2.5 py-0.5 text-xxs tracking-widest uppercase shadow-sm bg-white">
                 {PROJECT_STATUS_LABEL[project.status]}
               </Badge>
             </div>
@@ -151,7 +151,7 @@ export function ProjectDetailModal({
                   <Image key={id} src={`https://i.pravatar.cc/150?u=${id}`} alt="assignee" width={24} height={24} className="size-6 rounded-full ring-2 ring-white bg-slate-100 shadow-sm object-cover" />
                 ))}
                 {project.assigneeIds.length > 3 && (
-                  <div className="size-6 rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-[10px] font-medium text-slate-600 shadow-sm z-10">
+                  <div className="size-6 rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-xxs font-medium text-slate-600 shadow-sm z-10">
                     +{project.assigneeIds.length - 3}
                   </div>
                 )}

@@ -335,7 +335,7 @@ export function InternalOperationsBoard({
                     </div>
                     <span className="text-sm font-medium text-slate-700">Sales</span>
                   </div>
-                  <Badge tone="success" className="text-[10px] font-medium uppercase tracking-widest px-2 py-0.5">
+                  <Badge tone="success" className="text-xxs font-medium uppercase tracking-widest px-2 py-0.5">
                     <span className="size-1.5 rounded-full bg-teal-500 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)] mr-1.5 inline-block" />
                     Active
                   </Badge>
@@ -343,10 +343,10 @@ export function InternalOperationsBoard({
                 <div className="mt-auto flex items-end justify-between relative z-10">
                   <div>
                     <h3 className="text-4xl leading-none font-mono font-medium text-slate-900 tracking-tight">{departmentStats.sales}</h3>
-                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-2">Active Pipeline</p>
+                    <p className="text-ms font-medium text-slate-400 uppercase tracking-wider mt-2">Active Pipeline</p>
                   </div>
                   <div className="text-right pb-1">
-                    <span className="text-[11px] font-medium uppercase tracking-widest text-teal-600/70">
+                    <span className="text-ms font-medium uppercase tracking-widest text-teal-600/70">
                       Deals
                     </span>
                   </div>
@@ -365,7 +365,7 @@ export function InternalOperationsBoard({
                     </div>
                     <span className="text-sm font-medium text-slate-700">Ops</span>
                   </div>
-                  <Badge tone="warning" className="text-[10px] font-medium uppercase tracking-widest px-2 py-0.5">
+                  <Badge tone="warning" className="text-xxs font-medium uppercase tracking-widest px-2 py-0.5">
                     <span className="size-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)] mr-1.5 inline-block" />
                     Capacity
                   </Badge>
@@ -373,10 +373,10 @@ export function InternalOperationsBoard({
                 <div className="mt-auto flex items-end justify-between relative z-10">
                   <div>
                     <h3 className="text-4xl leading-none font-mono font-medium text-slate-900 tracking-tight">{departmentStats.ops}</h3>
-                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-2">Open Maintenance</p>
+                    <p className="text-ms font-medium text-slate-400 uppercase tracking-wider mt-2">Open Maintenance</p>
                   </div>
                   <div className="text-right pb-1">
-                    <span className="text-[11px] font-medium uppercase tracking-widest text-amber-600/70">
+                    <span className="text-ms font-medium uppercase tracking-widest text-amber-600/70">
                       Active
                     </span>
                   </div>
@@ -395,17 +395,17 @@ export function InternalOperationsBoard({
                     </div>
                     <span className="text-sm font-medium text-slate-700">Legal</span>
                   </div>
-                  <Badge tone="neutral" className="text-[10px] font-medium uppercase tracking-widest px-2 py-0.5">
+                  <Badge tone="neutral" className="text-xxs font-medium uppercase tracking-widest px-2 py-0.5">
                     Processing
                   </Badge>
                 </div>
                 <div className="mt-auto flex items-end justify-between relative z-10">
                   <div>
                     <h3 className="text-4xl leading-none font-mono font-medium text-slate-900 tracking-tight">{departmentStats.legal}</h3>
-                    <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-2">Active Leases</p>
+                    <p className="text-ms font-medium text-slate-400 uppercase tracking-wider mt-2">Active Leases</p>
                   </div>
                   <div className="text-right pb-1">
-                    <span className="text-[11px] font-medium uppercase tracking-widest text-indigo-600/70">
+                    <span className="text-ms font-medium uppercase tracking-widest text-indigo-600/70">
                       Pending
                     </span>
                   </div>
@@ -454,7 +454,7 @@ export function InternalOperationsBoard({
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-3 mt-0.5 shrink-0 ml-4">
-                            <Badge tone="neutral" className="text-[10px] font-medium uppercase tracking-widest px-2 py-0.5 capitalize">
+                            <Badge tone="neutral" className="text-xxs font-medium uppercase tracking-widest px-2 py-0.5 capitalize">
                               {project.department.replace("_", " ")}
                             </Badge>
                           </div>
@@ -468,12 +468,12 @@ export function InternalOperationsBoard({
                                   <Image key={id} src={`https://i.pravatar.cc/150?u=${id}`} alt="assignee" width={26} height={26} className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-100 shadow-sm object-cover" />
                                 ))}
                                 {project.assigneeIds.length > 3 && (
-                                  <div className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-[10px] font-medium text-slate-600 shadow-sm z-10">
+                                  <div className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-xxs font-medium text-slate-600 shadow-sm z-10">
                                     +{project.assigneeIds.length - 3}
                                   </div>
                                 )}
                               </div>
-                              <span className={cn("mono-data whitespace-nowrap px-2.5 py-1 rounded-md text-[11px] font-medium shadow-sm border bg-white", style.badge)}>
+                              <span className={cn("mono-data whitespace-nowrap px-2.5 py-1 rounded-md text-ms font-medium shadow-sm border bg-white", style.badge)}>
                                 {project.progressPercent}% Complete
                               </span>
                             </div>
@@ -495,15 +495,15 @@ export function InternalOperationsBoard({
                                     <Image key={id} src={`https://i.pravatar.cc/150?u=${id}`} alt="assignee" width={26} height={26} className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-100 shadow-sm object-cover" />
                                   ))}
                                   {project.assigneeIds.length > 3 && (
-                                    <div className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-[10px] font-medium text-slate-600 shadow-sm z-10">
+                                    <div className="w-[26px] h-[26px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-xxs font-medium text-slate-600 shadow-sm z-10">
                                       +{project.assigneeIds.length - 3}
                                     </div>
                                   )}
                                 </div>
-                                <span className="text-[12px] font-medium text-slate-400">{project.assigneeIds.length} Assignees</span>
+                                <span className="text-xs font-medium text-slate-400">{project.assigneeIds.length} Assignees</span>
                               </div>
                             )}
-                            <span className={cn("mono-data px-2.5 py-1 rounded-md text-[11px] font-medium shadow-sm border bg-white", style.badge)}>
+                            <span className={cn("mono-data px-2.5 py-1 rounded-md text-ms font-medium shadow-sm border bg-white", style.badge)}>
                               {PROJECT_STATUS_LABEL[project.status]}
                             </span>
                           </div>
@@ -631,7 +631,7 @@ export function InternalOperationsBoard({
                   ? 'Today\'s Itinerary'
                   : selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </span>
-              <span className="text-[10px] font-medium font-mono bg-slate-50 border border-slate-200/60 rounded-lg px-2.5 py-1 shadow-sm">{selectedDateEvents.length} Event(s)</span>
+              <span className="text-xxs font-medium font-mono bg-slate-50 border border-slate-200/60 rounded-lg px-2.5 py-1 shadow-sm">{selectedDateEvents.length} Event(s)</span>
             </h4>
 
             <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
@@ -647,7 +647,7 @@ export function InternalOperationsBoard({
                     {/* Minimal Time Block with Right Border */}
                     <div className="w-16 shrink-0 flex flex-col items-center justify-center px-2 border-r border-slate-100/80 bg-slate-50/30">
                       <span className="mono-stat text-[22px] leading-none mb-1 font-medium tracking-tight">{timePart}</span>
-                      <span className="text-[10px] font-medium tracking-widest opacity-70 uppercase">{periodPart ?? ""}</span>
+                      <span className="text-xxs font-medium tracking-widest opacity-70 uppercase">{periodPart ?? ""}</span>
                     </div>
 
                     <div className="flex-1 w-full flex flex-col justify-center relative z-10 py-1">
@@ -674,7 +674,7 @@ export function InternalOperationsBoard({
                                 <Image key={idx} src={`https://i.pravatar.cc/150?u=${attendee.name}`} alt={attendee.name} width={22} height={22} className="w-[22px] h-[22px] rounded-full ring-2 ring-white bg-slate-100 shadow-sm object-cover" title={attendee.name} />
                               ))}
                               {evt.attendees.length > 3 && (
-                                <div className="w-[22px] h-[22px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-[9px] font-medium text-slate-600 shadow-sm z-10">
+                                <div className="w-[22px] h-[22px] rounded-full ring-2 ring-white bg-slate-50 flex items-center justify-center text-xxs font-medium text-slate-600 shadow-sm z-10">
                                   +{evt.attendees.length - 3}
                                 </div>
                               )}
@@ -683,7 +683,7 @@ export function InternalOperationsBoard({
                         )}
 
                         {/* {evt.needsDisposition && (
-                          <Badge tone="risk" className="ml-auto text-[10px] uppercase tracking-widest px-2 py-0.5 shadow-sm">
+                          <Badge tone="risk" className="ml-auto text-xxs uppercase tracking-widest px-2 py-0.5 shadow-sm">
                             Needs disposition
                           </Badge>
                         )} */}

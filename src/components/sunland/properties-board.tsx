@@ -283,7 +283,7 @@ function PropertyGridCard({
                 <Avatar
                   src={property.owner?.avatarUrl || undefined}
                   fallback={ownerInitials(property)}
-                  className="size-6 text-[10px] bg-[#151936] text-[#f3df27]"
+                  className="size-6 text-xxs bg-[#151936] text-[#f3df27]"
                 />
                 <span className="text-xs text-slate-500 truncate max-w-[100px]">{ownerName}</span>
               </button>
@@ -304,7 +304,7 @@ function PropertyGridCard({
               <Avatar
                 src={property.manager.avatarUrl || undefined}
                 fallback={managerInitials(property.manager.name)}
-                className="size-6 text-[10px] bg-emerald-700 text-white"
+                className="size-6 text-xxs bg-emerald-700 text-white"
               />
               <span className="text-xs text-slate-500 truncate max-w-[100px]">{property.manager.name}</span>
             </button>
@@ -626,7 +626,7 @@ export function PropertiesBoard({
             <div className="flex items-end justify-between gap-3 relative z-10">
               <span className="font-mono text-4xl font-medium text-white">{kpis.total}</span>
               <div className="text-right mb-0.5">
-                <span className="text-xs font-medium uppercase tracking-widest text-emerald-400">{kpis.available} AVAILABLE</span>
+                <span className="text-xxs font-medium uppercase tracking-widest text-emerald-400">{kpis.available} AVAILABLE</span>
               </div>
             </div>
           </div>
@@ -644,7 +644,7 @@ export function PropertiesBoard({
             <div className="flex flex-col justify-between h-full py-1">
               <p className="text-xs font-medium text-slate-300">Occupancy</p>
               <span className="font-mono text-4xl font-medium text-white">{kpis.rate.toFixed(0)}%</span>
-              <p className="text-xs font-medium uppercase tracking-widest text-emerald-400">{kpis.occupied} occupied</p>
+              <p className="text-xxs font-medium uppercase tracking-widest text-emerald-400">{kpis.occupied} occupied</p>
             </div>
           </div>
 
@@ -668,7 +668,7 @@ export function PropertiesBoard({
                   ) : null
                 )}
               </div>
-              <div className="mt-2.5 flex items-center gap-x-3 gap-y-1 flex-wrap">
+              <div className="mt-2.5 flex items-center gap-x-3 text-xxs gap-y-1 flex-wrap">
                 {portfolioMix.map(({ status, count, config }) => {
                   if (count === 0) return null;
                   const textColors: Record<string, string> = {
@@ -682,11 +682,11 @@ export function PropertiesBoard({
                     <span
                       key={status}
                       className={cn(
-                        "flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider",
+                        "flex items-center gap-1 text-xxs font-medium uppercase tracking-wider",
                         textColors[status] || "text-slate-300"
                       )}
                     >
-                      <span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />
+                      <span className={cn("h-1.5 w-1.5  rounded-full", config.dot)} />
                       {count} {config.label}
                     </span>
                   );
