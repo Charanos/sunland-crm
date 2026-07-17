@@ -31,7 +31,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     let lease;
     if (action === "terminate") {
-      lease = await terminateLease(ctx, id);
+      lease = await terminateLease(ctx, id, body.reason);
     } else if (action === "update") {
       lease = await updateLease(ctx, id, body);
     } else if (action === "renew") {

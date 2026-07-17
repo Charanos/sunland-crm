@@ -18,6 +18,7 @@ import {
   IconFileText,
   IconHistory,
   IconLink,
+  IconBell,
   IconMapPin,
   IconMessageCircle,
   IconPhone,
@@ -38,7 +39,7 @@ import {
 import { LeaseFormModal, type LeaseEditTarget } from "./lease-form-modal";
 import { UnitFormModal } from "./unit-form-modal";
 import { LeaseRenewModal, type LeaseRenewTarget } from "./lease-renew-modal";
-import { Badge } from "@/components/ui/erp-primitives";
+import { Badge, SkeletonBlock } from "@/components/ui/erp-primitives";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -53,6 +54,8 @@ import { LeaseDetailDrawer } from "./lease-detail-drawer";
 import { PropertyOwnerProfileDrawer } from "./property-owner-profile-drawer";
 import { PropertyManagerProfileDrawer } from "./property-manager-profile-drawer";
 import { PhotoLightbox } from "./photo-lightbox";
+import { PageTransition } from "@/components/shared/page-transition";
+import { NotifyUserModal } from "./notify-user-modal";
 import { formatCompactKES, formatFileSize } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import type { Property } from "./property-constants";
@@ -227,6 +230,7 @@ export function MandateFullViewBoard({
   const [ownerDrawerOpen, setOwnerDrawerOpen] = useState(false);
   const [managerDrawerOpen, setManagerDrawerOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [notifyPmOpen, setNotifyPmOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
@@ -417,7 +421,7 @@ export function MandateFullViewBoard({
       pushToast({ tone: "success", title: `Generated ${data.units?.length ?? 0} units` });
       loadUnits();
     } catch (err) {
-      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Could not generate units." });
+      pushToast({ tone: "error", title: "Error", body: err instanceof Error ? err.message : "Could not generate units." });
     } finally {
       setGeneratingUnits(false);
     }
@@ -564,8 +568,31 @@ export function MandateFullViewBoard({
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2">
+          <div className="flex flex-col gap-2">
+            <SkeletonBlock className="h-8 w-72" />
+            <SkeletonBlock className="h-4 w-48" />
+          </div>
+          <SkeletonBlock className="h-9 w-40 rounded-full" />
+        </div>
+        <SkeletonBlock className="rounded-[28px] min-h-[300px] lg:min-h-[340px] mt-2" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonBlock key={i} className="rounded-2xl h-[150px]" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-3.5 items-start">
+          <div className="flex flex-col gap-4 min-w-0">
+            <SkeletonBlock className="h-12 w-full rounded-[16px]" />
+            <SkeletonBlock className="h-64 w-full rounded-[24px]" />
+          </div>
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonBlock key={i} className="h-40 w-full rounded-[24px]" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -689,7 +716,7 @@ export function MandateFullViewBoard({
       setTerminateNotes("");
       setRefreshCount((c) => c + 1);
     } catch (err) {
-      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Failed to terminate mandate" });
+      pushToast({ tone: "error", title: "Error", body: err instanceof Error ? err.message : "Failed to terminate mandate" });
     } finally {
       setIsTerminating(false);
     }
@@ -712,7 +739,7 @@ export function MandateFullViewBoard({
       loadRemittances();
       setRefreshCount((c) => c + 1);
     } catch (err) {
-      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Could not generate remittance advice." });
+      pushToast({ tone: "error", title: "Error", body: err instanceof Error ? err.message : "Could not generate remittance advice." });
     } finally {
       setGeneratingRemittance(false);
     }
@@ -734,7 +761,7 @@ export function MandateFullViewBoard({
   const currentMonthName = new Date().toLocaleDateString("en-US", { month: "short" });
 
   return (
-    <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2 animate-fade-in-up">
         <div className="flex flex-col gap-2 min-w-0">
@@ -795,6 +822,10 @@ export function MandateFullViewBoard({
               }
             >
               <DropdownItem icon={IconLink} onClick={handleCopyLink}>Copy deep link</DropdownItem>
+              {mandate.manager && (
+                <DropdownItem icon={IconBell} onClick={() => setNotifyPmOpen(true)}>Notify Property Manager</DropdownItem>
+              )}
+              <DropdownItem icon={IconBell} disabled title="Available once the landlord portal launches">Notify Landlord</DropdownItem>
               {(mandate.status === "active" || mandate.status === "pending_approval") && (
                 <DropdownItem icon={IconTrash} variant="danger" onClick={() => setTerminateOpen(true)}>Terminate mandate</DropdownItem>
               )}
@@ -983,7 +1014,7 @@ export function MandateFullViewBoard({
             type="button"
             onClick={() => setActiveTab(v.tab)}
             className={cn(
-              "relative overflow-hidden rounded-2xl border p-5 flex flex-col justify-between group shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 h-[150px] text-left cursor-pointer focus:outline-hidden",
+              "gsap-stagger relative overflow-hidden rounded-2xl border p-5 flex flex-col justify-between group shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 h-[150px] text-left cursor-pointer focus:outline-hidden",
               VITAL_TONE_BG[v.tone]
             )}
           >
@@ -1408,51 +1439,18 @@ export function MandateFullViewBoard({
                     </div>
                   </div>
 
-                  <div className="flex flex-col overflow-x-auto" style={scrollHiddenStyle}>
-                    {/* Table Header Row */}
-                    <div className="grid grid-cols-[90px_1.2fr_1fr_110px_110px_80px] items-center px-4 py-2.5 bg-slate-50/50 rounded-xl text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 border border-slate-100/60 min-w-[720px]">
-                      <div>Unit</div>
-                      <div>Tenant</div>
-                      <div>Type</div>
-                      <div>Rent</div>
-                      <div>Status</div>
-                      <div className="text-right">Actions</div>
-                    </div>
-
-                    {paginatedUnits.length === 0 ? (
-                      <div className="p-10 text-center text-slate-400 text-sm">No units match this search/filter.</div>
-                    ) : (
-                      <div className="flex flex-col gap-0.5 min-w-[720px]">
+                  {paginatedUnits.length === 0 ? (
+                    <div className="p-10 text-center text-slate-400 text-sm">No units match this search/filter.</div>
+                  ) : (
+                    <>
+                      {/* Mobile: stacked cards - a dense 6-column grid doesn't decard
+                          well below sm, so it gets its own simplified layout instead
+                          of relying on horizontal scroll. */}
+                      <div className="flex flex-col gap-2 sm:hidden">
                         {paginatedUnits.map((unit) => (
-                          <div
-                            key={unit.id}
-                            className="grid grid-cols-[90px_1.2fr_1fr_110px_110px_80px] items-center py-3 px-4 hover:bg-slate-50/60 rounded-2xl transition-colors text-sm group"
-                          >
-                            <span className="font-mono font-normal text-slate-900 truncate">{unit.unitLabel}</span>
-                            {unit.lease ? (
-                              <button
-                                type="button"
-                                onClick={() => router.push(`/admin/leases/${unit.lease!.id}`)}
-                                className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-80 transition-opacity"
-                              >
-                                <Avatar
-                                  src={unit.lease.tenantAvatarUrl || undefined}
-                                  fallback={getInitials(unit.lease.tenantName)}
-                                  className="size-7 bg-slate-100 text-slate-800 text-xs font-normal shrink-0"
-                                />
-                                <span className="text-slate-800 font-medium truncate">{unit.lease.tenantName}</span>
-                              </button>
-                            ) : (
-                              <span className="flex items-center gap-2.5 min-w-0">
-                                <span className="size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-[10px] font-normal shrink-0">—</span>
-                                <span className="text-slate-400 font-medium">—</span>
-                              </span>
-                            )}
-                            <span className="text-slate-500 text-xs truncate pr-2">{unit.unitType || "—"}</span>
-                            <span className={cn("font-mono", unit.monthlyRentKes ? "text-slate-600" : "text-slate-400")}>
-                              {unit.monthlyRentKes ? `${formatCompactKES(parseFloat(unit.monthlyRentKes))}/mo` : "—"}
-                            </span>
-                            <div>
+                          <div key={unit.id} className="rounded-2xl border border-slate-100 p-4 flex flex-col gap-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-mono font-medium text-slate-900">{unit.unitLabel}</span>
                               <Badge
                                 tone={
                                   unit.status === "occupied" ? "success" :
@@ -1464,33 +1462,136 @@ export function MandateFullViewBoard({
                                 {unit.status}
                               </Badge>
                             </div>
-                            <div className="flex justify-end gap-1.5">
-                              {canManage && unit.status === "vacant" && (
-                                <button
-                                  type="button"
-                                  onClick={() => setAssigningUnit(unit)}
-                                  title="Assign tenant"
-                                  className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-                                >
-                                  <IconUsers size={13} />
-                                </button>
-                              )}
-                              {canManage && (
+                            {unit.lease ? (
+                              <button
+                                type="button"
+                                onClick={() => router.push(`/admin/leases/${unit.lease!.id}`)}
+                                className="flex items-center gap-2.5 min-w-0 text-left"
+                              >
+                                <Avatar
+                                  src={unit.lease.tenantAvatarUrl || undefined}
+                                  fallback={getInitials(unit.lease.tenantName)}
+                                  className="size-8 bg-slate-100 text-slate-800 text-xs font-normal shrink-0"
+                                />
+                                <span className="text-slate-800 font-medium truncate text-sm">{unit.lease.tenantName}</span>
+                              </button>
+                            ) : (
+                              <span className="flex items-center gap-2.5 min-w-0">
+                                <span className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-[10px] font-normal shrink-0">—</span>
+                                <span className="text-slate-400 font-medium text-sm">No tenant assigned</span>
+                              </span>
+                            )}
+                            <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-50">
+                              <span className="text-slate-500">{unit.unitType || "—"}</span>
+                              <span className={cn("font-mono", unit.monthlyRentKes ? "text-slate-600" : "text-slate-400")}>
+                                {unit.monthlyRentKes ? `${formatCompactKES(parseFloat(unit.monthlyRentKes))}/mo` : "—"}
+                              </span>
+                            </div>
+                            {canManage && (
+                              <div className="flex justify-end gap-1.5">
+                                {unit.status === "vacant" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setAssigningUnit(unit)}
+                                    className="h-8 px-3 rounded-lg border border-slate-200 flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                                  >
+                                    <IconUsers size={13} /> Assign
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => { setEditingUnit(unit); setUnitFormOpen(true); }}
-                                  title="Edit unit"
-                                  className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                                  className="h-8 px-3 rounded-lg border border-slate-200 flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                                 >
-                                  <IconEdit size={13} />
+                                  <IconEdit size={13} /> Edit
                                 </button>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
-                    )}
-                  </div>
+
+                      {/* Desktop/tablet: dense grid */}
+                      <div className="hidden sm:flex sm:flex-col overflow-x-auto" style={scrollHiddenStyle}>
+                        <div className="grid grid-cols-[90px_1.2fr_1fr_110px_110px_80px] items-center px-4 py-2.5 bg-slate-50/50 rounded-xl text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 border border-slate-100/60 min-w-[720px]">
+                          <div>Unit</div>
+                          <div>Tenant</div>
+                          <div>Type</div>
+                          <div>Rent</div>
+                          <div>Status</div>
+                          <div className="text-right">Actions</div>
+                        </div>
+
+                        <div className="flex flex-col gap-0.5 min-w-[720px]">
+                          {paginatedUnits.map((unit) => (
+                            <div
+                              key={unit.id}
+                              className="grid grid-cols-[90px_1.2fr_1fr_110px_110px_80px] items-center py-3 px-4 hover:bg-slate-50/60 rounded-2xl transition-colors text-sm group"
+                            >
+                              <span className="font-mono font-normal text-slate-900 truncate">{unit.unitLabel}</span>
+                              {unit.lease ? (
+                                <button
+                                  type="button"
+                                  onClick={() => router.push(`/admin/leases/${unit.lease!.id}`)}
+                                  className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-80 transition-opacity"
+                                >
+                                  <Avatar
+                                    src={unit.lease.tenantAvatarUrl || undefined}
+                                    fallback={getInitials(unit.lease.tenantName)}
+                                    className="size-7 bg-slate-100 text-slate-800 text-xs font-normal shrink-0"
+                                  />
+                                  <span className="text-slate-800 font-medium truncate">{unit.lease.tenantName}</span>
+                                </button>
+                              ) : (
+                                <span className="flex items-center gap-2.5 min-w-0">
+                                  <span className="size-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-mono text-[10px] font-normal shrink-0">—</span>
+                                  <span className="text-slate-400 font-medium">—</span>
+                                </span>
+                              )}
+                              <span className="text-slate-500 text-xs truncate pr-2">{unit.unitType || "—"}</span>
+                              <span className={cn("font-mono", unit.monthlyRentKes ? "text-slate-600" : "text-slate-400")}>
+                                {unit.monthlyRentKes ? `${formatCompactKES(parseFloat(unit.monthlyRentKes))}/mo` : "—"}
+                              </span>
+                              <div>
+                                <Badge
+                                  tone={
+                                    unit.status === "occupied" ? "success" :
+                                      unit.status === "reserved" ? "warning" :
+                                        unit.status === "maintenance" ? "risk" :
+                                          "neutral"
+                                  }
+                                >
+                                  {unit.status}
+                                </Badge>
+                              </div>
+                              <div className="flex justify-end gap-1.5">
+                                {canManage && unit.status === "vacant" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setAssigningUnit(unit)}
+                                    title="Assign tenant"
+                                    className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                                  >
+                                    <IconUsers size={13} />
+                                  </button>
+                                )}
+                                {canManage && (
+                                  <button
+                                    type="button"
+                                    onClick={() => { setEditingUnit(unit); setUnitFormOpen(true); }}
+                                    title="Edit unit"
+                                    className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                                  >
+                                    <IconEdit size={13} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {unitTotalPages > 1 && (
                     <div className="flex items-center justify-between pt-2">
@@ -1829,7 +1930,7 @@ export function MandateFullViewBoard({
         {/* Context rail */}
         <div className="flex flex-col gap-4">
           {/* Landlord div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <div className="relative h-56 w-full flex flex-col justify-between p-5 text-center">
               {mandate.landlord.avatarUrl ? (
                 <Image
@@ -1940,7 +2041,7 @@ export function MandateFullViewBoard({
           </div>
 
           {/* Property Manager div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="size-12 rounded-full flex items-center justify-center bg-[#0f132b] text-[#f3df27] font-normal text-sm shrink-0 shadow-xs">
@@ -1986,7 +2087,7 @@ export function MandateFullViewBoard({
           </div>
 
           {/* Property Command Center div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
             <div className="relative h-32 w-full bg-slate-100 flex items-end p-4">
               {primaryImage ? (
                 <Image src={primaryImage} alt="" fill className="object-cover" />
@@ -2012,7 +2113,7 @@ export function MandateFullViewBoard({
           </div>
 
           {/* Portals div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <h4 className="text-base font-medium text-slate-800">Portals</h4>
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between text-xs">
@@ -2036,7 +2137,7 @@ export function MandateFullViewBoard({
           </div>
 
           {/* Quick Facts div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <h4 className="text-base font-medium text-slate-800">Quick Facts</h4>
             <div className="flex flex-col gap-3 text-xs">
               <div className="flex justify-between items-center">
@@ -2242,7 +2343,20 @@ export function MandateFullViewBoard({
         onIndexChange={setLightboxIndex}
         onClose={() => setLightboxOpen(false)}
       />
-    </div>
+
+      {mandate.manager && (
+        <NotifyUserModal
+          open={notifyPmOpen}
+          entityId={entityId}
+          userId={mandate.manager.id}
+          recipientName={mandate.manager.name || "Property Manager"}
+          associatedType="property_mandate"
+          associatedId={mandate.id}
+          href={`/admin/mandates/${mandate.id}`}
+          onClose={() => setNotifyPmOpen(false)}
+        />
+      )}
+    </PageTransition>
   );
 }
 

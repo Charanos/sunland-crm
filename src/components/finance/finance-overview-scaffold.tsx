@@ -43,7 +43,7 @@ import { BoardPanel } from "@/components/ui/erp-primitives";
 import { useUIStore } from "@/store/ui";
 
 // Dynamically import heavy charts and widgets
-const RevenueStreamChart = dynamic(() => import("./revenue-stream-chart"), { ssr: false });
+const RevenueStreamDropdown = dynamic(() => import("./revenue-stream-dropdown"), { ssr: false });
 const UnifiedMarketBoard = dynamic(() => import("@/components/sunland/unified-market-board").then(m => ({ default: m.UnifiedMarketBoard })), { ssr: false });
 
 // ─── Data Registry (Mocked for UI Implementation) ─────────────────────────────
@@ -811,7 +811,7 @@ export function FinanceOverviewScaffold() {
       </section>
 
       {/* ── Data Visualization Tier ── */}
-      <FinanceOverviewCharts period={activePeriod} />
+      <FinanceOverviewCharts period={activePeriod} entityId={context} />
 
       {/* ── Finance Operations & Closing Scheduler ── */}
       <FinanceOperationsScheduler
@@ -1092,7 +1092,7 @@ export function FinanceOverviewScaffold() {
           <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-title-primary">Revenue Breakdown</h2>
-              <p className="text-xs text-slate-450 mt-0.5 font-normal">Management fees, leasing commissions, and valuation services.</p>
+              <p className="text-xs text-slate-450 mt-0.5 font-normal">Management fees, commissions, valuation, agreement, and sales revenue — click a stream for transaction detail.</p>
             </div>
             <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
               {["This Month", "Last Month", "Q3"].map((period, i) => (
@@ -1103,8 +1103,8 @@ export function FinanceOverviewScaffold() {
             </div>
           </div>
 
-          <div className="flex-1 flex items-end">
-            <RevenueStreamChart entityId={context} />
+          <div className="flex-1 flex items-start">
+            <RevenueStreamDropdown entityId={context} />
           </div>
         </div>
 

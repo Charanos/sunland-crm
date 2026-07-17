@@ -921,7 +921,7 @@ export async function getLeaseById(ctx: CallerContext, leaseId: string) {
   return { ...lease, landlord: landlordData, manager: managerData, balanceKes };
 }
 
-export async function terminateLease(ctx: CallerContext, leaseId: string) {
+export async function terminateLease(ctx: CallerContext, leaseId: string, reason?: string) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(ctx.entityId);
   await authorize(ctx, "properties.lease.write", entityId);
@@ -971,7 +971,7 @@ export async function terminateLease(ctx: CallerContext, leaseId: string) {
       action: "properties.lease.terminate",
       associatedType: "lease",
       associatedId: lease.id,
-      summary: `Terminated lease agreement for property ${propertyName ?? lease.propertyId}`,
+      summary: `Terminated lease agreement for property ${propertyName ?? lease.propertyId}${reason ? `: ${reason}` : ""}`,
       entityId,
       before: lease,
       after: { lease: updatedLease, propertyStatus },

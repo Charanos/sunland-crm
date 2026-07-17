@@ -39,6 +39,8 @@ export async function GET(request: Request) {
     let expenseSum = 0;
     let depositSum = 0;
     let otherSum = 0;
+    let agreementFeeSum = 0;
+    let salesCommissionSum = 0;
 
     txs.forEach((tx) => {
       const amt = parseFloat(tx.amountKes.toString()) || 0;
@@ -48,9 +50,11 @@ export async function GET(request: Request) {
       else if (tx.type === "expense") expenseSum += amt;
       else if (tx.type === "deposit") depositSum += amt;
       else if (tx.type === "other") otherSum += amt;
+      else if (tx.type === "agreement_fee") agreementFeeSum += amt;
+      else if (tx.type === "sales_commission") salesCommissionSum += amt;
     });
 
-    const operatingAccount = rentSum + commissionSum + valuationSum + depositSum + otherSum - expenseSum;
+    const operatingAccount = rentSum + commissionSum + valuationSum + depositSum + otherSum + agreementFeeSum + salesCommissionSum - expenseSum;
     const rentClearing = 0; // Rent is allocated immediately
     const remittancesPayable = rentSum * 0.90 - expenseSum;
     const securityDeposit = depositSum;
@@ -65,6 +69,8 @@ export async function GET(request: Request) {
       { code: "2000", name: "Landlord Remittances Payable", category: "Liability", balance: remittancesPayable },
       { code: "3000", name: "Retained Earnings", category: "Equity", balance: retainedEarnings },
       { code: "4000", name: "Management Fee Revenue", category: "Revenue", balance: managementFeeRev },
+      { code: "4100", name: "Letting / Lease Fee Revenue (Agreement Fees)", category: "Revenue", balance: agreementFeeSum },
+      { code: "4200", name: "Sales Commission Revenue", category: "Revenue", balance: salesCommissionSum },
       { code: "5000", name: "Office Administrative Expense", category: "Expense", balance: operatingExpenses },
     ];
 
@@ -96,6 +102,12 @@ export async function GET(request: Request) {
       } else if (tx.type === "deposit") {
         lines.push({ accountCode: "1000", accountName: "Operating Bank Account", type: "debit", amount: amt });
         lines.push({ accountCode: "1300", accountName: "Tenant Security Deposit Account", type: "credit", amount: amt });
+      } else if (tx.type === "agreement_fee") {
+        lines.push({ accountCode: "1000", accountName: "Operating Bank Account", type: "debit", amount: amt });
+        lines.push({ accountCode: "4100", accountName: "Letting / Lease Fee Revenue (Agreement Fees)", type: "credit", amount: amt });
+      } else if (tx.type === "sales_commission") {
+        lines.push({ accountCode: "1000", accountName: "Operating Bank Account", type: "debit", amount: amt });
+        lines.push({ accountCode: "4200", accountName: "Sales Commission Revenue", type: "credit", amount: amt });
       } else {
         lines.push({ accountCode: "1000", accountName: "Operating Bank Account", type: "debit", amount: amt });
         lines.push({ accountCode: "3000", accountName: "Retained Earnings", type: "credit", amount: amt });

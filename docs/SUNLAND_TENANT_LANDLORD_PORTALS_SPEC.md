@@ -148,6 +148,12 @@ Roles `tenant` and `landlord` are **scope_type `self`** - every permission is im
 
 **Property Manager side (ADR 013 §13.2):** no new permission keys - `property_manager` already holds `...keysFor("properties")`, which covers `properties.maintenance.*`. What changes is routing/notification logic (complaints and move-out notices land in the assigned PM's queue, not a generic Ops queue) and a new `misc_charges` read/write path, which rides the same `properties.maintenance.*` grant rather than inventing `properties.misc_charge.*` for a table this closely related to maintenance/tenancy management.
 
+### 5.1 Pending integration point: admin-triggered contact notifications (added 2026-07-17)
+
+The Management Mandate and Tenant Lease detail pages (`mandate-full-view-board.tsx`, `lease-full-view-board.tsx`) now have a "More actions" menu with **Notify Property Manager** (real, working - uses the existing `users`-only `notifications` table via a new `sendManualNotification` service function, `src/lib/services/notifications.ts`) alongside **Notify Landlord** and **Notify Tenant** (visibly present but disabled, labeled "Available once the landlord/tenant portal launches").
+
+The disabled state exists because `notifications.userId` is a NOT NULL FK to `users.id` only - it cannot target a `contacts` row today, which is exactly the identity gap this doc's §2 describes (`users.contactId`/`isExternal` don't exist yet). Once P7's external identity lands, wiring these two buttons should be a small follow-up: resolve the mandate's `landlordContactId` (or the lease's `tenantContactId`) to its linked `users.id` via `contactId`, and reuse `sendManualNotification` as-is - no new backend capability needed, just the identity bridge this doc already specifies.
+
 ---
 
 ## 6. Interconnection (how these feed the internal system)

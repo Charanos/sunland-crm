@@ -3,16 +3,67 @@
 import Link from "next/link";
 import { IconArrowRight, IconChartLine, IconTrendingUp } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
+import { formatCompactKES } from "@/lib/utils/format";
 
-export default function GrowthWidget({ entityId = "group" }: { entityId?: string }) {
-  const isComm = entityId === "commercial";
-  const isRes = entityId === "residential";
+export default function GrowthWidget({
+  incomeKes,
+  rentPool,
+  conversionRate,
+  closedDealsCount,
+  occupancyRate,
+  occupiedProperties,
+  totalProperties,
+  totalPropertiesTrend,
+}: {
+  incomeKes: number;
+  rentPool: number;
+  conversionRate: number;
+  closedDealsCount: number;
+  occupancyRate: number;
+  occupiedProperties: number;
+  totalProperties: number;
+  totalPropertiesTrend: number;
+}) {
+  const revenueAttainmentPct = rentPool > 0 ? Math.min(100, Math.round((incomeKes / rentPool) * 100)) : 0;
+  const conversionPct = Math.min(100, Math.max(0, Math.round(conversionRate)));
+  const occupancyPct = Math.min(100, Math.max(0, Math.round(occupancyRate)));
+  const growthPct = Math.round(totalPropertiesTrend);
 
+  // Every value here is real (from the dashboard's own getDashboardOverview
+  // response) - previously all four metrics were static ternaries keyed only
+  // on entityId, disconnected from any actual data.
   const data = [
-    { label: "Revenue Target", value: isComm ? "82%" : isRes ? "91%" : "88%", target: "KES 50M", gradient: "from-emerald-400 to-teal-500" },
-    { label: "Leasing Pipeline", value: isComm ? "65%" : isRes ? "78%" : "72%", target: "120 Units", gradient: "from-blue-400 to-indigo-500" },
-    { label: "Client Retention", value: isComm ? "94%" : isRes ? "96%" : "95%", target: "95% SLA", gradient: "from-indigo-400 to-purple-500" },
-    { label: "Market Share", value: isComm ? "42%" : isRes ? "58%" : "48%", target: "50% Lead", gradient: "from-amber-400 to-orange-500" },
+    {
+      label: "Revenue Attainment",
+      value: `${revenueAttainmentPct}%`,
+      barPercent: revenueAttainmentPct,
+      target: `of ${formatCompactKES(rentPool)}`,
+      gradient: "from-emerald-400 to-teal-500",
+    },
+    {
+      label: "Lead Conversion",
+      value: `${conversionPct}%`,
+      barPercent: conversionPct,
+      target: `${closedDealsCount} closed`,
+      gradient: "from-blue-400 to-indigo-500",
+    },
+    {
+      label: "Portfolio Occupancy",
+      value: `${occupancyPct}%`,
+      barPercent: occupancyPct,
+      target: `${occupiedProperties}/${totalProperties}`,
+      gradient: "from-indigo-400 to-purple-500",
+    },
+    {
+      label: "Portfolio Growth (MoM)",
+      value: `${growthPct >= 0 ? "+" : ""}${growthPct}%`,
+      // Growth is a diverging month-over-month rate, not a 0-100% share - a
+      // 50%-baseline bar visually reads "above/below flat" rather than
+      // implying progress toward a ceiling.
+      barPercent: Math.min(100, Math.max(0, 50 + growthPct)),
+      target: `${totalProperties} properties`,
+      gradient: "from-amber-400 to-orange-500",
+    },
   ];
 
   return (
@@ -23,7 +74,7 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
         </div>
         <div>
           <h3 className="text-base font-medium text-slate-900 tracking-tight">Growth Metrics</h3>
-          <p className="text-xs text-slate-400 font-medium label-caps tracking-wider mt-0.5">Quarterly Objectives</p>
+          <p className="text-xs text-slate-400 font-medium label-caps tracking-wider mt-0.5">This Month, Live</p>
         </div>
       </div>
 
@@ -40,7 +91,7 @@ export default function GrowthWidget({ entityId = "group" }: { entityId?: string
             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/20">
               <div
                 className={cn("h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r", item.gradient)}
-                style={{ width: item.value }}
+                style={{ width: `${item.barPercent}%` }}
               />
             </div>
           </div>

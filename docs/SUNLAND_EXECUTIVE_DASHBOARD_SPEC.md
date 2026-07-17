@@ -193,12 +193,14 @@ No tabs, no shell changes, additive cards only, per Section 3.
 
 **New KPI tiles** (master spec 9.1), each sourced from the now-fully-specced department dashboards rather than computed independently here:
 
-| Card | Source |
-|---|---|
-| Collection Rate (company-wide) | Finance Overview, Finance spec 7.0 |
-| Payroll Cost Trend | Finance Payroll, Finance spec 7.4 |
-| AP/AR Aging Summary | Finance Payables & Receivables, Finance spec 7.5 |
-| Mandate Count & Collectible Value by Division | Finance Mandates + BD Mandate Status, Finance spec 7.3, BD spec 8.1 |
+| Card | Source | Status |
+|---|---|---|
+| Collection Rate (company-wide) | Finance Overview, Finance spec 7.0 | **Shipped** (2026-07-17) - "Collection Health" card, `getDashboardOverview` (`collectionRatePct`/`collectedThisMonthKes`/`expectedThisMonthKes`), Overview Row 2. |
+| Payroll Cost Trend | Finance Payroll, Finance spec 7.4 | **Deferred** - no payroll/payslip schema exists yet (only a `payroll_officer` RBAC role string); blocked until Finance Payroll (7.4) is actually built. |
+| AP/AR Aging Summary | Finance Payables & Receivables, Finance spec 7.5 | **Deferred** - no accounts-payable/receivable tables exist yet; blocked until Finance Payables & Receivables (7.5) is actually built. |
+| Mandate Count & Collectible Value by Division | Finance Mandates + BD Mandate Status, Finance spec 7.3, BD spec 8.1 | **Shipped, substituted** (2026-07-17) - real data shows all property/mandate/lease records live under a single "group" entity (commercial/residential/valuers entities are staff-scoping only, never property data), so a literal by-division split would be fabricated/degenerate. Shipped instead as "Mandate Portfolio": active/pending/draft/terminated status breakdown + collectible value, `getDashboardOverview` (`mandatePortfolio`), Overview Row 2. |
+
+Row 2 ("Portfolio Command") also ships two tiles outside this table, reusing already-real data rather than waiting on new schema: **Attention Required** (arrears, pending remittances, open maintenance - each linking to its owning page) and the relocated **Closed Deals + Active Pipeline** stack (moved from Row 1 to make room, content unchanged).
 
 **New widgets**, both reusing the existing `KPICard` component per master spec 9.1, no new shell:
 

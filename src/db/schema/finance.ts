@@ -20,6 +20,8 @@ export const transactionType = pgEnum("transaction_type", [
   "expense",
   "deposit",
   "other",
+  "agreement_fee",
+  "sales_commission",
 ]);
 
 // NOTE (P1 will supersede this): this is today's flat cash-movement log, kept

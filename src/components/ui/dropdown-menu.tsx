@@ -124,25 +124,34 @@ export function DropdownItem({
   icon: Icon,
   onClick,
   variant = "default",
+  disabled = false,
+  title,
 }: {
   children: React.ReactNode;
   icon?: React.ComponentType<{ size?: number; className?: string }>;
   onClick?: () => void;
   variant?: "default" | "danger";
+  disabled?: boolean;
+  /** Native title tooltip - useful for explaining why an item is disabled. */
+  title?: string;
 }) {
   return (
     <button
       className={cn(
         "focus-ring flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm transition-colors",
-        variant === "danger"
-          ? "text-rose-600 hover:bg-rose-50"
-          : "text-[var(--on-surface)] hover:bg-[var(--surface-muted)]",
+        disabled
+          ? "text-slate-300 cursor-not-allowed"
+          : variant === "danger"
+            ? "text-rose-600 hover:bg-rose-50"
+            : "text-[var(--on-surface)] hover:bg-[var(--surface-muted)]",
       )}
-      onClick={onClick}
+      onClick={disabled ? (e) => e.stopPropagation() : onClick}
+      disabled={disabled}
+      title={title}
       role="menuitem"
       type="button"
     >
-      {Icon && <Icon size={15} className={variant === "danger" ? "text-rose-500 shrink-0" : "text-slate-400 shrink-0"} />}
+      {Icon && <Icon size={15} className={disabled ? "text-slate-300 shrink-0" : variant === "danger" ? "text-rose-500 shrink-0" : "text-slate-400 shrink-0"} />}
       {children}
     </button>
   );

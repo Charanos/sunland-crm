@@ -8,6 +8,7 @@ import {
   maintenanceRequests,
   properties,
   propertyMandates,
+  remittanceAdvices,
   settings,
   transactions,
   users,
@@ -23,7 +24,7 @@ import type { UserRole } from "@/types";
 // this is the correct interim assumption rather than treating gross rent
 // collected as Sunland's own revenue (the exact mistake that doc calls out
 // as the single most consequential error a property-management ledger can make).
-const MANAGEMENT_FEE_RATE = 0.1;
+export const MANAGEMENT_FEE_RATE = 0.1;
 
 // Approvals spec §4.1/§8.1: "Awaiting My Decision" is scoped to whichever
 // step tier is the viewer's own - approval_requests.requiredApproverRole is
@@ -58,17 +59,30 @@ function getParsedDate(val: unknown): Date | null {
 }
 
 /** Sunland's own earned revenue for a set of transactions - never gross rent collected. */
-function computeIncome(rows: TransactionRow[]): number {
+export function computeIncome(rows: TransactionRow[]): number {
   return rows.reduce((sum, t) => {
     const amt = toNumber(t.amountKes);
     if (t.type === "rent") return sum + amt * MANAGEMENT_FEE_RATE;
-    if (t.type === "commission" || t.type === "valuation_fee") return sum + amt;
+    if (t.type === "commission" || t.type === "valuation_fee" || t.type === "agreement_fee" || t.type === "sales_commission") return sum + amt;
     return sum; // deposit (liability) and expense/other never count as income
   }, 0);
 }
 
-function computeExpenses(rows: TransactionRow[]): number {
-  return rows.filter((t) => t.type === "expense").reduce((sum, t) => sum + toNumber(t.amountKes), 0);
+// Confirmed bug (2026-07-17): this previously summed EVERY "expense"
+// transaction, including property-level costs tied to a managed property
+// (mandates.ts §5200 "Property Operating Expenses (rechargeable)"). Per
+// SUNLAND_FINANCE_LEDGER_ARCHITECTURE.md §5.2: "landlord bears the cost,
+// Sunland P&L is neutral" - a rechargeable property expense is fronted by
+// Sunland and then recovered by deducting it from that property's landlord
+// remittance (see getMandateWithDetails's currentPeriod.expenses / the
+// remittance_advices.expensesKes column), so it must NEVER also reduce
+// Sunland's own P&L or it's counted against the business twice. Only
+// entity-level operating expenses (propertyId null - salaries, office
+// admin, bank charges) are genuinely Sunland's own cost.
+export function computeExpenses(rows: TransactionRow[]): number {
+  return rows
+    .filter((t) => t.type === "expense" && !t.propertyId)
+    .reduce((sum, t) => sum + toNumber(t.amountKes), 0);
 }
 
 function percentChange(current: number, previous: number): number {
@@ -162,7 +176,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
   const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
   const lookback = new Date(now.getFullYear(), now.getMonth() - 3, 1); // covers quarter charting + mom trends
 
-  const [allProperties, recentTransactions, allLeads, recentLogs, allMaintenanceRequests, allLeases, mandateManagerRows] =
+  const [allProperties, recentTransactions, allLeads, recentLogs, allMaintenanceRequests, allLeases, mandateManagerRows, allMandates, pendingRemittanceRows] =
     await Promise.all([
       db.select().from(properties).where(eq(properties.entityId, entityId)),
       db
@@ -183,6 +197,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
           propertyId: propertyMandates.propertyId,
           managerId: propertyMandates.assignedPmId,
           managerName: users.name,
+          managerAvatarUrl: users.avatarUrl,
         })
         .from(propertyMandates)
         .leftJoin(users, eq(propertyMandates.assignedPmId, users.id))
@@ -192,12 +207,17 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
             inArray(propertyMandates.status, ["pending_approval", "active"]),
           ),
         ),
+      db.select().from(propertyMandates).where(eq(propertyMandates.entityId, entityId)),
+      db
+        .select()
+        .from(remittanceAdvices)
+        .where(and(eq(remittanceAdvices.entityId, entityId), eq(remittanceAdvices.status, "pending"))),
     ]);
 
   const managerByPropertyId = new Map(
     mandateManagerRows
       .filter((r) => r.managerId)
-      .map((r) => [r.propertyId, { id: r.managerId as string, name: r.managerName }]),
+      .map((r) => [r.propertyId, { id: r.managerId as string, name: r.managerName, avatarUrl: r.managerAvatarUrl }]),
   );
 
   // ── Portfolio ──
@@ -271,6 +291,52 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
     legal: activeLeaseCount,
   };
 
+  // ── Collection Rate (company-wide, this month) - same collected-vs-
+  // expected shape already used per-property/per-mandate in properties.ts/
+  // mandates.ts, aggregated here across every active lease instead. Real
+  // arrears is computed per-lease then summed (never a blanket total-vs-
+  // total subtraction, which would let one lease's overpayment silently
+  // mask another's shortfall).
+  const activeLeasesNow = allLeases.filter((l) => l.isActive);
+  const rentTxThisMonth = txnsThisMonth.filter((t) => t.type === "rent");
+  let collectedThisMonthKes = 0;
+  let expectedThisMonthKes = 0;
+  let arrearsKes = 0;
+  for (const l of activeLeasesNow) {
+    const expected = toNumber(l.monthlyRentKes);
+    const collected = rentTxThisMonth.filter((t) => t.leaseId === l.id).reduce((sum, t) => sum + toNumber(t.amountKes), 0);
+    expectedThisMonthKes += expected;
+    collectedThisMonthKes += collected;
+    arrearsKes += Math.max(0, expected - collected);
+  }
+  const collectionRatePct = expectedThisMonthKes > 0 ? Math.round((collectedThisMonthKes / expectedThisMonthKes) * 100) : 0;
+
+  // ── Mandate Portfolio - real status breakdown + collectible value. (Not
+  // broken out "by division" - checked seed.ts: every property/mandate/
+  // lease/transaction row is created under the single "group" entity today,
+  // commercial/residential/valuers entities only ever scope staff role
+  // assignments, so a by-division breakdown would be a fabricated 100%-in-
+  // one-bucket chart, not real data.)
+  const activeMandateRows = allMandates.filter((m) => m.status === "active");
+  const activeMandatePropertyIds = new Set(activeMandateRows.map((m) => m.propertyId));
+  const collectibleValueKes = allProperties
+    .filter((p) => activeMandatePropertyIds.has(p.id))
+    .reduce((sum, p) => sum + toNumber(p.monthlyRentKes), 0);
+  const mandatePortfolio = {
+    activeCount: activeMandateRows.length,
+    pendingCount: allMandates.filter((m) => m.status === "pending_approval").length,
+    draftCount: allMandates.filter((m) => m.status === "draft").length,
+    terminatedCount: allMandates.filter((m) => m.status === "terminated").length,
+    collectibleValueKes: Math.round(collectibleValueKes),
+  };
+
+  // ── Pending Remittances - real, this table was never queried by this
+  // service before despite holding real, varied-status data.
+  const pendingRemittances = {
+    count: pendingRemittanceRows.length,
+    totalKes: Math.round(pendingRemittanceRows.reduce((sum, r) => sum + toNumber(r.netRemittanceKes), 0)),
+  };
+
   // ── Awaiting My Decision (spec §8.1) - pending approvals at the viewer's own tier ──
   const approvalTier = ROLE_APPROVAL_TIER[ctx.user.role as UserRole];
   let awaitingMyDecision: {
@@ -325,6 +391,19 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
     occupiedProperties,
     rentPool,
     expiringLeases30d,
+    openMaintenanceCount,
+
+    // Collection health (company-wide, this month)
+    collectionRatePct,
+    collectedThisMonthKes: Math.round(collectedThisMonthKes),
+    expectedThisMonthKes: Math.round(expectedThisMonthKes),
+    arrearsKes: Math.round(arrearsKes),
+
+    // Mandate portfolio (status breakdown + collectible value)
+    mandatePortfolio,
+
+    // Pending remittances awaiting release to landlords
+    pendingRemittances,
 
     // Revenue (management-fee-aware)
     incomeKes: Math.round(incomeThisMonth),
@@ -380,6 +459,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
           isFeatured: p.isFeatured,
           managerId: manager?.id ?? null,
           managerName: manager?.name ?? null,
+          managerAvatarUrl: manager?.avatarUrl ?? null,
         };
       }),
     activityLogs: recentLogs.map((l) => {

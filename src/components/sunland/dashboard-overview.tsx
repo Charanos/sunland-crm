@@ -34,6 +34,11 @@ import {
   IconBriefcase,
   IconMapPin,
   IconUser,
+  IconFileCheck,
+  IconHomePlus,
+  IconAlertTriangle,
+  IconClipboardCheck,
+  IconTool,
 } from "@tabler/icons-react";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -81,6 +86,7 @@ interface PropertyListing {
   isFeatured?: boolean;
   managerId?: string | null;
   managerName?: string | null;
+  managerAvatarUrl?: string | null;
 }
 
 interface DashboardStats {
@@ -90,6 +96,22 @@ interface DashboardStats {
   occupiedProperties: number;
   rentPool: number;
   expiringLeases30d: number;
+  openMaintenanceCount: number;
+  collectionRatePct: number;
+  collectedThisMonthKes: number;
+  expectedThisMonthKes: number;
+  arrearsKes: number;
+  mandatePortfolio: {
+    activeCount: number;
+    pendingCount: number;
+    draftCount: number;
+    terminatedCount: number;
+    collectibleValueKes: number;
+  };
+  pendingRemittances: {
+    count: number;
+    totalKes: number;
+  };
   incomeKes: number;
   incomeTrend: number;
   expensesKes: number;
@@ -294,6 +316,13 @@ export function DashboardOverview({
       : "current occupancy rate",
     rentPool: stats ? stats.rentPool : 0,
     expiringLeases30d: stats ? stats.expiringLeases30d : 0,
+    openMaintenanceCount: stats ? stats.openMaintenanceCount : 0,
+    collectionRatePct: stats ? stats.collectionRatePct : 0,
+    collectedThisMonthKes: stats ? stats.collectedThisMonthKes : 0,
+    expectedThisMonthKes: stats ? stats.expectedThisMonthKes : 0,
+    arrearsKes: stats ? stats.arrearsKes : 0,
+    mandatePortfolio: stats ? stats.mandatePortfolio : { activeCount: 0, pendingCount: 0, draftCount: 0, terminatedCount: 0, collectibleValueKes: 0 },
+    pendingRemittances: stats ? stats.pendingRemittances : { count: 0, totalKes: 0 },
     income: stats ? stats.incomeKes : 0,
     expenses: stats ? stats.expensesKes : 0,
     profit: stats ? stats.profitKes : 0,
@@ -821,9 +850,104 @@ export function DashboardOverview({
           </Link>
         </div>
 
-        {/* Col 5: Closed Deals + New Deals */}
-        {/* <div className="flex flex-col gap-3">
-          <Link href="/admin/pipeline?stage=closed_won" className="animate-fade-in-up stagger-6 block h-[155px]">
+        {/* Col 5: Radial */}
+        <Card className="p-0 flex flex-col items-center justify-center h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all animate-fade-in-up stagger-6 rounded-2xl overflow-hidden">
+          {mounted ? (
+            <RadialProgress
+              percentage={metrics.radialPct}
+              subtitle={metrics.radialSub}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col gap-4 items-center justify-center w-full">
+              <div className="skeleton-shimmer h-32 w-32 rounded-full" />
+              <div className="skeleton-shimmer h-4 w-16 rounded-full" />
+            </div>
+          )}
+        </Card>
+      </section>
+
+      {/* ── Grid Row 2: Portfolio Command ── */}
+      <section
+        className="gsap-stagger grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 my-8"
+        aria-label="Portfolio command metrics"
+      >
+        {/* Col 1: Collection Health (Radial) */}
+        <Card className="p-0 flex flex-col items-center justify-center h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all animate-fade-in-up stagger-7 rounded-2xl overflow-hidden">
+          {mounted ? (
+            <RadialProgress
+              percentage={metrics.collectionRatePct}
+              subtitle={`${formatCompactKES(metrics.collectedThisMonthKes)} of ${formatCompactKES(metrics.expectedThisMonthKes)} collected`}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col gap-4 items-center justify-center w-full">
+              <div className="skeleton-shimmer h-32 w-32 rounded-full" />
+              <div className="skeleton-shimmer h-4 w-16 rounded-full" />
+            </div>
+          )}
+        </Card>
+
+        {/* Col 2: Mandate Portfolio */}
+        <Link
+          href="/fin/mandates"
+          className="animate-fade-in-up stagger-8 block h-[322px]"
+        >
+          <div className="relative overflow-hidden bg-white border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col h-full hover:shadow-md hover:border-slate-300 transition-all duration-300 group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="size-9 rounded-[10px] bg-[#eef2f6] flex items-center justify-center text-[#415671]">
+                  <IconClipboardCheck size={18} stroke={1.75} />
+                </div>
+                <span className="text-desc-secondary">Mandate Portfolio</span>
+              </div>
+              <IconArrowUpRight
+                size={14}
+                className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2.5 flex-1 justify-center">
+              <div className="flex items-center justify-between">
+                <span className="text-meta-muted flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  Active
+                </span>
+                <span className="mono-data text-slate-900">{metrics.mandatePortfolio.activeCount}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-meta-muted flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-amber-500" />
+                  Pending Approval
+                </span>
+                <span className="mono-data text-slate-900">{metrics.mandatePortfolio.pendingCount}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-meta-muted flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-slate-300" />
+                  Draft
+                </span>
+                <span className="mono-data text-slate-900">{metrics.mandatePortfolio.draftCount}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-meta-muted flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-rose-400" />
+                  Terminated
+                </span>
+                <span className="mono-data text-slate-900">{metrics.mandatePortfolio.terminatedCount}</span>
+              </div>
+            </div>
+
+            <div className="pt-3 mt-1 border-t border-slate-100">
+              <span className="text-meta-muted block">Collectible Value</span>
+              <span className="font-mono font-medium text-slate-900 mt-1 text-xl">
+                {formatCompactKES(metrics.mandatePortfolio.collectibleValueKes)}
+              </span>
+            </div>
+          </div>
+        </Link>
+
+        {/* Col 3: Closed Deals + Active Pipeline (Stacked) */}
+        <div className="flex flex-col gap-3">
+          <Link href="/admin/pipeline?stage=closed_won" className="animate-fade-in-up stagger-9 block h-[155px]">
             <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#fcf0e4]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#fcf0e4]/60 transition-all duration-300 group">
               <IconFileCheck size={140} stroke={1} className="absolute -right-6 -bottom-6 text-[#824429] opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none" />
               <div className="flex items-start justify-between relative z-10">
@@ -845,7 +969,7 @@ export function DashboardOverview({
             </div>
           </Link>
 
-          <Link href="/admin/pipeline" className="animate-fade-in-up stagger-7 block h-[155px]">
+          <Link href="/admin/pipeline" className="animate-fade-in-up stagger-10 block h-[155px]">
             <div className="relative overflow-hidden bg-gradient-to-br from-white to-[#eef2f6]/40 border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col justify-between h-full hover:shadow-md hover:border-slate-300 hover:from-white hover:to-[#eef2f6]/60 transition-all duration-300 group">
               <IconHomePlus size={140} stroke={1} className="absolute -right-6 -bottom-6 text-[#415671] opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.05] transition-all duration-500 pointer-events-none" />
               <div className="flex items-start justify-between relative z-10">
@@ -865,22 +989,61 @@ export function DashboardOverview({
               </div>
             </div>
           </Link>
-        </div> */}
+        </div>
 
-        {/* Col 6: Radial */}
-        <Card className="p-0 flex flex-col items-center justify-center h-[322px] bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all animate-fade-in-up stagger-8 rounded-2xl overflow-hidden">
-          {mounted ? (
-            <RadialProgress
-              percentage={metrics.radialPct}
-              subtitle={metrics.radialSub}
-            />
-          ) : (
-            <div className="flex-1 flex flex-col gap-4 items-center justify-center w-full">
-              <div className="skeleton-shimmer h-32 w-32 rounded-full" />
-              <div className="skeleton-shimmer h-4 w-16 rounded-full" />
+        {/* Col 4: Attention Required */}
+        <div className="animate-fade-in-up stagger-11 h-[322px]">
+          <div className="relative overflow-hidden bg-white border border-slate-200/80 shadow-sm rounded-2xl p-5 flex flex-col h-full hover:shadow-md transition-all duration-300">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="size-9 rounded-[10px] bg-rose-50 flex items-center justify-center text-rose-500">
+                <IconAlertTriangle size={18} stroke={1.75} />
+              </div>
+              <span className="text-desc-secondary">Attention Required</span>
             </div>
-          )}
-        </Card>
+
+            <div className="flex flex-col gap-1 flex-1 justify-center">
+              <Link
+                href="/admin/leases"
+                className="flex items-center justify-between p-2.5 -mx-2.5 rounded-xl hover:bg-slate-50 transition-colors group/row"
+              >
+                <span className="flex items-center gap-2 text-meta-muted">
+                  <IconTrendingDown size={15} className="text-rose-500" />
+                  Arrears This Month
+                </span>
+                <span className="mono-data text-slate-900 flex items-center gap-1">
+                  {formatCompactKES(metrics.arrearsKes)}
+                  <IconArrowUpRight size={12} className="text-slate-300 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+                </span>
+              </Link>
+              <Link
+                href="/fin/mandates"
+                className="flex items-center justify-between p-2.5 -mx-2.5 rounded-xl hover:bg-slate-50 transition-colors group/row"
+              >
+                <span className="flex items-center gap-2 text-meta-muted">
+                  <IconWallet size={15} className="text-amber-500" />
+                  Pending Remittances
+                </span>
+                <span className="mono-data text-slate-900 flex items-center gap-1">
+                  {metrics.pendingRemittances.count} · {formatCompactKES(metrics.pendingRemittances.totalKes)}
+                  <IconArrowUpRight size={12} className="text-slate-300 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+                </span>
+              </Link>
+              <Link
+                href="/admin/maintenance"
+                className="flex items-center justify-between p-2.5 -mx-2.5 rounded-xl hover:bg-slate-50 transition-colors group/row"
+              >
+                <span className="flex items-center gap-2 text-meta-muted">
+                  <IconTool size={15} className="text-blue-500" />
+                  Open Maintenance
+                </span>
+                <span className="mono-data text-slate-900 flex items-center gap-1">
+                  {metrics.openMaintenanceCount}
+                  <IconArrowUpRight size={12} className="text-slate-300 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+                </span>
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Dynamic Approvals Queue for CEO and GM */}
@@ -1726,7 +1889,18 @@ export function DashboardOverview({
 
         {/* Growth Widget */}
         <div className="p-6 xl:col-span-4 bg-white rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-          <GrowthWidget entityId={context} />
+          {stats && (
+            <GrowthWidget
+              incomeKes={stats.incomeKes}
+              rentPool={stats.rentPool}
+              conversionRate={stats.conversionRate}
+              closedDealsCount={stats.closedDealsCount}
+              occupancyRate={stats.occupancyRate}
+              occupiedProperties={stats.occupiedProperties}
+              totalProperties={stats.totalProperties}
+              totalPropertiesTrend={stats.totalPropertiesTrend}
+            />
+          )}
         </div>
       </section>
 
@@ -1735,6 +1909,7 @@ export function DashboardOverview({
         <UnifiedMarketBoard
           initialListings={listings}
           revenueData={stats?.chartSeries || []}
+          revenueTrend={stats?.incomeTrend ?? 0}
         />
       </section>
 

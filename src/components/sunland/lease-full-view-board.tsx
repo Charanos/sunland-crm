@@ -20,6 +20,7 @@ import {
   IconFilter,
   IconHistory,
   IconLink,
+  IconBell,
   IconMail,
   IconMapPin,
   IconMessageCircle,
@@ -35,7 +36,7 @@ import {
   IconBuildingCommunity,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/erp-primitives";
+import { Badge, SkeletonBlock } from "@/components/ui/erp-primitives";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Avatar } from "@/components/ui/erp-primitives";
 import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
@@ -51,6 +52,8 @@ import { LeaseDocumentModal } from "./lease-document-modal";
 import { PropertyOwnerProfileDrawer } from "./property-owner-profile-drawer";
 import { PropertyManagerProfileDrawer } from "./property-manager-profile-drawer";
 import { TenantProfileDrawer } from "./tenant-profile-drawer";
+import { PageTransition } from "@/components/shared/page-transition";
+import { NotifyUserModal } from "./notify-user-modal";
 
 interface LeaseDocument {
   id: string;
@@ -70,7 +73,7 @@ const LEASE_DOCUMENT_TYPE_LABEL: Record<string, string> = {
 
 interface PaymentEntry {
   id: string;
-  type: "rent" | "commission" | "valuation_fee" | "expense" | "deposit" | "other";
+  type: "rent" | "commission" | "valuation_fee" | "expense" | "deposit" | "other" | "agreement_fee" | "sales_commission";
   amountKes: string;
   occurredAt: string;
   notes: string | null;
@@ -83,6 +86,8 @@ const PAYMENT_TYPE_LABEL: Record<PaymentEntry["type"], string> = {
   expense: "Expense",
   deposit: "Deposit",
   other: "Other",
+  agreement_fee: "Agreement Fee",
+  sales_commission: "Sales Commission",
 };
 
 interface Lease {
@@ -265,6 +270,7 @@ export function LeaseFullViewBoard({
 
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [notifyPmOpen, setNotifyPmOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
@@ -495,8 +501,31 @@ export function LeaseFullViewBoard({
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2">
+          <div className="flex flex-col gap-2">
+            <SkeletonBlock className="h-8 w-72" />
+            <SkeletonBlock className="h-4 w-48" />
+          </div>
+          <SkeletonBlock className="h-9 w-40 rounded-full" />
+        </div>
+        <SkeletonBlock className="rounded-[28px] min-h-[300px] lg:min-h-[340px] mt-2" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonBlock key={i} className="rounded-2xl h-[150px]" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-3.5 items-start">
+          <div className="flex flex-col gap-4 min-w-0">
+            <SkeletonBlock className="h-12 w-full rounded-[16px]" />
+            <SkeletonBlock className="h-64 w-full rounded-[24px]" />
+          </div>
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonBlock key={i} className="h-40 w-full rounded-[24px]" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -591,7 +620,7 @@ export function LeaseFullViewBoard({
       setRefreshCount((c) => c + 1);
       setDeleteConfirmOpen(false);
     } catch (e: unknown) {
-      pushToast({ tone: "warning", title: "Error", body: e instanceof Error ? e.message : "Failed to terminate" });
+      pushToast({ tone: "error", title: "Error", body: e instanceof Error ? e.message : "Failed to terminate" });
     } finally {
       setIsDeleting(false);
     }
@@ -612,7 +641,7 @@ export function LeaseFullViewBoard({
   };
 
   return (
-    <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2 animate-fade-in-up">
         <div className="flex flex-col gap-2 min-w-0">
@@ -660,6 +689,11 @@ export function LeaseFullViewBoard({
               }
             >
               <DropdownItem icon={IconLink} onClick={handleCopyLink}>Copy deep link</DropdownItem>
+              {lease.manager && (
+                <DropdownItem icon={IconBell} onClick={() => setNotifyPmOpen(true)}>Notify Property Manager</DropdownItem>
+              )}
+              <DropdownItem icon={IconBell} disabled title="Available once the landlord portal launches">Notify Landlord</DropdownItem>
+              <DropdownItem icon={IconBell} disabled title="Available once the tenant portal launches">Notify Tenant</DropdownItem>
               {lease.isActive && (
                 <DropdownItem icon={IconTrash} variant="danger" onClick={() => setDeleteConfirmOpen(true)}>Terminate lease</DropdownItem>
               )}
@@ -852,7 +886,7 @@ export function LeaseFullViewBoard({
             type="button"
             onClick={() => setActiveTab(v.tab)}
             className={cn(
-              "relative overflow-hidden rounded-2xl border p-5 flex flex-col justify-between group shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 h-[150px] text-left cursor-pointer focus:outline-hidden",
+              "gsap-stagger relative overflow-hidden rounded-2xl border p-5 flex flex-col justify-between group shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 h-[150px] text-left cursor-pointer focus:outline-hidden",
               VITAL_TONE_BG[v.tone]
             )}
           >
@@ -1346,7 +1380,7 @@ export function LeaseFullViewBoard({
         {/* Context rail */}
         <div className="flex flex-col gap-4">
           {/* Tenant div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <div className="relative h-56 w-full flex flex-col justify-between p-5 text-center">
               {lease.tenantAvatarUrl ? (
                 <Image src={lease.tenantAvatarUrl} alt={lease.tenantName} fill className="object-cover" />
@@ -1414,7 +1448,7 @@ export function LeaseFullViewBoard({
 
           {/* Landlord div */}
           {lease.landlord && (
-            <div className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
               <div className="relative h-56 w-full flex flex-col justify-between p-5 text-center">
                 {lease.landlord.avatarUrl ? (
                   <Image src={lease.landlord.avatarUrl} alt={lease.landlord.name} fill className="object-cover" />
@@ -1503,7 +1537,7 @@ export function LeaseFullViewBoard({
 
           {/* Property Manager div */}
           {lease.manager && (
-            <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+            <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="size-12 rounded-full flex items-center justify-center bg-[#0f132b] text-[#f3df27] font-normal text-sm shrink-0 shadow-xs">
@@ -1533,7 +1567,7 @@ export function LeaseFullViewBoard({
           )}
 
           {/* Lease Timeline div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <h3 className="label-caps text-slate-400 flex items-center gap-2">
               <IconCalendarEvent size={14} /> Lease Timeline
             </h3>
@@ -1562,7 +1596,7 @@ export function LeaseFullViewBoard({
           </div>
 
           {/* Property Command Center div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
             <div className="relative h-32 w-full bg-slate-100 flex items-end p-4">
               {primaryImage ? (
                 <Image src={primaryImage} alt="" fill className="object-cover" />
@@ -1590,7 +1624,7 @@ export function LeaseFullViewBoard({
           </div>
 
           {/* Portals div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <h4 className="text-base font-medium text-slate-800">Portals</h4>
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between text-xs">
@@ -1614,7 +1648,7 @@ export function LeaseFullViewBoard({
           </div>
 
           {/* Quick Facts div */}
-          <div className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
+          <div className="gsap-stagger bg-white border border-slate-100 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-4">
             <h4 className="text-base font-medium text-slate-800">Quick Facts</h4>
             <div className="flex flex-col gap-3 text-xs">
               <div className="flex justify-between items-center">
@@ -1718,7 +1752,20 @@ export function LeaseFullViewBoard({
         onIndexChange={setLightboxIndex}
         onClose={() => setLightboxOpen(false)}
       />
-    </div>
+
+      {lease.manager && (
+        <NotifyUserModal
+          open={notifyPmOpen}
+          entityId={entityId}
+          userId={lease.manager.id}
+          recipientName={lease.manager.name || "Property Manager"}
+          associatedType="lease"
+          associatedId={lease.id}
+          href={`/admin/leases/${lease.id}`}
+          onClose={() => setNotifyPmOpen(false)}
+        />
+      )}
+    </PageTransition>
   );
 }
 

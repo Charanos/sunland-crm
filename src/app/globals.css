@@ -515,6 +515,18 @@ button:disabled {
   animation-delay: 0.32s;
 }
 
+.stagger-9 {
+  animation-delay: 0.36s;
+}
+
+.stagger-10 {
+  animation-delay: 0.40s;
+}
+
+.stagger-11 {
+  animation-delay: 0.44s;
+}
+
 /* ── Body scroll lock ─────────────────────────────────── */
 body.modal-open {
   overflow: hidden;

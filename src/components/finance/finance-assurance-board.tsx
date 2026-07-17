@@ -24,7 +24,7 @@ import { formatCompactKES } from "@/lib/utils/format";
 interface GeneratedReport {
   id: string;
   reportCode: string;
-  reportType: "Balance Sheet" | "Cash Flow Statement" | "Trial Balance Validation" | "Property Mandates Summary" | "Payroll Outlay Summary";
+  reportType: "Balance Sheet" | "Cash Flow Statement" | "Trial Balance Validation" | "Profit & Loss Statement" | "Payroll Outlay Summary";
   entityName: string;
   period: string;
   hash: string;
@@ -62,28 +62,6 @@ const INITIAL_REPORTS: GeneratedReport[] = [
     ]
   },
   {
-    id: "rpt-02",
-    reportCode: "RPT-207",
-    reportType: "Property Mandates Summary",
-    entityName: "Sunland Commercial",
-    period: "June 2026",
-    hash: "sunland_mandate_rpt_88e02d",
-    fileSize: "5.8 KB",
-    linesCount: 88,
-    generatedBy: "Grace Mutua",
-    generatedAt: "2026-06-19",
-    metrics: [
-      { label: "Active Mandates", value: 28 },
-      { label: "Gross Collectible", value: 9800000 },
-      { label: "Management Fees", value: 840000 }
-    ],
-    activityLog: [
-      "Mandates performance compiled · 2026-06-19",
-      "Approved for publishing by GM Grace Mutua",
-      "QR token registered under SHA-256 88e02d"
-    ]
-  },
-  {
     id: "rpt-03",
     reportCode: "RPT-206",
     reportType: "Payroll Outlay Summary",
@@ -106,6 +84,13 @@ const INITIAL_REPORTS: GeneratedReport[] = [
     ]
   }
 ];
+
+const ENTITY_SLUG_BY_LABEL: Record<string, string> = {
+  "Sunland Group": "group",
+  "Sunland Commercial": "commercial",
+  "Sunland Residential": "residential",
+  "Sunland Valuers Ltd": "valuers",
+};
 
 const ROWS_PER_PAGE = 5;
 
@@ -164,6 +149,82 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
     for (let i = 0; i < steps.length; i++) {
       await new Promise((resolve) => setTimeout(resolve, 400));
       setCompilerLines((prev) => [...prev, steps[i]]);
+    }
+
+    // Profit & Loss is backed by a real server-side computation over the
+    // general ledger (src/lib/services/finance/reports.ts), persisted to
+    // report_exports with a genuine verification token - unlike the other
+    // four statement types below, which remain a UI simulation pending their
+    // own backing schema (see docs/SUNLAND_CLIENT_CALL_REQUIREMENTS_SPEC.md
+    // item 3). This is the one figure the CEO explicitly cares about being
+    // accurate, so it can't be randomly generated like the rest.
+    if (reportType === "Profit & Loss Statement") {
+      try {
+        const res = await fetch("/api/finance/reports/pnl", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entityId: ENTITY_SLUG_BY_LABEL[entityTarget] ?? "group",
+            periodStart: new Date(dateRangeStart).toISOString(),
+            periodEnd: new Date(dateRangeEnd).toISOString(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to generate P&L report");
+        }
+
+        const snapshot = data.report.snapshot as {
+          totalRevenueKes: number;
+          operatingExpensesKes: number;
+          netProfitKes: number;
+        };
+        const token: string = data.report.verificationToken;
+
+        setCompilerLines((prev) => [...prev, `> Output token: ${token}`, `> COMPILATION SUCCESSFUL. PDF exported to vault.`]);
+        setCompiledToken(token);
+        setCompilationSuccess(true);
+        setIsCompiling(false);
+
+        const newReport: GeneratedReport = {
+          id: data.report.id,
+          reportCode: `RPT-${reports.length + 209}`,
+          reportType,
+          entityName: entityTarget,
+          period: `${dateRangeStart} – ${dateRangeEnd}`,
+          hash: token,
+          fileSize: "—",
+          linesCount: 3,
+          generatedBy: "Dennis Munge",
+          generatedAt: new Date().toISOString().split("T")[0],
+          metrics: [
+            { label: "Total Revenue", value: snapshot.totalRevenueKes },
+            { label: "Operating Expenses", value: snapshot.operatingExpensesKes },
+            { label: "Net Profit", value: snapshot.netProfitKes },
+          ],
+          activityLog: [
+            `Real ledger figures compiled from the general ledger · ${new Date().toISOString().split("T")[0]}`,
+            `Cryptographic signature key verified for Dennis Munge`,
+            `QR token registered: ${token}`,
+          ],
+        };
+
+        setReports([newReport, ...reports]);
+        pushToast({
+          tone: "success",
+          title: "Profit & Loss Statement Generated",
+          body: `Real ledger figures compiled. Verification token ${token} added to vault archive.`,
+        });
+      } catch (error) {
+        setIsCompiling(false);
+        setCompilationSuccess(false);
+        pushToast({
+          tone: "error",
+          title: "P&L Generation Failed",
+          body: error instanceof Error ? error.message : "Could not compile the Profit & Loss statement.",
+        });
+      }
+      return;
     }
 
     const randomHash = `sunland_gen_${Math.random().toString(16).substring(2, 8)}`;
@@ -305,7 +366,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
                       "Balance Sheet",
                       "Cash Flow Statement",
                       "Trial Balance Validation",
-                      "Property Mandates Summary",
+                      "Profit & Loss Statement",
                       "Payroll Outlay Summary"
                     ].map((type) => {
                       const isActive = reportType === type;

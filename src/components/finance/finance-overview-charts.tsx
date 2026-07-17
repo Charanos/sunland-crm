@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -59,14 +59,7 @@ const ANNUAL = [
   { label: "2026 YTD", revenue: 62500000, expenses: 34100000, cash: 157000000 },
 ];
 
-const REVENUE_DISTRIBUTION_DATA = [
-  { name: "Property Mgmt", value: 45 },
-  { name: "Letting Fees", value: 25 },
-  { name: "Consultation", value: 15 },
-  { name: "Valuation", value: 15 },
-];
-
-const PIE_COLORS = ["#151936", "#3f919d", "#8b5cf6", "#c96f45"];
+const PIE_COLORS = ["#151936", "#3f919d", "#8b5cf6", "#c96f45", "#f59e0b"];
 
 // ── Custom Tooltips ────────────────────────────────────────────────────────────
 
@@ -139,9 +132,35 @@ const PieTooltip = ({ active, payload }: Partial<TooltipContentProps<ChartValue,
 
 interface FinanceOverviewChartsProps {
   period: FinancePeriod;
+  entityId?: string;
 }
 
-export function FinanceOverviewCharts({ period }: FinanceOverviewChartsProps) {
+export function FinanceOverviewCharts({ period, entityId = "group" }: FinanceOverviewChartsProps) {
+  // Real revenue-by-stream shares (client call note item 5) - replaces the
+  // former hardcoded REVENUE_DISTRIBUTION_DATA mock, whose category labels
+  // ("Consultation") didn't even correspond to a real transaction type.
+  const [streamShares, setStreamShares] = useState<{ name: string; value: number }[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/finance/revenue-streams?entityId=${entityId}`)
+      .then((res) => res.json())
+      .then((json: { totalRevenueKes: number; streams: { label: string; totalKes: number }[] }) => {
+        if (cancelled) return;
+        const total = json.totalRevenueKes || 0;
+        const shares = json.streams
+          .filter((s) => s.totalKes > 0)
+          .map((s) => ({ name: s.label, value: total > 0 ? Math.round((s.totalKes / total) * 100) : 0 }));
+        setStreamShares(shares);
+      })
+      .catch(() => {
+        if (!cancelled) setStreamShares([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [entityId]);
+
   const chartData = useMemo(() => {
     switch (period) {
       case "3M": return QUARTERLY.slice(-3);
@@ -222,45 +241,57 @@ export function FinanceOverviewCharts({ period }: FinanceOverviewChartsProps) {
       <BoardPanel className="lg:col-span-3 flex flex-col h-[380px]">
         <div className="mb-4">
           <h3 className="text-title-primary">Revenue Streams</h3>
-          <p className="text-meta-muted mt-0.5">Year-to-date income breakdown</p>
+          <p className="text-meta-muted mt-0.5">This month's income breakdown</p>
         </div>
-        <div className="flex-1 w-full min-h-0 relative flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
-            <PieChart>
-              <Pie
-                data={REVENUE_DISTRIBUTION_DATA}
-                cx="50%"
-                cy="45%"
-                innerRadius={70}
-                outerRadius={85}
-                paddingAngle={4}
-                dataKey="value"
-                stroke="none"
-                animationDuration={800}
-              >
-                {REVENUE_DISTRIBUTION_DATA.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={<PieTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-          {/* Inner Donut Text */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center -mt-6 pointer-events-none">
-            <span className="font-mono text-slate-900 leading-none" style={{ fontSize: "24px" }}>100%</span>
-            <span className="label-caps text-slate-400 mt-1">Total</span>
+        {!streamShares ? (
+          <div className="flex-1 w-full flex items-center justify-center">
+            <div className="skeleton-shimmer size-40 rounded-full" />
           </div>
-        </div>
-
-        {/* Custom Legend */}
-        <div className="grid grid-cols-2 gap-y-2 gap-x-2 mt-auto pt-4 border-t border-slate-50">
-          {REVENUE_DISTRIBUTION_DATA.map((entry, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <div className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[index] }} />
-              <span className="text-meta-muted truncate">{entry.name}</span>
+        ) : streamShares.length === 0 ? (
+          <div className="flex-1 w-full flex items-center justify-center text-meta-muted text-center px-4">
+            No revenue recorded this period.
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 w-full min-h-0 relative flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
+                <PieChart>
+                  <Pie
+                    data={streamShares}
+                    cx="50%"
+                    cy="45%"
+                    innerRadius={70}
+                    outerRadius={85}
+                    paddingAngle={4}
+                    dataKey="value"
+                    stroke="none"
+                    animationDuration={800}
+                  >
+                    {streamShares.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<PieTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              {/* Inner Donut Text */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center -mt-6 pointer-events-none">
+                <span className="font-mono text-slate-900 leading-none" style={{ fontSize: "24px" }}>100%</span>
+                <span className="label-caps text-slate-400 mt-1">Total</span>
+              </div>
             </div>
-          ))}
-        </div>
+
+            {/* Custom Legend */}
+            <div className="grid grid-cols-2 gap-y-2 gap-x-2 mt-auto pt-4 border-t border-slate-50">
+              {streamShares.map((entry, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+                  <span className="text-meta-muted truncate">{entry.name}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </BoardPanel>
     </section>
   );

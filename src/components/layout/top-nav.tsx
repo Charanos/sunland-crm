@@ -10,6 +10,7 @@ import {
   endOfMonth,
   endOfWeek,
   format,
+  formatDistanceToNowStrict,
   isSameDay,
   isSameMonth,
   startOfMonth,
@@ -49,6 +50,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils/cn";
 import { useUIStore, type ModalType } from "@/store/ui";
 import { getEntityById } from "@/data/entities";
@@ -68,6 +70,36 @@ interface Notification {
   read: boolean;
 }
 
+// Matches the real /api/notifications response shape (notifications table) -
+// `type` is a free-text dotted string ("approval.pending", "complaint.assigned",
+// "manual.notify", etc.), not a closed enum.
+interface ApiNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  href: string | null;
+  createdAt: string;
+  readAt: string | null;
+}
+
+function toneForType(type: string): NotificationTone {
+  const prefix = type.split(".")[0];
+  if (prefix === "approval" || prefix === "complaint") return "warning";
+  return "info";
+}
+
+function mapApiNotification(n: ApiNotification): Notification {
+  return {
+    id: n.id,
+    tone: toneForType(n.type),
+    title: n.title,
+    body: n.body,
+    time: formatDistanceToNowStrict(new Date(n.createdAt), { addSuffix: true }),
+    read: n.readAt !== null,
+  };
+}
+
 interface QuickAction {
   icon: Icon;
   label: string;
@@ -77,13 +109,6 @@ interface QuickAction {
 }
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
-
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  { id: "1", tone: "info", title: "New lead assigned", body: "James Kariuki interested in Unit 4B, Westlands", time: "2 min ago", read: false },
-  { id: "2", tone: "warning", title: "Lease expiring soon", body: "Acacia Court Unit 12 expires in 14 days", time: "1 hr ago", read: false },
-  { id: "3", tone: "success", title: "Payment received", body: "KES 95,000 from Esther Howard - Ref #TXN-4821", time: "3 hr ago", read: true },
-  { id: "4", tone: "info", title: "Maintenance request", body: "Unit 7A - Plumbing issue reported by tenant", time: "Yesterday", read: true },
-];
 
 const QUICK_ACTIONS: QuickAction[] = [
   { icon: IconBuildingCommunity, label: "New Property", shortcut: "P", action: "create-property" },
@@ -246,8 +271,19 @@ function NavActionBtn({
 
 // ─── Notifications panel ───────────────────────────────────────────────────────
 
-function NotificationsPanel({ onClose }: { onClose: () => void }) {
-  const [items, setItems] = useState(INITIAL_NOTIFICATIONS);
+function NotificationsPanel({
+  onClose,
+  items,
+  loading,
+  onMarkRead,
+  onMarkAllRead,
+}: {
+  onClose: () => void;
+  items: Notification[];
+  loading: boolean;
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
+}) {
   const pathname = usePathname();
   const portalPrefix = pathname.startsWith("/fin") ? "/fin" : "/admin";
   const unread = items.filter((n) => !n.read).length;
@@ -268,7 +304,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
           {unread > 0 && (
             <button
               type="button"
-              onClick={() => setItems((p) => p.map((n) => ({ ...n, read: true })))}
+              onClick={onMarkAllRead}
               className="text-xs font-medium text-slate-400 transition-colors hover:text-slate-700 flex items-center gap-1"
             >
               <IconCheck size={12} stroke={2} />
@@ -288,7 +324,11 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
 
       {/* List */}
       <div className="max-h-[22rem] overflow-y-auto p-2 space-y-1 [scrollbar-width:thin]">
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner size="md" />
+          </div>
+        ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400">
             <IconCircleCheckFilled size={32} className="mb-3 text-slate-200" aria-hidden />
             <p className="text-sm font-medium text-slate-500">You&apos;re all caught up</p>
@@ -301,7 +341,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
               <button
                 key={n.id}
                 type="button"
-                onClick={() => setItems((p) => p.map((x) => x.id === n.id ? { ...x, read: true } : x))}
+                onClick={() => onMarkRead(n.id)}
                 className={cn(
                   "group relative flex w-full gap-3 rounded-xl p-3 text-left transition-all border border-transparent",
                   !n.read
@@ -977,7 +1017,31 @@ export function TopNav() {
   const create = usePanel(createRef);
   const calendar = usePanel(calendarRef);
 
-  const unreadCount = INITIAL_NOTIFICATIONS.filter((n) => !n.read).length;
+  // Real notifications - was previously 100% hardcoded mock data with zero
+  // connection to the /api/notifications endpoints that already existed.
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+
+  useEffect(() => {
+    setNotificationsLoading(true);
+    fetch("/api/notifications")
+      .then((res) => (res.ok ? res.json() : { notifications: [] }))
+      .then((data) => setNotifications((data.notifications ?? []).map(mapApiNotification)))
+      .catch(() => setNotifications([]))
+      .finally(() => setNotificationsLoading(false));
+  }, []);
+
+  const handleMarkRead = (id: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    fetch(`/api/notifications/${id}/read`, { method: "PATCH" }).catch(() => { });
+  };
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    fetch("/api/notifications/mark-all-read", { method: "POST" }).catch(() => { });
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   function closeAll() { notif.close(); create.close(); calendar.close(); }
 
@@ -1052,7 +1116,15 @@ export function TopNav() {
               <IconBell size={18} stroke={1.5} aria-hidden />
             </NavActionBtn>
             <AnimatePresence>
-              {notif.open && <NotificationsPanel onClose={notif.close} />}
+              {notif.open && (
+                <NotificationsPanel
+                  onClose={notif.close}
+                  items={notifications}
+                  loading={notificationsLoading}
+                  onMarkRead={handleMarkRead}
+                  onMarkAllRead={handleMarkAllRead}
+                />
+              )}
             </AnimatePresence>
           </div>
 

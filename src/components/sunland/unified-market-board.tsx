@@ -50,14 +50,18 @@ type ChartName = number | string;
 
 // ── Custom Tooltips ──
 
-const OccupancyTooltip = ({ active, payload }: Partial<TooltipContentProps<ChartValue, ChartName>>) => {
+// Renamed from OccupancyTooltip - the bar chart it decorates plots real
+// revenue-per-period (scaled 0-100% of the period's peak), not occupancy;
+// the two were previously conflated (tooltip literally said "Occupancy: X%"
+// over bars that were revenue-derived).
+const RevenueBarTooltip = ({ active, payload }: Partial<TooltipContentProps<ChartValue, ChartName>>) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-xl border border-slate-100 bg-white/95 p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md animate-scale-in">
-        <p className="text-sm text-slate-400 font-medium uppercase tracking-wider mb-1">Portfolio Segment</p>
+        <p className="text-sm text-slate-400 font-medium uppercase tracking-wider mb-1">Revenue Period</p>
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-[#122a20]" />
-          <span className="text-sm font-medium text-slate-800">Occupancy: {payload[0].value}%</span>
+          <span className="text-sm font-medium text-slate-800">{payload[0].value}% of peak</span>
         </div>
       </div>
     );
@@ -89,6 +93,8 @@ interface InitialListing {
   price: string | number;
   status: string;
   imageUrl?: string | null;
+  managerName?: string | null;
+  managerAvatarUrl?: string | null;
 }
 
 interface RevenueDataPoint {
@@ -104,7 +110,7 @@ const AVATAR_FALLBACKS = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&q=80"
 ];
 
-export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: { initialListings?: InitialListing[], revenueData?: RevenueDataPoint[] }) {
+export function UnifiedMarketBoard({ initialListings = [], revenueData = [], revenueTrend = 0 }: { initialListings?: InitialListing[], revenueData?: RevenueDataPoint[], revenueTrend?: number }) {
   const [activeType, setActiveType] = useState<PropertyType>("All Properties");
   const [searchQuery, setSearchQuery] = useState("");
   const [drawerProperty, setDrawerProperty] = useState<Property | null>(null);
@@ -125,15 +131,16 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
       price: typeof prop.price === 'string' ? parseFloat(prop.price.replace(/[^0-9.-]+/g, "")) : prop.price,
       status: (prop.status as ListingCard["status"]) || "Available",
       imageUrl: prop.imageUrl || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=400&h=260&q=80",
+      // Real assigned PM (already returned by getDashboardOverview's
+      // recentListings) instead of an alternating fabricated name/photo -
+      // "Unassigned" is an honest state, not every property has a PM.
       agent: {
-        userId: `agent-${idx}`,
-        name: idx % 2 === 0 ? "Aurther Morgan" : "Sarah Jenkins",
+        userId: `property-${prop.id}`,
+        name: prop.managerName || "Unassigned",
         sold: 0,
         rented: 0,
         revenue: "0",
-        img: idx % 2 === 0
-          ? "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&q=80"
-          : "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80",
+        avatarUrl: prop.managerAvatarUrl ?? undefined,
       }
     }));
   }, [initialListings]);
@@ -187,45 +194,42 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
     const relevantProps = activeType === "All Properties" ? activeInventory : activeInventory.filter(p => p.type === activeType);
     const totalProps = relevantProps.length;
 
-    // Estimate occupancy
+    // Real occupancy for this filter - an empty honest 0% when there are no
+    // properties of this type, not a fabricated 83% default.
     const occupiedProps = relevantProps.filter(p => p.status === "Occupied").length;
-    const occupancyBase = totalProps > 0 ? occupiedProps / totalProps : 0.83;
+    const occupancyBase = totalProps > 0 ? occupiedProps / totalProps : 0;
 
     // Estimate Revenue from active listings prices (treating them as potential rent for simplicity)
     const currentRevenue = relevantProps.reduce((sum, p) => sum + (p.price || 0), 0);
     const occupiedPercent = Math.round(occupancyBase * 100);
-    const vacantPercent = 100 - occupiedPercent;
+    const vacantPercent = totalProps > 0 ? 100 - occupiedPercent : 0;
 
     // Top agents specific to this filter (shuffle/slice to simulate changing ranks)
     const agents = (realAgents.length > 0 ? realAgents : []).slice(0, 5);
 
     return {
       revenue: currentRevenue >= 1000000 ? `${(currentRevenue / 1000000).toFixed(1)}M` : currentRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
-      growth: `+12.4%`,
+      // Real month-over-month income trend from the dashboard service,
+      // previously a hardcoded "+12.4%" unrelated to any actual figure.
+      growth: `${revenueTrend >= 0 ? "+" : ""}${revenueTrend.toFixed(1)}%`,
       totalProps: totalProps.toLocaleString(),
       occupiedPercent,
       vacantPercent,
       agents
     };
-  }, [activeType, activeInventory, realAgents, managerTimeFilter]);
+  }, [activeType, activeInventory, realAgents, managerTimeFilter, revenueTrend]);
 
+  // Real revenue-per-period bars (no synthetic sine-wave noise layered on
+  // top, and no fully-fabricated fallback series when data is thin - an
+  // empty/flat series is the honest state).
   const barChartData = useMemo(() => {
-    if (revenueData.length > 0) {
-      return revenueData.map((d, i: number) => ({
-        id: i,
-        occupancy: Math.max(10, d.Revenue / 1000 + (Math.sin(i * 0.5) * 10)),
-      }));
-    }
-    return Array.from({ length: 47 }).map((_, i) => {
-      const h = activeType === "All Properties"
-        ? Math.max(20, Math.sin(i * 0.2) * 40 + 50 + (Math.sin(i * 0.5) * 10 - 5))
-        : Math.max(10, Math.sin(i * 0.4) * 30 + 40 + (Math.sin(i * 0.8) * 20 - 10));
-      return {
-        id: i,
-        occupancy: Math.round(h),
-      };
-    });
-  }, [activeType, revenueData]);
+    if (revenueData.length === 0) return [];
+    const maxRevenue = Math.max(1, ...revenueData.map((d) => d.Revenue));
+    return revenueData.map((d, i: number) => ({
+      id: i,
+      occupancy: Math.round((d.Revenue / maxRevenue) * 100),
+    }));
+  }, [revenueData]);
 
   const pieChartData = useMemo(() => {
     const counts: Record<string, number> = { House: 0, Apartment: 0, Villa: 0, Commercial: 0, Land: 0, Other: 0 };
@@ -309,14 +313,14 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [] }: {
             <div className="h-[120px] w-full mt-4 mb-2 relative">
               <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                 <BarChart data={barChartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <Tooltip content={<OccupancyTooltip />} cursor={{ fill: "rgba(0,0,0,0.02)" }} />
+                  <Tooltip content={<RevenueBarTooltip />} cursor={{ fill: "rgba(0,0,0,0.02)" }} />
                   <Bar dataKey="occupancy" fill="#122a20" radius={[2, 2, 0, 0]} maxBarSize={6} animationDuration={800} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex justify-between text-sm  text-slate-400 border-b border-slate-100 pb-3 mb-4">
-              <span>Mon</span>
-              <span>Sun</span>
+              <span>Earliest</span>
+              <span>Latest</span>
             </div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">

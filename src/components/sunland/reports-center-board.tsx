@@ -31,7 +31,7 @@ const DEPARTMENT_GROUPS = [
   {
     id: "finance",
     label: "Finance",
-    description: "Balance sheets, cash flow statements, mandate statements, payroll reports, trial balances.",
+    description: "Balance sheets, cash flow statements, profit & loss statements, payroll reports, trial balances.",
     reportCount: 0,
     primaryColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
   },
@@ -160,7 +160,7 @@ export function ReportsCenterBoard() {
           <EmptyState
             icon={IconFolderOpen}
             title="No reports generated yet"
-            description="Reports will appear here once Finance generates balance sheets, mandate statements, or payroll reports. The Finance module's report generation pipeline (P5) populates this library."
+            description="Reports will appear here once Finance generates balance sheets, profit & loss statements, or payroll reports. The Finance module's report generation pipeline (P5) populates this library."
             action="Go to Finance Reports"
           />
         </BoardPanel>

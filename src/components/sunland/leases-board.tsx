@@ -38,6 +38,7 @@ import {
   Button,
   PaginationControls,
   Avatar,
+  SkeletonBlock,
 } from "@/components/ui/erp-primitives";
 import { LeaseFormModal, type LeaseEditTarget } from "./lease-form-modal";
 import { LeaseRenewModal, type LeaseRenewTarget } from "./lease-renew-modal";
@@ -56,6 +57,28 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
 import { PROPERTY_TYPE_ICON, PROPERTY_TYPES, type Property } from "./property-constants";
+
+// Content-shaped loading state for the main register (mandates/leases list),
+// replacing a centered spinner so the page-level load doesn't blank the
+// whole content area - SkeletonBlock exists in the shared UI lib but
+// previously had zero consumers anywhere in the app.
+function ListRowsSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100">
+          <SkeletonBlock className="size-10 rounded-full shrink-0" />
+          <div className="flex-1 flex flex-col gap-2 min-w-0">
+            <SkeletonBlock className="h-4 w-1/3" />
+            <SkeletonBlock className="h-3 w-1/4" />
+          </div>
+          <SkeletonBlock className="h-4 w-20 shrink-0" />
+          <SkeletonBlock className="h-4 w-16 shrink-0 hidden sm:block" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 interface Lease {
   id: string;
@@ -169,6 +192,14 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
   const [terminateNotes, setTerminateNotes] = useState("");
   const [terminateNotesErr, setTerminateNotesErr] = useState(false);
   const [isTerminatingMandate, setIsTerminatingMandate] = useState(false);
+
+  // Lease termination confirm-dialog state - previously fired immediately
+  // from the dropdown with no confirmation at all, inconsistent with mandate
+  // termination's ConfirmDialog + required-reason gate above.
+  const [terminatingLease, setTerminatingLease] = useState<Lease | null>(null);
+  const [leaseTerminateNotes, setLeaseTerminateNotes] = useState("");
+  const [leaseTerminateNotesErr, setLeaseTerminateNotesErr] = useState(false);
+  const [isTerminatingLease, setIsTerminatingLease] = useState(false);
   const [ownerDrawer, setOwnerDrawer] = useState<{ open: boolean; ownerContactId: string | null; properties: Property[] }>({
     open: false,
     ownerContactId: null,
@@ -218,7 +249,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     } catch (err) {
       console.error("Failed to load leases:", err);
       pushToast({
-        tone: "warning",
+        tone: "error",
         title: "Load Failed",
         body: "Could not retrieve lease agreements.",
       });
@@ -236,7 +267,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     } catch (err) {
       console.error("Failed to load mandates:", err);
       pushToast({
-        tone: "warning",
+        tone: "error",
         title: "Load Failed",
         body: "Could not retrieve management mandates.",
       });
@@ -299,12 +330,18 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
     return () => clearTimeout(timer);
   }, [entityId, mode, mandateActivityLoaded]);
 
-  const handleTerminate = async (id: string) => {
+  const handleTerminateLease = async () => {
+    if (!terminatingLease) return;
+    if (!leaseTerminateNotes.trim()) {
+      setLeaseTerminateNotesErr(true);
+      return;
+    }
+    setIsTerminatingLease(true);
     try {
-      const res = await fetch(`/api/leases/${id}`, {
+      const res = await fetch(`/api/leases/${terminatingLease.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entityId, action: "terminate" }),
+        body: JSON.stringify({ entityId, action: "terminate", reason: leaseTerminateNotes.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to terminate lease");
@@ -314,14 +351,18 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
         title: "Lease Terminated",
         body: "Lease has been set to inactive, and property status updated back to available.",
       });
+      setTerminatingLease(null);
+      setLeaseTerminateNotes("");
       loadLeases();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Termination failed.";
       pushToast({
-        tone: "warning",
+        tone: "error",
         title: "Action Failed",
         body: msg,
       });
+    } finally {
+      setIsTerminatingLease(false);
     }
   };
 
@@ -347,7 +388,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       setTerminateNotes("");
       loadMandates();
     } catch (err) {
-      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Failed to terminate mandate" });
+      pushToast({ tone: "error", title: "Error", body: err instanceof Error ? err.message : "Failed to terminate mandate" });
     } finally {
       setIsTerminatingMandate(false);
     }
@@ -1679,9 +1720,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
             </div>
 
             {mandatesLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <LoadingSpinner size="lg" />
-              </div>
+              <ListRowsSkeleton />
             ) : filteredMandates.length === 0 ? (
               <EmptyState
                 icon={IconFileCertificate}
@@ -2161,9 +2200,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
             )}
 
             {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <LoadingSpinner size="lg" />
-              </div>
+              <ListRowsSkeleton />
             ) : filtered.length === 0 ? (
               <EmptyState
                 icon={IconFileText}
@@ -2248,7 +2285,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                               )}
                               <DropdownItem icon={IconCalendarClock} onClick={() => setEditingLease(l)}>Edit Lease</DropdownItem>
                               {l.isActive && (
-                                <DropdownItem icon={IconBan} variant="danger" onClick={() => handleTerminate(l.id)}>Terminate Lease</DropdownItem>
+                                <DropdownItem icon={IconBan} variant="danger" onClick={() => setTerminatingLease(l)}>Terminate Lease</DropdownItem>
                               )}
                             </DropdownMenu>
                           </div>
@@ -2370,7 +2407,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                 )}
                                 <DropdownItem icon={IconCalendarClock} onClick={() => setEditingLease(l)}>Edit Lease</DropdownItem>
                                 {l.isActive && (
-                                  <DropdownItem icon={IconBan} variant="danger" onClick={() => handleTerminate(l.id)}>Terminate Lease</DropdownItem>
+                                  <DropdownItem icon={IconBan} variant="danger" onClick={() => setTerminatingLease(l)}>Terminate Lease</DropdownItem>
                                 )}
                               </DropdownMenu>
                             </div>
@@ -2506,7 +2543,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                     )}
                                     <DropdownItem icon={IconCalendarClock} onClick={() => setEditingLease(l)}>Edit Lease</DropdownItem>
                                     {l.isActive && (
-                                      <DropdownItem icon={IconBan} variant="danger" onClick={() => handleTerminate(l.id)}>Terminate Lease</DropdownItem>
+                                      <DropdownItem icon={IconBan} variant="danger" onClick={() => setTerminatingLease(l)}>Terminate Lease</DropdownItem>
                                     )}
                                   </DropdownMenu>
                                 </div>
@@ -2587,6 +2624,25 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
           onChange: (v) => { setTerminateNotes(v); setTerminateNotesErr(false); },
           required: true,
           error: terminateNotesErr ? "A reason is required." : undefined,
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!terminatingLease}
+        onClose={() => { setTerminatingLease(null); setLeaseTerminateNotes(""); setLeaseTerminateNotesErr(false); }}
+        onConfirm={handleTerminateLease}
+        title="Terminate Lease"
+        description="This cannot be undone. The tenancy is set to inactive and the unit becomes available immediately."
+        confirmLabel="Terminate Lease"
+        tone="danger"
+        isLoading={isTerminatingLease}
+        notes={{
+          label: "Termination reason",
+          placeholder: "Why is this lease being terminated?",
+          value: leaseTerminateNotes,
+          onChange: (v) => { setLeaseTerminateNotes(v); setLeaseTerminateNotesErr(false); },
+          required: true,
+          error: leaseTerminateNotesErr ? "A reason is required." : undefined,
         }}
       />
 

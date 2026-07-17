@@ -218,6 +218,8 @@ Dr 2000 Landlord Remittances Payable  x        (reduce what we owe the landlord)
 ```
 Net effect: landlord bears the cost, Sunland P&L is neutral. Requires approval if > threshold (§7).
 
+> **Implementation note (2026-07-17):** `computeExpenses()` in `src/lib/services/dashboard.ts` (backs the CEO dashboard's Total P&L card) previously summed every `type: "expense"` transaction, including rows tied to a `propertyId` - i.e. this rechargeable category. That double-counted §5.2 expenses against Sunland's own P&L on top of their recovery via the landlord remittance deduction. Fixed to filter `type === "expense" && !propertyId`, so only genuine entity-level operating costs (salaries, office rent, bank charges - `propertyId: null`) reduce Sunland's own profit figure, matching this section's rule exactly. Seed data (`src/db/seed.ts`) now includes a realistic set of `propertyId: null` operating expense transactions so this line has real substance behind it instead of computing to zero.
+
 ### 5.3 Landlord remittance payout (we pay the landlord their share)
 ```
 Dr 2000 Landlord Remittances Payable  87,000    (90,000 − 3,000 approved expenses, e.g.)

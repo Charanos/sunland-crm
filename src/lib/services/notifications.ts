@@ -1,7 +1,9 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { notifications } from "@/db/schema";
-import { NotFoundError } from "@/lib/authz/errors";
+import { authorize } from "@/lib/authz/can";
+import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";
+import { resolveEntityId } from "@/lib/services/entity";
 import { publishToChannel } from "@/lib/realtime/ably";
 import type { CallerContext } from "@/lib/services/types";
 
@@ -55,6 +57,49 @@ export async function createNotification(tx: Tx, input: CreateNotificationInput)
   }
 
   return notification;
+}
+
+/**
+ * Route-level entry point for an admin manually triggering a notification -
+ * unlike createNotification (always an internal side-effect of another
+ * service's own transaction), this is the "compose and send" path a Leases &
+ * Mandates detail page's "Notify Property Manager" action calls directly.
+ * Recipient must be a real users.id (staff) - contacts (landlords/tenants)
+ * have no login/notification concept yet (see
+ * docs/SUNLAND_TENANT_LANDLORD_PORTALS_SPEC.md, external identity is a
+ * tracked future phase, not built here).
+ */
+export async function sendManualNotification(
+  ctx: CallerContext,
+  input: {
+    userId: string;
+    title: string;
+    body: string;
+    associatedType?: string;
+    associatedId?: string;
+    href?: string;
+  },
+) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.lease.write", entityId);
+
+  if (!input.title.trim() || !input.body.trim()) {
+    throw new DomainValidationError("A notification needs both a title and a message.");
+  }
+
+  return db.transaction((tx) =>
+    createNotification(tx, {
+      userId: input.userId,
+      entityId,
+      type: "manual.notify",
+      title: input.title.trim(),
+      body: input.body.trim(),
+      associatedType: input.associatedType,
+      associatedId: input.associatedId,
+      href: input.href,
+    }),
+  );
 }
 
 export async function listNotifications(ctx: CallerContext, filters: { unreadOnly?: boolean } = {}) {

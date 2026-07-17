@@ -141,6 +141,20 @@
       "when": 1784208981381,
       "tag": "0019_chemical_ogun",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1784279755826,
+      "tag": "0020_crazy_diamondback",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1784280816576,
+      "tag": "0021_exotic_naoko",
+      "breakpoints": true
     }
   ]
 }

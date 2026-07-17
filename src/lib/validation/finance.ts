@@ -21,7 +21,7 @@ export const decideApprovalRequestSchema = z.object({
 
 export const recordTransactionSchema = z.object({
   entityId: z.string().min(1),
-  type: z.enum(["rent", "commission", "valuation_fee", "expense", "deposit", "other"]),
+  type: z.enum(["rent", "commission", "valuation_fee", "expense", "deposit", "other", "agreement_fee", "sales_commission"]),
   contactId: z.string().uuid().optional(),
   propertyId: z.string().uuid().optional(),
   leaseId: z.string().uuid().optional(),
@@ -31,6 +31,12 @@ export const recordTransactionSchema = z.object({
 });
 
 export const generateRemittanceSchema = z.object({
+  periodStart: z.string().min(1),
+  periodEnd: z.string().min(1),
+});
+
+export const generatePnLReportSchema = z.object({
+  entityId: z.string().min(1).optional(),
   periodStart: z.string().min(1),
   periodEnd: z.string().min(1),
 });
