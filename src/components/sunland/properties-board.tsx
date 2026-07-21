@@ -186,6 +186,13 @@ function PropertyGridCard({
 
   // Build icon-driven spec chips
   const specItems: { icon: React.ElementType; value: string }[] = [];
+  const activeLeasesCount = (property as Record<string, unknown>).leases
+    ? ((property as Record<string, unknown>).leases as Array<{ status: string }>).filter((l) => l.status === "active").length
+    : ((property as Record<string, unknown>).activeLeasesCount as number) ?? ((property as Record<string, unknown>).tenantCount as number);
+
+  if (activeLeasesCount != null && activeLeasesCount > 0) {
+    specItems.push({ icon: IconUsers, value: `${activeLeasesCount} ${activeLeasesCount === 1 ? "tenant" : "tenants"}` });
+  }
   const unitTotal = property.unitBreakdown?.reduce((sum, u) => sum + u.count, 0);
   if (unitTotal) specItems.push({ icon: IconBuildingCommunity, value: `${unitTotal} units` });
   if (!isLand && property.bedrooms != null) specItems.push({ icon: IconBed, value: `${property.bedrooms} beds` });
@@ -603,6 +610,7 @@ export function PropertiesBoard({
           return p;
         })
       );
+      setDrawerProperty((prev) => (prev?.id === id ? { ...prev, status } : prev));
       try {
         const res = await fetch(`/api/properties?id=${id}`, {
           method: "PATCH",
@@ -616,6 +624,7 @@ export function PropertiesBoard({
         if (previousStatus) {
           const reverted = previousStatus;
           setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, status: reverted } : p)));
+          setDrawerProperty((prev) => (prev?.id === id ? { ...prev, status: reverted } : prev));
         }
         pushToast({ title: "Couldn't update status", body: "Change was reverted - try again.", tone: "warning" });
       }

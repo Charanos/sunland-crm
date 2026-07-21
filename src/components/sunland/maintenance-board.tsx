@@ -287,10 +287,12 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
     return { open, urgent, slaCompliancePct, avgResponseHours, spendTotal, monthLabel, mix, mixTotal };
   }, [requests, slaHours]);
 
+  const [nowMs] = useState(() => Date.now());
+
   const attentionItems = useMemo(() => {
     type Item = { id: string; tone: "rose" | "amber"; icon: typeof IconShieldX; title: string; meta: string; ctaLabel: string };
     const items: Item[] = [];
-    const now = Date.now();
+    const now = nowMs;
 
     const complianceSoon = requests
       .filter((r) => r.category === "compliance" && r.status !== "done" && r.dueAt)
@@ -332,7 +334,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
     }
 
     return items.slice(0, 3);
-  }, [requests]);
+  }, [requests, nowMs]);
 
   const filterCounts = useMemo(() => ({
     all: requests.length,
@@ -365,7 +367,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
   }, [contractors, requests]);
 
   const scheduledVisits = useMemo(() => {
-    const now = Date.now();
+    const now = nowMs;
     return events
       .filter((e) => e.type === "maintenance" && e.maintenanceRequestId && new Date(e.startsAt).getTime() >= now)
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())

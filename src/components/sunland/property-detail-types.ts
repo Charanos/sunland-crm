@@ -12,6 +12,7 @@ export interface OwnerInfo {
 }
 
 export interface MandatePeriod {
+  period?: string;
   collectedAmount: number;
   managementFee: number;
   expenses: number;

@@ -1,381 +1,282 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
-  IconSearch,
-  IconPlus,
-  IconBuilding,
-  IconDotsVertical,
-  IconX,
-  IconTrash,
-  IconMessageCircle,
-  IconChevronRight,
-  IconChevronLeft,
-  IconCheck,
   IconArrowUpRight,
-  IconAlertTriangle,
-  IconChartBar,
+  IconBriefcase,
+  IconBuildingCommunity,
+  IconDotsVertical,
+  IconFlame,
   IconLayoutKanban,
   IconList,
-  IconArrowRight,
-  IconArrowLeft,
-  IconCircleDot,
-  IconEdit,
-  IconClipboardList,
-  IconBriefcase
+  IconMessageCircle,
+  IconPaperclip,
+  IconPlus,
+  IconSearch,
+  IconTrash,
+  IconTrendingDown,
+  IconTrendingUp,
+  IconX,
 } from "@tabler/icons-react";
-import { Avatar } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils/cn";
+import { Avatar, Badge, BoardHeader, Button, ConfirmDialog, DropdownItem, DropdownMenu, SkeletonBlock } from "@/components/ui/erp-primitives";
+import { PageTransition } from "@/components/shared/page-transition";
 import { useToast } from "@/components/ui/toast-provider";
+import { useUIStore } from "@/store/ui";
+import { cn } from "@/lib/utils/cn";
+import { formatCompactKES, formatKES } from "@/lib/utils/format";
 import { LeadDetailDrawer } from "./lead-detail-drawer";
 import { LeadFormModal } from "./lead-form-modal";
-import { formatKES, formatCompactKES } from "@/lib/utils/format";
-import { motion, AnimatePresence } from "framer-motion";
-import { useUIStore } from "@/store/ui";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  PRIORITY_META,
+  STAGE_META,
+  STAGE_ORDER,
+  canMoveLeadStage,
+  type PipelineLeadPriority,
+  type PipelineStage,
+} from "./lead-constants";
 
-// ─── Type Definitions ─────────────────────────────────────────────────────────
-
-export type PipelineStage =
-  | "inquiry"
-  | "qualification"
-  | "viewing"
-  | "offer"
-  | "negotiation"
-  | "closed_won"
-  | "closed_lost";
-
-export type PipelineSource =
-  | "referral"
-  | "walk_in"
-  | "website"
-  | "social_media"
-  | "cold_call"
-  | "existing_client"
-  | "partner"
-  | "exhibition";
+// ── Types (mirror the real /api/leads response shape) ──────────────────────────
 
 export interface Lead {
   id: string;
   clientName: string;
   email: string;
   phone: string;
+  clientAvatarUrl: string | null;
   budget: number;
-  propertyId?: string | null;
+  probability: number;
+  propertyId: string | null;
   propertyInterest: string;
-  source: PipelineSource;
+  propertyImageUrl: string | null;
+  source: string;
   stage: PipelineStage;
-  assignedToId?: string | null;
+  priority: PipelineLeadPriority;
+  assignedToId: string | null;
   assignedAgent: string;
+  assignedAgentAvatarUrl: string | null;
+  nextActionAt: string | null;
   createdDate: string;
+  createdAt: string;
+  closedAt: string | null;
   notes?: string;
-  timeline?: {
-    id: string;
-    date: string;
-    type: "call" | "email" | "meeting" | "message" | "system";
-    summary: string;
-    details?: string;
-  }[];
+  noteCount: number;
+  documentCount: number;
 }
 
-// ─── Constants & Styling Maps ──────────────────────────────────────────────────
+interface CurrentUser {
+  id: string;
+  name: string;
+  role: string;
+}
 
-export const STAGE_LABELS: Record<PipelineStage, string> = {
-  inquiry: "Inquiry",
-  qualification: "Qualification",
-  viewing: "Viewing",
-  offer: "Offer",
-  negotiation: "Negotiation",
-  closed_won: "Closed Won",
-  closed_lost: "Closed Lost",
-};
+interface AgentPerformanceRow {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  closedDealsCount: number;
+  totalValueKes: number;
+  activePipelineCount: number;
+  conversionRate: number;
+}
 
-export const STAGE_COLORS: Record<PipelineStage, string> = {
-  inquiry: "text-slate-650 bg-slate-50 border-slate-200/50",
-  qualification: "text-indigo-700 bg-indigo-50 border-indigo-200/30",
-  viewing: "text-cyan-700 bg-cyan-50 border-cyan-200/30",
-  offer: "text-amber-700 bg-amber-50 border-amber-200/30",
-  negotiation: "text-purple-700 bg-purple-50 border-purple-200/30",
-  closed_won: "text-emerald-700 bg-emerald-50 border-emerald-200/30",
-  closed_lost: "text-rose-700 bg-rose-50 border-rose-200/30",
-};
+const SOURCE_OPTIONS = ["referral", "walk_in", "website", "social_media", "cold_call", "existing_client", "partner", "exhibition"];
 
-export const SOURCE_COLORS: Record<PipelineSource, string> = {
-  referral: "bg-emerald-50 text-emerald-650",
-  walk_in: "bg-slate-50 text-slate-600",
-  website: "bg-blue-50 text-blue-650",
-  social_media: "bg-pink-50 text-pink-650",
-  cold_call: "bg-purple-50 text-purple-650",
-  existing_client: "bg-teal-50 text-teal-650",
-  partner: "bg-indigo-50 text-indigo-650",
-  exhibition: "bg-amber-50 text-amber-650",
-};
+// Content-shaped loading state for the kanban, replacing a centered spinner -
+// same "replace the spinner" precedent leases-board.tsx's ListRowsSkeleton /
+// maintenance-board.tsx's WorkOrderRowsSkeleton established.
+function PipelineColumnsSkeleton() {
+  return (
+    <div className="flex gap-3.5 overflow-x-auto pb-2">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex-1 min-w-[262px] bg-slate-50/50 rounded-2xl p-3 flex flex-col gap-2.5">
+          <SkeletonBlock className="h-8 w-full rounded-xl" />
+          <SkeletonBlock className="h-40 w-full rounded-2xl" />
+          <SkeletonBlock className="h-40 w-full rounded-2xl" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
-// ─── Property & Agent Mappers ───────────────────────────────────────────────
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
+}
 
-const PROPERTY_IMAGES: Record<string, string> = {
-  "Runda Grove Villa": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=200&fit=crop",
-  "Westlands Tower 4B": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=200&fit=crop",
-  "Karen Ridge House": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=200&fit=crop",
-  "Upper Hill Plaza": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=200&fit=crop",
-  "Kilimani Heights": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=200&fit=crop",
-  "Lavington Gardens": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=200&fit=crop",
-  "Riverside Haven": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=200&fit=crop",
-  "Muthaiga Grand": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=200&fit=crop",
-  "Gigiri Diplomatic": "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=200&fit=crop",
-};
+// Deterministic (not random) chip color from a name, so the same agent always
+// gets the same color across renders/sessions without a stored color column.
+const AGENT_CHIP_COLORS = ["#7c3aed", "#2A6FDB", "#047857", "#b45309", "#be123c", "#0f766e"];
+function agentColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return AGENT_CHIP_COLORS[hash % AGENT_CHIP_COLORS.length];
+}
 
-export const getPropertyImage = (interest: string) => {
-  return PROPERTY_IMAGES[interest] || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=200&fit=crop";
-};
-
-const AGENT_AVATARS: Record<string, string> = {
-  "Amina Wanjiku": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&h=80&fit=crop&crop=face",
-  "John Mwangi": "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=80&h=80&fit=crop&crop=face",
-};
-
-const getAgentAvatar = (name: string) => {
-  return AGENT_AVATARS[name] || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face";
-};
-
-const CLIENT_AVATARS: Record<string, string> = {
-  "James Mwangi": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face",
-  "Amina Abdalla": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face",
-  "John Kamau": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
-  "Fatma Hassan": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&h=80&fit=crop&crop=face",
-  "Kevin Ochieng": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face",
-  "Mary Wambui": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=face",
-  "Peter Kiprop": "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=80&h=80&fit=crop&crop=face",
-  "Sarah Mwangi": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=80&h=80&fit=crop&crop=face",
-  "Michael Onyango": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face",
-};
-
-const getClientAvatar = (name: string) => {
-  return CLIENT_AVATARS[name] || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face";
-};
-
-const ROWS_PER_PAGE = 5;
-
-export function PipelineBoard({
-  defaultView = "kanban",
-  isFullPageFocus = false
-}: {
-  defaultView?: "kanban" | "list";
-  isFullPageFocus?: boolean;
-}) {
+export function PipelineBoard() {
   const { pushToast } = useToast();
-  const { setSelectedChatDMId, activeEntityId } = useUIStore();
+  const { activeEntityId } = useUIStore();
 
-  // App States
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [selectedLeadDetail, setSelectedLeadDetail] = useState<Lead | undefined>(undefined);
-  const [viewMode, setViewMode] = useState<"kanban" | "list">(defaultView);
-  const [role, setRole] = useState<"CEO" | "Agent">("CEO");
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [agentPerformance, setAgentPerformance] = useState<AgentPerformanceRow[]>([]);
+
+  const [query, setQuery] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [mineOnly, setMineOnly] = useState(false);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  // Confirmation States
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
-
-  // Filter States
-  const [searchQuery, setSearchQuery] = useState("");
-  const [stageFilter, setStageFilter] = useState<string>("all");
-  const [sourceFilter, setSourceFilter] = useState<string>("all");
-
-  // Sorting & Pagination States
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<string>("clientName");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Detail Drawer & Form Modal State
-  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>(undefined);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
 
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<PipelineStage | null>(null);
+
   const loadLeads = useCallback(async () => {
-    Promise.resolve().then(() => setIsLoading(true));
+    Promise.resolve().then(() => setLoading(true));
     try {
       const res = await fetch(`/api/leads?entityId=${activeEntityId}`);
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load leads");
       setLeads((data.leads ?? []) as Lead[]);
     } catch (err) {
-      console.error("Failed to load leads:", err);
+      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Failed to load leads" });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [activeEntityId]);
+  }, [activeEntityId, pushToast]);
 
   useEffect(() => {
-    Promise.resolve().then(() => { loadLeads(); });
-  }, [loadLeads]);
-
-  // Detail drawer fetches the real per-lead record (with its real activity
-  // timeline from the audit log) rather than reusing the list row, which
-  // deliberately omits timeline for a cheaper list query.
-  useEffect(() => {
-    if (!selectedLeadId) {
-      setSelectedLeadDetail(undefined);
-      return;
-    }
-    let cancelled = false;
-    Promise.resolve().then(async () => {
-      try {
-        const res = await fetch(`/api/leads/${selectedLeadId}?entityId=${activeEntityId}`);
-        const data = await res.json();
-        if (!cancelled) setSelectedLeadDetail(data.lead as Lead);
-      } catch (err) {
-        console.error("Failed to load lead detail:", err);
-      }
+    Promise.resolve().then(() => {
+      loadLeads();
+      fetch("/api/auth/me").then((r) => r.json()).then((d) => setCurrentUser(d.user ?? null)).catch(() => { });
+      fetch(`/api/crm/agent-performance?entityId=${activeEntityId}`).then((r) => r.json()).then((d) => setAgentPerformance(Array.isArray(d.agents) ? d.agents : [])).catch(() => { });
     });
-    return () => { cancelled = true; };
-  }, [selectedLeadId, activeEntityId]);
+  }, [loadLeads, activeEntityId]);
 
-  // Skeleton loading triggers
-  useEffect(() => {
-    Promise.resolve().then(() => setIsLoading(true));
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [searchQuery, stageFilter, sourceFilter, role, currentPage, sortField, sortDir, viewMode]);
-
-  useEffect(() => {
-    Promise.resolve().then(() => setSelectedIds([]));
-  }, [searchQuery, stageFilter, sourceFilter, role, viewMode]);
-
-  const resetPagination = () => setCurrentPage(1);
-
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDir(prev => prev === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDir("asc");
-    }
-  };
-
-  const getDMIdForContact = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes("amina") || n.includes("hassan") || n.includes("abdalla") || n.includes("wanjiku")) return "dm1";
-    if (n.includes("james") || n.includes("mutua") || n.includes("mwangi")) return "dm2";
-    if (n.includes("grace") || n.includes("omondi")) return "dm3";
-    return "dm1";
-  };
-
-  // Filter Leads
-  const filteredLeads = useMemo(() => {
-    return leads.filter((lead) => {
-      // 1. Role Scope
-      const matchesRole = role === "CEO" || lead.assignedAgent === "Amina Wanjiku";
-
-      // 2. Search
-      const matchesSearch =
-        lead.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.propertyInterest.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.email.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // 3. Dropdowns
-      const matchesStage = stageFilter === "all" || lead.stage === stageFilter;
-      const matchesSource = sourceFilter === "all" || lead.source === sourceFilter;
-
-      return matchesRole && matchesSearch && matchesStage && matchesSource;
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return leads.filter((l) => {
+      const matchesMine = !mineOnly || !currentUser || l.assignedToId === currentUser.id;
+      const matchesSource = sourceFilter === "all" || l.source === sourceFilter;
+      const matchesQuery = !q || [l.clientName, l.propertyInterest, l.email].some((s) => s.toLowerCase().includes(q));
+      return matchesMine && matchesSource && matchesQuery;
     });
-  }, [leads, searchQuery, stageFilter, sourceFilter, role]);
+  }, [leads, query, sourceFilter, mineOnly, currentUser]);
 
-  // Sort Leads
-  const sortedLeads = useMemo(() => {
-    const sorted = [...filteredLeads];
-    sorted.sort((a, b) => {
-      const aVal = a[sortField as keyof Lead];
-      const bVal = b[sortField as keyof Lead];
+  // ── Real analytics - never fabricated. Deltas only where an honest
+  // month-over-month comparison exists (bucketed from real closedAt); omitted
+  // (not invented) where a point-in-time count has no real prior baseline. ──
+  const analytics = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-      if (aVal === undefined) return 1;
-      if (bVal === undefined) return -1;
+    const open = visible.filter((l) => l.stage !== "closed_won" && l.stage !== "closed_lost");
+    const openVolume = open.reduce((a, l) => a + l.budget, 0);
 
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      } else if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortDir === "asc" ? aVal - bVal : bVal - aVal;
-      }
-      return 0;
-    });
-    return sorted;
-  }, [filteredLeads, sortField, sortDir]);
+    const closedInRange = (start: Date, end: Date) =>
+      visible.filter((l) => (l.stage === "closed_won" || l.stage === "closed_lost") && l.closedAt && new Date(l.closedAt) >= start && new Date(l.closedAt) < end);
+    const closedThisMonth = closedInRange(monthStart, now);
+    const closedLastMonth = closedInRange(prevMonthStart, monthStart);
 
-  // Paginated List
-  const paginatedLeads = useMemo(() => {
-    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-    return sortedLeads.slice(startIndex, startIndex + ROWS_PER_PAGE);
-  }, [sortedLeads, currentPage]);
+    const wonValue = (rows: Lead[]) => rows.filter((l) => l.stage === "closed_won").reduce((a, l) => a + l.budget, 0);
+    const wonValueThisMonth = wonValue(closedThisMonth);
+    const wonValueLastMonth = wonValue(closedLastMonth);
+    const wonValueDeltaPct = wonValueLastMonth > 0 ? Math.round(((wonValueThisMonth - wonValueLastMonth) / wonValueLastMonth) * 100) : null;
 
-  const totalPages = Math.ceil(sortedLeads.length / ROWS_PER_PAGE) || 1;
+    const winRateOf = (rows: Lead[]) => {
+      if (rows.length === 0) return null;
+      return Math.round((rows.filter((l) => l.stage === "closed_won").length / rows.length) * 100);
+    };
+    const winRateThisMonth = winRateOf(closedThisMonth);
+    const winRateLastMonth = winRateOf(closedLastMonth);
+    const winRateDeltaPts = winRateThisMonth != null && winRateLastMonth != null ? winRateThisMonth - winRateLastMonth : null;
 
-  // KPIs Calculations
-  const stats = useMemo(() => {
-    const scoped = leads.filter(l => role === "CEO" || l.assignedAgent === "Amina Wanjiku");
-    const activeValue = scoped.filter(l => l.stage !== "closed_won" && l.stage !== "closed_lost").reduce((acc, l) => acc + l.budget, 0);
-    const viewings = scoped.filter(l => l.stage === "viewing").length;
-    const closedWon = scoped.filter(l => l.stage === "closed_won");
-    const totalClosed = scoped.filter(l => l.stage === "closed_won" || l.stage === "closed_lost").length;
+    const allClosed = visible.filter((l) => l.stage === "closed_won" || l.stage === "closed_lost");
+    const winRateAllTime = winRateOf(allClosed) ?? 0;
 
-    const winRate = totalClosed > 0 ? Math.round((closedWon.length / totalClosed) * 100) : 0;
-    const pendingOffers = scoped.filter(l => l.stage === "offer" || l.stage === "negotiation").reduce((acc, l) => acc + l.budget, 0);
+    const avgDaysOf = (rows: Lead[]) => {
+      const won = rows.filter((l) => l.stage === "closed_won" && l.closedAt);
+      if (won.length === 0) return null;
+      const total = won.reduce((a, l) => a + Math.max(0, (new Date(l.closedAt!).getTime() - new Date(l.createdAt).getTime()) / 86_400_000), 0);
+      return Math.round(total / won.length);
+    };
+    const avgDaysThisMonth = avgDaysOf(closedThisMonth);
+    const avgDaysLastMonth = avgDaysOf(closedLastMonth);
+    const avgDaysDelta = avgDaysThisMonth != null && avgDaysLastMonth != null ? avgDaysThisMonth - avgDaysLastMonth : null;
+    const avgDaysAllTime = avgDaysOf(visible);
 
     return {
-      activeValue,
-      viewings,
-      winRate,
-      pendingOffers,
-      total: scoped.length
+      openVolume,
+      openCount: open.length,
+      wonValueThisMonth,
+      wonValueDeltaPct,
+      viewings: visible.filter((l) => l.stage === "viewing").length,
+      offersInPlay: visible.filter((l) => l.stage === "offer" || l.stage === "negotiation").length,
+      negotiationCount: visible.filter((l) => l.stage === "negotiation").length,
+      winRateAllTime,
+      winRateDeltaPts,
+      avgDaysAllTime,
+      avgDaysDelta,
     };
-  }, [leads, role]);
+  }, [visible]);
 
-  // Drag-free Stage Advancement buttons on Kanban cards - optimistic update
-  // with rollback on failure, same convention as the valuations focus board's
-  // real drag-drop transitions.
-  const handleMoveStage = async (leadId: string, direction: "forward" | "backward") => {
-    const stageSequence: PipelineStage[] = ["inquiry", "qualification", "viewing", "offer", "negotiation", "closed_won", "closed_lost"];
-    const lead = leads.find(l => l.id === leadId);
-    if (!lead) return;
+  const hotDeal = useMemo(() => {
+    const open = visible.filter((l) => l.stage !== "closed_won" && l.stage !== "closed_lost");
+    if (open.length === 0) return null;
+    return [...open].sort((a, b) => b.budget - a.budget)[0];
+  }, [visible]);
 
-    const currentIndex = stageSequence.indexOf(lead.stage);
-    const nextIndex = direction === "forward" ? currentIndex + 1 : currentIndex - 1;
+  const heroSub = useMemo(() => {
+    const bits: string[] = [];
+    if (analytics.negotiationCount > 0) bits.push(`${analytics.negotiationCount} deal${analytics.negotiationCount === 1 ? "" : "s"} in Legal & Docs`);
+    if (analytics.offersInPlay > 0) bits.push(`${analytics.offersInPlay} offer${analytics.offersInPlay === 1 ? "" : "s"} in play`);
+    const lead = bits.length > 0 ? `${bits.join("; ")}. ` : "";
+    return `${lead}Win rate holding at ${analytics.winRateAllTime}%.`;
+  }, [analytics]);
 
-    // Boundary safeguards
-    if (nextIndex < 0 || nextIndex >= stageSequence.length) return;
+  // ── Mutations ────────────────────────────────────────────────────────────
 
-    const newStage = stageSequence[nextIndex];
-    const previousStage = lead.stage;
-
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
-
+  const transitionStage = async (lead: Lead, target: PipelineStage, lostReason?: string) => {
+    const prevStage = lead.stage;
+    setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, stage: target } : l)));
     try {
-      const res = await fetch(`/api/leads/${leadId}`, {
+      const res = await fetch(`/api/leads/${lead.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "transition", entityId: activeEntityId, stage: newStage }),
+        body: JSON.stringify({ action: "transition", entityId: activeEntityId, stage: target, lostReason }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to move stage");
-      pushToast({
-        tone: "success",
-        title: "Opportunity Advanced",
-        body: `"${lead.clientName}" is now in stage "${STAGE_LABELS[newStage]}".`
-      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Failed to move opportunity");
+      pushToast({ tone: "success", title: `${lead.clientName} → ${STAGE_META[target].label}`, body: `${lead.assignedAgent} notified; timeline updated.` });
     } catch (err) {
-      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: previousStage } : l));
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, stage: prevStage } : l)));
       pushToast({ tone: "warning", title: "Could not move opportunity", body: err instanceof Error ? err.message : "Try again." });
     }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetStage: PipelineStage) => {
+    e.preventDefault();
+    const id = dragId;
+    setDragId(null);
+    setDragOverStage(null);
+    if (!id) return;
+    const lead = leads.find((l) => l.id === id);
+    if (!lead || !canMoveLeadStage(lead.stage, targetStage)) return;
+    transitionStage(lead, targetStage);
   };
 
   const handleCreateOrUpdate = async (payload: Partial<Lead>) => {
     try {
       if (editingLead) {
-        await fetch(`/api/leads/${editingLead.id}`, {
+        const res = await fetch(`/api/leads/${editingLead.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -384,12 +285,12 @@ export function PipelineBoard({
             propertyId: payload.propertyId ?? null,
             assignedToId: payload.assignedToId ?? null,
             expectedValueKes: payload.budget != null ? String(payload.budget) : undefined,
+            priority: payload.priority,
             notes: payload.notes ?? null,
           }),
-        }).then(async (res) => {
-          if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to update opportunity");
         });
-        pushToast({ tone: "success", title: "Deal Updated", body: `Opportunity details saved for "${payload.clientName}".` });
+        if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to update opportunity");
+        pushToast({ tone: "success", title: "Deal updated", body: `Opportunity details saved for "${payload.clientName}".` });
         setEditingLead(undefined);
       } else {
         const res = await fetch("/api/leads", {
@@ -403,58 +304,51 @@ export function PipelineBoard({
             propertyId: payload.propertyId ?? null,
             assignedToId: payload.assignedToId ?? null,
             expectedValueKes: payload.budget != null ? String(payload.budget) : undefined,
+            priority: payload.priority,
             source: payload.source ?? "website",
             notes: payload.notes ?? null,
           }),
         });
         if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to create opportunity");
-        pushToast({ tone: "success", title: "Deal Opened", body: `Successfully logged pipeline lead "${payload.clientName}".` });
+        pushToast({ tone: "success", title: "Deal created", body: `"${payload.clientName}" opens in New Inquiry.` });
       }
-      setIsModalOpen(false);
+      setFormOpen(false);
       loadLeads();
     } catch (err) {
       pushToast({ tone: "warning", title: "Could not save opportunity", body: err instanceof Error ? err.message : "Try again." });
     }
   };
 
-  const handleDeleteLead = (id: string) => {
-    setDeleteConfirmId(id);
-  };
-
   const confirmDeleteLead = async () => {
     if (!deleteConfirmId) return;
-    const lead = leads.find(l => l.id === deleteConfirmId);
+    const lead = leads.find((l) => l.id === deleteConfirmId);
     try {
       const res = await fetch(`/api/leads/${deleteConfirmId}?entityId=${activeEntityId}`, { method: "DELETE" });
       if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to delete opportunity");
-      setLeads(prev => prev.filter(l => l.id !== deleteConfirmId));
-      pushToast({
-        tone: "success",
-        title: "Opportunity Cleared",
-        body: `"${lead?.clientName || 'Record'}" was successfully scrubbed from CRM.`
-      });
+      setLeads((prev) => prev.filter((l) => l.id !== deleteConfirmId));
+      pushToast({ tone: "success", title: "Deal removed", body: `"${lead?.clientName ?? "Record"}" removed from the pipeline.` });
     } catch (err) {
-      pushToast({ tone: "warning", title: "Could not delete opportunity", body: err instanceof Error ? err.message : "Try again." });
+      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Try again." });
     } finally {
       setDeleteConfirmId(null);
     }
   };
 
-  // Bulk Handlers - looped real calls, same convention as the valuation
-  // reassign modal's bulk actions (no bulk API route, N sequential requests).
-  const handleBulkStageChange = async (newStage: PipelineStage) => {
+  const handleBulkStageChange = async (target: PipelineStage) => {
     const ids = [...selectedIds];
-    setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, stage: newStage } : l));
+    const movable = ids.filter((id) => {
+      const l = leads.find((x) => x.id === id);
+      return l && canMoveLeadStage(l.stage, target);
+    });
+    setLeads((prev) => prev.map((l) => (movable.includes(l.id) ? { ...l, stage: target } : l)));
     setSelectedIds([]);
     try {
-      await Promise.all(ids.map((id) =>
-        fetch(`/api/leads/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "transition", entityId: activeEntityId, stage: newStage }),
-        })
-      ));
-      pushToast({ tone: "success", title: "Batch Updated", body: `Moved ${ids.length} deals to stage "${STAGE_LABELS[newStage]}".` });
+      await Promise.all(movable.map((id) => fetch(`/api/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "transition", entityId: activeEntityId, stage: target }),
+      })));
+      pushToast({ tone: "success", title: "Batch updated", body: `Moved ${movable.length} deal${movable.length === 1 ? "" : "s"} to "${STAGE_META[target].label}".` });
     } catch (err) {
       pushToast({ tone: "warning", title: "Some updates failed", body: err instanceof Error ? err.message : "Refresh to check current state." });
     } finally {
@@ -462,776 +356,374 @@ export function PipelineBoard({
     }
   };
 
-  const handleBulkDelete = () => {
-    setIsBulkDeleteConfirmOpen(true);
-  };
-
   const confirmBulkDelete = async () => {
     const ids = [...selectedIds];
     try {
       await Promise.all(ids.map((id) => fetch(`/api/leads/${id}?entityId=${activeEntityId}`, { method: "DELETE" })));
-      setLeads(prev => prev.filter(l => !ids.includes(l.id)));
-      pushToast({ tone: "success", title: "Batch Action Completed", body: `Deleted ${ids.length} opportunities.` });
+      setLeads((prev) => prev.filter((l) => !ids.includes(l.id)));
+      pushToast({ tone: "success", title: "Batch deleted", body: `Removed ${ids.length} opportunit${ids.length === 1 ? "y" : "ies"}.` });
     } catch (err) {
       pushToast({ tone: "warning", title: "Some deletions failed", body: err instanceof Error ? err.message : "Refresh to check current state." });
       loadLeads();
     } finally {
       setSelectedIds([]);
-      setIsBulkDeleteConfirmOpen(false);
+      setIsBulkDeleteOpen(false);
     }
   };
 
-  const handleBulkMessage = () => {
-    pushToast({ tone: "success", title: "Direct Broadcast Dispatched", body: `Dispatched message links to ${selectedIds.length} prospects.` });
-    setSelectedIds([]);
-  };
+  const teamStack = agentPerformance.slice(0, 3);
+  const teamOverflow = Math.max(0, agentPerformance.length - teamStack.length);
 
   return (
-    <div className={cn(
-      "mx-auto w-full max-w-[98rem] flex flex-col gap-6",
-      isFullPageFocus && "fixed inset-0 z-50 bg-slate-50 p-6 overflow-hidden h-screen w-screen"
-    )}>
-
-      {isFullPageFocus && (
-        <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-2 shrink-0">
+    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-5">
+      <BoardHeader
+        eyebrow={<Badge tone="primary">Sales & Acquisition Pipeline</Badge>}
+        title="Deals Pipeline"
+        description="Every enquiry, viewing, offer, and closed deal across the sales desk - from first contact to signed sale."
+        actions={
           <div className="flex items-center gap-3">
-            <Link
-              href="/admin/pipeline"
-              className="flex items-center gap-1.5 font-medium text-slate-550 hover:text-slate-900 transition-colors bg-white px-3 py-1.5 border border-slate-200 rounded-xl shadow-sm animate-fade-in text-base"
-            >
-              <IconChevronLeft size={15} />
-              <span>Exit Focus Mode</span>
-            </Link>
-            <div className="h-4 w-px bg-slate-200" />
-            <h1 className="text-base font-medium text-slate-800 tracking-tight font-serif">
-              Deals Pipeline Focus Deck
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="bg-[#f3df27]/20 text-[#151936] px-2.5 py-0.5 rounded-full border border-[#f3df27]/40 label-caps">
-              CEO / Admin Control
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* ── Sales & CRM Hub Navigator ── */}
-      {!isFullPageFocus && (
-        <div className="flex items-center justify-between flex-wrap gap-4 bg-white border border-slate-100 p-4 rounded-[20px] shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-lg bg-indigo-50 text-indigo-650 flex items-center justify-center">
-              <IconBriefcase size={16} />
-            </div>
-            <div>
-              <h3 className="text-base font-medium text-slate-800 leading-none">Sales & CRM Hub</h3>
-              <p className="text-sm text-slate-400 mt-1">Manage client relationships and sales pipelines.</p>
-            </div>
-          </div>
-
-          <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
-            <Link
-              href="/admin/contacts"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
-            >
-              <span>Contacts</span>
-            </Link>
-            <Link
-              href="/admin/pipeline"
-              className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
-            >
-              <span>Deals Pipeline</span>
-              <span className="bg-[#f3df27] text-[#151936] px-1.5 py-0.2 rounded-full text-meta-muted-strong">Active</span>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ── Top Analytics KPI Tier ── */}
-      {!isFullPageFocus && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-          {/* KPI 1 */}
-          <div className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
-            <div className="flex items-center gap-2">
-              <div className="size-[22px] rounded-full bg-slate-100 flex items-center justify-center text-slate-550">
-                <IconChartBar size={13} />
-              </div>
-              <span className="text-base font-medium text-slate-400 tracking-wider uppercase">Active Pipeline Value</span>
-            </div>
-            <div className="flex items-end justify-between mt-auto mb-2">
-              <span className="sm:text-[28px] font-medium text-slate-800 tracking-tight font-mono leading-none text-3xl">
-                {formatCompactKES(stats.activeValue)}
-              </span>
-              <span className="text-sm text-emerald-650 font-medium">Active Leads: {stats.total}</span>
-            </div>
-            <div className="h-[3px] bg-slate-100 rounded-full w-full overflow-hidden">
-              <div className="h-full bg-indigo-500 rounded-full w-[72%] transition-all duration-1000" />
-            </div>
-          </div>
-
-          {/* KPI 2 */}
-          <div className="bg-indigo-50/70 p-5 rounded-[20px] border border-indigo-100/50 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
-            <div className="flex items-center gap-2">
-              <div className="size-[22px] rounded-full bg-indigo-500 text-white flex items-center justify-center animate-none">
-                <IconBuilding size={13} />
-              </div>
-              <span className="text-base font-medium text-indigo-700 tracking-wider uppercase">Active Viewings</span>
-            </div>
-            <div className="flex items-end justify-between mt-auto mb-2">
-              <span className="text-indigo-900 tracking-tight leading-none mono-stat">{stats.viewings}</span>
-              <span className="text-sm text-indigo-650 font-medium">Tours this month</span>
-            </div>
-            <div className="h-[3px] bg-indigo-200/50 rounded-full w-full overflow-hidden">
-              <div className="h-full bg-indigo-600 rounded-full w-[45%] transition-all duration-1000" />
-            </div>
-          </div>
-
-          {/* KPI 3 */}
-          <div className="bg-emerald-50/70 p-5 rounded-[20px] border border-emerald-100/50 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
-            <div className="flex items-center gap-2">
-              <div className="size-[22px] rounded-full bg-emerald-500 text-white flex items-center justify-center">
-                <IconCheck size={13} />
-              </div>
-              <span className="text-base font-medium text-emerald-700 tracking-wider uppercase">Win Conversion Rate</span>
-            </div>
-            <div className="flex items-end justify-between mt-auto mb-2">
-              <span className="text-emerald-900 tracking-tight leading-none mono-stat">{stats.winRate}%</span>
-              <span className="text-sm text-emerald-650 font-medium">Won vs Lost ratio</span>
-            </div>
-            <div className="h-[3px] bg-emerald-200/50 rounded-full w-full overflow-hidden">
-              <div className="h-full bg-emerald-600 rounded-full w-[80%] transition-all duration-1000" />
-            </div>
-          </div>
-
-          {/* KPI 4 */}
-          <div className="bg-amber-50/70 p-5 rounded-[20px] border border-amber-100/50 shadow-sm flex flex-col justify-between h-[135px] hover:shadow-md transition-all group relative overflow-hidden">
-            <div className="flex items-center gap-2">
-              <div className="size-[22px] rounded-full bg-amber-500 text-white flex items-center justify-center">
-                <IconAlertTriangle size={13} />
-              </div>
-              <span className="text-base font-medium text-amber-700 tracking-wider uppercase">Pending Offers Value</span>
-            </div>
-            <div className="flex items-end justify-between mt-auto mb-2">
-              <span className="sm:text-[28px] font-medium text-amber-900 tracking-tight font-mono leading-none text-3xl">
-                {formatCompactKES(stats.pendingOffers)}
-              </span>
-              <span className="text-sm text-amber-750 font-medium">Offers & Negotiation</span>
-            </div>
-            <div className="h-[3px] bg-amber-200/50 rounded-full w-full overflow-hidden">
-              <div className="h-full bg-amber-600 rounded-full w-[60%] transition-all duration-1000" />
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* ── Main Data Board ── */}
-      <Card className={cn(
-        "flex flex-col overflow-hidden border border-slate-100 shadow-sm bg-white rounded-3xl",
-        isFullPageFocus ? "flex-1 h-full" : ""
-      )}>
-
-        {/* Controls Bar */}
-        <div className="p-5 border-b border-slate-100 space-y-4 bg-white shrink-0">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-
-            {/* View switcher & Search */}
-            <div className="flex items-center gap-3 flex-wrap flex-1 min-w-[280px]">
-
-              {/* Kanban / List Toggle */}
-              <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
-                <button
-                  onClick={() => setViewMode("kanban")}
-                  className={cn(
-                    "p-1.5 rounded-lg transition-all text-slate-550 hover:text-slate-800",
-                    viewMode === "kanban" && "bg-white shadow-sm text-[#151936]"
-                  )}
-                  aria-label="Kanban view"
-                >
-                  <IconLayoutKanban size={17} />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={cn(
-                    "p-1.5 rounded-lg transition-all text-slate-550 hover:text-slate-800",
-                    viewMode === "list" && "bg-white shadow-sm text-[#151936]"
-                  )}
-                  aria-label="List view"
-                >
-                  <IconList size={17} />
-                </button>
-              </div>
-
-              {/* Search */}
-              <div className="relative flex-1 max-w-xs">
-                <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search opportunities..."
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); resetPagination(); }}
-                  className="pl-10 pr-4 py-2 w-full bg-slate-50 border border-slate-200/60 rounded-xl text-base focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-all placeholder:text-slate-400"
-                />
-              </div>
-            </div>
-
-            {/* Dropdown filters */}
-            <div className="flex items-center gap-2 flex-wrap">
-
-              {/* Stage select (List view only) */}
-              {viewMode === "list" && (
-                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 text-base">
-                  <span className="text-slate-400">Stage:</span>
-                  <select
-                    value={stageFilter}
-                    onChange={(e) => { setStageFilter(e.target.value); resetPagination(); }}
-                    className="bg-transparent focus:outline-none font-medium text-slate-800"
-                  >
-                    <option value="all">All Stages</option>
-                    {Object.entries(STAGE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
-                </div>
-              )}
-              {/* Source Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 font-normal text-base">
-                <span className="text-slate-400">Source:</span>
-                <select
-                  value={sourceFilter}
-                  onChange={(e) => { setSourceFilter(e.target.value); resetPagination(); }}
-                  className="bg-transparent focus:outline-none font-medium text-slate-800"
-                >
-                  <option value="all">All Sources</option>
-                  {Object.entries(SOURCE_COLORS).map(([k]) => <option key={k} value={k}>{k.replace("_", " ")}</option>)}
-                </select>
-              </div>
-
-              {/* Scope Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 font-normal text-base">
-                <span className="text-slate-400">Scope:</span>
-                <select
-                  value={role}
-                  onChange={(e) => { setRole(e.target.value as "CEO" | "Agent"); resetPagination(); }}
-                  className="bg-transparent focus:outline-none font-medium text-slate-800 cursor-pointer"
-                >
-                  <option value="CEO">CEO (All)</option>
-                  <option value="Agent">Agent Amina</option>
-                </select>
-              </div>
-
-              {/* Add Lead button */}
-              <button
-                onClick={() => { setEditingLead(undefined); setIsModalOpen(true); }}
-                className="flex items-center gap-1.5 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl font-medium hover:bg-[#e6d220] transition-colors shadow-sm cursor-pointer text-base"
-              >
-                <IconPlus size={15} stroke={2.5} />
-                <span>Create Lead</span>
-              </button>
-
-              {/* Full Screen Focus button */}
-              {!isFullPageFocus && (
-                <Link
-                  href="/admin/pipeline/kanban"
-                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-medium transition-all shadow-sm shrink-0 text-base"
-                >
-                  <IconArrowUpRight size={15} stroke={2.5} />
-                  <span>Full Screen Focus</span>
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Active filter chips */}
-          {(stageFilter !== "all" || sourceFilter !== "all" || searchQuery !== "") && (
-            <div className="flex items-center gap-2 flex-wrap pt-2 animate-fade-in">
-              <span className="text-slate-400 label-caps">Active Filters:</span>
-              {searchQuery && (
-                <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
-                  Search: &quot;{searchQuery}&quot;
-                  <button onClick={() => setSearchQuery("")} className="hover:text-red-500"><IconX size={12} /></button>
+            <div className="flex items-center">
+              {teamStack.map((a) => (
+                <span key={a.userId} className="-ml-2 first:ml-0" title={a.name}>
+                  <Avatar src={a.avatarUrl ?? undefined} fallback={initialsOf(a.name)} className="size-7 border-2 border-[#f4f6f0] text-[10px]" />
                 </span>
-              )}
-              {stageFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-base font-medium border border-indigo-200/40">
-                  Stage: {STAGE_LABELS[stageFilter as PipelineStage]}
-                  <button onClick={() => setStageFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
-                </span>
-              )}
-              {sourceFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-base font-medium border border-amber-200/40 font-medium">
-                  Source: {sourceFilter}
-                  <button onClick={() => setSourceFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
-                </span>
-              )}
-              <button onClick={() => { setSearchQuery(""); setStageFilter("all"); setSourceFilter("all"); }} className="text-sm font-medium text-slate-400 hover:text-slate-800 underline ml-1">
-                Clear all
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* ── MAIN CONTENT DUAL VIEWS ── */}
-        <div className="flex-1 min-h-[400px]">
-
-          <AnimatePresence mode="wait">
-
-            {isLoading ? (
-              // Simple unified skeleton loader screen
-              <div key="loading" className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="border border-slate-100 rounded-2xl p-4 space-y-4">
-                    <div className="h-4 w-24 bg-slate-100 rounded" />
-                    <div className="space-y-2">
-                      <div className="h-14 bg-slate-100 rounded-xl" />
-                      <div className="h-14 bg-slate-50 rounded-xl" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : viewMode === "kanban" ? (
-
-              // ── Kanban Board View ──
-              <div
-                key="kanban"
-                className={cn(
-                  "p-6 overflow-x-auto flex gap-4 custom-scrollbar select-none align-stretch",
-                  isFullPageFocus ? "flex-1 overflow-y-hidden" : ""
-                )}
-              >
-                {(Object.keys(STAGE_LABELS) as PipelineStage[]).map((stage) => {
-                  const stageLeads = sortedLeads.filter(l => l.stage === stage);
-                  const columnBudget = stageLeads.reduce((acc, l) => acc + l.budget, 0);
-
-                  return (
-                    <div key={stage} className="flex-1 min-w-[280px] bg-slate-50/50 rounded-2xl p-3 flex flex-col border border-slate-100">
-
-                      {/* Column Header */}
-                      <div className="flex items-center justify-between mb-3 px-1">
-                        <div className="flex items-center gap-2">
-                          <span className={cn("px-2 py-0.5 rounded-md text-sm font-medium border uppercase tracking-wider font-medium", STAGE_COLORS[stage])}>
-                            {STAGE_LABELS[stage]}
-                          </span>
-                          <span className="text-slate-400 mono-data">({stageLeads.length})</span>
-                        </div>
-                        {columnBudget > 0 && (
-                          <span className="text-sm  font-mono font-medium text-slate-400">{formatCompactKES(columnBudget)}</span>
-                        )}
-                      </div>
-
-                      {/* Leads Cards Container */}
-                      <div className={cn(
-                        "flex-1 space-y-2 overflow-y-auto pr-0.5 custom-scrollbar min-h-[150px]",
-                        isFullPageFocus ? "max-h-[calc(100vh-270px)]" : "max-h-[480px]"
-                      )}>
-                        {stageLeads.length > 0 ? (
-                          stageLeads.map((lead) => (
-                            <div
-                              key={lead.id}
-                              onClick={() => setSelectedLeadId(lead.id)}
-                              className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-slate-300 hover:shadow-md transition-all cursor-pointer group flex flex-col min-h-[180px] shadow-sm"
-                            >
-                              {/* Header Property Visual */}
-                              <div className="relative h-[65px] w-full bg-slate-100 overflow-hidden">
-                                <Image
-                                  src={getPropertyImage(lead.propertyInterest)}
-                                  alt={lead.propertyInterest}
-                                  fill
-                                  sizes="200px"
-                                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                                <div className="absolute top-2 right-2">
-                                  <span className={cn("px-1.5 py-0.5 rounded text-xs font-medium tracking-wide uppercase shadow-sm bg-white/95 text-slate-800 border border-slate-100", SOURCE_COLORS[lead.source])}>
-                                    {lead.source}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Card Content & Footer */}
-                              <div className="p-3 flex-1 flex flex-col justify-between">
-                                <div className="space-y-1">
-                                  <h4 className="text-base font-normal text-slate-900 group-hover:text-[#151936] transition-colors leading-snug truncate">
-                                    {lead.clientName}
-                                  </h4>
-                                  <p className="text-sm  text-slate-400 flex items-center gap-1 font-normal truncate">
-                                    <IconBuilding size={12} className="text-slate-400 shrink-0" />
-                                    <span>{lead.propertyInterest}</span>
-                                  </p>
-                                </div>
-
-                                <div className="mt-3 pt-2.5 border-t border-slate-100/70 flex items-center justify-between">
-                                  {/* Budget & Agent Row */}
-                                  <div className="flex items-center gap-2">
-                                    <Avatar
-                                      src={getAgentAvatar(lead.assignedAgent)}
-                                      fallback={lead.assignedAgent[0]}
-                                      className="size-5 shrink-0 border border-slate-100 shadow-sm"
-                                    />
-                                    <span className="text-slate-800 leading-none mono-data">
-                                      {formatCompactKES(lead.budget)}
-                                    </span>
-                                  </div>
-
-                                  {/* Manual stage adjustments and editing buttons */}
-                                  <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-                                    <button
-                                      onClick={() => { setEditingLead(lead); setIsModalOpen(true); }}
-                                      className="p-1 border border-slate-100/80 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors"
-                                      title="Edit Lead"
-                                    >
-                                      <IconEdit size={11} />
-                                    </button>
-                                    <div className="h-4 w-px bg-slate-100 mx-0.5" />
-                                    <button
-                                      onClick={() => handleMoveStage(lead.id, "backward")}
-                                      disabled={lead.stage === "inquiry"}
-                                      className="p-1 border border-slate-100/80 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                                      aria-label="Move stage backward"
-                                    >
-                                      <IconArrowLeft size={11} />
-                                    </button>
-                                    <button
-                                      onClick={() => handleMoveStage(lead.id, "forward")}
-                                      disabled={lead.stage === "closed_lost"}
-                                      className="p-1 border border-slate-100/80 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                                      aria-label="Move stage forward"
-                                    >
-                                      <IconArrowRight size={11} />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="h-full border border-dashed border-slate-200 rounded-xl flex items-center justify-center p-6 text-center text-slate-400 min-h-[100px]">
-                            <p className="text-sm  font-medium">Drag-free space</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-
-              // ── List View (DataTable) ──
-              <div key="list" className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
-                  <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 select-none label-caps">
-                      <th className="py-4 pl-6 pr-2 w-10 text-center">
-                        <input
-                          type="checkbox"
-                          onChange={() => {
-                            const paginatedIds = paginatedLeads.map(l => l.id);
-                            const allSelected = paginatedIds.every(id => selectedIds.includes(id));
-                            if (allSelected) {
-                              setSelectedIds(prev => prev.filter(id => !paginatedIds.includes(id)));
-                            } else {
-                              setSelectedIds(prev => [...prev, ...paginatedIds.filter(id => !prev.includes(id))]);
-                            }
-                          }}
-                          checked={paginatedLeads.length > 0 && paginatedLeads.every(l => selectedIds.includes(l.id))}
-                          className="rounded border-slate-300 text-[#151936] focus:ring-[#151936]/20 size-4 cursor-pointer"
-                        />
-                      </th>
-                      <th className="py-4 px-4 font-medium cursor-pointer" onClick={() => handleSort("clientName")}>
-                        Deal / Client Name {sortField === "clientName" && (sortDir === "asc" ? "▲" : "▼")}
-                      </th>
-                      <th className="py-4 px-4 font-medium">Stage</th>
-                      <th className="py-4 px-4 font-medium cursor-pointer text-right" onClick={() => handleSort("budget")}>
-                        KES Budget {sortField === "budget" && (sortDir === "asc" ? "▲" : "▼")}
-                      </th>
-                      <th className="py-4 px-4 font-medium">Property Interest</th>
-                      <th className="py-4 px-4 font-medium">Assigned Agent</th>
-                      <th className="py-4 px-4 font-medium">Source</th>
-                      <th className="py-4 px-6 text-right w-20">Actions</th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-slate-50 bg-white">
-                    {paginatedLeads.length > 0 ? (
-                      paginatedLeads.map((lead, idx) => (
-                        <motion.tr
-                          key={lead.id}
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.15, delay: idx * 0.02 }}
-                          className={cn(
-                            "hover:bg-slate-50/50 transition-colors cursor-pointer text-base text-slate-700 group",
-                            selectedIds.includes(lead.id) && "bg-indigo-50/20"
-                          )}
-                          onClick={() => setSelectedLeadId(lead.id)}
-                        >
-                          <td className="py-4 pl-6 pr-2 text-center" onClick={e => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.includes(lead.id)}
-                              onChange={() => setSelectedIds(prev => prev.includes(lead.id) ? prev.filter(id => id !== lead.id) : [...prev, lead.id])}
-                              className="rounded border-slate-300 text-[#151936] focus:ring-[#151936]/20 size-4 cursor-pointer"
-                            />
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-3">
-                              <Avatar
-                                src={getClientAvatar(lead.clientName)}
-                                fallback={lead.clientName[0]}
-                                className="size-9 shrink-0 border border-slate-100 shadow-sm"
-                              />
-                              <div>
-                                <span className="font-normal text-slate-900 group-hover:text-[#151936] transition-colors leading-snug block body-md">
-                                  {lead.clientName}
-                                </span>
-                                <span className="text-sm text-slate-400 font-mono mt-0.5 block font-normal">
-                                  Created: {lead.createdDate}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full border uppercase tracking-wider font-medium", STAGE_COLORS[lead.stage])}>
-                              {STAGE_LABELS[lead.stage]}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono font-medium text-slate-800">
-                            {formatKES(lead.budget)}
-                          </td>
-                          <td className="py-4 px-4 text-slate-550">
-                            <span className="flex items-center gap-1.5 font-normal">
-                              <IconBuilding size={14} className="text-slate-400 shrink-0" />
-                              <span>{lead.propertyInterest}</span>
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-slate-600 font-normal">
-                            <div className="flex items-center gap-2">
-                              <Avatar
-                                src={getAgentAvatar(lead.assignedAgent)}
-                                fallback={lead.assignedAgent[0]}
-                                className="size-5 shrink-0 border border-slate-100 shadow-sm"
-                              />
-                              <span>{lead.assignedAgent?.replace("CEO", "Admin")}</span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full capitalize block w-fit", SOURCE_COLORS[lead.source])}>
-                              {lead.source}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 text-right relative" onClick={e => e.stopPropagation()}>
-                            <button
-                              onClick={() => setRowMenuId(rowMenuId === lead.id ? null : lead.id)}
-                              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                            >
-                              <IconDotsVertical size={16} />
-                            </button>
-
-                            {rowMenuId === lead.id && (
-                              <>
-                                <div className="fixed inset-0 z-10" onClick={() => setRowMenuId(null)} />
-                                <div className="absolute right-6 top-10 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 text-left animate-scale-in">
-                                  <button
-                                    onClick={() => { setSelectedLeadId(lead.id); setRowMenuId(null); }}
-                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
-                                  >
-                                    <IconCircleDot size={14} /> View Details
-                                  </button>
-                                  <button
-                                    onClick={() => { setEditingLead(lead); setIsModalOpen(true); setRowMenuId(null); }}
-                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
-                                  >
-                                    <IconEdit size={14} /> Edit Lead
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedChatDMId(getDMIdForContact(lead.clientName));
-                                      setRowMenuId(null);
-                                    }}
-                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
-                                  >
-                                    <IconMessageCircle size={14} /> Send Message
-                                  </button>
-                                  <div className="border-t border-slate-100 my-1" />
-                                  <button
-                                    onClick={() => { handleDeleteLead(lead.id); setRowMenuId(null); }}
-                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-red-650 hover:bg-red-50 font-medium transition-colors text-base"
-                                  >
-                                    <IconTrash size={14} /> Clear Record
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </td>
-                        </motion.tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={8} className="py-16 text-center">
-                          <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
-                            <div className="size-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-sm">
-                              <IconChartBar size={28} />
-                            </div>
-                            <h4 className="font-medium text-slate-800 leading-none body-md">No active leads match filters</h4>
-                            <button
-                              onClick={() => {
-                                setSearchQuery("");
-                                setStageFilter("all");
-                                setSourceFilter("all");
-                              }}
-                              className="mt-4 px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-medium transition-all shadow-sm text-base"
-                            >
-                              Reset Filters
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </AnimatePresence>
-
-        </div>
-
-        {/* List Pagination (List view only) */}
-        {viewMode === "list" && (
-          <div className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
-            <span className="text-slate-400 mono-data">
-              Showing {sortedLeads.length > 0 ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0}-
-              {Math.min(currentPage * ROWS_PER_PAGE, sortedLeads.length)} of {sortedLeads.length} deals
-            </span>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1 || isLoading}
-                className="p-1.5 border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors shadow-sm"
-              >
-                <IconChevronLeft size={16} />
-              </button>
-
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={cn(
-                    "size-8 rounded-lg text-[12.5px] font-medium transition-colors font-mono",
-                    currentPage === i + 1 ? "bg-[#151936] text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                  )}
-                >
-                  {i + 1}
-                </button>
               ))}
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages || isLoading}
-                className="p-1.5 border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-colors shadow-sm"
-              >
-                <IconChevronRight size={16} />
-              </button>
+              {teamOverflow > 0 && (
+                <span className="-ml-2 size-7 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center text-[10px] font-mono font-medium border-2 border-[#f4f6f0]">
+                  +{teamOverflow}
+                </span>
+              )}
             </div>
-          </div>
-        )}
-
-      </Card>
-
-      {/* ── Sliding Bulk Actions Bar ── */}
-      <AnimatePresence>
-        {selectedIds.length > 0 && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-6 inset-x-0 mx-auto w-full max-w-2xl bg-[#151936] text-white p-4 rounded-2xl shadow-[0_20px_50px_rgba(21,25,54,0.3)] flex items-center justify-between z-[70] border border-slate-800/40"
-          >
-            <div className="flex items-center gap-3">
-              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center mono-data">
-                {selectedIds.length}
+            <div className="flex bg-white border border-slate-100 rounded-xl p-1 gap-1">
+              <Link href="/admin/contacts" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                <IconBriefcase size={14} /> Contacts
+              </Link>
+              <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium bg-[#151936] text-white">
+                <IconLayoutKanban size={14} /> Pipeline
               </span>
-              <div>
-                <p className="font-medium leading-none text-base">Deals Selected</p>
-                <p className="text-sm text-slate-400 mt-1">Batch actions will apply to marked deals.</p>
-              </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleBulkMessage}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-base font-medium rounded-xl transition-all"
-              >
-                <IconMessageCircle size={14} /> Message
-              </button>
-
-              {/* Set Stage Dropdown */}
-              <div className="relative group/stage px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-base font-medium rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
-                <span>Set Stage</span>
-                <span className="text-sm ">▼</span>
-                <div className="absolute bottom-full right-0 mb-2 w-40 bg-white border border-slate-200 rounded-xl shadow-lg text-slate-700 py-1 hidden group-hover/stage:block animate-scale-in max-h-[160px] overflow-y-auto custom-scrollbar">
-                  {Object.entries(STAGE_LABELS).map(([k, v]) => (
-                    <button key={k} onClick={() => handleBulkStageChange(k as PipelineStage)} className="w-full text-left px-3.5 py-2 text-base hover:bg-slate-50 font-medium transition-colors">{v}</button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={handleBulkDelete}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-650 hover:bg-red-500 text-base font-medium rounded-xl transition-all"
-              >
-                <IconTrash size={14} /> Scrub Batch
-              </button>
-
-              <div className="w-[1px] h-6 bg-slate-700 mx-1" />
-
-              <button
-                onClick={() => setSelectedIds([])}
-                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
-              >
-                <IconX size={16} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Detail Drawer & Creation Modal ── */}
-      <LeadDetailDrawer
-        leadId={selectedLeadId}
-        onClose={() => setSelectedLeadId(null)}
-        leadData={selectedLeadDetail}
-        onUpdateLead={(updated) => setSelectedLeadDetail(updated)}
+            <Button size="sm" onClick={() => { setEditingLead(undefined); setFormOpen(true); }}>
+              <IconPlus size={14} /> New Deal
+            </Button>
+          </div>
+        }
       />
 
+      {/* ── Hero band ── */}
+      <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3">
+        <div className="relative rounded-3xl overflow-hidden min-h-[170px] flex bg-gradient-to-br from-[#0c1f24] to-[#1e1b4b]">
+          <div className="relative p-6 flex flex-col justify-center gap-2 max-w-[520px]">
+            <span className="self-start inline-flex items-center gap-1.5 bg-[#f3df27] rounded-lg px-2.5 py-1 text-[10.5px] font-medium uppercase tracking-wider text-[#151936]">
+              <IconFlame size={12} /> {new Date().toLocaleDateString("en-KE", { month: "long" })} Pipeline Pulse
+            </span>
+            <p className="font-serif text-2xl text-white leading-tight">
+              {formatCompactKES(analytics.openVolume)} in play across {analytics.openCount} open deal{analytics.openCount === 1 ? "" : "s"}
+            </p>
+            <p className="text-xs text-white/75 leading-relaxed">{heroSub}</p>
+          </div>
+        </div>
+        {hotDeal ? (
+          <button
+            type="button"
+            onClick={() => setSelectedLeadId(hotDeal.id)}
+            className="relative rounded-3xl overflow-hidden min-h-[170px] text-left shadow-[0_14px_36px_rgba(21,25,54,0.12)] hover:brightness-105 transition-all"
+          >
+            {hotDeal.propertyImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={hotDeal.propertyImageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d1c]/85 via-[#0a0d1c]/10 to-transparent" />
+            <span className="absolute top-3 left-3 inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/90 text-[#be123c]">Hot Deal</span>
+            <span className="absolute left-3.5 right-3.5 bottom-3">
+              <span className="block text-xs font-medium text-white truncate">{hotDeal.propertyInterest}</span>
+              <span className="flex items-center justify-between mt-1">
+                <span className="font-mono text-sm text-[#f3df27]">{formatCompactKES(hotDeal.budget)}</span>
+                <span className="text-[10.5px] text-white/70 flex items-center gap-1">{STAGE_META[hotDeal.stage].label} <IconArrowUpRight size={11} /></span>
+              </span>
+            </span>
+          </button>
+        ) : (
+          <div className="rounded-3xl min-h-[170px] border border-dashed border-slate-200 bg-white/50 flex items-center justify-center text-sm text-slate-400">No open deals yet</div>
+        )}
+      </div>
+
+      {/* ── Analytics strips ── */}
+      <div className="gsap-stagger grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          {
+            title: "Pipeline Value",
+            stats: [
+              { label: "Total open volume", value: formatCompactKES(analytics.openVolume) },
+              { label: "Closed won MTD", value: formatCompactKES(analytics.wonValueThisMonth), deltaPct: analytics.wonValueDeltaPct },
+            ],
+          },
+          {
+            title: "Deal Activity",
+            stats: [
+              { label: "Active viewings", value: String(analytics.viewings) },
+              { label: "Offers in play", value: String(analytics.offersInPlay) },
+            ],
+          },
+          {
+            title: "Conversion & Speed",
+            stats: [
+              { label: "Avg. days to close", value: analytics.avgDaysAllTime != null ? String(analytics.avgDaysAllTime) : "—", deltaPts: analytics.avgDaysDelta, invertDelta: true },
+              { label: "Win rate", value: `${analytics.winRateAllTime}%`, deltaPts: analytics.winRateDeltaPts },
+            ],
+          },
+        ].map((panel) => (
+          <div key={panel.title} className="bg-white border border-slate-100 rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-4">
+            <p className="text-xs font-medium text-slate-700 mb-3">{panel.title}</p>
+            <div className="flex gap-2.5">
+              {panel.stats.map((st) => {
+                const delta = "deltaPct" in st ? st.deltaPct : "deltaPts" in st ? st.deltaPts : null;
+                const isGood = delta != null && ("invertDelta" in st && st.invertDelta ? delta <= 0 : delta >= 0);
+                return (
+                  <div key={st.label} className="flex-1 border border-slate-50 bg-[#fafbf8] rounded-xl p-2.5 min-w-0">
+                    <p className="text-[11px] text-slate-400 truncate">{st.label}</p>
+                    <p className="font-mono text-lg text-slate-900 leading-none mt-1.5">{st.value}</p>
+                    {delta != null ? (
+                      <p className={cn("flex items-center gap-1 text-[10.5px] font-medium mt-1.5", isGood ? "text-emerald-700" : "text-rose-600")}>
+                        {isGood ? <IconTrendingUp size={11} /> : <IconTrendingDown size={11} />}
+                        {Math.abs(delta)}{"deltaPct" in st ? "%" : "pt"} <span className="text-slate-300 font-normal">vs last month</span>
+                      </p>
+                    ) : (
+                      <p className="text-[10.5px] text-slate-300 mt-1.5">as of today</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Queue toolbar ── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap mt-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="label-caps text-slate-400">Active Deals</span>
+          <div className="flex bg-slate-100 p-1 rounded-xl">
+            <button type="button" onClick={() => setViewMode("kanban")} className={cn("p-1.5 rounded-lg transition-colors", viewMode === "kanban" ? "bg-white shadow-sm text-[#151936]" : "text-slate-400 hover:text-slate-700")} aria-label="Kanban view">
+              <IconLayoutKanban size={16} />
+            </button>
+            <button type="button" onClick={() => setViewMode("list")} className={cn("p-1.5 rounded-lg transition-colors", viewMode === "list" ? "bg-white shadow-sm text-[#151936]" : "text-slate-400 hover:text-slate-700")} aria-label="List view">
+              <IconList size={16} />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMineOnly((v) => !v)}
+            className={cn("inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium border transition-colors", mineOnly ? "bg-[#151936] text-white border-[#151936]" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300")}
+          >
+            {mineOnly ? "My Deals" : "All Deals"}
+          </button>
+          <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 outline-none">
+            <option value="all">All Sources</option>
+            {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
+          </select>
+        </div>
+        <div className="relative">
+          <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search deals…" className="w-[200px] bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 outline-none focus:border-[#151936]/30 focus:ring-2 focus:ring-[#151936]/10 transition-all" />
+        </div>
+      </div>
+
+      {loading ? (
+        <PipelineColumnsSkeleton />
+      ) : viewMode === "kanban" ? (
+        <div className="overflow-x-auto pb-2">
+          <div className="grid grid-flow-col auto-cols-[262px] gap-3.5 items-start">
+            {STAGE_ORDER.map((stage) => {
+              const cfg = STAGE_META[stage];
+              const columnCards = visible.filter((l) => l.stage === stage);
+              const dragged = dragId ? leads.find((l) => l.id === dragId) : null;
+              const canDrop = dragged ? canMoveLeadStage(dragged.stage, stage) : false;
+              const isOver = dragOverStage === stage && canDrop;
+              return (
+                <div
+                  key={stage}
+                  className="flex flex-col gap-2.5"
+                  onDragOver={(e) => { if (canDrop) { e.preventDefault(); if (dragOverStage !== stage) setDragOverStage(stage); } }}
+                  onDragLeave={() => { if (dragOverStage === stage) setDragOverStage(null); }}
+                  onDrop={(e) => handleDrop(e, stage)}
+                >
+                  <div className={cn("flex items-center justify-between bg-white border rounded-2xl px-3.5 py-2.5 transition-colors", isOver ? "" : "border-slate-100")} style={isOver ? { borderColor: cfg.color } : undefined}>
+                    <span className="flex items-center gap-2 text-sm font-medium text-slate-900">
+                      <span className="size-2 rounded-full inline-block" style={{ background: cfg.color }} />
+                      {cfg.label}
+                      <span className="font-mono text-[11px] text-slate-400">{columnCards.length}</span>
+                    </span>
+                  </div>
+                  <div
+                    className="flex flex-col gap-2.5 rounded-2xl p-0.5 transition-all"
+                    style={isOver ? { background: `${cfg.color}0f`, boxShadow: `inset 0 0 0 2px ${cfg.color}55` } : undefined}
+                  >
+                    {columnCards.map((lead) => {
+                      const prio = PRIORITY_META[lead.priority];
+                      return (
+                        <div
+                          key={lead.id}
+                          draggable={stage !== "closed_won"}
+                          onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragId(lead.id); }}
+                          onDragEnd={() => { setDragId(null); setDragOverStage(null); }}
+                          onClick={() => setSelectedLeadId(lead.id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedLeadId(lead.id); } }}
+                          className={cn("bg-white border rounded-2xl p-3 cursor-grab shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_26px_rgba(0,0,0,0.07)] transition-all", dragId === lead.id ? "border-[#f3df27] opacity-50" : "border-slate-100")}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-mono text-[10.5px] text-slate-400">{lead.id.slice(0, 8).toUpperCase()}</span>
+                            <span className={cn("inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide", prio.pill)}>{prio.label}</span>
+                          </div>
+                          <div className="relative h-[86px] rounded-xl overflow-hidden mb-2.5 bg-slate-100">
+                            {lead.propertyImageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={lead.propertyImageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center text-slate-300"><IconBuildingCommunity size={28} /></div>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-slate-900 leading-snug truncate">{lead.propertyInterest}</p>
+                          <p className="font-mono text-[15px] text-[#122a20] mt-1">{formatCompactKES(lead.budget)}</p>
+                          <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-slate-50">
+                            <div className="flex justify-between"><span className="text-[10.5px] text-slate-300">Client</span><span className="text-[11px] text-slate-500 truncate">{lead.clientName}</span></div>
+                          </div>
+                          <div className="flex items-center justify-between mt-2.5">
+                            <span title={lead.assignedAgent} className="size-[22px] rounded-full inline-flex items-center justify-center font-mono text-[9px] text-white" style={{ background: agentColor(lead.assignedAgent) }}>
+                              {initialsOf(lead.assignedAgent)}
+                            </span>
+                            <span className="flex gap-2.5">
+                              {lead.noteCount > 0 && <span className="inline-flex items-center gap-1 text-[10.5px] text-slate-400"><IconMessageCircle size={12} /> {lead.noteCount}</span>}
+                              {lead.documentCount > 0 && <span className="inline-flex items-center gap-1 text-[10.5px] text-slate-400"><IconPaperclip size={12} /> {lead.documentCount}</span>}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {columnCards.length === 0 && dragged && canDrop && (
+                      <div className="rounded-xl p-3.5 text-center text-[11.5px] font-medium border-[1.5px] border-dashed" style={{ color: cfg.color, borderColor: `${cfg.color}66` }}>Drop here</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-x-auto">
+          <table className="w-full text-left min-w-[900px]">
+            <thead>
+              <tr className="border-b border-slate-100 label-caps text-slate-400 bg-slate-50/50">
+                <th className="py-3 pl-5 pr-2 w-10 text-center">
+                  <input type="checkbox" className="rounded border-slate-300 size-4" onChange={() => {
+                    const ids = visible.map((l) => l.id);
+                    const allSelected = ids.every((id) => selectedIds.includes(id));
+                    setSelectedIds(allSelected ? [] : ids);
+                  }} checked={visible.length > 0 && visible.every((l) => selectedIds.includes(l.id))} />
+                </th>
+                <th className="py-3 px-4">Client / Deal</th>
+                <th className="py-3 px-4">Stage</th>
+                <th className="py-3 px-4">Priority</th>
+                <th className="py-3 px-4 text-right">Value</th>
+                <th className="py-3 px-4">Property</th>
+                <th className="py-3 px-4">Agent</th>
+                <th className="py-3 px-6 text-right w-16">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {visible.map((lead) => (
+                <tr key={lead.id} className={cn("hover:bg-slate-50/60 cursor-pointer transition-colors", selectedIds.includes(lead.id) && "bg-indigo-50/20")} onClick={() => setSelectedLeadId(lead.id)}>
+                  <td className="py-3.5 pl-5 pr-2 text-center" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" className="rounded border-slate-300 size-4" checked={selectedIds.includes(lead.id)} onChange={() => setSelectedIds((prev) => prev.includes(lead.id) ? prev.filter((id) => id !== lead.id) : [...prev, lead.id])} />
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar src={lead.clientAvatarUrl ?? undefined} fallback={initialsOf(lead.clientName)} className="size-8" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{lead.clientName}</p>
+                        <p className="text-[11px] text-slate-400 font-mono">{lead.createdDate}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4"><span className="text-xs font-medium" style={{ color: STAGE_META[lead.stage].color }}>{STAGE_META[lead.stage].label}</span></td>
+                  <td className="py-3.5 px-4"><span className={cn("inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium uppercase", PRIORITY_META[lead.priority].pill)}>{PRIORITY_META[lead.priority].label}</span></td>
+                  <td className="py-3.5 px-4 text-right font-mono text-sm text-slate-800">{formatKES(lead.budget)}</td>
+                  <td className="py-3.5 px-4 text-sm text-slate-600 truncate max-w-[180px]">{lead.propertyInterest}</td>
+                  <td className="py-3.5 px-4 text-sm text-slate-600">{lead.assignedAgent}</td>
+                  <td className="py-3.5 px-6 text-right relative" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu label="Deal actions" align="right" trigger={<div className="p-1.5 rounded-lg text-slate-400 hover:bg-white hover:shadow-sm transition-all"><IconDotsVertical size={16} /></div>}>
+                      <DropdownItem onClick={() => setSelectedLeadId(lead.id)}>View Details</DropdownItem>
+                      <DropdownItem onClick={() => { setEditingLead(lead); setFormOpen(true); }}>Edit Deal</DropdownItem>
+                      <div className="my-1 h-px bg-slate-100" />
+                      <DropdownItem icon={IconTrash} variant="danger" onClick={() => setDeleteConfirmId(lead.id)}>Delete</DropdownItem>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))}
+              {visible.length === 0 && (
+                <tr><td colSpan={8} className="py-14 text-center text-sm text-slate-400">No deals match the current filters.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 inset-x-0 mx-auto w-full max-w-2xl bg-[#151936] text-white p-4 rounded-2xl shadow-[0_20px_50px_rgba(21,25,54,0.3)] flex items-center justify-between z-[70]">
+          <div className="flex items-center gap-3">
+            <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center font-mono text-xs">{selectedIds.length}</span>
+            <p className="text-sm font-medium">Deals selected</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative group px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-xl cursor-pointer">
+              <span>Set Stage ▾</span>
+              <div className="absolute bottom-full right-0 mb-2 w-40 bg-white border border-slate-200 rounded-xl shadow-lg text-slate-700 py-1 hidden group-hover:block max-h-40 overflow-y-auto">
+                {STAGE_ORDER.map((s) => <button key={s} onClick={() => handleBulkStageChange(s)} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50">{STAGE_META[s].label}</button>)}
+              </div>
+            </div>
+            <button onClick={() => setIsBulkDeleteOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-xs font-medium rounded-xl"><IconTrash size={13} /> Delete</button>
+            <button onClick={() => setSelectedIds([])} className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"><IconX size={15} /></button>
+          </div>
+        </div>
+      )}
+
       <LeadFormModal
-        open={isModalOpen}
+        open={formOpen}
         entityId={activeEntityId}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => setFormOpen(false)}
         onSubmit={handleCreateOrUpdate}
         initialData={editingLead}
       />
 
+      <LeadDetailDrawer
+        leadId={selectedLeadId}
+        entityId={activeEntityId}
+        onClose={() => setSelectedLeadId(null)}
+        onChanged={loadLeads}
+      />
+
       <ConfirmDialog
-        open={deleteConfirmId !== null}
+        open={!!deleteConfirmId}
         onClose={() => setDeleteConfirmId(null)}
         onConfirm={confirmDeleteLead}
-        title="Scrub Opportunity Record?"
-        description="Are you sure you want to delete this opportunity? All activity logs, custom details, and files associated with this lead will be permanently deleted. This action cannot be undone."
-        confirmLabel="Scrub Record"
-        cancelLabel="Keep Record"
+        title="Delete Opportunity?"
+        description="This permanently removes the deal, its notes, and its file attachments. This action cannot be undone."
+        confirmLabel="Delete Deal"
         tone="danger"
       />
 
       <ConfirmDialog
-        open={isBulkDeleteConfirmOpen}
-        onClose={() => setIsBulkDeleteConfirmOpen(false)}
+        open={isBulkDeleteOpen}
+        onClose={() => setIsBulkDeleteOpen(false)}
         onConfirm={confirmBulkDelete}
-        title="Scrub Selected Opportunities?"
-        description={`Are you sure you want to bulk delete the ${selectedIds.length} selected opportunities? This will permanently erase all associated CRM pipelines, notes, and activity history. This action cannot be undone.`}
-        confirmLabel="Scrub Opportunities"
-        cancelLabel="Cancel"
+        title="Delete Selected Deals?"
+        description={`This permanently removes the ${selectedIds.length} selected deal${selectedIds.length === 1 ? "" : "s"}. This action cannot be undone.`}
+        confirmLabel="Delete Deals"
         tone="danger"
       />
-
-    </div>
+    </PageTransition>
   );
 }

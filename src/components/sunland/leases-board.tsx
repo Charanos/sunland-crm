@@ -2273,7 +2273,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                               </div>
                             )}
 
-                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute top-4 right-4 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                               <button
                                 type="button"
                                 onClick={() => handleToggleFeature(l.propertyId, !!l.isFeatured)}
@@ -2281,13 +2281,13 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                                 aria-pressed={!!l.isFeatured}
                                 className={cn(
                                   "size-7 rounded-lg flex items-center justify-center shadow-xs transition-colors",
-                                  l.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-white border border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-amber-50"
+                                  l.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-white border border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-amber-50 opacity-0 group-hover:opacity-100"
                                 )}
                               >
                                 {l.isFeatured ? <IconStarFilled size={13} /> : <IconStar size={13} />}
                               </button>
                               <DropdownMenu label="Lease actions" align="right" trigger={
-                                <span className="size-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-xs transition-colors">
+                                <span className="size-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-xs transition-colors opacity-0 group-hover:opacity-100">
                                   <IconDotsVertical size={14} />
                                 </span>
                               }>
@@ -2480,160 +2480,164 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
       </div>
 
       {/* Mandate Activity */}
-      <div className="gsap-stagger mb-6 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 mb-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
-              <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Mandate Activity
-            </h3>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="relative flex-1">
-              <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input type="text" placeholder="Search activity logs..." value={mandateActivitySearchQuery}
-                onChange={(e) => { setMandateActivitySearchQuery(e.target.value); setMandateActivityPage(1); }}
-                className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400" />
+      {mode === "mandates" && (
+        <div className="gsap-stagger mb-6 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
+          <div className="flex flex-col gap-5 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
+                <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Mandate Activity
+              </h3>
             </div>
-            <div className="relative shrink-0">
-              <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <select value={mandateActivityFilter} onChange={(e) => { setMandateActivityFilter(e.target.value); setMandateActivityPage(1); }}
-                className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer">
-                <option value="all">All Events</option>
-                <option value="edits">Modifications</option>
-                <option value="terminations">Terminations</option>
-                <option value="system">System Actions</option>
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconChevronRight size={14} className="text-slate-400 rotate-90" /></div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" placeholder="Search activity logs..." value={mandateActivitySearchQuery}
+                  onChange={(e) => { setMandateActivitySearchQuery(e.target.value); setMandateActivityPage(1); }}
+                  className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400" />
+              </div>
+              <div className="relative shrink-0">
+                <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <select value={mandateActivityFilter} onChange={(e) => { setMandateActivityFilter(e.target.value); setMandateActivityPage(1); }}
+                  className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer">
+                  <option value="all">All Events</option>
+                  <option value="edits">Modifications</option>
+                  <option value="terminations">Terminations</option>
+                  <option value="system">System Actions</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconChevronRight size={14} className="text-slate-400 rotate-90" /></div>
+              </div>
             </div>
           </div>
-        </div>
-        {mandateActivityLoading ? (
-          <div className="flex items-center justify-center py-12"><LoadingSpinner size="md" /></div>
-        ) : mandateActivity.length === 0 ? (
-          <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
-            <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1"><IconMoodEmpty size={32} className="text-slate-300" /></div>
-            <h3 className="text-sm font-medium text-slate-700">No recorded mandate activity yet.</h3>
-            <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, and mandate events will safely log here.</p>
-          </div>
-        ) : paginatedMandateActivity.length === 0 ? (
-          <div className="flex flex-col items-center py-12 text-center">
-            <IconSearch size={24} className="text-slate-300 mb-3" />
-            <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
-            <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-6 relative ml-1">
-            <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
-            {paginatedMandateActivity.map((entry) => {
-              const toneColor = getActivityTone(entry.summary);
-              return (
-                <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
-                  <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
-                  <Link href={entry.associatedId ? `/admin/mandates/${entry.associatedId}` : "#"}
-                    className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/50 -my-1.5 -mx-3 p-1.5 px-3 rounded-xl transition-colors cursor-pointer">
-                    <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
-                      {entry.actorName ? (<><span className="font-medium text-slate-700">{entry.actorName}</span> {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}</>) : entry.summary}
-                    </p>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
-                        {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          {mandateActivityLoading ? (
+            <div className="flex items-center justify-center py-12"><LoadingSpinner size="md" /></div>
+          ) : mandateActivity.length === 0 ? (
+            <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+              <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1"><IconMoodEmpty size={32} className="text-slate-300" /></div>
+              <h3 className="text-sm font-medium text-slate-700">No recorded mandate activity yet.</h3>
+              <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, and mandate events will safely log here.</p>
+            </div>
+          ) : paginatedMandateActivity.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-center">
+              <IconSearch size={24} className="text-slate-300 mb-3" />
+              <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
+              <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6 relative ml-1">
+              <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
+              {paginatedMandateActivity.map((entry) => {
+                const toneColor = getActivityTone(entry.summary);
+                return (
+                  <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
+                    <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
+                    <Link href={entry.associatedId ? `/admin/mandates/${entry.associatedId}` : "#"}
+                      className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/50 -my-1.5 -mx-3 p-1.5 px-3 rounded-xl transition-colors cursor-pointer">
+                      <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
+                        {entry.actorName ? (<><span className="font-medium text-slate-700">{entry.actorName}</span> {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}</>) : entry.summary}
                       </p>
-                      <Badge tone="neutral">{relativeTime(entry.createdAt)}</Badge>
-                    </div>
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {mandateActivityTotalPages > 1 && (
-          <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-            <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">Page {safeMandateActivityPage} of {mandateActivityTotalPages} · {filteredMandateActivity.length} logs</span>
-            <div className="flex items-center gap-1.5">
-              <button type="button" onClick={() => setMandateActivityPage(Math.max(1, safeMandateActivityPage - 1))} disabled={safeMandateActivityPage <= 1} className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"><IconChevronLeft size={15} /></button>
-              <button type="button" onClick={() => setMandateActivityPage(Math.min(mandateActivityTotalPages, safeMandateActivityPage + 1))} disabled={safeMandateActivityPage >= mandateActivityTotalPages} className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"><IconChevronRight size={15} /></button>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
+                          {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <Badge tone="neutral">{relativeTime(entry.createdAt)}</Badge>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+          {mandateActivityTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+              <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">Page {safeMandateActivityPage} of {mandateActivityTotalPages} · {filteredMandateActivity.length} logs</span>
+              <div className="flex items-center gap-1.5">
+                <button type="button" onClick={() => setMandateActivityPage(Math.max(1, safeMandateActivityPage - 1))} disabled={safeMandateActivityPage <= 1} className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"><IconChevronLeft size={15} /></button>
+                <button type="button" onClick={() => setMandateActivityPage(Math.min(mandateActivityTotalPages, safeMandateActivityPage + 1))} disabled={safeMandateActivityPage >= mandateActivityTotalPages} className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"><IconChevronRight size={15} /></button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Lease Activity */}
-      <div className="gsap-stagger mb-8 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 mb-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
-              <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Lease Activity
-            </h3>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="relative flex-1">
-              <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input type="text" placeholder="Search activity logs..." value={leaseActivitySearchQuery}
-                onChange={(e) => { setLeaseActivitySearchQuery(e.target.value); setLeaseActivityPage(1); }}
-                className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400" />
+      {mode === "leases" && (
+        <div className="gsap-stagger mb-8 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
+          <div className="flex flex-col gap-5 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
+                <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Lease Activity
+              </h3>
             </div>
-            <div className="relative shrink-0">
-              <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <select value={leaseActivityFilter} onChange={(e) => { setLeaseActivityFilter(e.target.value); setLeaseActivityPage(1); }}
-                className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer">
-                <option value="all">All Events</option>
-                <option value="edits">Modifications</option>
-                <option value="terminations">Terminations</option>
-                <option value="system">System Actions</option>
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconChevronRight size={14} className="text-slate-400 rotate-90" /></div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" placeholder="Search activity logs..." value={leaseActivitySearchQuery}
+                  onChange={(e) => { setLeaseActivitySearchQuery(e.target.value); setLeaseActivityPage(1); }}
+                  className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400" />
+              </div>
+              <div className="relative shrink-0">
+                <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <select value={leaseActivityFilter} onChange={(e) => { setLeaseActivityFilter(e.target.value); setLeaseActivityPage(1); }}
+                  className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer">
+                  <option value="all">All Events</option>
+                  <option value="edits">Modifications</option>
+                  <option value="terminations">Terminations</option>
+                  <option value="system">System Actions</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconChevronRight size={14} className="text-slate-400 rotate-90" /></div>
+              </div>
             </div>
           </div>
-        </div>
-        {leaseActivityLoading ? (
-          <div className="flex items-center justify-center py-12"><LoadingSpinner size="md" /></div>
-        ) : leaseActivity.length === 0 ? (
-          <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
-            <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1"><IconMoodEmpty size={32} className="text-slate-300" /></div>
-            <h3 className="text-sm font-medium text-slate-700">No recorded lease activity yet.</h3>
-            <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, and lease events will safely log here.</p>
-          </div>
-        ) : paginatedLeaseActivity.length === 0 ? (
-          <div className="flex flex-col items-center py-12 text-center">
-            <IconSearch size={24} className="text-slate-300 mb-3" />
-            <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
-            <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-6 relative ml-1">
-            <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
-            {paginatedLeaseActivity.map((entry) => {
-              const toneColor = getActivityTone(entry.summary);
-              return (
-                <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
-                  <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
-                  <Link href={entry.associatedId ? `/admin/leases/${entry.associatedId}` : "#"}
-                    className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/50 -my-1.5 -mx-3 p-1.5 px-3 rounded-xl transition-colors cursor-pointer">
-                    <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
-                      {entry.actorName ? (<><span className="font-medium text-slate-700">{entry.actorName}</span> {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}</>) : entry.summary}
-                    </p>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
-                        {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          {leaseActivityLoading ? (
+            <div className="flex items-center justify-center py-12"><LoadingSpinner size="md" /></div>
+          ) : leaseActivity.length === 0 ? (
+            <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+              <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1"><IconMoodEmpty size={32} className="text-slate-300" /></div>
+              <h3 className="text-sm font-medium text-slate-700">No recorded lease activity yet.</h3>
+              <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, and lease events will safely log here.</p>
+            </div>
+          ) : paginatedLeaseActivity.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-center">
+              <IconSearch size={24} className="text-slate-300 mb-3" />
+              <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
+              <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6 relative ml-1">
+              <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
+              {paginatedLeaseActivity.map((entry) => {
+                const toneColor = getActivityTone(entry.summary);
+                return (
+                  <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
+                    <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
+                    <Link href={entry.associatedId ? `/admin/leases/${entry.associatedId}` : "#"}
+                      className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/50 -my-1.5 -mx-3 p-1.5 px-3 rounded-xl transition-colors cursor-pointer">
+                      <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
+                        {entry.actorName ? (<><span className="font-medium text-slate-700">{entry.actorName}</span> {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}</>) : entry.summary}
                       </p>
-                      <Badge tone="neutral">{relativeTime(entry.createdAt)}</Badge>
-                    </div>
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {leaseActivityTotalPages > 1 && (
-          <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-            <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">Page {safeLeaseActivityPage} of {leaseActivityTotalPages} · {filteredLeaseActivity.length} logs</span>
-            <div className="flex items-center gap-1.5">
-              <button type="button" onClick={() => setLeaseActivityPage(Math.max(1, safeLeaseActivityPage - 1))} disabled={safeLeaseActivityPage <= 1} className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"><IconChevronLeft size={15} /></button>
-              <button type="button" onClick={() => setLeaseActivityPage(Math.min(leaseActivityTotalPages, safeLeaseActivityPage + 1))} disabled={safeLeaseActivityPage >= leaseActivityTotalPages} className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"><IconChevronRight size={15} /></button>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
+                          {new Date(entry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(entry.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <Badge tone="neutral">{relativeTime(entry.createdAt)}</Badge>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+          {leaseActivityTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+              <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">Page {safeLeaseActivityPage} of {leaseActivityTotalPages} · {filteredLeaseActivity.length} logs</span>
+              <div className="flex items-center gap-1.5">
+                <button type="button" onClick={() => setLeaseActivityPage(Math.max(1, safeLeaseActivityPage - 1))} disabled={safeLeaseActivityPage <= 1} className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"><IconChevronLeft size={15} /></button>
+                <button type="button" onClick={() => setLeaseActivityPage(Math.min(leaseActivityTotalPages, safeLeaseActivityPage + 1))} disabled={safeLeaseActivityPage >= leaseActivityTotalPages} className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"><IconChevronRight size={15} /></button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {
         isModalOpen && (

@@ -9,7 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { entities, timestamps, users } from "@/db/schema/platform";
-import { contacts } from "@/db/schema/crm";
+import { contacts, leads } from "@/db/schema/crm";
 import { properties, leases } from "@/db/schema/properties";
 import { valuations } from "@/db/schema/valuations";
 
@@ -50,6 +50,9 @@ export const documents = pgTable(
     // Nullable - scopes a valuation report/offer letter to one acquisition
     // prospect (src/db/schema/valuations.ts), same pattern as propertyId/leaseId.
     valuationId: uuid("valuation_id").references(() => valuations.id),
+    // Nullable - scopes a Sales Pipeline deal's real attachments (SPA drafts,
+    // ID copies, etc.) to one lead, same pattern as propertyId/leaseId/valuationId.
+    leadId: uuid("lead_id").references(() => leads.id),
     // Captured at upload time - real, not a display-only estimate. Nullable
     // for documents uploaded before this column existed.
     fileSizeBytes: integer("file_size_bytes"),
@@ -62,6 +65,7 @@ export const documents = pgTable(
     propertyIdx: index("documents_property_idx").on(table.propertyId),
     leaseIdx: index("documents_lease_idx").on(table.leaseId),
     valuationIdx: index("documents_valuation_idx").on(table.valuationId),
+    leadIdx: index("documents_lead_idx").on(table.leadId),
     typeIdx: index("documents_type_idx").on(table.type),
   }),
 );

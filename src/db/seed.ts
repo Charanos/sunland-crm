@@ -33,6 +33,7 @@ import {
   contacts,
   properties,
   leads,
+  leadNotes,
   leases,
   maintenanceRequests,
   transactions,
@@ -93,6 +94,7 @@ async function runSeed() {
     await db.delete(propertyUnits);
     await db.delete(leases);
     await db.delete(maintenanceRequests);
+    await db.delete(leadNotes);
     await db.delete(leads);
     await db.delete(valuations);
     await db.delete(remittanceAdvices);
@@ -325,6 +327,84 @@ async function runSeed() {
         source: "Walk-in Client",
         assignedToId: pmUser.id,
       },
+      // Sales Pipeline / Contacts CRM real-data variety (2026 CRM precision
+      // rebuild) - the app's contact_type enum has 3 more real values
+      // (buyer/seller/company) than the original seed ever used, and every
+      // pipeline lead below needs a real contactId now that listLeads()
+      // inner-joins contacts (a lead with no contactId is invisible on the
+      // Sales Pipeline board, not just incomplete).
+      {
+        entityId: groupEntity.id,
+        type: "buyer",
+        displayName: "James Mwangi",
+        email: "j.mwangi@gmail.com",
+        phone: "+254712345001",
+        avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+        source: "website",
+        assignedToId: lineManagerUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "company",
+        displayName: "Meridian Business Park Ltd",
+        companyName: "Meridian Business Park Ltd",
+        email: "leasing@meridianbp.co.ke",
+        phone: "+254712345002",
+        avatarUrl: "https://images.unsplash.com/photo-1549692520-acc6669e2f0c?w=400&q=80",
+        source: "existing_client",
+        assignedToId: lineManagerUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "buyer",
+        displayName: "Daniel Kiptoo",
+        email: "d.kiptoo@outlook.com",
+        phone: "+254712345003",
+        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+        source: "referral",
+        assignedToId: lineManagerUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "buyer",
+        displayName: "Grace Nyambura",
+        email: "grace.nyambura@yahoo.com",
+        phone: "+254712345004",
+        avatarUrl: "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=400&q=80",
+        source: "walk_in",
+        assignedToId: lineManagerUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "seller",
+        displayName: "Samuel Kimani",
+        email: "s.kimani@gmail.com",
+        phone: "+254712345005",
+        avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
+        source: "cold_call",
+        assignedToId: lineManagerUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "buyer",
+        displayName: "Peter Otieno",
+        email: "p.otieno@gmail.com",
+        phone: "+254712345006",
+        avatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80",
+        source: "website",
+        assignedToId: lineManagerUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        type: "company",
+        displayName: "Constructive Ventures Ltd",
+        companyName: "Constructive Ventures Ltd",
+        email: "info@constructiveventures.co.ke",
+        phone: "+254712345007",
+        avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80",
+        source: "partner",
+        assignedToId: lineManagerUser.id,
+      },
     ];
 
     // Grown from i<=20 to i<=60 (56 generated + 4 explicit = 60 contacts) so
@@ -362,7 +442,7 @@ async function runSeed() {
       .insert(contacts)
       .values(contactsToInsert)
       .returning();
-    const [landlordA, landlordB, tenantA, tenantB] = insertedContacts;
+    const [landlordA, landlordB, tenantA, tenantB, buyerJames, companyMeridian, buyerDaniel, buyerGrace, sellerSamuel, buyerPeter, companyConstructive] = insertedContacts;
 
     console.log(`Created ${insertedContacts.length} contacts.`);
 
@@ -815,42 +895,67 @@ async function runSeed() {
     // 5b. Create pipeline leads - spans this-week/this-month/last-month so the
     // executive overview's CRM metrics (closed deals, active pipeline, new
     // leads, conversion) have real, non-zero data to compute from instead of
-    // showing an all-zero dashboard on a fresh seed.
+    // showing an all-zero dashboard on a fresh seed. Every lead now carries a
+    // real contactId (listLeads() inner-joins contacts - a lead without one
+    // is invisible on the Sales Pipeline board, not just incomplete) and real
+    // priority/nextActionAt variety for the Contacts CRM's hot-leads and
+    // follow-ups-due digests to have real content.
     console.log("Step 5b: Populating sales pipeline...");
     const daysAgo = (n: number) => new Date(Date.now() - n * 86400000);
-    await db.insert(leads).values([
+    const hoursFromNow = (n: number) => new Date(Date.now() + n * 3_600_000);
+    const [
+      leadInquiry,
+      leadQualification,
+      leadViewing,
+      leadOffer,
+      leadNegotiation,
+      leadClosedWon1,
+      leadClosedWon2,
+      leadClosedLost,
+    ] = await db.insert(leads).values([
       {
         entityId: groupEntity.id,
         title: "3BR Apartment Inquiry - Kilimani",
         stage: "inquiry",
+        priority: "medium",
+        contactId: buyerJames.id,
         assignedToId: lineManagerUser.id,
         expectedValueKes: "14000000.00",
         probability: 10,
+        nextActionAt: hoursFromNow(30),
         createdAt: daysAgo(2),
       },
       {
         entityId: groupEntity.id,
         title: "Office Space Lease - Westlands",
         stage: "qualification",
+        priority: "high",
+        contactId: companyMeridian.id,
         propertyId: propComm.id,
         assignedToId: lineManagerUser.id,
         expectedValueKes: "4200000.00",
         probability: 25,
+        nextActionAt: hoursFromNow(-6),
         createdAt: daysAgo(5),
       },
       {
         entityId: groupEntity.id,
         title: "Villa Purchase - Karen",
         stage: "viewing",
+        priority: "high",
+        contactId: buyerDaniel.id,
         assignedToId: lineManagerUser.id,
         expectedValueKes: "62000000.00",
         probability: 40,
+        nextActionAt: hoursFromNow(4),
         createdAt: daysAgo(12),
       },
       {
         entityId: groupEntity.id,
         title: "Retail Unit - CBD",
         stage: "offer",
+        priority: "medium",
+        contactId: buyerGrace.id,
         assignedToId: lineManagerUser.id,
         expectedValueKes: "9500000.00",
         probability: 60,
@@ -860,6 +965,8 @@ async function runSeed() {
         entityId: groupEntity.id,
         title: "Land Sale - Ruiru",
         stage: "negotiation",
+        priority: "low",
+        contactId: sellerSamuel.id,
         assignedToId: lineManagerUser.id,
         expectedValueKes: "18000000.00",
         probability: 75,
@@ -869,6 +976,7 @@ async function runSeed() {
         entityId: groupEntity.id,
         title: "Nexus Tech Office Lease",
         stage: "closed_won",
+        priority: "medium",
         contactId: tenantA.id,
         propertyId: propComm.id,
         assignedToId: lineManagerUser.id,
@@ -881,6 +989,8 @@ async function runSeed() {
         entityId: groupEntity.id,
         title: "Riverside Apartment Sale",
         stage: "closed_won",
+        priority: "medium",
+        contactId: buyerPeter.id,
         assignedToId: lineManagerUser.id,
         expectedValueKes: "8500000.00",
         probability: 100,
@@ -891,6 +1001,8 @@ async function runSeed() {
         entityId: groupEntity.id,
         title: "Industrial Warehouse Deal",
         stage: "closed_lost",
+        priority: "low",
+        contactId: companyConstructive.id,
         assignedToId: lineManagerUser.id,
         expectedValueKes: "16000000.00",
         probability: 0,
@@ -898,8 +1010,54 @@ async function runSeed() {
         createdAt: daysAgo(28),
         closedAt: daysAgo(8),
       },
-    ]);
+    ]).returning();
     console.log("Created 8 pipeline leads across the funnel.");
+
+    // Real, persisted lead notes + file attachments (Sales Pipeline precision
+    // rebuild) - a couple of leads get genuine multi-entry activity so the
+    // deal-peek drawer's Notes/Files tabs have real content on first load.
+    await db.insert(leadNotes).values([
+      {
+        entityId: groupEntity.id,
+        leadId: leadViewing.id,
+        authorId: lineManagerUser.id,
+        text: "Buyer confirmed for a viewing this week - flexible on financing, wants to move fast if the layout works.",
+        createdAt: daysAgo(1),
+      },
+      {
+        entityId: groupEntity.id,
+        leadId: leadNegotiation.id,
+        authorId: lineManagerUser.id,
+        text: "Seller's counsel reviewing the draft sale agreement - expecting redlines back by end of week.",
+        createdAt: daysAgo(2),
+      },
+      {
+        entityId: groupEntity.id,
+        leadId: leadQualification.id,
+        authorId: lineManagerUser.id,
+        text: "Meridian's ops lead wants a second walkthrough before committing to headcount-based floor plan.",
+        createdAt: daysAgo(1),
+      },
+    ]);
+    await db.insert(documents).values([
+      {
+        entityId: groupEntity.id,
+        leadId: leadNegotiation.id,
+        type: "offer_letter",
+        title: "Land Sale Agreement - Draft v2.pdf",
+        fileUrl: "https://example.com/documents/ruiru-land-sale-draft-v2.pdf",
+        uploadedById: lineManagerUser.id,
+      },
+      {
+        entityId: groupEntity.id,
+        leadId: leadOffer.id,
+        type: "identification",
+        title: "Buyer ID - Grace Nyambura.pdf",
+        fileUrl: "https://example.com/documents/grace-nyambura-id.pdf",
+        uploadedById: lineManagerUser.id,
+      },
+    ]);
+    console.log("Created 3 lead notes and 2 lead-scoped documents.");
 
     // 6. Create Leases
     console.log("Step 6: Executing lease agreements...");
@@ -1855,6 +2013,46 @@ async function runSeed() {
         summary: "New management mandate established.",
         createdAt: hoursAgo(12),
       },
+      // Real Contacts CRM "Quick Connects" touch-log feed (contactId/email/
+      // whatsapp channel variety, real recent timestamps) - these are the
+      // same real writeAudit rows logContactTouch() produces, not a
+      // display-only illustration.
+      {
+        entityId: groupEntity.id,
+        actorId: lineManagerUser.id,
+        associatedType: "contact",
+        associatedId: buyerJames.id,
+        action: "crm.contact.call_logged",
+        summary: `${lineManagerUser.name} called James Mwangi`,
+        createdAt: hoursAgo(2),
+      },
+      {
+        entityId: groupEntity.id,
+        actorId: lineManagerUser.id,
+        associatedType: "contact",
+        associatedId: companyMeridian.id,
+        action: "crm.contact.email_logged",
+        summary: `${lineManagerUser.name} emailed Meridian Business Park Ltd`,
+        createdAt: hoursAgo(4),
+      },
+      {
+        entityId: groupEntity.id,
+        actorId: lineManagerUser.id,
+        associatedType: "contact",
+        associatedId: buyerDaniel.id,
+        action: "crm.contact.whatsapp_logged",
+        summary: `${lineManagerUser.name} WhatsApp'd Daniel Kiptoo`,
+        createdAt: hoursAgo(6),
+      },
+      {
+        entityId: groupEntity.id,
+        actorId: lineManagerUser.id,
+        associatedType: "contact",
+        associatedId: sellerSamuel.id,
+        action: "crm.contact.call_logged",
+        summary: `${lineManagerUser.name} called Samuel Kimani`,
+        createdAt: hoursAgo(20),
+      },
     ];
 
     await db.insert(activityLogs).values([
@@ -2049,9 +2247,38 @@ async function runSeed() {
         // seeded example of an event whose day has passed without a
         // resolution, so needsDisposition renders true on first load.
       },
+      // Real Contacts CRM "viewing" events - linked to a real lead/contact
+      // (calendarEvents.contactId/leadId) so "Today's Viewings" and the Quick
+      // Connects featured card have genuine, relationally-queryable content.
+      {
+        entityId: groupEntity.id,
+        title: "Property viewing — Daniel Kiptoo",
+        description: "Villa walkthrough - Karen.",
+        type: "viewing",
+        startsAt: new Date(now.getTime() + 4 * 3_600_000),
+        endsAt: new Date(now.getTime() + 5 * 3_600_000),
+        location: "Karen",
+        organizerId: lineManagerUser.id,
+        attendees: [{ name: "Daniel Kiptoo" }],
+        contactId: buyerDaniel.id,
+        leadId: leadViewing.id,
+      },
+      {
+        entityId: groupEntity.id,
+        title: "Property viewing — James Mwangi",
+        description: "3BR apartment walkthrough - Kilimani.",
+        type: "viewing",
+        startsAt: new Date(now.getTime() + 30 * 3_600_000),
+        endsAt: new Date(now.getTime() + 31 * 3_600_000),
+        location: "Kilimani",
+        organizerId: lineManagerUser.id,
+        attendees: [{ name: "James Mwangi" }],
+        contactId: buyerJames.id,
+        leadId: leadInquiry.id,
+      },
     ]);
 
-    console.log("Created 7 calendar events.");
+    console.log("Created 9 calendar events.");
 
     // 12. Valuations - new-mandate acquisition pipeline (2026-07-17 repurpose).
     // Real spread across 6 of the 7 stages (mandate_signed is deliberately

@@ -7,9 +7,7 @@ import {
   IconBath,
   IconBed,
   IconBuildingSkyscraper,
-  IconCalendarEvent,
   IconCar,
-  IconClock,
   IconEdit,
   IconEye,
   IconMail,
@@ -20,8 +18,10 @@ import {
   IconStarFilled,
   IconTag,
   IconTrash,
+  IconChevronDown,
+  IconUsers,
 } from "@tabler/icons-react";
-import { Button, ConfirmDialog, Avatar, Badge } from "@/components/ui/erp-primitives";
+import { Button, ConfirmDialog, Avatar } from "@/components/ui/erp-primitives";
 import { Drawer } from "@/components/ui/drawer";
 import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
@@ -155,9 +155,9 @@ export function PropertyDetailDrawer({
         open={open}
         onClose={onClose}
         title="Property Details"
-        width="32rem"
+        width="36rem"
         footer={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {canManage && onToggleFeature && (
               <Button
                 variant="secondary"
@@ -165,10 +165,11 @@ export function PropertyDetailDrawer({
                 onClick={() => onToggleFeature(property.id, !!property.isFeatured)}
                 aria-pressed={!!property.isFeatured}
                 className={cn(
-                  property.isFeatured && "border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100"
+                  "px-4 border-transparent shadow-none bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors",
+                  property.isFeatured && "text-amber-500 bg-amber-50 hover:bg-amber-100"
                 )}
               >
-                {property.isFeatured ? <IconStarFilled size={14} /> : <IconStar size={14} />}
+                {property.isFeatured ? <IconStarFilled size={16} /> : <IconStar size={16} />}
               </Button>
             )}
             {canManage && (
@@ -176,61 +177,59 @@ export function PropertyDetailDrawer({
                 variant="secondary"
                 size="sm"
                 onClick={() => onEdit(property)}
-                className="flex-1"
+                className="flex-1 border-transparent shadow-none bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors"
               >
-                <IconEdit size={14} />
+                <IconEdit size={14} className="mr-1.5" />
                 Edit
               </Button>
             )}
             <Link href={`/admin/properties/${property.id}`} className="flex-1">
-              <Button size="sm" className="w-full bg-[#151936] text-white hover:bg-[#151936]/90">
-                <IconEye size={14} />
+              <Button size="sm" className="w-full bg-[#151936] text-white hover:bg-[#151936]/90 shadow-none border-transparent transition-colors">
+                <IconEye size={14} className="mr-1.5" />
                 Full View
               </Button>
             </Link>
             {canManage && (
-              <Button variant="danger" size="sm" onClick={() => onDelete(property.id)}>
+              <Button variant="danger" size="sm" onClick={() => onDelete(property.id)} className="px-4 border-transparent shadow-none bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors">
                 <IconTrash size={14} />
               </Button>
             )}
           </div>
         }
       >
-        <div className="space-y-6 animate-fade-in-up">
+        <div className="space-y-8 animate-fade-in-up pb-6">
           {/* ── Hero Image ── */}
-          <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden shadow-sm border border-slate-100 bg-slate-100">
+          <div className="relative aspect-[16/10] sm:aspect-[21/9] w-full rounded-[16px] overflow-hidden bg-slate-100 group">
             {primaryImageUrl(property) ? (
               <Image
                 src={primaryImageUrl(property)!}
                 alt={property.name}
                 fill
-                sizes="500px"
-                className="object-cover"
+                sizes="600px"
+                className="object-cover transition-transform duration-1000 group-hover:scale-105"
               />
             ) : (
-              <div className="size-full flex items-center justify-center">
-                <IconBuildingSkyscraper size={40} className="text-slate-300" stroke={1.5} />
+              <div className="size-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+                <IconBuildingSkyscraper size={48} className="text-slate-200" stroke={1.2} />
               </div>
             )}
 
             {/* Tags overlay */}
-            <div className="absolute top-3 right-3 flex items-center gap-1.5 flex-wrap justify-end">
+            <div className="absolute top-4 right-4 flex items-center gap-2 flex-wrap justify-end z-10">
               {property.isFeatured && (
-                <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg border shadow-sm bg-amber-50 text-amber-700 border-amber-200 label-caps">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md bg-white/70 text-amber-600 label-caps border border-white/40 shadow-sm">
                   <IconStarFilled size={12} /> Featured
                 </span>
               )}
               {canManage ? (
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 shadow-sm backdrop-blur-sm bg-white/85 border border-slate-200/80"
-                >
-                  <span className={cn("size-1.5 rounded-full shrink-0", statusConfig.dot)} aria-hidden="true" />
+                <div className="relative inline-flex items-center rounded-full px-3 py-1.5 backdrop-blur-md bg-white/90 border border-white/60 shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all hover:bg-white hover:shadow-[0_4px_24px_rgba(0,0,0,0.1)] group cursor-pointer">
+                  <span className={cn("size-2 rounded-full shrink-0 shadow-sm absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none", statusConfig.dot)} aria-hidden="true" />
                   <select
                     value={property.status}
                     disabled={updating}
                     onChange={(e) => applyStatusChange(e.target.value as PropertyStatus)}
                     aria-label={`Change status for ${property.name}`}
-                    className="appearance-none bg-transparent outline-none cursor-pointer disabled:cursor-wait label-caps text-slate-700"
+                    className="appearance-none bg-transparent outline-none cursor-pointer disabled:cursor-wait label-caps text-slate-900 tracking-widest font-medium pl-5 pr-6 w-full h-full relative z-10"
                   >
                     {STATUS_ORDER.map((s) => (
                       <option key={s} value={s}>
@@ -238,114 +237,76 @@ export function PropertyDetailDrawer({
                       </option>
                     ))}
                   </select>
-                </span>
+                  <IconChevronDown size={14} stroke={2.5} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-all group-hover:text-slate-900 z-10" />
+                </div>
               ) : (
-                <Badge
-                  tone={
-                    property.status === "available" ? "success" :
-                    property.status === "under_offer" ? "warning" :
-                    property.status === "maintenance" ? "risk" :
-                    "neutral"
-                  }
-                >
-                  {statusConfig.label}
-                </Badge>
+                <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 backdrop-blur-md bg-white/70 border border-white/40 shadow-sm">
+                  <span className={cn("size-2 rounded-full shrink-0", statusConfig.dot)} aria-hidden="true" />
+                  <span className="label-caps text-slate-800 tracking-widest">{statusConfig.label}</span>
+                </span>
               )}
             </div>
 
-            {/* Bottom gradient */}
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-              <p className="text-white/70 mb-1 label-caps">{property.propertyType}</p>
-              <h3 className="text-white leading-snug">{property.name}</h3>
+            {/* Subtle bottom gradient */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 inset-x-0 p-5 pt-8">
+              <p className="text-white/80 mb-1 label-caps tracking-widest">{property.propertyType}</p>
+              <h3 className="headline-md text-white tracking-tight leading-tight">{property.name}</h3>
             </div>
           </div>
 
           {/* ── Price & Location ── */}
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[#151936] tracking-tight leading-none mono-stat">{priceVal}</p>
-              <div className="flex items-center gap-1.5 mt-2 text-slate-400">
-                <IconMapPin size={13} stroke={2} />
-                <span className="body-sm">{property.location}</span>
+          <div className="flex flex-col gap-5 border-b border-slate-100 pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <p className="text-slate-400 label-caps mb-1.5 tracking-widest">{isForSale ? "Asking Price" : "Monthly Rent"}</p>
+                <div className="flex items-baseline gap-1.5 text-slate-900">
+                  <span className="mono-stat text-4xl sm:text-5xl font-normal tracking-tight">{priceVal.replace("KES ", "").replace("/mo", "")}</span>
+                  <span className="text-slate-400 label-caps font-normal">{priceVal.includes("KES") ? "KES" : ""}{priceVal.includes("/mo") ? " / mo" : ""}</span>
+                </div>
+              </div>
+              <div className="text-left sm:text-right">
+                <span className="mono-stat text-2xl font-normal text-slate-900">N/A</span>
+                <p className="label-caps text-slate-400 mt-0.5 tracking-widest">Annual ROI</p>
               </div>
             </div>
-            <div className="text-right shrink-0">
-              <span className="mono-data text-slate-600">N/A</span>
-              <p className="label-caps text-slate-400 mt-0.5">Annual ROI</p>
+            <div className="flex items-center gap-2 text-slate-500">
+              <IconMapPin size={16} stroke={1.2} className="text-slate-400 shrink-0" />
+              <span className="body-sm">{property.location}</span>
             </div>
           </div>
 
-          {/* ── Info Tiles ── */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                icon: IconBed,
-                label: "Bedrooms",
-                value: property.bedrooms != null ? String(property.bedrooms) : "—",
-              },
-              {
-                icon: IconBath,
-                label: "Bathrooms",
-                value: property.bathrooms != null ? String(property.bathrooms) : "—",
-              },
-              {
-                icon: IconRuler,
-                label: "Size",
-                value:
-                  property.sizeSqft != null
-                    ? `${property.sizeSqft.toLocaleString()} sqft`
-                    : "—",
-              },
-              {
-                icon: IconCalendarEvent,
-                label: "Year Built",
-                value: property.yearBuilt != null ? String(property.yearBuilt) : "—",
-              },
-              {
-                icon: IconCar,
-                label: "Parking Spaces",
-                value: property.parkingSpaces != null ? String(property.parkingSpaces) : "—",
-              },
-              {
-                icon: IconRuler,
-                label: "Land Area",
-                value:
-                  property.landAreaSqft != null
-                    ? `${property.landAreaSqft.toLocaleString()} sqft`
-                    : "—",
-              },
-              {
-                icon: IconTag,
-                label: "Listing Type",
-                value: LISTING_TYPE_LABEL[property.listingType as keyof typeof LISTING_TYPE_LABEL]
-                  ?? (property.listingType?.toLowerCase() === "sale" ? "For Sale" : property.listingType || "—"),
-              },
-            ].map((tile, idx) => (
-              <div
-                key={tile.label + idx}
-                className="bg-slate-50/70 border border-slate-100 rounded-xl p-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors"
-              >
-                <div className="size-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm shrink-0">
-                  <tile.icon size={16} stroke={1.5} />
+          {/* ── Key Specs (Sleek Grid) ── */}
+          <div>
+            <p className="label-caps text-slate-400 mb-5 tracking-widest">Property Specifications</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
+              {[
+                { icon: IconBed, label: "Bedrooms", value: property.bedrooms != null ? String(property.bedrooms) : "—" },
+                { icon: IconBath, label: "Bathrooms", value: property.bathrooms != null ? String(property.bathrooms) : "—" },
+                { icon: IconUsers, label: "Tenants", value: (property as Record<string, unknown>).leases ? `${((property as Record<string, unknown>).leases as Array<{ status: string }>).filter((l) => l.status === "active").length} Active` : "1 Active" },
+                { icon: IconRuler, label: "Size (sqft)", value: property.sizeSqft != null ? property.sizeSqft.toLocaleString() : "—" },
+                { icon: IconCar, label: "Parking", value: property.parkingSpaces != null ? String(property.parkingSpaces) : "—" },
+                { icon: IconTag, label: "Listing", value: LISTING_TYPE_LABEL[property.listingType as keyof typeof LISTING_TYPE_LABEL] ?? (property.listingType?.toLowerCase() === "sale" ? "For Sale" : property.listingType || "—") },
+              ].map((tile, idx) => (
+                <div key={tile.label + idx} className="flex flex-col gap-1.5 border-l border-slate-100 pl-4">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <tile.icon size={14} stroke={1.5} />
+                    <span className="label-caps tracking-widest">{tile.label}</span>
+                  </div>
+                  <span className="mono-stat text-xl text-slate-800 font-normal">{tile.value}</span>
                 </div>
-                <div>
-                  <p className="mono-data text-slate-800 leading-none">{tile.value}</p>
-                  <p className="label-caps text-slate-400 mt-1">{tile.label}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* ── Amenities ── */}
+          {/* ── Amenities (Minimal List) ── */}
           {property.amenities && property.amenities.length > 0 && (
-            <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
-              <p className="label-caps text-slate-400 mb-3">Amenities & Features</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="border-t border-slate-100 pt-8">
+              <p className="label-caps text-slate-400 mb-5 tracking-widest">Amenities & Features</p>
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
                 {property.amenities.map((amenity: string) => (
-                  <span
-                    key={amenity}
-                    className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-medium shadow-sm"
-                  >
+                  <span key={amenity} className="flex items-center gap-2 text-slate-600 body-sm">
+                    <span className="size-1 rounded-full bg-slate-300" />
                     {amenity}
                   </span>
                 ))}
@@ -353,37 +314,39 @@ export function PropertyDetailDrawer({
             </div>
           )}
 
-          {/* ── Property Owner ── */}
+          {/* ── Property Owner (Flush Row) ── */}
           {ownerHasName && (
-            <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
-              <p className="label-caps text-slate-400 mb-3">Property Owner</p>
-              <div className="flex items-center gap-3">
-                <Avatar
-                  src={property.owner?.avatarUrl || undefined}
-                  fallback={ownerName.slice(0, 2).toUpperCase()}
-                  className="size-10 bg-white border border-slate-200 text-slate-400 shrink-0 text-xxs"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="body-sm text-slate-800 leading-none mb-1 truncate">{ownerName}</p>
-                  <p className="label-caps text-slate-400 leading-none">Landlord</p>
+            <div className="border-t border-slate-100 pt-8">
+              <p className="label-caps text-slate-400 mb-5 tracking-widest">Property Owner</p>
+              <div className="flex items-center justify-between gap-4 group">
+                <div className="flex items-center gap-4">
+                  <Avatar
+                    src={property.owner?.avatarUrl || undefined}
+                    fallback={ownerName.slice(0, 2).toUpperCase()}
+                    className="size-12 bg-slate-50 text-slate-600 text-sm"
+                  />
+                  <div>
+                    <p className="text-slate-900 font-medium text-base">{ownerName}</p>
+                    <p className="text-slate-500 text-sm mt-0.5">Landlord</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   {contact?.phone && (
                     <a
                       href={`tel:${contact.phone}`}
-                      className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
+                      className="size-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                       aria-label="Call owner"
                     >
-                      <IconPhone size={14} stroke={2} />
+                      <IconPhone size={18} stroke={1.5} />
                     </a>
                   )}
                   {contact?.email && (
                     <a
                       href={`mailto:${contact.email}`}
-                      className="size-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-[#151936] hover:border-[#151936]/30 transition-colors shadow-sm"
+                      className="size-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                       aria-label="Email owner"
                     >
-                      <IconMail size={14} stroke={2} />
+                      <IconMail size={18} stroke={1.5} />
                     </a>
                   )}
                 </div>
@@ -391,23 +354,20 @@ export function PropertyDetailDrawer({
             </div>
           )}
 
-          {/* ── Activity Timeline ── */}
-          <div>
-            <p className="label-caps text-slate-400 mb-3">Recent Activity</p>
+          {/* ── Activity Timeline (Delicate) ── */}
+          <div className="border-t border-slate-100 pt-8">
+            <p className="label-caps text-slate-400 mb-6 tracking-widest">Recent Activity</p>
             {activity.length === 0 ? (
-              <p className="body-sm text-slate-400">No recorded activity yet.</p>
+              <p className="body-sm text-slate-400 italic">No recorded activity yet.</p>
             ) : (
-              <div className="space-y-0">
-                {activity.map((entry, i) => (
-                  <div key={entry.id} className="flex gap-3 relative py-2.5">
-                    {i < activity.length - 1 && (
-                      <div className="absolute left-[7px] top-[28px] bottom-0 w-px bg-slate-100" />
-                    )}
-                    <div className="size-[15px] rounded-full border-2 border-slate-200 bg-white shrink-0 mt-0.5 z-10" />
+              <div className="space-y-5 pl-1.5 relative">
+                <div className="absolute left-[9px] top-2 bottom-2 w-px bg-slate-100" />
+                {activity.map((entry) => (
+                  <div key={entry.id} className="flex gap-4 relative">
+                    <div className="size-[6px] rounded-full bg-slate-300 shrink-0 mt-[6px] z-10" />
                     <div className="flex-1 min-w-0">
                       <p className="body-sm text-slate-700 leading-snug">{entry.summary}</p>
-                      <p className="label-caps text-slate-400 mt-0.5 flex items-center gap-1">
-                        <IconClock size={11} stroke={2} />
+                      <p className="text-xs text-slate-400 mt-1">
                         {relativeTime(entry.createdAt)}
                       </p>
                     </div>

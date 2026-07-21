@@ -159,7 +159,7 @@ export function CommandPalette() {
                 setActiveIndex(0);
               }}
               placeholder="Search clients, properties, leases..."
-              className="flex-1 bg-transparent text-md font-light text-slate-800 placeholder:text-slate-300 focus:outline-none"
+              className="flex-1 bg-transparent text-md font-normal text-slate-800 placeholder:text-slate-300 focus:outline-none"
             />
             <kbd className="hidden sm:inline-flex items-center justify-center rounded-[6px] border border-slate-200 bg-slate-50 px-2 py-0.5 text-xxs font-medium text-slate-400">
               ESC

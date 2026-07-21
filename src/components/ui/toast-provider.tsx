@@ -25,26 +25,26 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const toneStyles: Record<ToastTone, { border: string; icon: string; bg: string }> = {
+const toneStyles: Record<ToastTone, { icon: string; iconBg: string; artwork: string }> = {
   success: {
-    border: "border border-emerald-100",
-    icon: "text-[var(--success)]",
-    bg: "bg-[#f0faf4]",
+    icon: "text-emerald-500",
+    iconBg: "bg-emerald-50 border-emerald-100/50",
+    artwork: "text-emerald-500",
   },
   warning: {
-    border: "border border-amber-100",
-    icon: "text-[var(--warning)]",
-    bg: "bg-[#fffbf0]",
+    icon: "text-amber-500",
+    iconBg: "bg-amber-50 border-amber-100/50",
+    artwork: "text-amber-500",
   },
   error: {
-    border: "border border-rose-100",
-    icon: "text-[var(--error)]",
-    bg: "bg-[#fef2f2]",
+    icon: "text-rose-500",
+    iconBg: "bg-rose-50 border-rose-100/50",
+    artwork: "text-rose-500",
   },
   info: {
-    border: "border border-blue-100",
-    icon: "text-[var(--tertiary)]",
-    bg: "bg-[#f0f4ff]",
+    icon: "text-blue-500",
+    iconBg: "bg-blue-50 border-blue-100/50",
+    artwork: "text-blue-500",
   },
 };
 
@@ -75,7 +75,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         next.delete(id);
         return next;
       });
-    }, 280);
+    }, 300);
   }, []);
 
   const value = useMemo<ToastContextValue>(
@@ -96,7 +96,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed top-4 right-4 z-[9999] flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2.5 lg:top-6 lg:right-6">
+      <div className="fixed top-4 right-4 z-[9999] flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-3 lg:top-6 lg:right-6 pointer-events-none">
         {toasts.map((toast) => {
           const IconComponent = toneIcons[toast.tone];
           const styles = toneStyles[toast.tone];
@@ -105,52 +105,55 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div
               className={cn(
-                "relative overflow-hidden rounded-xl p-4 shadow-[0_12px_36px_rgba(0,0,0,0.06)] backdrop-blur-md transition-all duration-280",
-                styles.border,
-                styles.bg,
+                "relative overflow-hidden rounded-[16px] p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] backdrop-blur-xl bg-white/95 border border-slate-100/80 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-auto group",
                 isExiting
-                  ? "translate-x-[110%] opacity-0"
-                  : "animate-fade-in translate-x-0 opacity-100",
+                  ? "translate-x-[120%] opacity-0 scale-95"
+                  : "animate-fade-in translate-x-0 opacity-100 scale-100",
               )}
               key={toast.id}
             >
-              <div className="flex gap-3">
+              {/* Artwork Watermark */}
+              <div className={cn("absolute -bottom-6 -right-4 opacity-[0.04] pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:opacity-[0.06]", styles.artwork)}>
+                <IconComponent size={100} stroke={1.5} />
+              </div>
+
+              <div className="flex gap-3 items-start relative z-10">
                 <div
                   className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                    "flex size-9 shrink-0 items-center justify-center rounded-full border shadow-sm",
                     styles.icon,
-                    styles.bg,
+                    styles.iconBg,
                   )}
                 >
                   <IconComponent aria-hidden size={18} stroke={2} />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-base font-medium text-slate-800">
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <p className="text-sm font-medium text-slate-900 tracking-tight leading-snug">
                     {toast.title}
                   </p>
                   {toast.body ? (
-                    <p className="mt-0.5 text-base text-slate-400 leading-relaxed">
+                    <p className="mt-1 text-[13px] text-slate-500 leading-relaxed">
                       {toast.body}
                     </p>
                   ) : null}
                 </div>
                 <button
                   aria-label="Dismiss notification"
-                  className="focus-ring flex size-6 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-black/[0.05] hover:text-slate-600 transition-colors"
+                  className="focus-ring flex size-7 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
                   onClick={() => dismissToast(toast.id)}
                   type="button"
                 >
-                  <IconX aria-hidden size={14} />
+                  <IconX aria-hidden size={14} stroke={2.5} />
                 </button>
               </div>
               {/* Auto-dismiss progress bar */}
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/[0.03]">
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-100">
                 <div
-                  className={cn("h-full rounded-full opacity-40", {
-                    "bg-[var(--success)]": toast.tone === "success",
-                    "bg-[var(--warning)]": toast.tone === "warning",
-                    "bg-[var(--error)]": toast.tone === "error",
-                    "bg-[var(--tertiary)]": toast.tone === "info",
+                  className={cn("h-full", {
+                    "bg-emerald-400": toast.tone === "success",
+                    "bg-amber-400": toast.tone === "warning",
+                    "bg-rose-400": toast.tone === "error",
+                    "bg-blue-400": toast.tone === "info",
                   })}
                   style={{
                     animation: `progressShrink ${toast.duration}ms linear forwards`,

@@ -56,7 +56,7 @@ export function Drawer({
       {/* Backdrop */}
       <button
         aria-label="Close drawer backdrop"
-        className="absolute inset-0 size-full cursor-default bg-black/30 backdrop-blur-[2px]"
+        className="absolute inset-0 size-full cursor-default bg-[#0a0f1c]/40 backdrop-blur-sm transition-all duration-300"
         onClick={onClose}
         type="button"
       />

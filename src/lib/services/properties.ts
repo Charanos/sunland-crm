@@ -1408,6 +1408,7 @@ export async function listDocuments(
     propertyId?: string;
     leaseId?: string;
     valuationId?: string;
+    leadId?: string;
     type?: typeof documents.type.enumValues[number];
   } = {}
 ) {
@@ -1430,6 +1431,9 @@ export async function listDocuments(
   if (filters.valuationId) {
     conditions = and(conditions, eq(documents.valuationId, filters.valuationId));
   }
+  if (filters.leadId) {
+    conditions = and(conditions, eq(documents.leadId, filters.leadId));
+  }
   if (filters.type) {
     conditions = and(conditions, eq(documents.type, filters.type));
   }
@@ -1447,6 +1451,7 @@ export async function createDocument(
     propertyId?: string | null;
     leaseId?: string | null;
     valuationId?: string | null;
+    leadId?: string | null;
     fileSizeBytes?: number | null;
     metadata?: Record<string, unknown>;
   }
@@ -1472,6 +1477,7 @@ export async function createDocument(
         propertyId: input.propertyId ?? null,
         leaseId: input.leaseId ?? null,
         valuationId: input.valuationId ?? null,
+        leadId: input.leadId ?? null,
         fileSizeBytes: input.fileSizeBytes ?? null,
         metadata: input.metadata ?? {},
       })

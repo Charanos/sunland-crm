@@ -15,9 +15,12 @@ export async function GET(request: Request) {
     const startDate = searchParams.get("startDate") ?? undefined;
     const endDate = searchParams.get("endDate") ?? undefined;
     const scope = searchParams.get("scope") === "all" ? "all" : "mine";
+    const type = searchParams.get("type") ?? undefined;
+    const contactId = searchParams.get("contactId") ?? undefined;
+    const leadId = searchParams.get("leadId") ?? undefined;
 
     const ctx = await requireCallerContext(entityId, request);
-    const events = await listCalendarEvents(ctx, { entityId: entityId ?? undefined, startDate, endDate, scope });
+    const events = await listCalendarEvents(ctx, { entityId: entityId ?? undefined, startDate, endDate, scope, type, contactId, leadId });
 
     return NextResponse.json({ events });
   } catch (error) {

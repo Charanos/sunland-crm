@@ -190,6 +190,20 @@
       "when": 1784634038497,
       "tag": "0026_maintenance_status_priority_category_calendar_link",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1784647506217,
+      "tag": "0027_sales_pipeline_priority_lead_notes_documents_link",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1784649597643,
+      "tag": "0028_contacts_crm_calendar_viewing_link",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Property Lifecycle Architecture
 
-Status: current as of 2026-07-21. Companion to ADR 014 (Mandate Letter Flow), ADR 015 (Property Lifecycle Unification), and ADR 016 (Mandates Folded Into Leases, Maintenance Board Precision Rebuild) in `docs/ARCHITECTURE_DECISIONS.md` - this document is the durable map; the ADRs are the dated decision record. If the two ever disagree, trust the ADRs and update this file.
+Status: current as of 2026-07-21. Companion to ADR 014 (Mandate Letter Flow), ADR 015 (Property Lifecycle Unification), ADR 016 (Mandates Folded Into Leases, Maintenance Board Precision Rebuild), and ADR 017 (Sales Pipeline + Contacts CRM Precision Rebuilds) in `docs/ARCHITECTURE_DECISIONS.md` - this document is the durable map; the ADRs are the dated decision record. If the two ever disagree, trust the ADRs and update this file.
 
 ## 0. Why this document exists
 
@@ -65,7 +65,7 @@ Phases 1-3 are strictly sequential per property. Phase 4 (Sales & Marketing) is 
 | 2. Paperwork | `documents` (type=mandate_letter) | Real, correctly scoped (ADR 015 §15.1) | Real (banners + badges on mandate/property pages, queue folded into `leases-board.tsx`'s mandates mode - ADR 016 §16.1) |
 | 3. Active Management | `property_mandates` | Real | Real |
 | 3a. Maintenance & Works | `maintenance_requests`, `calendar_events` | Real (ADR 016 §16.2-16.4) | Real, precision rebuild against Claude Design mockup (ADR 016 §16.6) |
-| 4. Sales & Marketing | `leads` | Real (ADR 015 §15.4) | Real data, pre-existing visual design (not redesigned this pass - see §6) |
+| 4. Sales & Marketing | `leads`, `lead_notes` | Real (ADR 015 §15.4, extended ADR 017 §17.1) | Real, precision rebuild against Claude Design mockup (ADR 017 §17.1 - see §6) |
 | 5. Tenancy | `leases` | Real | Real |
 | 6. Remittances | `transactions`, `remittance_advices` | Real | Real |
 
@@ -114,18 +114,22 @@ There is no longer a standalone `/admin/mandates` list route. `leases-board.tsx`
 
 Deliberately unchanged this pass. `src/lib/services/finance/remittances.ts` has no dependency on `documents`/`mandateLetterStatus`, and this document doesn't propose adding one - a real enforcement gate is a business-policy decision (what happens to an already-active mandate whose landlord never delivers a letter?) that hasn't been asked for. The banner copy on the mandate/property pages ("Required on file before first remittance") is aspirational UI text, not a currently-true statement; a future session tightening this should either make the enforcement real or soften the copy to match reality.
 
-## 6. Sales & CRM (`leads`) - real backend, frontend redesign is separate
+## 6. Sales & CRM (`leads`) - real backend, real precision-rebuilt frontend (ADR 017 §17.1)
 
-As of ADR 015 §15.4, `leads` has a real service layer (`src/lib/services/leads.ts`), validation (`src/lib/validation/leads.ts`), and API routes (`/api/leads`, `/api/leads/[id]`), gated by the pre-existing `crm.lead.read`/`crm.lead.write` permissions that no route previously exercised. `pipeline-board.tsx` is wired to this real backend - real fetch, real create/update/transition/delete calls - but its **visual design was not rebuilt** to match `docs/SUNLAND_BD_DASHBOARD_SPEC.md`. That's a deliberate, separate scope decision, not an oversight: the client's own framing was "build the backend, the frontend will be done shortly after."
+As of ADR 015 §15.4, `leads` has a real service layer (`src/lib/services/leads.ts`), validation (`src/lib/validation/leads.ts`), and API routes (`/api/leads`, `/api/leads/[id]`, `/api/leads/[id]/notes`), gated by the pre-existing `crm.lead.read`/`crm.lead.write` permissions. `pipeline-board.tsx` was subsequently rebuilt (ADR 017 §17.1) against the Claude Design mockup, closing every gap the earlier split had left open:
 
-Known consequences of this split, for whoever picks up the frontend pass:
-- `pipeline-board.tsx`'s property/agent photo lookups (`PROPERTY_IMAGES`, `AGENT_AVATARS`, `CLIENT_AVATARS`) are keyed by the old fictional names and will always fall through to their generic fallback image now that real property/contact names flow through - harmless, but visually flat until real photos are wired in.
-- The `role: "CEO" | "Agent"` toggle's Agent-scoping still hardcodes `lead.assignedAgent === "Amina Wanjiku"` - a pre-existing mock affordance, not touched this pass. Real per-viewer scoping (matching the logged-in user to `assignedToId`) is frontend-redesign work.
-- The detail drawer's quick-note log (`lead-detail-drawer.tsx`) stays local/ephemeral - it doesn't persist to `leads.notes` or the audit log, since a genuine append-only note-log needs a backend concept (a notes table, or audit-log entries authored by users rather than the system) that doesn't exist yet. The real, persisted `timeline` shown on open comes from the audit log (creation + stage transitions only).
+- `pipeline-board.tsx`'s old fictional-name-keyed photo lookups (`PROPERTY_IMAGES`, `AGENT_AVATARS`, `CLIENT_AVATARS`) are gone - real property media and deterministic name-hash agent-color chips are used instead.
+- The `role: "CEO" | "Agent"` toggle's hardcoded `lead.assignedAgent === "Amina Wanjiku"` scoping is gone - "My Deals / All Deals" now keys off the real logged-in user (`/api/auth/me`) against `assignedToId`.
+- The detail drawer's note log now persists for real: `lead_notes` (ADR 017 §17.1) is a dedicated, timestamped, multi-entry table merged into the same drawer's Activity timeline alongside audit-log entries - no longer local/ephemeral.
+- `leads.priority` (real 3-tier enum) and `documents.leadId` (real Files tab) are both real columns now, and `transitionLeadStage` enforces a real server-side adjacency guard (`canMoveLeadStage`), not just a client-side one.
 
 ### 6.1 The one real connection to the base portfolio, already existing before this pass
 
 `property-full-view-board.tsx`'s "Sales Pipeline" tab (shown instead of "Tenancy" when `listingType === "sale"`) is genuinely `leads`-backed via `getPropertyWithDetails`'s `salesPipeline` field - real data, explicitly read-only. This is the natural extension point once `leads` gets real write endpoints from its own page context (e.g., closing a deal from the property page itself) - not built this pass, but the read side already composes correctly with the new backend.
+
+### 6.2 Contacts CRM (`contacts`) - real backend, real precision-rebuilt frontend (ADR 017 §17.2)
+
+`contacts-board.tsx` was rebuilt against a second Claude Design mockup in the same pass, closing gaps that predated even the leads split: `updateContact`/`deleteContact` (previously entirely missing from the service layer - editing a contact was a client-only no-op), real touch-logging (`logContactTouch`, closing the gap where a `crm.contact.call_logged`-style action existed only as static seed-data illustration with no live code path), and real viewing scheduling (`calendar_events.contactId`/`leadId` + a new `"viewing"` enum value, mirroring the `maintenanceRequestId` precedent from §4.2). Contact "status" (Active Client / Hot Prospect / Prospect / New Contact) is derived at read time from real signals, never stored - see ADR 017 §17.2 for the full signal list. `contact-detail-drawer.tsx` (confirmed 100% mock) was retired; `contact-full-view-board.tsx` (`/admin/contacts/[id]`) remains the real full-profile destination, untouched.
 
 ## 7. Explicit seams for future modules
 
@@ -136,9 +140,9 @@ When Front Office's own dashboard is built (per `docs/SUNLAND_FRONT_OFFICE_DASHB
 - `listMandates()`'s paperwork/origin fields and their surfacing on `leases-board.tsx`'s mandates mode (§4.1, ADR 016 §16.1 - the standalone `mandates-queue-board.tsx` this note originally pointed at is deleted) are the intended starting point to relocate, not a throwaway prototype.
 - Today, `front_office_head`/`front_office_admin` hold no `properties.property.write` (needed to attach a letter) - granting it is a real, small permissions decision to make when that module actually gets built and staffed, not before.
 
-### 7.2 Sales & CRM frontend redesign
+### 7.2 Sales & CRM frontend redesign - DONE (ADR 017 §17.1-§17.2)
 
-Plugs into the real backend from §6 as-is - `/api/leads` and `/api/leads/[id]` are stable contracts. The redesign's job is presentation, not data modeling: real property/contact photos, real per-viewer role scoping, and (if wanted) a persisted notes/comment concept for the detail drawer.
+Both the Sales Pipeline and Contacts CRM frontends have been precision-rebuilt against their respective Claude Design mockups - see §6/§6.2 and ADR 017 for the full detail. Remaining, deliberately out of scope this pass: the Contacts CRM mockup's "Group" field has no schema backing and was dropped rather than invented; no dedicated contact-notes table exists (the mockup itself has no note-composer UI, only a Quick Task menu).
 
 ### 7.3 Enforcement (remittance gating on paperwork)
 

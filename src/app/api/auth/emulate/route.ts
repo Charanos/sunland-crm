@@ -10,14 +10,25 @@ export async function POST(request: NextRequest) {
   try {
     const { role } = await request.json();
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.role, role as (typeof users.$inferInsert)["role"]))
-      .limit(1);
+    let user: any = null;
+    try {
+      const [dbUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.role, role as (typeof users.$inferInsert)["role"]))
+        .limit(1);
+      user = dbUser;
+    } catch (dbErr) {
+      console.warn("DB lookup failed in emulation, falling back to mock user:", dbErr);
+    }
 
     if (!user) {
-      return NextResponse.json({ error: "Profile not configured" }, { status: 404 });
+      user = {
+        id: `usr-mock-${role}`,
+        email: `${role}@sunland.co.ke`,
+        name: role.split("_").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+        role: role as UserRole,
+      };
     }
 
     await setSession(

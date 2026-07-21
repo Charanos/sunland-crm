@@ -2,12 +2,14 @@ import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-or
 import { entities, timestamps, users } from "@/db/schema/platform";
 import { projects } from "@/db/schema/operations";
 import { maintenanceRequests } from "@/db/schema/properties";
+import { contacts, leads } from "@/db/schema/crm";
 
 export const calendarEventType = pgEnum("calendar_event_type", [
   "internal",
   "external",
   "legal",
   "maintenance",
+  "viewing",
 ]);
 
 // Post-event disposition. No cron/background-job infrastructure exists in
@@ -51,6 +53,12 @@ export const calendarEvents = pgTable(
     // in the same transaction, so "closing the order closes the event" is
     // literally true rather than aspirational copy.
     maintenanceRequestId: uuid("maintenance_request_id").references(() => maintenanceRequests.id),
+    // Real Contacts CRM linkage - a "viewing" event can point back at the
+    // lead/contact it's scheduled for, same reasoning as maintenanceRequestId
+    // above: "today's viewings" and "this contact's next viewing" become
+    // literal relational queries instead of free-text attendee matching.
+    contactId: uuid("contact_id").references(() => contacts.id),
+    leadId: uuid("lead_id").references(() => leads.id),
     outcome: calendarEventOutcome("outcome").default("pending").notNull(),
     ...timestamps,
   },
@@ -60,5 +68,7 @@ export const calendarEvents = pgTable(
     startsAtIdx: index("calendar_events_starts_at_idx").on(table.startsAt),
     projectIdx: index("calendar_events_project_idx").on(table.projectId),
     maintenanceRequestIdx: index("calendar_events_maintenance_request_idx").on(table.maintenanceRequestId),
+    contactIdx: index("calendar_events_contact_idx").on(table.contactId),
+    leadIdx: index("calendar_events_lead_idx").on(table.leadId),
   }),
 );

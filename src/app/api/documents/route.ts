@@ -11,10 +11,11 @@ export async function GET(request: Request) {
     const propertyId = searchParams.get("propertyId") ?? undefined;
     const leaseId = searchParams.get("leaseId") ?? undefined;
     const valuationId = searchParams.get("valuationId") ?? undefined;
+    const leadId = searchParams.get("leadId") ?? undefined;
     const type = (searchParams.get("type") as "mandate_letter" | "lease_agreement" | "rent_receipt" | "statement" | "valuation_report" | "offer_letter" | "identification" | "title_deed" | null) ?? undefined;
 
     const ctx = await requireCallerContext(entityId, request);
-    const documentsList = await listDocuments(ctx, { ownerContactId, propertyId, leaseId, valuationId, type });
+    const documentsList = await listDocuments(ctx, { ownerContactId, propertyId, leaseId, valuationId, leadId, type });
 
     return NextResponse.json({ documents: documentsList });
   } catch (error) {

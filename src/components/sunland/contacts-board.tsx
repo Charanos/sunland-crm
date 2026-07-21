@@ -1,1042 +1,654 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  IconSearch,
-  IconPlus,
-  IconPhone,
-  IconMail,
-  IconBuilding,
-  IconUserCircle,
-  IconDotsVertical,
-  IconX,
-  IconTrash,
-  IconEdit,
-  IconMessageCircle,
-  IconUsers,
-  IconAlertTriangle,
-  IconClipboardList,
+  IconArrowUpRight,
   IconBriefcase,
+  IconBuildingCommunity,
+  IconCalendarEvent,
+  IconClock,
+  IconDotsVertical,
+  IconEdit,
+  IconLayoutKanban,
+  IconMail,
+  IconMessageCircle,
+  IconMoodEmpty,
+  IconPhone,
+  IconPlus,
+  IconSearch,
+  IconTrash,
+  IconUser,
+  IconUsers,
 } from "@tabler/icons-react";
-import { Avatar } from "@/components/ui/avatar";
-import {
-  BoardPanel,
-  KpiCard,
-  PaginationControls,
-} from "@/components/ui/erp-primitives";
-import { cn } from "@/lib/utils/cn";
+import { Avatar, Badge, BoardHeader, Button, ConfirmDialog, DropdownItem, DropdownMenu, SkeletonBlock } from "@/components/ui/erp-primitives";
+import { PageTransition } from "@/components/shared/page-transition";
 import { useToast } from "@/components/ui/toast-provider";
-import { ContactDetailDrawer } from "./contact-detail-drawer";
+import { cn } from "@/lib/utils/cn";
 import { ContactFormModal } from "./contact-form-modal";
-import { formatCompactKES } from "@/lib/utils/format";
-import { motion, AnimatePresence } from "framer-motion";
-import { useUIStore } from "@/store/ui";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ContactProfilePeek, type ProfilePeekData } from "./contact-profile-peek";
+import { STATUS_META, TYPE_META, type ContactCrmStatus, type ContactType } from "./contact-constants";
 
-// ─── Type Definitions ─────────────────────────────────────────────────────────
-
-export type ContactType =
-  | "landlord"
-  | "property_owner"
-  | "investor"
-  | "buyer"
-  | "tenant"
-  | "developer"
-  | "financial_institution"
-  | "advocate"
-  | "contractor"
-  | "valuer"
-  | "government_agency";
-
-export type ContactSource =
-  | "referral"
-  | "walk_in"
-  | "website"
-  | "social_media"
-  | "cold_call"
-  | "existing_client"
-  | "partner"
-  | "exhibition";
-
-export type ContactStatus = "active" | "inactive" | "blacklisted";
-
-export interface AssociatedProperty {
-  id: string;
-  name: string;
-  role?: string;
-}
-
-export interface ContactFinancials {
-  paid: number;
-  arrears: number;
-  balance: number;
-  portfolioValue?: number;
-}
-
-export interface ContactInteractionLog {
-  id: string;
-  date: string;
-  type: "call" | "email" | "meeting" | "message" | "system";
-  summary: string;
-  details?: string;
-}
+// ── Types (mirror the real /api/contacts + /api/crm/contacts-overview shape) ──
 
 export interface Contact {
   id: string;
-  name: string;
+  displayName: string;
   type: ContactType;
-  source: ContactSource;
-  status: ContactStatus;
-  email: string;
-  phone: string;
-  avatar?: string;
-  associatedProperties: AssociatedProperty[];
-  financials: ContactFinancials;
-  timeline: ContactInteractionLog[];
-  assignedAgent?: string;
-  createdDate: string;
-  notes?: string;
+  companyName: string | null;
+  email: string | null;
+  phone: string | null;
+  avatarUrl: string | null;
+  source: string | null;
+  assignedToId: string | null;
+  assignedToName: string | null;
+  assignedToAvatarUrl: string | null;
+  createdAt: string;
+  status: ContactCrmStatus;
 }
 
-// ─── Constants & Styling Maps ──────────────────────────────────────────────────
+interface LeadDigestItem {
+  id: string;
+  contactId: string | null;
+  clientName: string;
+  propertyInterest: string;
+  propertyImageUrl: string | null;
+  stage: string;
+  priority: "low" | "medium" | "high";
+  phone: string;
+  email: string;
+  nextActionAt: string | null;
+}
 
-export const TYPE_LABELS: Record<ContactType, string> = {
-  landlord: "Landlord",
-  property_owner: "Property Owner",
-  investor: "Investor",
-  buyer: "Buyer",
-  tenant: "Tenant",
-  developer: "Developer",
-  financial_institution: "Financial Institution",
-  advocate: "Advocate",
-  contractor: "Contractor",
-  valuer: "Valuer",
-  government_agency: "Gov Agency",
+interface ViewingEvent {
+  id: string;
+  title: string;
+  startsAt: string;
+  contactId: string | null;
+  leadId: string | null;
+}
+
+interface TouchEvent {
+  id: string;
+  contactId: string;
+  summary: string;
+  actorName: string | null;
+  createdAt: string | null;
+}
+
+interface Overview {
+  totalContacts: number;
+  newThisMonth: number;
+  viewingsToday: number;
+  openLeadsCount: number;
+  followUpsDueCount: number;
+  newLeadsToday: number;
+  hotLeads: LeadDigestItem[];
+  followUpsDue: LeadDigestItem[];
+  todaysViewings: ViewingEvent[];
+  upcomingViewing: ViewingEvent | null;
+  recentTouches: TouchEvent[];
+}
+
+const STAGE_LABELS: Record<string, string> = {
+  inquiry: "New Inquiry",
+  qualification: "Qualified",
+  viewing: "Viewing Scheduled",
+  offer: "Offer Sent",
+  negotiation: "Legal & Docs",
+  closed_won: "Closed Won",
+  closed_lost: "Closed Lost",
 };
 
-export const SOURCE_LABELS: Record<ContactSource, string> = {
-  referral: "Referral",
-  walk_in: "Walk-In",
-  website: "Website",
-  social_media: "Social Media",
-  cold_call: "Cold Call",
-  existing_client: "Existing Client",
-  partner: "Partner",
-  exhibition: "Exhibition",
+const PRIORITY_PILL: Record<string, string> = {
+  high: "bg-rose-50 text-rose-700",
+  medium: "bg-amber-50 text-amber-700",
+  low: "bg-slate-100 text-slate-600",
 };
 
-export const STATUS_LABELS: Record<ContactStatus, string> = {
-  active: "Active",
-  inactive: "Inactive",
-  blacklisted: "Blacklisted",
-};
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
+}
 
-export const TYPE_COLORS: Record<ContactType, string> = {
-  landlord: "bg-indigo-50/80 text-indigo-700 border-indigo-200/50",
-  property_owner: "bg-purple-50/80 text-purple-700 border-purple-200/50",
-  investor: "bg-emerald-50/80 text-emerald-700 border-emerald-200/50",
-  buyer: "bg-blue-50/80 text-blue-700 border-blue-200/50",
-  tenant: "bg-cyan-50/80 text-cyan-700 border-cyan-200/50",
-  developer: "bg-violet-50/80 text-violet-700 border-violet-200/50",
-  financial_institution: "bg-slate-100 text-slate-700 border-slate-300/50",
-  advocate: "bg-orange-50/80 text-orange-700 border-orange-200/50",
-  contractor: "bg-rose-50/80 text-rose-700 border-rose-200/50",
-  valuer: "bg-amber-50/80 text-amber-700 border-amber-200/50",
-  government_agency: "bg-red-50/80 text-red-700 border-red-200/50",
-};
+function relativeTime(iso: string | null): string {
+  if (!iso) return "—";
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "Just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.floor(hr / 24);
+  return days === 1 ? "Yesterday" : `${days}d ago`;
+}
 
-export const STATUS_COLORS: Record<ContactStatus, string> = {
-  active: "text-emerald-700 bg-emerald-50 border-emerald-150",
-  inactive: "text-slate-400 bg-slate-50 border-slate-200/70",
-  blacklisted: "text-red-700 bg-red-50 border-red-150",
-};
+// Content-shaped loading state, replacing a centered spinner - same
+// "replace the spinner" precedent as every sibling board this session.
+function ContactBoardSkeleton() {
+  return (
+    <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
+      <div className="flex flex-col gap-3.5">
+        <SkeletonBlock className="h-[130px] w-full rounded-3xl" />
+        <SkeletonBlock className="h-[220px] w-full rounded-3xl" />
+        <SkeletonBlock className="h-[180px] w-full rounded-3xl" />
+      </div>
+      <SkeletonBlock className="h-[520px] w-full rounded-3xl" />
+    </div>
+  );
+}
 
-export const SOURCE_COLORS: Record<ContactSource, string> = {
-  referral: "bg-emerald-50/50 text-emerald-600 border border-emerald-100/50",
-  walk_in: "bg-slate-100 text-slate-600 border border-slate-200/50",
-  website: "bg-blue-50/50 text-blue-600 border border-blue-100/50",
-  social_media: "bg-pink-50/50 text-pink-600 border border-pink-100/50",
-  cold_call: "bg-purple-50/50 text-purple-600 border border-purple-100/50",
-  existing_client: "bg-teal-50/50 text-teal-600 border border-teal-100/50",
-  partner: "bg-indigo-50/50 text-indigo-600 border border-indigo-100/50",
-  exhibition: "bg-amber-50/50 text-amber-600 border border-amber-100/50",
-};
-
-
-
-const ROWS_PER_PAGE = 5;
-
-// ─── Component Code ───────────────────────────────────────────────────────────
-
-export function ContactsBoard({ entityId: _entityId }: { entityId: string }) {
+export function ContactsBoard({ entityId }: { entityId: string }) {
   const { pushToast } = useToast();
-  const { setSelectedChatDMId } = useUIStore();
 
-  // App States
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Confirmation States
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
+  const [spotlightId, setSpotlightId] = useState<string | null>(null);
+  const [directoryQuery, setDirectoryQuery] = useState("");
 
-  // Filter States
-  const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sourceFilter, setSourceFilter] = useState<string>("all");
-
-  // Simulated Roles: "CEO" (sees everything) or "Agent" (sees only Amina Wanjiku's assignments)
-  const [role, setRole] = useState<"CEO" | "Agent">("CEO");
-
-  // Sorting & Pagination States
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<string>("name");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Detail Drawer & Form Modal State
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | undefined>(undefined);
-  const [rowMenuId, setRowMenuId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [peekData, setPeekData] = useState<ProfilePeekData | null>(null);
 
-  const fetchContacts = useCallback(async () => {
-    Promise.resolve().then(() => setIsLoading(true));
+  const loadContacts = useCallback(async () => {
     try {
-      const res = await fetch(`/api/contacts?entityId=${_entityId}`);
+      const res = await fetch(`/api/contacts?entityId=${entityId}`);
       const data = await res.json();
-      if (data.contacts) {
-        const mapped = data.contacts.map((c: {
-          id: string;
-          displayName: string;
-          type: ContactType;
-          source?: ContactSource | null;
-          status?: ContactStatus | null;
-          email?: string | null;
-          phone?: string | null;
-          createdAt?: string | null;
-        }) => ({
-          id: c.id,
-          name: c.displayName,
-          type: c.type,
-          source: c.source ?? "website",
-          status: c.status ?? "active",
-          email: c.email ?? "",
-          phone: c.phone ?? "",
-          associatedProperties: [],
-          financials: { paid: 0, arrears: 0, balance: 0 },
-          timeline: [],
-          assignedAgent: "Staff Member",
-          createdDate: c.createdAt ? c.createdAt.split("T")[0] : "",
-        }));
-        setContacts(mapped);
+      if (Array.isArray(data.contacts)) {
+        setContacts(data.contacts as Contact[]);
+        setSpotlightId((prev) => prev ?? data.contacts[0]?.id ?? null);
       }
-    } catch (err) {
-      console.error("Failed to fetch contacts:", err);
-    } finally {
-      setIsLoading(false);
+    } catch {
+      pushToast({ tone: "warning", title: "Error", body: "Failed to load contacts." });
     }
-  }, [_entityId]);
+  }, [entityId, pushToast]);
+
+  const loadOverview = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/crm/contacts-overview?entityId=${entityId}`);
+      const data = await res.json();
+      if (data.overview) setOverview(data.overview as Overview);
+    } catch {
+      // Non-critical - hero/digest widgets degrade to empty, not a hard error.
+    }
+  }, [entityId]);
 
   useEffect(() => {
-    let active = true;
-    if (_entityId) {
-      const timer = setTimeout(() => {
-        if (active) fetchContacts();
-      }, 0);
-      return () => {
-        active = false;
-        clearTimeout(timer);
-      };
-    }
-  }, [_entityId, fetchContacts]);
+    if (!entityId) return;
+    setLoading(true);
+    Promise.all([loadContacts(), loadOverview()]).finally(() => setLoading(false));
+    fetch("/api/auth/me").then((r) => r.json()).then((d) => setCurrentUserName(d.user?.name ?? null)).catch(() => { });
+  }, [entityId, loadContacts, loadOverview]);
 
-  // Trigger loading skeletons on filter changes
-  useEffect(() => {
-    const startTimer = setTimeout(() => {
-      setIsLoading(true);
-    }, 0);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 400);
-    return () => {
-      clearTimeout(startTimer);
-      clearTimeout(timer);
-    };
-  }, [searchQuery, typeFilter, statusFilter, sourceFilter, role, currentPage, sortField, sortDir]);
+  const spotlight = useMemo(() => contacts.find((c) => c.id === spotlightId) ?? null, [contacts, spotlightId]);
 
-  // Clear selections when filter or role changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSelectedIds([]);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [searchQuery, typeFilter, statusFilter, sourceFilter, role]);
+  const spotlightLastTouch = useMemo(() => {
+    if (!spotlight || !overview) return null;
+    return overview.recentTouches.find((t) => t.contactId === spotlight.id) ?? null;
+  }, [spotlight, overview]);
 
-  // Reset page when filters change
-  const resetPagination = () => setCurrentPage(1);
+  const spotlightNextAction = useMemo(() => {
+    if (!spotlight || !overview) return null;
+    const candidates = [...overview.hotLeads, ...overview.followUpsDue].filter((l) => l.contactId === spotlight.id && l.nextActionAt);
+    if (candidates.length === 0) return null;
+    return [...candidates].sort((a, b) => new Date(a.nextActionAt!).getTime() - new Date(b.nextActionAt!).getTime())[0];
+  }, [spotlight, overview]);
 
-  // Filter contacts based on search, filters, and simulated role
-  const filteredContacts = useMemo(() => {
-    return contacts.filter((c) => {
-      // 1. Role Scope
-      const matchesRole = role === "CEO" || c.assignedAgent === "Amina Wanjiku";
+  const directory = useMemo(() => {
+    const q = directoryQuery.trim().toLowerCase();
+    if (!q) return contacts;
+    return contacts.filter((c) => c.displayName.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q) || (c.phone ?? "").includes(q));
+  }, [contacts, directoryQuery]);
 
-      // 2. Search Box
-      const matchesSearch =
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.phone.includes(searchQuery);
+  const heroGreeting = useMemo(() => {
+    const hour = new Date().getHours();
+    const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+    const firstName = currentUserName?.split(" ")[0] ?? "there";
+    const needsAttention = overview ? overview.hotLeads.length + overview.followUpsDueCount : 0;
+    return `Good ${timeOfDay}, ${firstName}${needsAttention > 0 ? ` — ${needsAttention} contact${needsAttention === 1 ? "" : "s"} need${needsAttention === 1 ? "s" : ""} you today` : ""}`;
+  }, [currentUserName, overview]);
 
-      // 3. Dropdown filters
-      const matchesType = typeFilter === "all" || c.type === typeFilter;
-      const matchesStatus = statusFilter === "all" || c.status === statusFilter;
-      const matchesSource = sourceFilter === "all" || c.source === sourceFilter;
+  const heroSub = useMemo(() => {
+    if (!overview) return "";
+    const bits: string[] = [];
+    if (overview.hotLeads.length > 0) bits.push(`${overview.hotLeads.length} hot prospect${overview.hotLeads.length === 1 ? "" : "s"} awaiting a follow-up`);
+    if (overview.viewingsToday > 0) bits.push(`${overview.viewingsToday} viewing${overview.viewingsToday === 1 ? "" : "s"} scheduled today`);
+    return bits.length > 0 ? `${bits.join("; ")}.` : "No urgent follow-ups right now.";
+  }, [overview]);
 
-      return matchesRole && matchesSearch && matchesType && matchesStatus && matchesSource;
-    });
-  }, [contacts, searchQuery, typeFilter, statusFilter, sourceFilter, role]);
+  // ── Mutations ──────────────────────────────────────────────────────────
 
-  // Sort contacts
-  const sortedContacts = useMemo(() => {
-    const sorted = [...filteredContacts];
-    sorted.sort((a, b) => {
-      let aVal: unknown = a[sortField as keyof Contact];
-      let bVal: unknown = b[sortField as keyof Contact];
-
-      // Nested object checking
-      if (sortField === "financials.paid") {
-        aVal = a.financials.paid;
-        bVal = b.financials.paid;
-      } else if (sortField === "financials.arrears") {
-        aVal = a.financials.arrears;
-        bVal = b.financials.arrears;
-      }
-
-      if (aVal === undefined || aVal === null) return 1;
-      if (bVal === undefined || bVal === null) return -1;
-
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDir === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      } else {
-        const aNum = typeof aVal === "number" ? aVal : 0;
-        const bNum = typeof bVal === "number" ? bVal : 0;
-        return sortDir === "asc"
-          ? aNum - bNum
-          : bNum - aNum;
-      }
-    });
-    return sorted;
-  }, [filteredContacts, sortField, sortDir]);
-
-  // Paginated contacts
-  const paginatedContacts = useMemo(() => {
-    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-    return sortedContacts.slice(startIndex, startIndex + ROWS_PER_PAGE);
-  }, [sortedContacts, currentPage]);
-
-  const totalPages = Math.ceil(sortedContacts.length / ROWS_PER_PAGE) || 1;
-
-  // Sorting Handler
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDir(prev => prev === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDir("asc");
-    }
-  };
-
-  const getDMIdForContact = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes("amina") || n.includes("hassan") || n.includes("abdalla") || n.includes("wanjiku")) return "dm1";
-    if (n.includes("james") || n.includes("mutua") || n.includes("mwangi")) return "dm2";
-    if (n.includes("grace") || n.includes("omondi")) return "dm3";
-    return "dm1";
-  };
-
-  // Checkbox row toggler
-  const toggleSelectRow = (id: string) => {
-    setSelectedIds(prev =>
-      prev.includes(id)
-        ? prev.filter(item => item !== id)
-        : [...prev, id]
-    );
-  };
-
-  // Select all filtered contacts toggler
-  const toggleSelectAll = () => {
-    const paginatedIds = paginatedContacts.map(c => c.id);
-    const allSelectedOnPage = paginatedIds.every(id => selectedIds.includes(id));
-
-    if (allSelectedOnPage) {
-      // Remove page IDs
-      setSelectedIds(prev => prev.filter(id => !paginatedIds.includes(id)));
-    } else {
-      // Add missing page IDs
-      setSelectedIds(prev => {
-        const added = paginatedIds.filter(id => !prev.includes(id));
-        return [...prev, ...added];
+  const logTouch = async (contactId: string, channel: "call" | "email" | "whatsapp", contactName: string) => {
+    try {
+      const res = await fetch(`/api/contacts/${contactId}/touch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityId, channel }),
       });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to log");
+      pushToast({ tone: "success", title: `Logged: ${channel}`, body: `${contactName}'s timeline updated.` });
+      loadOverview();
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Try again." });
     }
   };
 
-  // Bulk Operations Handlers
-  const handleBulkDelete = () => {
-    setIsBulkDeleteConfirmOpen(true);
+  const handleScheduleViewing = async (contact: Contact) => {
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    start.setHours(10, 0, 0, 0);
+    const end = new Date(start.getTime() + 60 * 60_000);
+    try {
+      const res = await fetch("/api/scheduling/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityId,
+          title: `Property viewing — ${contact.displayName}`,
+          type: "viewing",
+          startsAt: start.toISOString(),
+          endsAt: end.toISOString(),
+          contactId: contact.id,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to schedule");
+      pushToast({ tone: "success", title: "Viewing scheduled", body: `Tomorrow 10:00 AM with ${contact.displayName}.` });
+      loadOverview();
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Error", body: err instanceof Error ? err.message : "Try again." });
+    }
   };
 
-  const confirmBulkDelete = () => {
-    setContacts(prev => prev.filter(c => !selectedIds.includes(c.id)));
-    pushToast({
-      tone: "success",
-      title: "Batch Action Completed",
-      body: `Successfully deleted ${selectedIds.length} contact records from the CRM.`
-    });
-    setSelectedIds([]);
-    setIsBulkDeleteConfirmOpen(false);
-  };
-
-
-  const handleBulkStatusChange = (newStatus: ContactStatus) => {
-    setContacts(prev => prev.map(c =>
-      selectedIds.includes(c.id) ? { ...c, status: newStatus } : c
-    ));
-    pushToast({
-      tone: "success",
-      title: "Batch Action Completed",
-      body: `Status updated to "${STATUS_LABELS[newStatus]}" for ${selectedIds.length} contacts.`
-    });
-    setSelectedIds([]);
-  };
-
-  const handleBulkMessage = () => {
-    pushToast({
-      tone: "success",
-      title: "Direct Broadcast Dispatched",
-      body: `Dispatched chat invitations to ${selectedIds.length} selected recipients.`
-    });
-    setSelectedIds([]);
-  };
-
-  // Create / Edit Submissions
-  const handleCreateOrUpdate = async (payload: Partial<Contact>) => {
-    setIsLoading(true);
+  const handleCreateOrUpdate = async (payload: {
+    displayName: string;
+    type: ContactType;
+    companyName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    source?: string | null;
+    assignedToId?: string | null;
+  }) => {
     try {
       if (editingContact) {
-        // Update
-        pushToast({ tone: "success", title: "Record Updated", body: `Changes saved for "${payload.name}".` });
+        const res = await fetch(`/api/contacts/${editingContact.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ entityId, ...payload }),
+        });
+        if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to update contact");
+        pushToast({ tone: "success", title: "Contact updated", body: `Changes saved for "${payload.displayName}".` });
         setEditingContact(undefined);
       } else {
-        // Create
         const res = await fetch("/api/contacts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            entityId: _entityId,
-            displayName: payload.name,
-            type: payload.type,
-            email: payload.email,
-            phone: payload.phone,
-            source: payload.source,
-          }),
+          body: JSON.stringify({ entityId, ...payload }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to create contact");
-
-        pushToast({ tone: "success", title: "Record Created", body: `Successfully enrolled "${payload.name}".` });
-        fetchContacts();
+        if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to create contact");
+        pushToast({ tone: "success", title: "Contact created", body: `"${payload.displayName}" added to the directory.` });
       }
+      setFormOpen(false);
+      loadContacts();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "An unexpected error occurred";
-      pushToast({ tone: "warning", title: "Failed to Save", body: message });
-    } finally {
-      setIsLoading(false);
-      setIsModalOpen(false);
+      pushToast({ tone: "warning", title: "Could not save contact", body: err instanceof Error ? err.message : "Try again." });
     }
   };
 
-  const handleDeleteContact = (id: string) => {
-    setDeleteConfirmId(id);
-  };
-
-  const confirmDeleteContact = () => {
+  const confirmDeleteContact = async () => {
     if (!deleteConfirmId) return;
-    const contact = contacts.find(c => c.id === deleteConfirmId);
-    setContacts(prev => prev.filter(c => c.id !== deleteConfirmId));
-    pushToast({
-      tone: "success",
-      title: "Record Deleted",
-      body: `"${contact?.name || 'Contact'}" has been successfully scrubbed from CRM.`
+    const contact = contacts.find((c) => c.id === deleteConfirmId);
+    try {
+      const res = await fetch(`/api/contacts/${deleteConfirmId}?entityId=${entityId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to delete contact");
+      setContacts((prev) => prev.filter((c) => c.id !== deleteConfirmId));
+      if (spotlightId === deleteConfirmId) setSpotlightId(null);
+      pushToast({ tone: "success", title: "Contact removed", body: `"${contact?.displayName ?? "Record"}" removed from the directory.` });
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Could not delete", body: err instanceof Error ? err.message : "Try again." });
+    } finally {
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const openPeekForLead = (lead: LeadDigestItem) => {
+    setPeekData({
+      contactId: lead.contactId,
+      name: lead.clientName,
+      photo: lead.propertyImageUrl,
+      badge: `${STAGE_LABELS[lead.stage] ?? lead.stage} · ${lead.propertyInterest}`,
+      phone: lead.phone || undefined,
+      info: [
+        { icon: IconUser, label: "Stage", value: STAGE_LABELS[lead.stage] ?? lead.stage },
+        { icon: IconClock, label: "Next action", value: lead.nextActionAt ? new Date(lead.nextActionAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—" },
+        { icon: IconMail, label: "Email", value: lead.email || "—" },
+      ],
     });
-    setDeleteConfirmId(null);
   };
 
-  // Dynamic Contact Detail Updates (when logging notes in drawer)
-  const handleUpdateContact = (updated: Contact) => {
-    setContacts(prev => prev.map(c => c.id === updated.id ? updated : c));
+  const openPeekForTouch = (touch: TouchEvent) => {
+    const contact = contacts.find((c) => c.id === touch.contactId);
+    setPeekData({
+      contactId: touch.contactId,
+      name: contact?.displayName ?? "Contact",
+      photo: contact?.avatarUrl ?? null,
+      badge: touch.summary,
+      phone: contact?.phone ?? undefined,
+      info: [
+        { icon: IconClock, label: "When", value: relativeTime(touch.createdAt) },
+        { icon: IconUser, label: "Logged by", value: touch.actorName ?? "—" },
+        { icon: IconMail, label: "Email", value: contact?.email || "—" },
+      ],
+    });
   };
 
-  // Metric aggregates
-  const stats = useMemo(() => {
-    const filtered = contacts.filter(c => role === "CEO" || c.assignedAgent === "Amina Wanjiku");
-    const totalPaid = filtered.reduce((acc, c) => acc + c.financials.paid, 0);
-    const totalArrears = filtered.reduce((acc, c) => acc + c.financials.arrears, 0);
+  const openInSpotlight = (contactId: string | null) => {
+    if (!contactId) return;
+    setSpotlightId(contactId);
+    setPeekData(null);
+  };
 
-    return {
-      total: filtered.length,
-      landlords: filtered.filter(c => c.type === "landlord" || c.type === "property_owner").length,
-      tenants: filtered.filter(c => c.type === "tenant").length,
-      blacklisted: filtered.filter(c => c.status === "blacklisted").length,
-      paid: totalPaid,
-      arrears: totalArrears
-    };
-  }, [contacts, role]);
+  const newClientsPct = overview && contacts.length > 0 ? Math.min(100, Math.round((overview.newThisMonth / contacts.length) * 100)) : 0;
+  const followUpsPct = overview && overview.openLeadsCount > 0 ? Math.min(100, Math.round((overview.followUpsDueCount / overview.openLeadsCount) * 100)) : 0;
 
   return (
-    <div className="mx-auto w-full max-w-[98rem] flex flex-col gap-6">
-
-      {/* ── Sales & CRM Hub Navigator ── */}
-      <BoardPanel className="flex flex-wrap items-center justify-between gap-4 p-4">
-        <div className="flex items-center gap-2">
-          <div className="size-8 rounded-lg bg-indigo-50 text-indigo-650 flex items-center justify-center">
-            <IconBriefcase size={16} />
-          </div>
-          <div>
-            <h3 className="text-base font-medium text-slate-800 leading-none">Sales & CRM Hub</h3>
-            <p className="text-sm text-slate-400 mt-1">Manage client relationships and sales pipelines.</p>
-          </div>
-        </div>
-
-        <div className="flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1">
-          <Link
-            href="/admin/contacts"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-[#151936] text-white shadow-sm"
-          >
-            <span>Contacts</span>
-            <span className="bg-[#f3df27] text-[#151936] px-1.5 py-0.2 rounded-full text-meta-muted-strong">Active</span>
-          </Link>
-          <Link
-            href="/admin/pipeline"
-            className="body-sm px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-900 hover:bg-white/45"
-          >
-            <span>Deals Pipeline</span>
-          </Link>
-        </div>
-      </BoardPanel>
-
-      {/* ── Top Analytics KPI Tier ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-        <KpiCard icon={IconUsers} label="Total Contacts" progress={80} tone="neutral" trend="+12%" value={stats.total} />
-        <KpiCard icon={IconBuilding} label="Landlords & Owners" progress={65} tone="data" trend="32 Units Owned" value={stats.landlords} />
-        <KpiCard icon={IconUsers} label="Active Tenants" progress={92} tone="success" trend="92% Occupancy" value={stats.tenants} />
-        <KpiCard
-          icon={IconAlertTriangle}
-          label="Blacklisted / Risks"
-          progress={15}
-          tone="warning"
-          trend={`Arrears: ${formatCompactKES(stats.arrears)}`}
-          value={stats.blacklisted}
-        />
-
-      </div>
-
-      {/* ── Main Data Board ── */}
-      <BoardPanel className="flex flex-col overflow-hidden p-0">
-
-        {/* Controls Header */}
-        <div className="p-5 border-b border-slate-100 space-y-4 bg-white shrink-0">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-
-            {/* Left search */}
-            <div className="relative flex-1 min-w-[240px] max-w-sm">
-              <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input
-                type="text"
-                placeholder="Search CRM Directory..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); resetPagination(); }}
-                className="pl-10 pr-4 py-2 w-full bg-slate-50 border border-slate-200/60 rounded-xl text-base focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-all placeholder:text-slate-400"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                >
-                  <IconX size={14} />
-                </button>
-              )}
-            </div>
-
-            {/* Right filter dropdowns & actions */}
-            <div className="flex items-center gap-2 flex-wrap">
-
-              {/* Type Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 text-base">
-                <span className="text-slate-400">Type:</span>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => { setTypeFilter(e.target.value); resetPagination(); }}
-                  className="bg-transparent focus:outline-none font-medium text-slate-800"
-                >
-                  <option value="all">All Types</option>
-                  {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-              </div>
-
-              {/* Status Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 text-base">
-                <span className="text-slate-400">Status:</span>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value); resetPagination(); }}
-                  className="bg-transparent focus:outline-none font-medium text-slate-800"
-                >
-                  <option value="all">All Statuses</option>
-                  {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-              </div>
-              {/* Source Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 font-normal text-base">
-                <span className="text-slate-400">Source:</span>
-                <select
-                  value={sourceFilter}
-                  onChange={(e) => { setSourceFilter(e.target.value); resetPagination(); }}
-                  className="bg-transparent focus:outline-none font-medium text-slate-800"
-                >
-                  <option value="all">All Sources</option>
-                  {Object.entries(SOURCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-              </div>
-
-              {/* Scope Select */}
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 border border-slate-200/60 rounded-xl text-slate-600 font-normal text-base">
-                <span className="text-slate-400">Scope:</span>
-                <select
-                  value={role}
-                  onChange={(e) => { setRole(e.target.value as "CEO" | "Agent"); resetPagination(); }}
-                  className="bg-transparent focus:outline-none font-medium text-slate-800 cursor-pointer"
-                >
-                  <option value="CEO">CEO (All)</option>
-                  <option value="Agent">Agent Amina</option>
-                </select>
-              </div>
-
-              {/* New Contact Trigger */}
-              <button
-                onClick={() => { setEditingContact(undefined); setIsModalOpen(true); }}
-                className="flex items-center gap-1.5 bg-[#f3df27] text-[#151936] px-4 py-2 rounded-xl font-medium hover:bg-[#e6d220] transition-colors shadow-sm cursor-pointer text-base"
-              >
-                <IconPlus size={15} stroke={2.5} />
-                <span>Add Record</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Active Filter Chips */}
-          {(typeFilter !== "all" || statusFilter !== "all" || sourceFilter !== "all" || searchQuery !== "") && (
-            <div className="flex items-center gap-2 flex-wrap pt-2 animate-fade-in">
-              <span className="text-slate-400 label-caps">Active Filters:</span>
-
-              {searchQuery && (
-                <span className="flex items-center gap-1 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
-                  Search: &quot;{searchQuery}&quot;
-                  <button onClick={() => setSearchQuery("")} className="hover:text-red-500"><IconX size={12} /></button>
-                </span>
-              )}
-              {typeFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-base font-medium border border-indigo-200/40">
-                  Type: {TYPE_LABELS[typeFilter as ContactType]}
-                  <button onClick={() => setTypeFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
-                </span>
-              )}
-              {statusFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-slate-150 text-slate-700 px-2.5 py-1 rounded-lg text-base font-medium border border-slate-200/40">
-                  Status: {STATUS_LABELS[statusFilter as ContactStatus]}
-                  <button onClick={() => setStatusFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
-                </span>
-              )}
-              {sourceFilter !== "all" && (
-                <span className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-base font-medium border border-amber-200/40">
-                  Source: {SOURCE_LABELS[sourceFilter as ContactSource]}
-                  <button onClick={() => setSourceFilter("all")} className="hover:text-red-500"><IconX size={12} /></button>
-                </span>
-              )}
-
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setTypeFilter("all");
-                  setStatusFilter("all");
-                  setSourceFilter("all");
-                }}
-                className="text-sm font-medium text-slate-400 hover:text-slate-800 underline ml-1"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Data Grid Table Wrapper (styled using custom scrollbars globally) */}
-        <div className="overflow-x-auto min-h-[300px]">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 select-none label-caps">
-                <th className="py-4 pl-6 pr-2 w-10 text-center">
-                  <input
-                    type="checkbox"
-                    onChange={toggleSelectAll}
-                    checked={paginatedContacts.length > 0 && paginatedContacts.every(c => selectedIds.includes(c.id))}
-                    className="rounded border-slate-300 text-[#151936] focus:ring-[#151936]/20 size-4 cursor-pointer"
-                  />
-                </th>
-                <th className="py-4 px-4 font-medium cursor-pointer hover:text-slate-650" onClick={() => handleSort("name")}>
-                  Contact {sortField === "name" && (sortDir === "asc" ? "▲" : "▼")}
-                </th>
-                <th className="py-4 px-4 font-medium cursor-pointer hover:text-slate-650" onClick={() => handleSort("type")}>
-                  Classification & Source {sortField === "type" && (sortDir === "asc" ? "▲" : "▼")}
-                </th>
-                <th className="py-4 px-4 font-medium">Contact Details</th>
-                <th className="py-4 px-4 font-medium">Associated Entities</th>
-                <th className="py-4 px-4 font-medium text-right cursor-pointer hover:text-slate-650" onClick={() => handleSort("financials.paid")}>
-                  Financial Record {sortField === "financials.paid" && (sortDir === "asc" ? "▲" : "▼")}
-                </th>
-                <th className="py-4 px-4 font-medium cursor-pointer hover:text-slate-650" onClick={() => handleSort("createdDate")}>
-                  Last Contact {sortField === "createdDate" && (sortDir === "asc" ? "▲" : "▼")}
-                </th>
-                <th className="py-4 px-6 font-medium text-right w-20">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-50 bg-white relative">
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  // Skeleton Loading State
-                  Array.from({ length: ROWS_PER_PAGE }).map((_, i) => (
-                    <tr key={`skeleton-${i}`} className="animate-pulse">
-                      <td className="py-4 pl-6 pr-2 text-center"><div className="size-4 bg-slate-100 rounded mx-auto" /></td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="size-9 bg-slate-100 rounded-full" />
-                          <div className="space-y-2">
-                            <div className="h-4 w-28 bg-slate-100 rounded" />
-                            <div className="h-3 w-16 bg-slate-50 rounded" />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="space-y-1.5">
-                          <div className="h-5 w-20 bg-slate-100 rounded" />
-                          <div className="h-4 w-12 bg-slate-50 rounded" />
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="space-y-1.5">
-                          <div className="h-3 w-32 bg-slate-55 rounded" />
-                          <div className="h-3 w-24 bg-slate-50 rounded" />
-                        </div>
-                      </td>
-                      <td className="py-4 px-4"><div className="h-6 w-24 bg-slate-100 rounded-lg" /></td>
-                      <td className="py-4 px-4 text-right"><div className="h-4 w-20 bg-slate-100 rounded ml-auto" /></td>
-                      <td className="py-4 px-4"><div className="h-4 w-16 bg-slate-100 rounded" /></td>
-                      <td className="py-4 px-6 text-right"><div className="size-7 bg-slate-100 rounded-lg ml-auto" /></td>
-                    </tr>
-                  ))
-                ) : paginatedContacts.length > 0 ? (
-                  paginatedContacts.map((contact, idx) => (
-                    <motion.tr
-                      key={contact.id}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15, delay: idx * 0.02 }}
-                      className={cn(
-                        "hover:bg-slate-50/50 transition-colors cursor-pointer group text-base text-slate-700",
-                        selectedIds.includes(contact.id) && "bg-indigo-50/20"
-                      )}
-                      onClick={() => setSelectedContactId(contact.id)}
-                    >
-                      {/* Checkbox column */}
-                      <td className="py-4 pl-6 pr-2 text-center" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(contact.id)}
-                          onChange={() => toggleSelectRow(contact.id)}
-                          className="rounded border-slate-300 text-[#151936] focus:ring-[#151936]/20 size-4 cursor-pointer"
-                        />
-                      </td>
-
-                      {/* Profile column (names in font-normal) */}
-                      <td className="py-4 px-4 font-normal text-slate-800">
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <Avatar src={contact.avatar} fallback={contact.name[0]} className="size-9 border border-slate-200" />
-                            <span className={cn(
-                              "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-white",
-                              contact.status === "active" ? "bg-emerald-500" : contact.status === "inactive" ? "bg-slate-400" : "bg-red-500"
-                            )} />
-                          </div>
-                          <div>
-                            <span className="font-normal text-slate-900 group-hover:text-[#151936] transition-colors leading-snug block body-md">
-                              {contact.name}
-                            </span>
-                            <span className="text-sm text-slate-400 mt-0.5 block font-medium capitalize">
-                              Owner: {contact.assignedAgent?.replace("CEO", "Admin")}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Type badge / Source column */}
-                      <td className="py-4 px-4 space-y-1.5">
-                        <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full border block w-fit whitespace-nowrap", TYPE_COLORS[contact.type])}>
-                          {TYPE_LABELS[contact.type]}
-                        </span>
-                        <span className={cn("px-2.5 py-0.5 text-sm font-medium rounded-full block w-fit", SOURCE_COLORS[contact.source])}>
-                          {SOURCE_LABELS[contact.source]}
-                        </span>
-                      </td>
-
-                      {/* Quick contacts actions */}
-                      <td className="py-4 px-4" onClick={e => e.stopPropagation()}>
-                        <div className="space-y-1">
-                          <a href={`mailto:${contact.email}`} className="flex items-center gap-1.5 text-slate-400 hover:text-[#151936] transition-colors w-fit">
-                            <IconMail size={13} className="text-slate-400" />
-                            <span>{contact.email}</span>
-                          </a>
-                          <a href={`tel:${contact.phone}`} className="flex items-center gap-1.5 text-slate-400 hover:text-[#151936] transition-colors w-fit font-mono">
-                            <IconPhone size={13} className="text-slate-400" />
-                            <span>{contact.phone}</span>
-                          </a>
-                        </div>
-                      </td>
-
-                      {/* Associated Properties (Pill Tag list) */}
-                      <td className="py-4 px-4">
-                        {contact.associatedProperties.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 max-w-[200px]">
-                            {contact.associatedProperties.map((p) => (
-                              <span key={p.id} className="bg-slate-50 hover:bg-slate-100 hover:text-slate-800 transition-colors border border-slate-200/60 rounded px-1.5 py-0.5 text-sm font-medium text-slate-600 block truncate max-w-[120px]">
-                                {p.name}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-slate-450 italic text-sm ">No Properties</span>
-                        )}
-                      </td>
-
-                      {/* Financial values (Paid & Arrears) */}
-                      <td className="py-4 px-4 text-right">
-                        <div className="space-y-0.5">
-                          <span className="text-emerald-600 block leading-tight mono-data">
-                            {formatCompactKES(contact.financials.paid)} Paid
-                          </span>
-                          {contact.financials.arrears > 0 && (
-                            <span className="text-sm font-medium font-mono text-rose-500 block leading-tight">
-                              {formatCompactKES(contact.financials.arrears)} Arrears
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Last contacted / Activity snippet */}
-                      <td className="py-4 px-4 text-slate-400">
-                        <span className="font-mono body-sm">{contact.createdDate}</span>
-                      </td>
-
-                      {/* Row actions */}
-                      <td className="py-4 px-6 text-right relative" onClick={e => e.stopPropagation()}>
-                        <button
-                          onClick={() => setRowMenuId(rowMenuId === contact.id ? null : contact.id)}
-                          className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                        >
-                          <IconDotsVertical size={16} />
-                        </button>
-
-                        {rowMenuId === contact.id && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setRowMenuId(null)} />
-                            <div className="absolute right-6 top-10 w-44 bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-20 py-1 text-left animate-scale-in">
-                              <button
-                                onClick={() => { setSelectedContactId(contact.id); setRowMenuId(null); }}
-                                className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
-                              >
-                                <IconUserCircle size={14} /> View Details
-                              </button>
-                              <button
-                                onClick={() => { setEditingContact(contact); setIsModalOpen(true); setRowMenuId(null); }}
-                                className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
-                              >
-                                <IconEdit size={14} /> Edit Profile
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedChatDMId(getDMIdForContact(contact.name));
-                                  setRowMenuId(null);
-                                }}
-                                className="flex items-center gap-2 w-full px-3.5 py-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors text-base"
-                              >
-                                <IconMessageCircle size={14} /> Send Message
-                              </button>
-                              <div className="border-t border-slate-100 my-1" />
-
-                              <button
-                                onClick={() => { handleDeleteContact(contact.id); setRowMenuId(null); }}
-                                className="flex items-center gap-2 w-full px-3.5 py-2 text-red-650 hover:bg-red-50 font-medium transition-colors text-base"
-                              >
-                                <IconTrash size={14} /> Scrub Record
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </td>
-                    </motion.tr>
-                  ))
-                ) : (
-                  // Empty State
-                  <tr>
-                    <td colSpan={8} className="py-16 text-center">
-                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
-                        <div className="size-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-sm">
-                          <IconUserCircle size={28} />
-                        </div>
-                        <h4 className="font-medium text-slate-800 leading-none body-md">No contact records found</h4>
-                        <p className="text-base text-slate-400 mt-2 leading-relaxed">
-                          Your current search filters or security scope returned zero matches.
-                        </p>
-                        <button
-                          onClick={() => {
-                            setSearchQuery("");
-                            setTypeFilter("all");
-                            setStatusFilter("all");
-                            setSourceFilter("all");
-                          }}
-                          className="mt-4 px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-medium transition-all shadow-sm text-base"
-                        >
-                          Reset Filters
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </AnimatePresence>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Board Footer / Pagination */}
-        <div className="px-6 py-1">
-          <PaginationControls
-            currentPage={currentPage}
-            label={`Showing ${sortedContacts.length > 0 ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0}-${Math.min(currentPage * ROWS_PER_PAGE, sortedContacts.length)} of ${sortedContacts.length} records`}
-            onPageChange={setCurrentPage}
-            totalPages={totalPages}
-          />
-        </div>
-
-      </BoardPanel>
-
-      {/* ── Sliding Bulk Actions Bar ── */}
-      <AnimatePresence>
-        {selectedIds.length > 0 && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-6 inset-x-0 mx-auto w-full max-w-2xl bg-[#151936] text-white p-4 rounded-2xl shadow-[0_20px_50px_rgba(21,25,54,0.3)] flex items-center justify-between z-[70] border border-slate-800/40"
-          >
-            <div className="flex items-center gap-3">
-              <span className="size-6 rounded-full bg-[#f3df27] text-[#151936] flex items-center justify-center mono-data">
-                {selectedIds.length}
+    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-5">
+      <BoardHeader
+        eyebrow={<Badge tone="primary">Directory & Relationships</Badge>}
+        title="Keep-in-Touch"
+        description="Every landlord, tenant, buyer, and partner across the organization - real contact history, real follow-ups, real touchpoints."
+        actions={
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium text-slate-400">
+              All Contacts <span className="font-mono text-slate-700">({contacts.length})</span>
+            </span>
+            <div className="flex bg-white border border-slate-100 rounded-xl p-1 gap-1">
+              <span className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium bg-[#151936] text-white">
+                <IconUsers size={14} /> Contacts
               </span>
-              <div>
-                <p className="font-medium leading-none text-base">Contacts Selected</p>
-                <p className="text-sm text-slate-400 mt-1">Batch actions apply to selected records only.</p>
-              </div>
+              <Link href="/admin/pipeline" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                <IconLayoutKanban size={14} /> Pipeline
+              </Link>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleBulkMessage}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-base font-medium rounded-xl transition-all"
-              >
-                <IconMessageCircle size={14} /> Broadcast
-              </button>
-
-              {/* Bulk Status Select */}
-              <div className="relative group/status px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-base font-medium rounded-xl transition-all flex items-center gap-1.5 cursor-pointer">
-                <span>Set Status</span>
-                <span className="text-sm ">▼</span>
-                <div className="absolute bottom-full right-0 mb-2 w-36 bg-white border border-slate-200 rounded-xl shadow-lg text-slate-700 py-1 hidden group-hover/status:block animate-scale-in">
-                  <button onClick={() => handleBulkStatusChange("active")} className="w-full text-left px-3.5 py-2 text-base hover:bg-slate-50 font-medium transition-colors">Active</button>
-                  <button onClick={() => handleBulkStatusChange("inactive")} className="w-full text-left px-3.5 py-2 text-base hover:bg-slate-50 font-medium transition-colors">Inactive</button>
-                  <button onClick={() => handleBulkStatusChange("blacklisted")} className="w-full text-left px-3.5 py-2 text-base hover:bg-slate-50 text-red-650 hover:bg-red-50 font-medium transition-colors">Blacklisted</button>
-                </div>
-              </div>
-
-              <button
-                onClick={handleBulkDelete}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-base font-medium rounded-xl transition-all"
-              >
-                <IconTrash size={14} /> Scrub Batch
-              </button>
-
-              <div className="w-[1px] h-6 bg-slate-700 mx-1" />
-
-              <button
-                onClick={() => setSelectedIds([])}
-                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
-              >
-                <IconX size={16} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Drawers & Modals ── */}
-      <ContactDetailDrawer
-        contactId={selectedContactId}
-        onClose={() => setSelectedContactId(null)}
-        contactData={contacts.find(c => c.id === selectedContactId)}
-        onUpdateContact={handleUpdateContact}
+            <Button size="sm" onClick={() => { setEditingContact(undefined); setFormOpen(true); }}>
+              <IconPlus size={14} /> New Contact
+            </Button>
+          </div>
+        }
       />
 
+      {loading ? (
+        <ContactBoardSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 items-start">
+          {/* ── Left column ── */}
+          <div className="gsap-stagger flex flex-col gap-3.5 min-w-0">
+            {/* Hero band */}
+            <div className="relative rounded-3xl overflow-hidden min-h-[130px] flex bg-gradient-to-br from-[#0c1f24] to-[#1e1b4b]">
+              <div className="relative p-6 flex items-center justify-between gap-4 flex-1 flex-wrap">
+                <div>
+                  <p className="font-serif text-xl text-white leading-tight">{heroGreeting}</p>
+                  <p className="text-xs text-white/75 mt-1 leading-relaxed">{heroSub}</p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { label: "Viewings today", value: overview?.viewingsToday ?? 0 },
+                    { label: "Follow-ups due", value: overview?.followUpsDueCount ?? 0 },
+                    { label: "New leads today", value: overview?.newLeadsToday ?? 0 },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl px-3.5 py-2 min-w-[90px]">
+                      <p className="font-mono text-lg text-white leading-none">{s.value}</p>
+                      <p className="text-[9.5px] uppercase tracking-wide text-white/65 mt-1">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Contact spotlight */}
+            {spotlight ? (
+              <div className="bg-white border border-slate-100 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-5">
+                <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] gap-4">
+                  <Avatar src={spotlight.avatarUrl ?? undefined} fallback={initialsOf(spotlight.displayName)} className="size-[100px] rounded-2xl text-2xl mx-auto sm:mx-0" />
+                  <div className="min-w-0 flex flex-col gap-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-serif text-lg text-slate-900 truncate">{spotlight.displayName}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{spotlight.companyName ?? TYPE_META[spotlight.type].label}</p>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button onClick={() => { setEditingContact(spotlight); setFormOpen(true); }} aria-label="Edit contact" className="size-8 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-center transition-colors">
+                          <IconEdit size={14} />
+                        </button>
+                        <DropdownMenu label="Contact actions" align="right" trigger={<div className="size-8 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-center transition-colors"><IconDotsVertical size={14} /></div>}>
+                          <DropdownItem icon={IconTrash} variant="danger" onClick={() => setDeleteConfirmId(spotlight.id)}>Delete Contact</DropdownItem>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      {spotlight.phone && <a href={`tel:${spotlight.phone}`} className="flex items-center gap-2 text-xs font-mono text-slate-500 hover:text-[#151936] transition-colors w-fit"><IconPhone size={13} className="text-slate-400" />{spotlight.phone}</a>}
+                      {spotlight.email && <a href={`mailto:${spotlight.email}`} className="flex items-center gap-2 text-xs text-slate-500 hover:text-[#151936] transition-colors w-fit"><IconMail size={13} className="text-slate-400" />{spotlight.email}</a>}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-1">
+                      {[
+                        { label: "Status", value: <span className="flex items-center gap-1.5"><span className={cn("size-1.5 rounded-full inline-block", STATUS_META[spotlight.status].dot)} />{spotlight.status}</span> },
+                        { label: "Type", value: TYPE_META[spotlight.type].label },
+                        { label: "Source", value: spotlight.source ?? "—" },
+                        { label: "Assigned to", value: spotlight.assignedToName ?? "Unassigned" },
+                      ].map((f) => (
+                        <div key={f.label}>
+                          <p className="text-[10px] text-slate-400">{f.label}</p>
+                          <p className="text-xs font-medium text-slate-900 mt-0.5 truncate">{f.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-end justify-between gap-3 flex-wrap border-t border-slate-100 mt-4 pt-3.5">
+                  <div className="flex gap-5 flex-wrap">
+                    {[
+                      { label: "First contacted", value: new Date(spotlight.createdAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) },
+                      { label: "Last touch", value: spotlightLastTouch ? relativeTime(spotlightLastTouch.createdAt) : "No activity yet" },
+                      { label: "Next follow-up", value: spotlightNextAction?.nextActionAt ? new Date(spotlightNextAction.nextActionAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—" },
+                    ].map((d) => (
+                      <div key={d.label}>
+                        <p className="text-[10px] text-slate-400">{d.label}</p>
+                        <p className="text-xs font-mono text-slate-900 mt-0.5">{d.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <DropdownMenu label="Quick task" align="right" trigger={<div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">Quick Task</div>}>
+                      <DropdownItem icon={IconPhone} onClick={() => logTouch(spotlight.id, "call", spotlight.displayName)}>Log Call</DropdownItem>
+                      <DropdownItem icon={IconMail} onClick={() => logTouch(spotlight.id, "email", spotlight.displayName)}>Log Email</DropdownItem>
+                      <DropdownItem icon={IconMessageCircle} onClick={() => logTouch(spotlight.id, "whatsapp", spotlight.displayName)}>Log WhatsApp</DropdownItem>
+                      <div className="my-1 h-px bg-slate-100" />
+                      <DropdownItem icon={IconCalendarEvent} onClick={() => handleScheduleViewing(spotlight)}>Schedule Viewing (tomorrow 10am)</DropdownItem>
+                    </DropdownMenu>
+                    <Button size="sm" onClick={() => logTouch(spotlight.id, "call", spotlight.displayName)}>Prospecting Update</Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-slate-200 bg-white/50 p-8 text-center text-sm text-slate-400">Add a contact to see it spotlighted here.</div>
+            )}
+
+            {/* Lead Status Overview */}
+            <div className="bg-white border border-slate-100 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-5">
+              <div className="flex items-center justify-between mb-3.5">
+                <p className="text-sm font-medium text-slate-800">Lead Status Overview</p>
+                <span className="text-xs text-slate-400">Hot prospects</span>
+              </div>
+              {overview && overview.hotLeads.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {overview.hotLeads.map((lead) => (
+                    <button key={lead.id} onClick={() => openPeekForLead(lead)} className="text-left rounded-2xl p-3.5 bg-[#fafbf8] border border-slate-100 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition-shadow">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          <Avatar fallback={initialsOf(lead.clientName)} className="size-6 text-[9px]" />
+                          <span className="text-xs font-medium text-slate-900 truncate">{lead.clientName}</span>
+                        </span>
+                        <IconArrowUpRight size={13} className="text-slate-300 shrink-0" />
+                      </div>
+                      <span className={cn("inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium uppercase", PRIORITY_PILL[lead.priority])}>{STAGE_LABELS[lead.stage] ?? lead.stage}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 text-center py-6">No hot prospects right now.</p>
+              )}
+            </div>
+
+            {/* Appointments + Follow-ups */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="bg-white border border-slate-100 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-slate-800">Property Appointments</p>
+                  <span className="text-xs text-slate-400">Today</span>
+                </div>
+                <div className="flex flex-col gap-2.5 mb-3.5">
+                  {[
+                    { label: "New Contacts (mo.)", value: `${overview?.newThisMonth ?? 0}/${contacts.length}`, pct: newClientsPct, color: "#151936" },
+                    { label: "Follow-Ups Due", value: `${overview?.followUpsDueCount ?? 0}/${overview?.openLeadsCount ?? 0}`, pct: followUpsPct, color: "#f3df27" },
+                  ].map((bar) => (
+                    <div key={bar.label}>
+                      <div className="flex justify-between mb-1"><span className="text-[11px] text-slate-500">{bar.label}</span><span className="text-[11px] font-mono text-slate-700">{bar.value}</span></div>
+                      <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${bar.pct}%`, background: bar.color }} /></div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs font-medium text-slate-700 mb-2">Today's Viewings <span className="font-mono text-[11px] text-slate-400">{overview?.viewingsToday ?? 0}</span></p>
+                {overview && overview.todaysViewings.length > 0 ? (
+                  <div className="flex flex-col gap-1.5">
+                    {overview.todaysViewings.slice(0, 4).map((v) => (
+                      <div key={v.id} className="flex items-center gap-2.5 text-xs">
+                        <span className="font-mono text-[11px] text-slate-400 w-12 shrink-0">{new Date(v.startsAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span className="text-slate-700 truncate">{v.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">No viewings scheduled today.</p>
+                )}
+              </div>
+
+              <div className="bg-white border border-slate-100 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-5">
+                <p className="text-sm font-medium text-slate-800 mb-3">Follow-Up Tasks</p>
+                {overview && overview.followUpsDue.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {overview.followUpsDue.map((lead) => (
+                      <div key={lead.id} className="bg-[#fafbf8] border border-slate-100 rounded-2xl p-3">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="flex items-center gap-2 min-w-0">
+                            <Avatar fallback={initialsOf(lead.clientName)} className="size-6 text-[9px]" />
+                            <span className="text-xs font-medium text-slate-900 truncate">{lead.clientName}</span>
+                          </span>
+                          <span className="flex gap-1 shrink-0">
+                            {lead.phone && <a href={`tel:${lead.phone}`} onClick={(e) => { e.stopPropagation(); if (lead.contactId) logTouch(lead.contactId, "call", lead.clientName); }} aria-label={`Call ${lead.clientName}`} className="size-6 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-center"><IconPhone size={11} /></a>}
+                            <button onClick={() => openPeekForLead(lead)} aria-label="Open" className="size-6 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-center"><IconArrowUpRight size={11} /></button>
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 truncate">{lead.propertyInterest}</p>
+                        <p className="text-[10.5px] font-mono text-slate-400 mt-1 flex items-center gap-1"><IconClock size={11} /> {lead.nextActionAt ? new Date(lead.nextActionAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 text-center py-6">No follow-ups due.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right rail ── */}
+          <div className="flex flex-col gap-3.5">
+            {/* Quick Connects */}
+            <div className="bg-white border border-slate-100 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-4.5 flex flex-col gap-3">
+              <p className="text-sm font-medium text-slate-800">Quick Connects</p>
+
+              {overview?.upcomingViewing ? (
+                <div className="border border-slate-100 rounded-2xl overflow-hidden bg-[#fafbf8]">
+                  <div className="flex items-center justify-between px-3.5 py-2.5">
+                    <span className="inline-flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-wide text-[#151936]"><IconCalendarEvent size={13} /> Viewing</span>
+                    <span className="font-mono text-[10.5px] text-slate-400">{new Date(overview.upcomingViewing.startsAt).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short" })}</span>
+                  </div>
+                  <div className="px-3.5 pb-3.5">
+                    <p className="text-xs font-medium text-slate-900 truncate">{overview.upcomingViewing.title}</p>
+                    <p className="text-[10.5px] text-slate-400 mt-0.5">{new Date(overview.upcomingViewing.startsAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center py-4 text-center gap-1.5 border border-dashed border-slate-150 rounded-2xl">
+                  <IconMoodEmpty size={18} className="text-slate-300" />
+                  <p className="text-[11px] text-slate-400">No upcoming viewings scheduled.</p>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-1.5">
+                {overview && overview.recentTouches.length > 0 ? (
+                  overview.recentTouches.map((t) => (
+                    <button key={t.id} onClick={() => openPeekForTouch(t)} className="text-left border border-slate-50 bg-[#fafbf8] rounded-2xl px-3 py-2 hover:bg-slate-100/60 transition-colors">
+                      <p className="text-xs text-slate-700 truncate">{t.summary}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[10.5px] text-slate-400">{t.actorName ?? "System"}</span>
+                        <span className="text-[10.5px] font-mono text-slate-400">{relativeTime(t.createdAt)}</span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-[11px] text-slate-400 text-center py-4">No recent touchpoints logged yet.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Directory */}
+            <div className="bg-white border border-slate-100 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-4.5">
+              <p className="text-sm font-medium text-slate-800 mb-2.5">Directory</p>
+              <div className="relative mb-2.5">
+                <IconSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input value={directoryQuery} onChange={(e) => setDirectoryQuery(e.target.value)} placeholder="Search contacts…" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-900 outline-none focus:border-[#151936]/30 focus:ring-2 focus:ring-[#151936]/10 transition-all" />
+              </div>
+              <div className="flex flex-col gap-0.5 max-h-[420px] overflow-y-auto custom-scrollbar">
+                {directory.length > 0 ? directory.map((c) => (
+                  <button key={c.id} onClick={() => setSpotlightId(c.id)} className={cn("flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors", c.id === spotlightId ? "bg-[#f4f6f0]" : "hover:bg-slate-50")}>
+                    <Avatar src={c.avatarUrl ?? undefined} fallback={initialsOf(c.displayName)} className="size-7 text-[10px]" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-medium text-slate-900 truncate">{c.displayName}</span>
+                      <span className="block text-[10.5px] text-slate-400 truncate">{TYPE_META[c.type].label} · {c.status}</span>
+                    </span>
+                    <span className={cn("size-2 rounded-full shrink-0", STATUS_META[c.status].dot)} />
+                  </button>
+                )) : (
+                  <p className="text-xs text-slate-400 text-center py-6">No contacts match your search.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ContactProfilePeek data={peekData} onClose={() => setPeekData(null)} onOpenSpotlight={() => openInSpotlight(peekData?.contactId ?? null)} />
+
       <ContactFormModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        open={formOpen}
+        entityId={entityId}
+        onClose={() => setFormOpen(false)}
         onSubmit={handleCreateOrUpdate}
         initialData={editingContact}
       />
 
       <ConfirmDialog
-        open={deleteConfirmId !== null}
+        open={!!deleteConfirmId}
         onClose={() => setDeleteConfirmId(null)}
         onConfirm={confirmDeleteContact}
-        title="Scrub Contact Record?"
-        description="Are you sure you want to delete this contact? All associated tenant leases, payment records, and activity timeline events will be permanently deleted. This action cannot be undone."
-        confirmLabel="Scrub Record"
-        cancelLabel="Keep Record"
+        title="Delete Contact?"
+        description="This permanently removes the contact record. Contacts with active leases, mandates, or pipeline deals cannot be deleted - reassign or close those first."
+        confirmLabel="Delete Contact"
         tone="danger"
       />
-
-      <ConfirmDialog
-        open={isBulkDeleteConfirmOpen}
-        onClose={() => setIsBulkDeleteConfirmOpen(false)}
-        onConfirm={confirmBulkDelete}
-        title="Scrub Selected Contacts?"
-        description={`Are you sure you want to bulk delete the ${selectedIds.length} selected contacts? This will permanently erase all associated CRM pipelines, notes, and activity history. This action cannot be undone.`}
-        confirmLabel="Scrub Contacts"
-        cancelLabel="Cancel"
-        tone="danger"
-      />
-    </div>
+    </PageTransition>
   );
 }

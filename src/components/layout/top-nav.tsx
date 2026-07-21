@@ -559,7 +559,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
           <div className="flex size-8 items-center justify-center rounded-xl bg-slate-50 text-slate-500 shadow-sm ring-1 ring-slate-200/50">
             <IconCalendar size={16} aria-hidden />
           </div>
-          <span className="text-lg font-light text-slate-800 tracking-tight">Calendar</span>
+          <span className="text-lg font-normal text-slate-800 tracking-tight">Calendar</span>
         </div>
         <button
           type="button"

@@ -35,7 +35,15 @@ function withDisposition<T extends CalendarEventRow>(event: T): T & { needsDispo
  */
 export async function listCalendarEvents(
   ctx: CallerContext,
-  filters: { entityId?: string; startDate?: string; endDate?: string; scope?: "mine" | "all" } = {},
+  filters: {
+    entityId?: string;
+    startDate?: string;
+    endDate?: string;
+    scope?: "mine" | "all";
+    type?: string;
+    contactId?: string;
+    leadId?: string;
+  } = {},
 ) {
   const rawEntityId = filters.entityId ?? ctx.entityId;
   if (!rawEntityId) throw new DomainValidationError("entityId is required");
@@ -49,6 +57,9 @@ export async function listCalendarEvents(
   const conditions = [eq(calendarEvents.entityId, entityId)];
   if (filters.startDate) conditions.push(gte(calendarEvents.startsAt, new Date(filters.startDate)));
   if (filters.endDate) conditions.push(lte(calendarEvents.startsAt, new Date(filters.endDate)));
+  if (filters.type) conditions.push(eq(calendarEvents.type, filters.type as (typeof calendarEvents.type.enumValues)[number]));
+  if (filters.contactId) conditions.push(eq(calendarEvents.contactId, filters.contactId));
+  if (filters.leadId) conditions.push(eq(calendarEvents.leadId, filters.leadId));
 
   const rows = await db.select().from(calendarEvents).where(and(...conditions)).orderBy(calendarEvents.startsAt);
   const scoped = wantsAll
@@ -86,6 +97,8 @@ export async function createCalendarEvent(ctx: CallerContext, rawInput: unknown)
         organizerId: ctx.user.id,
         attendees: input.attendees ?? [],
         projectId: input.projectId ?? null,
+        contactId: input.contactId ?? null,
+        leadId: input.leadId ?? null,
       })
       .returning();
 
@@ -134,6 +147,8 @@ export async function updateCalendarEvent(ctx: CallerContext, eventId: string, r
         location: input.location !== undefined ? input.location : existing.location,
         attendees: input.attendees ?? existing.attendees,
         projectId: input.projectId !== undefined ? input.projectId : existing.projectId,
+        contactId: input.contactId !== undefined ? input.contactId : existing.contactId,
+        leadId: input.leadId !== undefined ? input.leadId : existing.leadId,
         updatedAt: new Date(),
       })
       .where(eq(calendarEvents.id, eventId))
