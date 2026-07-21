@@ -21,7 +21,7 @@ import {
   IconTag,
   IconTrash,
 } from "@tabler/icons-react";
-import { Button, ConfirmDialog, Avatar } from "@/components/ui/erp-primitives";
+import { Button, ConfirmDialog, Avatar, Badge } from "@/components/ui/erp-primitives";
 import { Drawer } from "@/components/ui/drawer";
 import { formatCompactKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
@@ -222,18 +222,15 @@ export function PropertyDetailDrawer({
               )}
               {canManage ? (
                 <span
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border shadow-sm label-caps",
-                    statusConfig.pill
-                  )}
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 shadow-sm backdrop-blur-sm bg-white/85 border border-slate-200/80"
                 >
-                  <span className={cn("size-1.5 rounded-full", statusConfig.dot)} aria-hidden="true" />
+                  <span className={cn("size-1.5 rounded-full shrink-0", statusConfig.dot)} aria-hidden="true" />
                   <select
                     value={property.status}
                     disabled={updating}
                     onChange={(e) => applyStatusChange(e.target.value as PropertyStatus)}
                     aria-label={`Change status for ${property.name}`}
-                    className="appearance-none bg-transparent outline-none cursor-pointer disabled:cursor-wait pr-1"
+                    className="appearance-none bg-transparent outline-none cursor-pointer disabled:cursor-wait label-caps text-slate-700"
                   >
                     {STATUS_ORDER.map((s) => (
                       <option key={s} value={s}>
@@ -243,9 +240,16 @@ export function PropertyDetailDrawer({
                   </select>
                 </span>
               ) : (
-                <span className={cn("px-3 py-1 rounded-lg border shadow-sm label-caps", statusConfig.pill)}>
+                <Badge
+                  tone={
+                    property.status === "available" ? "success" :
+                    property.status === "under_offer" ? "warning" :
+                    property.status === "maintenance" ? "risk" :
+                    "neutral"
+                  }
+                >
                   {statusConfig.label}
-                </span>
+                </Badge>
               )}
             </div>
 
@@ -340,7 +344,7 @@ export function PropertyDetailDrawer({
                 {property.amenities.map((amenity: string) => (
                   <span
                     key={amenity}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 body-sm shadow-sm"
+                    className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-medium shadow-sm"
                   >
                     {amenity}
                   </span>

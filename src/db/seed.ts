@@ -374,7 +374,7 @@ async function runSeed() {
         propertyCode: "PROP-COMM-001",
         name: "Nexus Office Plaza",
         propertyType: "Commercial",
-        listingType: "Rental",
+        listingType: "let",
         status: "occupied",
         location: "Westlands, Nairobi",
         ownerContactId: landlordA.id,
@@ -394,7 +394,7 @@ async function runSeed() {
         propertyCode: "PROP-RES-001",
         name: "Lavington Heights Unit 4B",
         propertyType: "Apartment",
-        listingType: "Rental",
+        listingType: "let",
         status: "occupied",
         location: "Lavington, Nairobi",
         ownerContactId: landlordB.id,
@@ -414,7 +414,7 @@ async function runSeed() {
         propertyCode: "PROP-RES-088",
         name: "The Sovereign Riverside Penthouse",
         propertyType: "Residential",
-        listingType: "Rental",
+        listingType: "let",
         status: "available",
         location: "Riverside Drive, Nairobi",
         ownerContactId: landlordB.id,
@@ -730,7 +730,8 @@ async function runSeed() {
       title: "Elevator breakdown in block A",
       description: "Main passenger elevator is stuck between floors.",
       priority: "critical",
-      status: "open",
+      status: "reported",
+      category: "reactive",
       reportedByContactId: tenantA.id,
     });
 
@@ -1263,29 +1264,66 @@ async function runSeed() {
     await db.insert(reportExports).values(reportExportsToInsert);
     console.log(`Seeded ${remittancesCreated} remittance advices across ${remittanceSampleIdx.length} mandates (mixed pending/released/flagged), each reconciled to real transactions.`);
 
-    // 7b. Create Maintenance Requests and Documents
-    console.log("Step 7b: Generating maintenance requests and property documents...");
+    // 7b. Create Contractors, Maintenance Requests and Documents
+    console.log("Step 7b: Generating contractors, maintenance requests, and property documents...");
+
+    // Property lifecycle unification follow-up: contractors previously never
+    // existed in seed data at all, so the reassignment picker on the
+    // Maintenance Board had nothing real to show. Specialty lives in
+    // metadata.specialty (contacts has no dedicated column for it - reusing
+    // the existing, already-unused jsonb field rather than adding one).
+    const contractorCatalog = [
+      { displayName: "Fundi Bora Plumbing Services", specialty: "Plumbing", phone: "+254 722 340 118", email: "jobs@fundibora.co.ke" },
+      { displayName: "Voltage Masters Electrical Ltd", specialty: "Electrical", phone: "+254 733 561 902", email: "dispatch@voltagemasters.co.ke" },
+      { displayName: "CoolBreeze HVAC & Generators", specialty: "Generator & HVAC", phone: "+254 710 224 887", email: "service@coolbreeze.co.ke" },
+      { displayName: "Jenga Imara General Contractors", specialty: "General & Structural", phone: "+254 720 998 341", email: "info@jengaimara.co.ke" },
+      { displayName: "SecureGuard Access Systems Kenya", specialty: "Security & Access", phone: "+254 701 445 672", email: "support@secureguardke.com" },
+      { displayName: "Safi Pest Control Services", specialty: "Pest Control", phone: "+254 715 662 034", email: "bookings@safipest.co.ke" },
+      { displayName: "AquaFlow Water Systems", specialty: "Plumbing", phone: "+254 728 117 559", email: "aquaflow.nairobi@gmail.com" },
+      { displayName: "Nyota Glass & Aluminium Works", specialty: "Glazing & General", phone: "+254 734 882 260", email: "orders@nyotaglass.co.ke" },
+    ];
+    const insertedContractors = await db
+      .insert(contacts)
+      .values(
+        contractorCatalog.map((c) => ({
+          entityId: groupEntity.id,
+          type: "contractor" as const,
+          displayName: c.displayName,
+          phone: c.phone,
+          email: c.email,
+          source: "referral",
+          metadata: { specialty: c.specialty },
+        })),
+      )
+      .returning();
+    console.log(`Created ${insertedContractors.length} contractors across ${new Set(contractorCatalog.map((c) => c.specialty)).size} specialties.`);
+    const contractorBySpecialty = (specialty: string) => insertedContractors.filter((c) => (c.metadata as { specialty?: string } | null)?.specialty === specialty);
+
     // D2 follow-up: grown from 3 total (all tied to propComm/propRes) to a
     // real spread across many leased properties, with full priority/status
     // variety - the Executive Dashboard's "Ops" department stat and the
     // Internal Structure panel both read openMaintenanceCount from this
     // table, and 3 rows barely moved that number.
     const maintenanceCatalog = [
-      { title: "Kitchen sink drainage blocked", description: "Water pools in the sink and drains very slowly." },
-      { title: "Living room ceiling water stain", description: "A brown stain has appeared on the ceiling after recent rains." },
-      { title: "Main gate motor not responding", description: "The automatic gate no longer opens on remote signal." },
-      { title: "Bedroom window latch broken", description: "The window will not lock securely." },
-      { title: "Communal hallway lighting out", description: "Two light fixtures in the shared corridor are not working." },
-      { title: "Backup generator fuel gauge fault", description: "Fuel gauge reads empty even when the tank is full." },
-      { title: "Bathroom tiles cracked", description: "Several floor tiles near the shower have cracked and shifted." },
-      { title: "Pest control - ants in kitchen", description: "Recurring ant trail spotted near the kitchen counter." },
-      { title: "Intercom system unresponsive", description: "Visitors cannot reach the unit via the entry intercom." },
-      { title: "Water heater not heating", description: "Hot water supply has been intermittent for three days." },
-      { title: "Parking gate remote unpaired", description: "Tenant's remote no longer triggers the parking barrier." },
-      { title: "Balcony door seal worn", description: "Draft and light rain coming in around the sliding door frame." },
+      { title: "Kitchen sink drainage blocked", description: "Water pools in the sink and drains very slowly.", specialty: "Plumbing", costKes: 4500 },
+      { title: "Living room ceiling water stain", description: "A brown stain has appeared on the ceiling after recent rains.", specialty: "General & Structural", costKes: 18000 },
+      { title: "Main gate motor not responding", description: "The automatic gate no longer opens on remote signal.", specialty: "Security & Access", costKes: 32000 },
+      { title: "Bedroom window latch broken", description: "The window will not lock securely.", specialty: "Glazing & General", costKes: 2500 },
+      { title: "Communal hallway lighting out", description: "Two light fixtures in the shared corridor are not working.", specialty: "Electrical", costKes: 6000 },
+      { title: "Backup generator fuel gauge fault", description: "Fuel gauge reads empty even when the tank is full.", specialty: "Generator & HVAC", costKes: 45000 },
+      { title: "Bathroom tiles cracked", description: "Several floor tiles near the shower have cracked and shifted.", specialty: "General & Structural", costKes: 15000 },
+      { title: "Pest control - ants in kitchen", description: "Recurring ant trail spotted near the kitchen counter.", specialty: "Pest Control", costKes: 3500 },
+      { title: "Intercom system unresponsive", description: "Visitors cannot reach the unit via the entry intercom.", specialty: "Security & Access", costKes: 9000 },
+      { title: "Water heater not heating", description: "Hot water supply has been intermittent for three days.", specialty: "Plumbing", costKes: 12000 },
+      { title: "Parking gate remote unpaired", description: "Tenant's remote no longer triggers the parking barrier.", specialty: "Security & Access", costKes: 1800 },
+      { title: "Balcony door seal worn", description: "Draft and light rain coming in around the sliding door frame.", specialty: "Glazing & General", costKes: 5000 },
     ];
-    const maintenancePriorities = ["low", "normal", "high", "critical"] as const;
-    const maintenanceStatuses = ["open", "assigned", "in_progress", "resolved", "closed"] as const;
+    // Real 3-tier severity / 5-stage status vocabulary (Maintenance Board
+    // design, ADR 015 follow-up) - all 12 catalog items above are genuinely
+    // reactive (tenant-reported repairs); planned/compliance get their own
+    // honestly-labeled entries below rather than being force-fit into this loop.
+    const maintenancePriorities = ["routine", "urgent", "critical"] as const;
+    const maintenanceStatuses = ["reported", "awaiting_approval", "scheduled", "in_progress", "done"] as const;
     const sampledLeasesForMaintenance = insertedLeases.filter((l) => l.isActive).filter((_, i) => i % 2 === 0);
 
     const maintenanceToInsert: (typeof maintenanceRequests.$inferInsert)[] = [
@@ -1294,27 +1332,36 @@ async function runSeed() {
         propertyId: propComm.id,
         title: "Main generator electrical fault",
         priority: "critical",
-        status: "open",
+        status: "reported",
+        category: "reactive",
         description: "The main backup generator is failing to auto-start during grid blackouts. Needs urgent technician attention.",
         reportedByContactId: tenantA.id,
         createdAt: new Date(Date.now() - 2 * 86_400_000),
+        estimatedCostKes: "120000.00",
       },
       {
         entityId: groupEntity.id,
         propertyId: propRes.id,
         title: "Master bathroom plumbing leak",
-        priority: "high",
+        priority: "urgent",
         status: "in_progress",
+        category: "reactive",
         description: "Water leaking under the sink, causing dampness in the cabinets.",
         reportedByContactId: tenantB.id,
+        assignedContractorId: contractorBySpecialty("Plumbing")[0]?.id ?? null,
         createdAt: new Date(Date.now() - 5 * 86_400_000),
+        estimatedCostKes: "8500.00",
       },
       ...sampledLeasesForMaintenance.map((lease, idx) => {
         const item = maintenanceCatalog[idx % maintenanceCatalog.length];
         const priority = maintenancePriorities[idx % maintenancePriorities.length];
         const status = maintenanceStatuses[idx % maintenanceStatuses.length];
         const createdDaysAgo = 2 + (idx % 20);
-        const isResolved = status === "resolved" || status === "closed";
+        const isDone = status === "done";
+        // Real assignment for anything past "reported" - matches a contractor
+        // of the matching specialty, round-robin within that specialty pool.
+        const specialtyPool = contractorBySpecialty(item.specialty);
+        const assignedContractorId = status !== "reported" && specialtyPool.length > 0 ? specialtyPool[idx % specialtyPool.length].id : null;
         return {
           entityId: groupEntity.id,
           propertyId: lease.propertyId,
@@ -1322,15 +1369,86 @@ async function runSeed() {
           description: item.description,
           priority,
           status,
+          category: "reactive" as const,
           reportedByContactId: lease.tenantContactId,
+          assignedContractorId,
           createdAt: new Date(Date.now() - createdDaysAgo * 86_400_000),
-          dueAt: status === "open" || status === "assigned" ? new Date(Date.now() + (3 + (idx % 10)) * 86_400_000) : undefined,
-          resolvedAt: isResolved ? new Date(Date.now() - Math.max(0, createdDaysAgo - (2 + (idx % 5))) * 86_400_000) : undefined,
+          dueAt: !isDone ? new Date(Date.now() + (3 + (idx % 10)) * 86_400_000) : undefined,
+          resolvedAt: isDone ? new Date(Date.now() - Math.max(0, createdDaysAgo - (2 + (idx % 5))) * 86_400_000) : undefined,
+          estimatedCostKes: status !== "reported" ? item.costKes.toFixed(2) : undefined,
+          actualCostKes: isDone ? item.costKes.toFixed(2) : undefined,
         };
       }),
+      // Planned/compliance content (ADR 015 follow-up) - honestly distinct
+      // from the reactive catalog above: a real preventive-maintenance cycle
+      // and two real compliance renewals, one genuinely close to its deadline
+      // so the Needs Attention band has real content to surface post-reseed.
+      {
+        entityId: groupEntity.id,
+        propertyId: propComm.id,
+        title: "Quarterly generator preventive service",
+        description: "Scheduled preventive service and load-bank test for the main backup generator, per the Q3 planned-works calendar.",
+        priority: "routine",
+        status: "scheduled",
+        category: "planned",
+        reportedByContactId: null,
+        assignedContractorId: contractorBySpecialty("Generator & HVAC")[0]?.id ?? null,
+        createdAt: new Date(Date.now() - 6 * 86_400_000),
+        dueAt: new Date(Date.now() + 3 * 86_400_000),
+        estimatedCostKes: "38000.00",
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propRes.id,
+        title: "Fire extinguisher service certificate renewal",
+        description: "Annual fire extinguisher inspection and recharge certificate expires this week - required for the occupancy compliance file.",
+        priority: "urgent",
+        status: "awaiting_approval",
+        category: "compliance",
+        reportedByContactId: null,
+        createdAt: new Date(Date.now() - 4 * 86_400_000),
+        dueAt: new Date(Date.now() + 5 * 86_400_000),
+        estimatedCostKes: "22000.00",
+      },
+      {
+        entityId: groupEntity.id,
+        propertyId: propComm.id,
+        title: "Lift service compliance inspection",
+        description: "Annual statutory lift inspection and certification - required before the certificate lapses.",
+        priority: "critical",
+        status: "awaiting_approval",
+        category: "compliance",
+        reportedByContactId: null,
+        createdAt: new Date(Date.now() - 9 * 86_400_000),
+        dueAt: new Date(Date.now() + 6 * 86_400_000),
+        estimatedCostKes: "142000.00",
+      },
     ];
-    await db.insert(maintenanceRequests).values(maintenanceToInsert);
-    console.log(`Created ${maintenanceToInsert.length} maintenance requests across ${sampledLeasesForMaintenance.length + 2} properties, full priority/status variety.`);
+    const insertedMaintenance = await db.insert(maintenanceRequests).values(maintenanceToInsert).returning();
+    console.log(`Created ${insertedMaintenance.length} maintenance requests (reactive/planned/compliance) across ${sampledLeasesForMaintenance.length + 5} properties, full severity/status variety, real contractor assignment.`);
+    const scheduledGeneratorService = insertedMaintenance.find((m) => m.title === "Quarterly generator preventive service")!;
+
+    // Real, in-flight cost approvals so the Maintenance Board's "Pending Cost
+    // Approvals" strip and /admin/approvals both have real content - matches
+    // the exact costApprovalTierFor/submitMaintenanceCostForApproval shape
+    // (relatedTable: "maintenance_requests", status: "awaiting_approval" on
+    // both sides of the link), not a fabricated demo row.
+    const highCostCandidates = insertedMaintenance.filter((m) => m.status === "awaiting_approval" && m.estimatedCostKes).slice(0, 3);
+    if (highCostCandidates.length > 0) {
+      await db.insert(approvalRequests).values(
+        highCostCandidates.map((m) => ({
+          entityId: groupEntity.id,
+          requestType: "maintenance_cost",
+          relatedTable: "maintenance_requests",
+          relatedId: m.id,
+          requestedById: propertyManager1User.id,
+          amountKes: m.estimatedCostKes!,
+          requiredApproverRole: parseFloat(m.estimatedCostKes!) > 100000 ? ("ceo" as const) : ("gm" as const),
+          status: "pending" as const,
+        })),
+      );
+      console.log(`Seeded ${highCostCandidates.length} pending maintenance cost approval(s).`);
+    }
 
     // D2: previously a single mandate_letter document existed in the entire
     // dataset (no fileSizeBytes, no other document types) - added variety
@@ -1825,6 +1943,7 @@ async function runSeed() {
     // event left at outcome="pending" so the disposition flow has something
     // real to surface on first load.
     console.log("Step 11: Populating cross-department calendar events...");
+    const generatorServiceVisitStart = scheduledGeneratorService.dueAt ? scheduledGeneratorService.dueAt.getTime() : now.getTime() + 3 * 86_400_000;
     await db.insert(calendarEvents).values([
       {
         entityId: groupEntity.id,
@@ -1875,6 +1994,20 @@ async function runSeed() {
         organizerId: propertyManager1User.id,
         attendees: [{ name: propertyManager2User.name, userId: propertyManager2User.id }],
         projectId: safetyAuditProject.id,
+      },
+      // Real "Scheduler" link for the Maintenance Board's scheduled generator
+      // service (maintenanceRequestId set) - the work order's status:
+      // "scheduled" is only true because this visit genuinely exists.
+      {
+        entityId: groupEntity.id,
+        title: `${scheduledGeneratorService.title} — Nexus Office Plaza`,
+        description: "Preventive service visit for the main backup generator.",
+        type: "maintenance",
+        startsAt: new Date(generatorServiceVisitStart),
+        endsAt: new Date(generatorServiceVisitStart + 7_200_000),
+        location: "Nexus Office Plaza",
+        organizerId: propertyManager1User.id,
+        maintenanceRequestId: scheduledGeneratorService.id,
       },
       {
         entityId: groupEntity.id,

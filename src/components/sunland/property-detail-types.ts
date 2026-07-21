@@ -67,16 +67,18 @@ export interface LeaseSummary {
   depositKes: string | null;
 }
 
-// Priority/status mirror the DB enums (maintenance_priority /
-// maintenance_status in src/db/schema/properties.ts) - the earlier
-// medium/urgent/cancelled vocabulary never existed server-side.
+// Priority/status/category mirror the DB enums (maintenance_priority /
+// maintenance_status / maintenance_category in src/db/schema/properties.ts) -
+// real 3-tier severity + 5-stage status (Maintenance Board design, ADR 015
+// follow-up), not an invented vocabulary.
 export interface MaintenanceRequestSummary {
   id: string;
   title: string;
   reportedAt: string;
   reportedBy?: string;
-  priority: "low" | "normal" | "high" | "critical";
-  status: "open" | "assigned" | "in_progress" | "resolved" | "closed";
+  priority: "routine" | "urgent" | "critical";
+  status: "reported" | "awaiting_approval" | "scheduled" | "in_progress" | "done";
+  category: "reactive" | "planned" | "compliance";
 }
 
 export interface SalesPipelineSummary {
@@ -93,6 +95,7 @@ export interface PropertyDocumentSummary {
   status: "draft" | "awaiting_signature" | "signed";
   url?: string;
   type?: "mandate_letter" | "lease_agreement" | "rent_receipt" | "statement" | "title_deed" | "identification" | "offer_letter";
+  propertyId?: string | null;
   createdAt?: string | null;
   fileSizeBytes?: number | null;
 }

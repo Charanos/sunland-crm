@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils/cn";
+import {
+  CATEGORY_META,
+  PRIORITY_META,
+  costApprovalTierFor,
+  type MaintenanceCategory,
+  type MaintenancePriority,
+} from "./maintenance-constants";
 
 interface PropertyOption {
   id: string;
@@ -11,36 +19,49 @@ interface PropertyOption {
   propertyCode: string;
 }
 
-interface ContactOption {
-  id: string;
-  displayName: string;
-}
-
 interface ReportIssueModalProps {
   open: boolean;
   entityId: string | null;
-  /** Pre-set when opened from a specific property's page; omit to show a property picker (board-level "Log Request"). */
+  /** Pre-set when opened from a specific property's page; omit to show a property picker (board-level "New Work Order"). */
   propertyId?: string;
   propertyName?: string;
+  /** Defaults to "Report Maintenance Issue" - pass "New Work Order" from the board-level entry point. */
+  title?: string;
   onClose: () => void;
   onCreated: () => void;
 }
 
-export function ReportIssueModal({ open, entityId, propertyId, propertyName, onClose, onCreated }: ReportIssueModalProps) {
+const CATEGORY_OPTIONS: MaintenanceCategory[] = ["reactive", "planned", "compliance"];
+const SEVERITY_OPTIONS: MaintenancePriority[] = ["routine", "urgent", "critical"];
+
+function pillClass(active: boolean) {
+  return cn(
+    "inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-medium cursor-pointer transition-colors border",
+    active ? "bg-[#151936] text-white border-[#151936]" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300",
+  );
+}
+
+export function ReportIssueModal({ open, entityId, propertyId, propertyName, title, onClose, onCreated }: ReportIssueModalProps) {
   const { pushToast } = useToast();
   const [selectedPropertyId, setSelectedPropertyId] = useState(propertyId ?? "");
-  const [title, setTitle] = useState("");
+  const [issueTitle, setIssueTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("normal");
-  const [contractorId, setContractorId] = useState("");
-  const [dueAt, setDueAt] = useState("");
+  const [category, setCategory] = useState<MaintenanceCategory>("reactive");
+  const [severity, setSeverity] = useState<MaintenancePriority>("routine");
+  const [estimateInput, setEstimateInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [titleErr, setTitleErr] = useState(false);
 
   const [propertyOptions, setPropertyOptions] = useState<PropertyOption[]>([]);
-  const [contractorOptions, setContractorOptions] = useState<ContactOption[]>([]);
+  const [authorityByPropertyId, setAuthorityByPropertyId] = useState<Map<string, number | null>>(new Map());
+  const [gmThreshold, setGmThreshold] = useState(25000);
+  const [ceoThreshold, setCeoThreshold] = useState(100000);
 
   useEffect(() => {
-    Promise.resolve().then(() => setSelectedPropertyId(propertyId ?? ""));
+    Promise.resolve().then(() => {
+      setSelectedPropertyId(propertyId ?? "");
+      setTitleErr(false);
+    });
   }, [propertyId, open]);
 
   useEffect(() => {
@@ -51,16 +72,50 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
         .then((data) => setPropertyOptions(data.properties ?? []))
         .catch(() => setPropertyOptions([]));
     }
-    fetch(`/api/contacts?entityId=${entityId}&type=contractor`)
+    // Real routing-preview inputs, never hardcoded: each property's own
+    // mandate.maintenanceAuthorityKes (auto-approve ceiling), and the real
+    // settings-backed GM/CEO thresholds costApprovalTierFor is evaluated against.
+    fetch(`/api/mandates?entityId=${entityId}`)
       .then((res) => res.json())
-      .then((data) => setContractorOptions(data.contacts ?? []))
-      .catch(() => setContractorOptions([]));
+      .then((data) => {
+        const rows: Array<{ propertyId: string; maintenanceAuthorityKes: string | null }> = Array.isArray(data.mandates) ? data.mandates : [];
+        setAuthorityByPropertyId(new Map(rows.map((m) => [m.propertyId, m.maintenanceAuthorityKes ? parseFloat(m.maintenanceAuthorityKes) : null])));
+      })
+      .catch(() => setAuthorityByPropertyId(new Map()));
+    fetch(`/api/settings?entityId=${entityId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const rows: Array<{ key: string; value: unknown }> = Array.isArray(data.settings) ? data.settings : [];
+        const gm = rows.find((r) => r.key === "maintenance_cost_gm_threshold_kes");
+        const ceo = rows.find((r) => r.key === "maintenance_cost_ceo_threshold_kes");
+        if (gm && typeof gm.value === "number") setGmThreshold(gm.value);
+        if (ceo && typeof ceo.value === "number") setCeoThreshold(ceo.value);
+      })
+      .catch(() => {});
   }, [open, entityId, propertyId]);
+
+  const autoApproveCeiling = useMemo(() => {
+    const authority = authorityByPropertyId.get(selectedPropertyId);
+    return authority ?? gmThreshold;
+  }, [authorityByPropertyId, selectedPropertyId, gmThreshold]);
+
+  const estimate = useMemo(() => parseInt(estimateInput.replace(/[^0-9]/g, ""), 10) || 0, [estimateInput]);
+
+  const routeNote = useMemo(() => {
+    if (estimate === 0) {
+      return `Enter an estimate — up to KES ${autoApproveCeiling.toLocaleString()} auto-approves under PM authority; up to KES ${ceoThreshold.toLocaleString()} routes to GM approval; above that goes to the CEO approval queue.`;
+    }
+    const tier = costApprovalTierFor({ costKes: estimate, maintenanceAuthorityKes: authorityByPropertyId.get(selectedPropertyId) ?? null, gmThresholdKes: gmThreshold, ceoThresholdKes: ceoThreshold });
+    if (tier === "auto") return `Routing: auto-approved (≤ KES ${autoApproveCeiling.toLocaleString()} PM authority). Crew can be scheduled immediately; cost posts to the mandate ledger.`;
+    if (tier === "gm") return `Routing: GM approval required (KES ${autoApproveCeiling.toLocaleString()}–${ceoThreshold.toLocaleString()}). Crew mobilization waits on that decision.`;
+    return `Routing: CEO approval queue (above KES ${ceoThreshold.toLocaleString()}) via the approval engine, dual sign-off. Flagged in the Needs Attention band.`;
+  }, [estimate, autoApproveCeiling, authorityByPropertyId, selectedPropertyId, gmThreshold, ceoThreshold]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPropertyId || !title.trim() || !description.trim()) {
-      pushToast({ tone: "warning", title: "Missing fields", body: "Please fill in all required fields." });
+    if (!selectedPropertyId || !issueTitle.trim()) {
+      setTitleErr(!issueTitle.trim());
+      if (!selectedPropertyId) pushToast({ tone: "warning", title: "Missing fields", body: "Please select a property." });
       return;
     }
 
@@ -72,11 +127,11 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
         body: JSON.stringify({
           entityId,
           propertyId: selectedPropertyId,
-          title: title.trim(),
-          description: description.trim(),
-          priority,
-          assignedContractorId: contractorId || undefined,
-          dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
+          title: issueTitle.trim(),
+          description: description.trim() || issueTitle.trim(),
+          priority: severity,
+          category,
+          estimatedCostKes: estimate > 0 ? estimate : undefined,
         }),
       });
 
@@ -87,14 +142,14 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
 
       pushToast({
         tone: "success",
-        title: "Issue reported",
-        body: `Successfully logged issue for ${propertyName ?? propertyOptions.find((p) => p.id === selectedPropertyId)?.name ?? "the property"}.`,
+        title: "Work order created",
+        body: `${issueTitle.trim()} — ${estimate > gmThreshold ? "sent for approval." : "logged and ready to schedule."}`,
       });
-      setTitle("");
+      setIssueTitle("");
       setDescription("");
-      setPriority("normal");
-      setContractorId("");
-      setDueAt("");
+      setCategory("reactive");
+      setSeverity("routine");
+      setEstimateInput("");
       onCreated();
       onClose();
     } catch (err) {
@@ -109,88 +164,82 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
     <Modal
       open={open}
       onClose={submitting ? () => { } : onClose}
-      title="Report Maintenance Issue"
+      title={title ?? "Report Maintenance Issue"}
       description={propertyName}
       size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="label-caps text-slate-400 mb-1.5 block">Issue — required</label>
+          <input
+            required
+            type="text"
+            placeholder="e.g. Water heater failure, Apt 3C"
+            value={issueTitle}
+            onChange={(e) => { setIssueTitle(e.target.value); setTitleErr(false); }}
+            className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+          />
+          {titleErr && <p className="text-xs text-rose-600 mt-1">Describe the issue to continue.</p>}
+        </div>
+
         {!propertyId && (
           <div>
             <label className="label-caps text-slate-400 mb-1.5 block">Property</label>
-            <select
-              required
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            >
-              <option value="">Select a property...</option>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Property">
               {propertyOptions.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.propertyCode})
-                </option>
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelectedPropertyId(p.id)}
+                  className={pillClass(selectedPropertyId === p.id)}
+                >
+                  {p.name}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
         )}
 
         <div>
-          <label className="label-caps text-slate-400 mb-1.5 block">Issue Summary / Title</label>
+          <label className="label-caps text-slate-400 mb-1.5 block">Category</label>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Category">
+            {CATEGORY_OPTIONS.map((c) => (
+              <button key={c} type="button" onClick={() => setCategory(c)} className={pillClass(category === c)}>
+                {CATEGORY_META[c].label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="label-caps text-slate-400 mb-1.5 block">Severity</label>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Severity">
+            {SEVERITY_OPTIONS.map((s) => (
+              <button key={s} type="button" onClick={() => setSeverity(s)} className={pillClass(severity === s)}>
+                {PRIORITY_META[s].label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="label-caps text-slate-400 mb-1.5 block">Cost estimate (KES)</label>
           <input
-            required
             type="text"
-            placeholder="e.g., Leaking water pipe in Bathroom B"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+            inputMode="numeric"
+            placeholder="15,000"
+            value={estimateInput}
+            onChange={(e) => setEstimateInput(e.target.value)}
+            className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Priority Rating</label>
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            >
-              <option value="low">Low Priority</option>
-              <option value="normal">Medium Priority</option>
-              <option value="high">High Priority</option>
-              <option value="critical">Urgent / Critical</option>
-            </select>
-          </div>
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Due Date (optional)</label>
-            <input
-              type="date"
-              value={dueAt}
-              onChange={(e) => setDueAt(e.target.value)}
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            />
-          </div>
-        </div>
+        <p className="text-xs text-slate-400 leading-relaxed">{routeNote}</p>
 
         <div>
-          <label className="label-caps text-slate-400 mb-1.5 block">Assign Contractor (optional)</label>
-          <select
-            value={contractorId}
-            onChange={(e) => setContractorId(e.target.value)}
-            className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-          >
-            <option value="">Unassigned</option>
-            {contractorOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.displayName}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="label-caps text-slate-400 mb-1.5 block">Detailed Description</label>
+          <label className="label-caps text-slate-400 mb-1.5 block">Detailed description (optional)</label>
           <textarea
-            required
-            rows={4}
+            rows={3}
             placeholder="Describe the nature of the maintenance requirement, locations, and any urgent circumstances..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -203,7 +252,7 @@ export function ReportIssueModal({ open, entityId, propertyId, propertyName, onC
             Cancel
           </Button>
           <Button type="submit" disabled={submitting}>
-            {submitting ? "Submitting..." : "Report Issue"}
+            {submitting ? "Creating..." : "Create Work Order"}
           </Button>
         </div>
       </form>

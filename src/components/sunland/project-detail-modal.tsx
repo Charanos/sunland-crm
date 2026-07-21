@@ -13,7 +13,6 @@ import {
 import { Modal } from "@/components/ui/modal";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils/cn";
 
 interface Project {
   id: string;

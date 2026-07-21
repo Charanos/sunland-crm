@@ -24,6 +24,7 @@ import {
   IconX,
   IconDotsVertical,
   IconStarFilled,
+  IconStar,
   IconArrowsMove,
   IconMapPin,
   IconFilter,
@@ -102,6 +103,7 @@ interface Valuation {
   landlordAvatarUrl: string | null;
   managerName: string | null;
   managerAvatarUrl: string | null;
+  isFeatured: boolean;
 }
 
 interface AuditEntry {
@@ -162,6 +164,28 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
   useEffect(() => {
     Promise.resolve().then(() => loadValuations());
   }, [loadValuations]);
+
+  // User-curated star toggle, parity with properties-board.tsx's real
+  // handleToggleFeature - separate valuations.isFeatured column (not
+  // properties.isFeatured) since an external/prospect valuation has no
+  // property row yet to toggle.
+  const [featuredCarouselIndex, setFeaturedCarouselIndex] = useState(0);
+  const handleToggleFeature = async (id: string, currentlyFeatured: boolean) => {
+    const nextVal = !currentlyFeatured;
+    setValuations((prev) => prev.map((v) => (v.id === id ? { ...v, isFeatured: nextVal } : v)));
+    try {
+      const res = await fetch(`/api/valuations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityId, isFeatured: nextVal }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to update featured status");
+      pushToast({ tone: "success", title: "Updated", body: `Prospect is now ${nextVal ? "featured" : "unfeatured"}.` });
+    } catch {
+      setValuations((prev) => prev.map((v) => (v.id === id ? { ...v, isFeatured: currentlyFeatured } : v)));
+      pushToast({ tone: "warning", title: "Error", body: "Could not update featured status." });
+    }
+  };
 
   useEffect(() => {
     if (!entityId) return;
@@ -273,7 +297,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
     return { total, setup, offer, accepted };
   }, [valuations]);
 
-  const featuredProspect = useMemo(() => {
+  const scoreBasedProspect = useMemo(() => {
     const active = valuations.filter((v) => v.stage !== "mandate_signed" && v.stage !== "declined");
     if (active.length === 0) return null;
     return [...active].sort((a, b) => {
@@ -282,6 +306,19 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
       return valB - valA;
     })[0];
   }, [valuations]);
+
+  // Real, user-curated set wins over the auto-computed score-based pick -
+  // same "augment, don't replace" rule properties-board.tsx follows for its
+  // own featured carousel. Falls back to the score-based single card when
+  // nobody has starred anything yet.
+  const curatedFeatured = useMemo(() => {
+    return valuations
+      .filter((v) => v.isFeatured && v.stage !== "mandate_signed" && v.stage !== "declined")
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [valuations]);
+  const safeFeaturedCarouselIndex = curatedFeatured.length === 0 ? 0 : Math.min(featuredCarouselIndex, curatedFeatured.length - 1);
+  const featuredProspect = curatedFeatured.length > 0 ? curatedFeatured[safeFeaturedCarouselIndex] : scoreBasedProspect;
+  const isCuratedFeatured = curatedFeatured.length > 0;
 
   const featuredPropertyMedia = useMemo(() => {
     if (!featuredProspect) return null;
@@ -658,10 +695,45 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
 
               {/* Left Side: Gradient artwork or media image */}
               <div className="lg:w-[35%] shrink-0 relative min-h-[280px] lg:min-h-0 bg-[#0d211a]">
-                <div className="absolute top-5 left-5 z-20">
+                <div className="absolute top-5 left-5 z-20 flex items-center gap-2">
                   <span className="bg-[#151936] text-[#f3df27] flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium uppercase tracking-wider shadow-sm border border-slate-700/30">
-                    <IconStarFilled size={12} className="text-[#f3df27] shrink-0" /> High-Value Prospect
+                    <IconStarFilled size={12} className="text-[#f3df27] shrink-0" /> {isCuratedFeatured ? "Featured" : "High-Value Prospect"}
                   </span>
+                </div>
+                <div className="absolute top-5 right-5 z-20 flex items-center gap-2">
+                  {curatedFeatured.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setFeaturedCarouselIndex((i) => (i === 0 ? curatedFeatured.length - 1 : i - 1))}
+                        aria-label="Previous featured prospect"
+                        className="size-7 rounded-full bg-white/15 backdrop-blur-sm text-white flex items-center justify-center hover:bg-white/25 transition-colors"
+                      >
+                        <IconChevronLeft size={14} />
+                      </button>
+                      <span className="label-caps text-white/70 tabular-nums">{safeFeaturedCarouselIndex + 1}&thinsp;/&thinsp;{curatedFeatured.length}</span>
+                      <button
+                        type="button"
+                        onClick={() => setFeaturedCarouselIndex((i) => (i === curatedFeatured.length - 1 ? 0 : i + 1))}
+                        aria-label="Next featured prospect"
+                        className="size-7 rounded-full bg-white/15 backdrop-blur-sm text-white flex items-center justify-center hover:bg-white/25 transition-colors"
+                      >
+                        <IconChevronRight size={14} />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleFeature(featuredProspect.id, !!featuredProspect.isFeatured)}
+                    aria-label={featuredProspect.isFeatured ? "Remove from featured" : "Add to featured"}
+                    aria-pressed={!!featuredProspect.isFeatured}
+                    className={cn(
+                      "size-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors",
+                      featuredProspect.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-white/15 text-white hover:bg-amber-400 hover:text-[#151936]"
+                    )}
+                  >
+                    {featuredProspect.isFeatured ? <IconStarFilled size={13} /> : <IconStar size={13} />}
+                  </button>
                 </div>
 
                 <Image
@@ -961,6 +1033,18 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                                     Stalled
                                   </span>
                                 )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleToggleFeature(v.id, !!v.isFeatured); }}
+                                  aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
+                                  aria-pressed={!!v.isFeatured}
+                                  className={cn(
+                                    "size-6 rounded-md flex items-center justify-center backdrop-blur-xs shadow-xs border transition-colors",
+                                    v.isFeatured ? "bg-amber-400 border-amber-300 text-[#151936]" : "bg-[#151936]/80 border-slate-700/20 text-white hover:bg-amber-400 hover:text-[#151936]"
+                                  )}
+                                >
+                                  {v.isFeatured ? <IconStarFilled size={11} /> : <IconStar size={11} />}
+                                </button>
                               </div>
 
                               {score && (
@@ -1046,11 +1130,25 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       </Badge>
                     </div>
 
-                    {score && (
-                      <span className="absolute top-3 right-3 bg-white/95 text-slate-800 rounded-lg px-2 py-0.5 text-xs font-mono font-medium shadow-xs border border-slate-150" title="Acquisition Fit Score">
-                        <span style={{ color: score.color }} className="font-medium mr-0.5">{score.grade}</span> {score.score}
-                      </span>
-                    )}
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                      {score && (
+                        <span className="bg-white/95 text-slate-800 rounded-lg px-2 py-0.5 text-xs font-mono font-medium shadow-xs border border-slate-150" title="Acquisition Fit Score">
+                          <span style={{ color: score.color }} className="font-medium mr-0.5">{score.grade}</span> {score.score}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleToggleFeature(v.id, !!v.isFeatured); }}
+                        aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
+                        aria-pressed={!!v.isFeatured}
+                        className={cn(
+                          "size-7 rounded-lg flex items-center justify-center backdrop-blur-sm shadow-xs transition-colors",
+                          v.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-black/30 text-white hover:bg-amber-400 hover:text-[#151936]"
+                        )}
+                      >
+                        {v.isFeatured ? <IconStarFilled size={13} /> : <IconStar size={13} />}
+                      </button>
+                    </div>
 
                     {v.managerName && (
                       <span className="absolute bottom-3 right-3 size-8 rounded-full bg-[#151936] text-[#f3df27] text-xs font-mono font-medium flex items-center justify-center border-2 border-white shadow-md" title={`Assigned PM: ${v.managerName}`}>
@@ -1131,10 +1229,22 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       <div className={cn("size-10 rounded-lg border flex items-center justify-center shrink-0", subject.portfolio ? "bg-teal-50 border-teal-100 text-teal-600" : "bg-slate-50 border-slate-200 text-slate-600")}>
                         {subject.portfolio ? <IconBuildingCommunity size={18} /> : <IconExternalLink size={18} />}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-slate-900 truncate">{subject.name}</p>
                         <p className="text-xs text-slate-500 truncate">{subject.location}</p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleToggleFeature(v.id, !!v.isFeatured); }}
+                        aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
+                        aria-pressed={!!v.isFeatured}
+                        className={cn(
+                          "size-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                          v.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-slate-50 border border-slate-100 text-slate-400 hover:text-amber-500 hover:bg-amber-50"
+                        )}
+                      >
+                        {v.isFeatured ? <IconStarFilled size={14} /> : <IconStar size={14} />}
+                      </button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 border-t border-slate-50 pt-3 text-xs">
@@ -1178,7 +1288,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             {/* Desktop View: Full-column table format */}
             <div className="hidden lg:block overflow-x-auto">
               <div className="min-w-[920px]">
-                <div className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_44px] gap-2.5 px-3.5 py-2 border-b border-slate-100">
+                <div className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_76px] gap-2.5 px-3.5 py-2 border-b border-slate-100">
                   <span className="label-caps text-slate-600">Property</span>
                   <span className="label-caps text-slate-600">Landlord</span>
                   <span className="label-caps text-slate-600">Valuer</span>
@@ -1198,7 +1308,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       role="button"
                       tabIndex={0}
                       onClick={() => router.push(`/admin/valuations/${v.id}`)}
-                      className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_44px] gap-2.5 px-3.5 py-2.5 border-b border-slate-50 items-center cursor-pointer hover:bg-slate-50/80"
+                      className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_76px] gap-2.5 px-3.5 py-2.5 border-b border-slate-50 items-center cursor-pointer hover:bg-slate-50/80"
                     >
                       <span className="flex items-center gap-2 min-w-0">
                         <span className="relative size-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0">
@@ -1255,7 +1365,19 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                           {cfg.label}
                         </Badge>
                       </span>
-                      <span onClick={(e) => e.stopPropagation()} className="flex justify-end">
+                      <span onClick={(e) => e.stopPropagation()} className="flex justify-end items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFeature(v.id, !!v.isFeatured)}
+                          aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
+                          aria-pressed={!!v.isFeatured}
+                          className={cn(
+                            "size-7 rounded-md flex items-center justify-center transition-colors",
+                            v.isFeatured ? "bg-amber-400 text-[#151936]" : "text-slate-400 hover:text-amber-500 hover:bg-amber-50"
+                          )}
+                        >
+                          {v.isFeatured ? <IconStarFilled size={13} /> : <IconStar size={13} />}
+                        </button>
                         <DropdownMenu
                           label="Valuation actions"
                           trigger={<div className="p-1.5 rounded-md text-slate-600 hover:bg-white hover:shadow-sm hover:text-slate-900 transition-all border border-transparent hover:border-slate-200"><IconDotsVertical size={16} /></div>}

@@ -9,11 +9,13 @@ export async function GET(request: Request) {
     const entityId = searchParams.get("entityId") ?? null;
     const propertyId = searchParams.get("propertyId") ?? undefined;
     const status = searchParams.get("status") ?? undefined;
+    const paperworkStatus = (searchParams.get("paperworkStatus") as "verified" | "pending_upload" | null) ?? undefined;
+    const search = searchParams.get("search") ?? undefined;
     const includeFinancials = searchParams.get("includeFinancials") === "1";
     const includeSummary = searchParams.get("includeSummary") === "1";
 
     const ctx = await requireCallerContext(entityId, request);
-    const mandates = await listMandates(ctx, { propertyId, status, includeFinancials });
+    const mandates = await listMandates(ctx, { propertyId, status, paperworkStatus, search, includeFinancials });
     const summary = includeSummary ? await getMandatesSummary(ctx) : undefined;
 
     return NextResponse.json({ mandates, summary });

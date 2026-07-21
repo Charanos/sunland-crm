@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconX, IconTrendingUp } from "@tabler/icons-react";
 import { Lead, PipelineStage, PipelineSource } from "./pipeline-board";
 
 interface LeadFormModalProps {
   open: boolean;
+  entityId: string;
   onClose: () => void;
   onSubmit: (data: Partial<Lead>) => void;
   initialData?: Lead;
@@ -16,10 +17,10 @@ interface LeadFormData {
   email: string;
   phone: string;
   budget: number;
-  propertyInterest: string;
+  propertyId: string;
   source: PipelineSource;
   stage: PipelineStage;
-  assignedAgent: string;
+  assignedToId: string;
   notes: string;
 }
 
@@ -44,24 +45,12 @@ const SOURCES: { value: PipelineSource; label: string }[] = [
   { value: "exhibition", label: "Exhibition" },
 ];
 
-const PROPERTIES = [
-  "Runda Grove Villa",
-  "Westlands Tower 4B",
-  "Karen Ridge House",
-  "Upper Hill Plaza",
-  "Kilimani Heights",
-  "Lavington Gardens",
-  "Riverside Haven",
-  "Muthaiga Grand",
-  "Gigiri Diplomatic",
-  "None / Other"
-];
-
-export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadFormModalProps) {
+export function LeadFormModal({ open, entityId, onClose, onSubmit, initialData }: LeadFormModalProps) {
   if (!open) return null;
 
   return (
     <LeadFormModalContent
+      entityId={entityId}
       onClose={onClose}
       onSubmit={onSubmit}
       initialData={initialData}
@@ -70,14 +59,20 @@ export function LeadFormModal({ open, onClose, onSubmit, initialData }: LeadForm
 }
 
 function LeadFormModalContent({
+  entityId,
   onClose,
   onSubmit,
   initialData,
 }: {
+  entityId: string;
   onClose: () => void;
   onSubmit: (data: Partial<Lead>) => void;
   initialData?: Lead;
 }) {
+  const isEdit = !!initialData;
+  const [properties, setProperties] = useState<{ id: string; name: string }[]>([]);
+  const [agents, setAgents] = useState<{ id: string; name: string }[]>([]);
+
   const [formData, setFormData] = useState<LeadFormData>(() => {
     if (initialData) {
       return {
@@ -85,10 +80,10 @@ function LeadFormModalContent({
         email: initialData.email || "",
         phone: initialData.phone || "",
         budget: initialData.budget || 0,
-        propertyInterest: initialData.propertyInterest || "Runda Grove Villa",
+        propertyId: initialData.propertyId || "",
         source: initialData.source || "website",
         stage: initialData.stage || "inquiry",
-        assignedAgent: initialData.assignedAgent || "Amina Wanjiku",
+        assignedToId: initialData.assignedToId || "",
         notes: initialData.notes || "",
       };
     }
@@ -97,18 +92,38 @@ function LeadFormModalContent({
       email: "",
       phone: "",
       budget: 0,
-      propertyInterest: "Runda Grove Villa",
+      propertyId: "",
       source: "website",
       stage: "inquiry",
-      assignedAgent: "Amina Wanjiku",
+      assignedToId: "",
       notes: "",
     };
   });
+
+  // Real property/agent pickers, matching valuation-form-modal.tsx's fetch
+  // pattern - replaces the previous hardcoded fictional-name arrays.
+  useEffect(() => {
+    if (!entityId) return;
+    fetch(`/api/properties?entityId=${entityId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.properties)) setProperties(d.properties.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
+      })
+      .catch(() => { });
+    fetch(`/api/identity/users?entityId=${entityId}&role=property_manager`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.users)) setAgents(d.users.map((u: { id: string; name: string }) => ({ id: u.id, name: u.name })));
+      })
+      .catch(() => { });
+  }, [entityId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       ...formData,
+      propertyId: formData.propertyId || null,
+      assignedToId: formData.assignedToId || null,
       budget: Number(formData.budget) || 0,
     });
   };
@@ -148,42 +163,55 @@ function LeadFormModalContent({
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
 
           <div className="space-y-4">
-            {/* Name */}
+            {/* Name - editable only when creating a new opportunity, since
+                editing changes the lead record, not the underlying contact */}
             <div>
               <label className="block text-slate-400 mb-1.5 label-caps">Client / Organization Name</label>
-              <input
-                required
-                type="text"
-                placeholder="e.g. James Mwangi or Embacassy Holdings"
-                value={formData.clientName}
-                onChange={e => setFormData({ ...formData, clientName: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
-              />
+              {isEdit ? (
+                <p className="w-full px-3.5 py-2.5 text-base bg-slate-50 border border-slate-100 rounded-xl text-slate-600">{formData.clientName}</p>
+              ) : (
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. James Mwangi or Embacassy Holdings"
+                  value={formData.clientName}
+                  onChange={e => setFormData({ ...formData, clientName: e.target.value })}
+                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                />
+              )}
             </div>
 
             {/* Email & Phone */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-slate-400 mb-1.5 label-caps">Email Address</label>
-                <input
-                  required
-                  type="email"
-                  placeholder="name@domain.com"
-                  value={formData.email}
-                  onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
-                />
+                {isEdit ? (
+                  <p className="w-full px-3.5 py-2.5 text-base bg-slate-50 border border-slate-100 rounded-xl text-slate-600 truncate">{formData.email || "-"}</p>
+                ) : (
+                  <input
+                    required
+                    type="email"
+                    placeholder="name@domain.com"
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-slate-400 mb-1.5 label-caps">Phone Number</label>
-                <input
-                  required
-                  type="tel"
-                  placeholder="+254 7XX XXX XXX"
-                  value={formData.phone}
-                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm mono-data"
-                />
+                {isEdit ? (
+                  <p className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-600 mono-data">{formData.phone || "-"}</p>
+                ) : (
+                  <input
+                    required
+                    type="tel"
+                    placeholder="+254 7XX XXX XXX"
+                    value={formData.phone}
+                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm mono-data"
+                  />
+                )}
               </div>
             </div>
 
@@ -192,11 +220,12 @@ function LeadFormModalContent({
               <div>
                 <label className="block text-slate-400 mb-1.5 label-caps">Property of Interest</label>
                 <select
-                  value={formData.propertyInterest}
-                  onChange={e => setFormData({ ...formData, propertyInterest: e.target.value })}
+                  value={formData.propertyId}
+                  onChange={e => setFormData({ ...formData, propertyId: e.target.value })}
                   className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
                 >
-                  {PROPERTIES.map(p => <option key={p} value={p}>{p}</option>)}
+                  <option value="">None / Other</option>
+                  {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               <div>
@@ -240,13 +269,12 @@ function LeadFormModalContent({
             <div>
               <label className="block text-slate-400 mb-1.5 label-caps">Assigned Agent</label>
               <select
-                value={formData.assignedAgent}
-                onChange={e => setFormData({ ...formData, assignedAgent: e.target.value })}
+                value={formData.assignedToId}
+                onChange={e => setFormData({ ...formData, assignedToId: e.target.value })}
                 className="w-full px-3.5 py-2.5 text-base bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#151936]/40 focus:ring-1 focus:ring-[#151936]/10 transition-colors shadow-sm"
               >
-                <option value="Amina Wanjiku">Amina Wanjiku (Broker)</option>
-                <option value="John Mwangi">John Mwangi (Broker)</option>
-                <option value="CEO">CEO / Admin</option>
+                <option value="">Unassigned</option>
+                {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
 

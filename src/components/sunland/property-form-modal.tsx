@@ -27,7 +27,7 @@ export interface PropertyFormData {
   propertyCode: string;
   name: string;
   propertyType: string;
-  listingType: "Rent" | "Sale";
+  listingType: "let" | "sale";
   location: string;
   ownerContactId: string;
   monthlyRentKes: string;
@@ -118,11 +118,11 @@ export function PropertyFormModal({
     propertyCode: (initialData?.propertyCode as string | undefined) ?? "",
     name: (initialData?.name as string | undefined) ?? "",
     propertyType: (initialData?.propertyType as string | undefined) ?? (initialData?.type as string | undefined) ?? "Apartment",
-    listingType: (initialData?.listingType as "Rent" | "Sale" | undefined) ?? "Rent",
+    listingType: (initialData?.listingType as "let" | "sale" | undefined) ?? "let",
     location: (initialData?.location as string | undefined) ?? "",
     ownerContactId: (initialData?.ownerContactId as string | undefined) ?? "",
-    monthlyRentKes: (initialData?.monthlyRentKes as string | undefined) ?? (initialData?.listingType === "Rent" || !initialData?.listingType ? (initialData?.price as string | undefined) : "") ?? "",
-    askingPriceKes: (initialData?.askingPriceKes as string | undefined) ?? (initialData?.listingType === "Sale" ? (initialData?.price as string | undefined) : "") ?? "",
+    monthlyRentKes: (initialData?.monthlyRentKes as string | undefined) ?? (initialData?.listingType === "let" || !initialData?.listingType ? (initialData?.price as string | undefined) : "") ?? "",
+    askingPriceKes: (initialData?.askingPriceKes as string | undefined) ?? (initialData?.listingType === "sale" ? (initialData?.price as string | undefined) : "") ?? "",
     bedrooms: (initialData?.bedrooms as number | undefined) ?? null,
     bathrooms: (initialData?.bathrooms as number | undefined) ?? null,
     sizeSqft: (initialData?.sizeSqft as number | undefined) ?? null,
@@ -267,14 +267,14 @@ export function PropertyFormModal({
     const newErrors: Partial<Record<keyof PropertyFormData, string>> = {};
     if (!form.name.trim()) newErrors.name = "Property name is required";
     if (!form.location.trim()) newErrors.location = "Location is required";
-    if (form.listingType === "Rent") {
+    if (form.listingType === "let") {
       if (isMultiUnit && computedTotalRent === 0) {
         newErrors.monthlyRentKes = "Add units with rent to compute total";
       } else if (!isMultiUnit && !form.monthlyRentKes.trim()) {
         newErrors.monthlyRentKes = "Monthly Rent is required";
       }
     }
-    if (form.listingType === "Sale") {
+    if (form.listingType === "sale") {
       if (isMultiUnit && computedTotalRent === 0) {
         newErrors.askingPriceKes = "Add units with price to compute total";
       } else if (!isMultiUnit && !form.askingPriceKes.trim()) {
@@ -309,8 +309,8 @@ export function PropertyFormModal({
         listingType: form.listingType,
         location: form.location,
         ownerContactId: form.ownerContactId || null,
-        monthlyRentKes: form.listingType === "Rent" ? (isMultiUnit ? computedTotalRent.toString() : form.monthlyRentKes) : null,
-        askingPriceKes: form.listingType === "Sale" ? (isMultiUnit ? computedTotalRent.toString() : form.askingPriceKes) : null,
+        monthlyRentKes: form.listingType === "let" ? (isMultiUnit ? computedTotalRent.toString() : form.monthlyRentKes) : null,
+        askingPriceKes: form.listingType === "sale" ? (isMultiUnit ? computedTotalRent.toString() : form.askingPriceKes) : null,
         bedrooms: isMultiUnit ? null : form.bedrooms,
         bathrooms: isMultiUnit ? null : form.bathrooms,
         sizeSqft: form.sizeSqft,
@@ -376,7 +376,7 @@ export function PropertyFormModal({
     }
   };
 
-  const displayRent = isMultiUnit ? computedTotalRent.toString() : (form.listingType === "Rent" ? form.monthlyRentKes : form.askingPriceKes);
+  const displayRent = isMultiUnit ? computedTotalRent.toString() : (form.listingType === "let" ? form.monthlyRentKes : form.askingPriceKes);
 
   return (
     <Modal
@@ -541,15 +541,15 @@ export function PropertyFormModal({
               <select
                 className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
                 value={form.listingType}
-                onChange={(e) => updateField("listingType", e.target.value as "Rent" | "Sale")}
+                onChange={(e) => updateField("listingType", e.target.value as "let" | "sale")}
               >
-                <option value="Rent">Rent</option>
-                <option value="Sale">Sale</option>
+                <option value="let">Rent</option>
+                <option value="sale">Sale</option>
               </select>
             </div>
 
             <div className="sm:col-span-2">
-              {form.listingType === "Rent" ? (
+              {form.listingType === "let" ? (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="label-caps text-slate-400">

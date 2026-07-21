@@ -3,7 +3,7 @@ import { handleRouteError, NotFoundError } from "@/lib/authz/errors";
 import { listAuditLog } from "@/lib/services/audit-log";
 import { listRemittancesForMandate } from "@/lib/services/finance/remittances";
 import { db } from "@/db";
-import { leases, propertyMandates } from "@/db/schema";
+import { propertyMandates } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireCallerContext } from "@/lib/services/types";
 
@@ -20,16 +20,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const [mandate] = await db.select().from(propertyMandates).where(eq(propertyMandates.id, id)).limit(1);
     if (!mandate) throw new NotFoundError("Mandate not found");
 
-    const [propertyLeases, remittances] = await Promise.all([
-      db.select({ id: leases.id }).from(leases).where(eq(leases.propertyId, mandate.propertyId)),
-      listRemittancesForMandate(ctx, id),
-    ]);
+    // Lease activity is deliberately NOT stacked in here anymore - a lease
+    // has its own dedicated full-view page with its own correctly-scoped
+    // activity tab (lease-full-view-board.tsx). Remittances stay - they have
+    // no other home.
+    const remittances = await listRemittancesForMandate(ctx, id);
 
     const entries = await listAuditLog(ctx, {
       entityId: mandate.entityId,
       associatedGroups: [
         { type: "property_mandate", ids: [id] },
-        { type: "lease", ids: propertyLeases.map((l) => l.id) },
         { type: "remittance_advice", ids: remittances.map((r) => r.id) },
       ],
       limit,

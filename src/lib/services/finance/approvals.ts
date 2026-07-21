@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { approvalRequests, propertyMandates, transactions, users } from "@/db/schema";
+import { approvalRequests, maintenanceRequests, propertyMandates, transactions, users } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -182,6 +182,22 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
           updatedAt: new Date(),
         })
         .where(and(eq(propertyMandates.id, existing.relatedId), eq(propertyMandates.status, "pending_approval")));
+    }
+
+    // Maintenance cost side-effect (ADR 015 follow-up): stamp actualCostKes
+    // on approval, same parity as submitMaintenanceCostForApproval's own
+    // self-approve path stamps it immediately. Either way, clear the
+    // "awaiting_approval" gate back to "reported" - the decision (approve or
+    // reject) is what the request was waiting on, not a status in itself.
+    if (existing.relatedTable === "maintenance_requests") {
+      await tx
+        .update(maintenanceRequests)
+        .set({
+          ...(input.status === "approved" ? { actualCostKes: existing.amountKes } : {}),
+          status: "reported",
+          updatedAt: new Date(),
+        })
+        .where(and(eq(maintenanceRequests.id, existing.relatedId), eq(maintenanceRequests.status, "awaiting_approval")));
     }
 
     // Disbursement side-effect on approval - will move onto the real ledger

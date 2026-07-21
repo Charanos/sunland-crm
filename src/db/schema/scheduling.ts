@@ -1,6 +1,7 @@
 import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { entities, timestamps, users } from "@/db/schema/platform";
 import { projects } from "@/db/schema/operations";
+import { maintenanceRequests } from "@/db/schema/properties";
 
 export const calendarEventType = pgEnum("calendar_event_type", [
   "internal",
@@ -44,6 +45,12 @@ export const calendarEvents = pgTable(
     // Optional link to a cross-department Project - a milestone/deadline can
     // show up as a real calendar event without a heavier relational model.
     projectId: uuid("project_id").references(() => projects.id),
+    // Real link for the Maintenance Board's "Scheduler" integration -
+    // scheduleMaintenanceVisit() sets this when a work order's visit is
+    // booked; closing/cancelling the request resolves this event's outcome
+    // in the same transaction, so "closing the order closes the event" is
+    // literally true rather than aspirational copy.
+    maintenanceRequestId: uuid("maintenance_request_id").references(() => maintenanceRequests.id),
     outcome: calendarEventOutcome("outcome").default("pending").notNull(),
     ...timestamps,
   },
@@ -52,5 +59,6 @@ export const calendarEvents = pgTable(
     organizerIdx: index("calendar_events_organizer_idx").on(table.organizerId),
     startsAtIdx: index("calendar_events_starts_at_idx").on(table.startsAt),
     projectIdx: index("calendar_events_project_idx").on(table.projectId),
+    maintenanceRequestIdx: index("calendar_events_maintenance_request_idx").on(table.maintenanceRequestId),
   }),
 );

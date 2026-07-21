@@ -87,6 +87,10 @@ export const valuations = pgTable(
     // Set once stage becomes "mandate_signed" - a real deep link into the
     // mandate this prospect became, not a static route.
     resultingMandateId: uuid("resulting_mandate_id").references(() => propertyMandates.id),
+    // User-curated highlight, same concept/parity as properties.isFeatured -
+    // separate column (not a reuse of properties.isFeatured) since an
+    // external/prospect valuation has no properties row yet to toggle.
+    isFeatured: boolean("is_featured").default(false).notNull(),
     ...timestamps,
   },
   (table) => ({

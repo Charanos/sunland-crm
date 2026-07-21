@@ -191,6 +191,38 @@ export const DEFAULT_SETTINGS: Array<{ key: string; value: unknown; description:
     value: true,
     description: "Offboarding a Head-level role notifies the CEO; treated as effectively required sign-off",
   },
+
+  // ── Maintenance module (property lifecycle unification follow-up).
+  // Response-time targets by priority + cost-approval tiers, the same
+  // "thresholds as data" pattern as everything above. Hour defaults are a
+  // proposed starting point derived from the Maintenance Board design
+  // reference, not a confirmed business number - CEO can edit from System
+  // Administration like every other threshold here.
+  {
+    key: "maintenance_sla_hours_critical",
+    value: 6,
+    description: "Target hours to resolve a critical-severity maintenance request before it's flagged breached",
+  },
+  {
+    key: "maintenance_sla_hours_urgent",
+    value: 24,
+    description: "Target hours to resolve an urgent-severity maintenance request before it's flagged breached",
+  },
+  {
+    key: "maintenance_sla_hours_routine",
+    value: 72,
+    description: "Target hours to resolve a routine-severity maintenance request before it's flagged breached",
+  },
+  {
+    key: "maintenance_cost_gm_threshold_kes",
+    value: 25000,
+    description: "Maintenance work order cost above this amount (and above the property mandate's own authority) requires GM approval",
+  },
+  {
+    key: "maintenance_cost_ceo_threshold_kes",
+    value: 100000,
+    description: "Maintenance work order cost above this amount requires CEO approval",
+  },
 ];
 
 export async function seedDefaultSettings(groupEntityId: string) {

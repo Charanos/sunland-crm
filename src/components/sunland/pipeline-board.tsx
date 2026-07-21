@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -64,13 +64,15 @@ export interface Lead {
   email: string;
   phone: string;
   budget: number;
+  propertyId?: string | null;
   propertyInterest: string;
   source: PipelineSource;
   stage: PipelineStage;
+  assignedToId?: string | null;
   assignedAgent: string;
   createdDate: string;
   notes?: string;
-  timeline: {
+  timeline?: {
     id: string;
     date: string;
     type: "call" | "email" | "meeting" | "message" | "system";
@@ -155,155 +157,6 @@ const getClientAvatar = (name: string) => {
   return CLIENT_AVATARS[name] || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face";
 };
 
-// ─── Initial Mock Data ─────────────────────────────────────────────────────────
-
-const INITIAL_LEADS: Lead[] = [
-  {
-    id: "l1",
-    clientName: "James Mwangi",
-    email: "james@mwangi-invest.co.ke",
-    phone: "+254 712 999 888",
-    budget: 25000000,
-    propertyInterest: "Runda Grove Villa",
-    source: "website",
-    stage: "inquiry",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-06-12",
-    notes: "Client interested in cash payment. Needs layout plans of the Karen estate.",
-    timeline: [
-      { id: "tl1", date: "2026-06-12", type: "system", summary: "Inquiry Received", details: "Logged via website form." }
-    ]
-  },
-  {
-    id: "l2",
-    clientName: "Amina Abdalla",
-    email: "amina.a@abdallagroup.com",
-    phone: "+254 722 111 222",
-    budget: 72000000,
-    propertyInterest: "Westlands Tower 4B",
-    source: "referral",
-    stage: "viewing",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-06-01",
-    notes: "Requires building audit certificates and occupancy summaries.",
-    timeline: [
-      { id: "tl2", date: "2026-06-05", type: "meeting", summary: "Site Viewing Done", details: "Inspected office shell on Westlands 4B." }
-    ]
-  },
-  {
-    id: "l3",
-    clientName: "John Kamau",
-    email: "kamau.j@gmail.com",
-    phone: "+254 734 555 444",
-    budget: 62000000,
-    propertyInterest: "Karen Ridge House",
-    source: "social_media",
-    stage: "offer",
-    assignedAgent: "John Mwangi",
-    createdDate: "2026-05-20",
-    notes: "Submitted formal offer of KES 59.5M. Landlord reviewing.",
-    timeline: [
-      { id: "tl3", date: "2026-06-14", type: "email", summary: "Offer Submitted", details: "Emailed formal letter of intent." }
-    ]
-  },
-  {
-    id: "l4",
-    clientName: "Fatma Hassan",
-    email: "fatma.h@hassanco.com",
-    phone: "+254 788 777 666",
-    budget: 120000000,
-    propertyInterest: "Upper Hill Plaza",
-    source: "partner",
-    stage: "qualification",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-06-10",
-    notes: "Corporate expansion. Checking liquidity status and board resolution.",
-    timeline: [
-      { id: "tl4", date: "2026-06-11", type: "call", summary: "Introductory Audit Call", details: "Discussed corporate financial backing." }
-    ]
-  },
-  {
-    id: "l5",
-    clientName: "Kevin Ochieng",
-    email: "kevin.o@outlook.com",
-    phone: "+254 701 444 333",
-    budget: 14000000,
-    propertyInterest: "Kilimani Heights",
-    source: "existing_client",
-    stage: "closed_won",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-05-01",
-    notes: "Lease signed. First month rent and deposit cleared. Commission generated.",
-    timeline: [
-      { id: "tl5", date: "2026-06-15", type: "message", summary: "Escrow Cleared", details: "Fund verified in accounts." }
-    ]
-  },
-  {
-    id: "l6",
-    clientName: "Mary Wambui",
-    email: "mary.w@wambuicatering.com",
-    phone: "+254 723 888 999",
-    budget: 48000000,
-    propertyInterest: "Lavington Gardens",
-    source: "cold_call",
-    stage: "closed_lost",
-    assignedAgent: "John Mwangi",
-    createdDate: "2026-04-15",
-    notes: "Lost to competitor due to pricing mismatch. Karen site chosen instead.",
-    timeline: [
-      { id: "tl6", date: "2026-06-01", type: "system", summary: "Archived Lead", details: "Marked lost after no response." }
-    ]
-  },
-  {
-    id: "l7",
-    clientName: "Peter Kiprop",
-    email: "peter@kiprop-farms.co.ke",
-    phone: "+254 711 222 333",
-    budget: 8500000,
-    propertyInterest: "Riverside Haven",
-    source: "website",
-    stage: "negotiation",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-06-03",
-    notes: "Negotiating payment terms: 50% deposit and 12-month installments.",
-    timeline: [
-      { id: "tl7", date: "2026-06-16", type: "meeting", summary: "Terms Discussion", details: "Met at Riverside sales lounge." }
-    ]
-  },
-  {
-    id: "l8",
-    clientName: "Sarah Mwangi",
-    email: "sarah.m@mwangi-props.com",
-    phone: "+254 733 666 999",
-    budget: 150000000,
-    propertyInterest: "Muthaiga Grand",
-    source: "walk_in",
-    stage: "viewing",
-    assignedAgent: "John Mwangi",
-    createdDate: "2026-05-28",
-    notes: "Client scheduled second viewing with structural engineer.",
-    timeline: [
-      { id: "tl8", date: "2026-06-10", type: "meeting", summary: "Initial Tour", details: "Client toured the entire estate." }
-    ]
-  },
-  {
-    id: "l9",
-    clientName: "Michael Onyango",
-    email: "m.onyango@domain.com",
-    phone: "+254 705 333 222",
-    budget: 35000000,
-    propertyInterest: "Gigiri Diplomatic",
-    source: "exhibition",
-    stage: "qualification",
-    assignedAgent: "Amina Wanjiku",
-    createdDate: "2026-06-05",
-    notes: "Needs property with diplomatic status or secure perimeter checks.",
-    timeline: [
-      { id: "tl9", date: "2026-06-07", type: "call", summary: "Security Verification", details: "Discussed diplomatic zone clearances." }
-    ]
-  }
-];
-
 const ROWS_PER_PAGE = 5;
 
 export function PipelineBoard({
@@ -314,10 +167,11 @@ export function PipelineBoard({
   isFullPageFocus?: boolean;
 }) {
   const { pushToast } = useToast();
-  const { setSelectedChatDMId } = useUIStore();
+  const { setSelectedChatDMId, activeEntityId } = useUIStore();
 
   // App States
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [selectedLeadDetail, setSelectedLeadDetail] = useState<Lead | undefined>(undefined);
   const [viewMode, setViewMode] = useState<"kanban" | "list">(defaultView);
   const [role, setRole] = useState<"CEO" | "Agent">("CEO");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -342,6 +196,44 @@ export function PipelineBoard({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>(undefined);
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
+
+  const loadLeads = useCallback(async () => {
+    Promise.resolve().then(() => setIsLoading(true));
+    try {
+      const res = await fetch(`/api/leads?entityId=${activeEntityId}`);
+      const data = await res.json();
+      setLeads((data.leads ?? []) as Lead[]);
+    } catch (err) {
+      console.error("Failed to load leads:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeEntityId]);
+
+  useEffect(() => {
+    Promise.resolve().then(() => { loadLeads(); });
+  }, [loadLeads]);
+
+  // Detail drawer fetches the real per-lead record (with its real activity
+  // timeline from the audit log) rather than reusing the list row, which
+  // deliberately omits timeline for a cheaper list query.
+  useEffect(() => {
+    if (!selectedLeadId) {
+      setSelectedLeadDetail(undefined);
+      return;
+    }
+    let cancelled = false;
+    Promise.resolve().then(async () => {
+      try {
+        const res = await fetch(`/api/leads/${selectedLeadId}?entityId=${activeEntityId}`);
+        const data = await res.json();
+        if (!cancelled) setSelectedLeadDetail(data.lead as Lead);
+      } catch (err) {
+        console.error("Failed to load lead detail:", err);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [selectedLeadId, activeEntityId]);
 
   // Skeleton loading triggers
   useEffect(() => {
@@ -443,8 +335,10 @@ export function PipelineBoard({
     };
   }, [leads, role]);
 
-  // Drag-free Stage Advancement buttons on Kanban cards
-  const handleMoveStage = (leadId: string, direction: "forward" | "backward") => {
+  // Drag-free Stage Advancement buttons on Kanban cards - optimistic update
+  // with rollback on failure, same convention as the valuations focus board's
+  // real drag-drop transitions.
+  const handleMoveStage = async (leadId: string, direction: "forward" | "backward") => {
     const stageSequence: PipelineStage[] = ["inquiry", "qualification", "viewing", "offer", "negotiation", "closed_won", "closed_lost"];
     const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
@@ -456,94 +350,135 @@ export function PipelineBoard({
     if (nextIndex < 0 || nextIndex >= stageSequence.length) return;
 
     const newStage = stageSequence[nextIndex];
+    const previousStage = lead.stage;
 
-    // Append stage movement to timeline log
-    const movementLog = {
-      // eslint-disable-next-line
-      id: `log-${Date.now()}`,
-      date: new Date().toISOString().split("T")[0],
-      type: "system" as const,
-      summary: "Stage Advanced",
-      details: `Admin advanced stage from ${STAGE_LABELS[lead.stage]} to ${STAGE_LABELS[newStage]}.`
-    };
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
 
-    setLeads(prev => prev.map(l =>
-      l.id === leadId
-        ? { ...l, stage: newStage, timeline: [movementLog, ...(l.timeline || [])] }
-        : l
-    ));
-
-    pushToast({
-      tone: "success",
-      title: "Opportunity Advanced",
-      body: `"${lead.clientName}" is now in stage "${STAGE_LABELS[newStage]}".`
-    });
+    try {
+      const res = await fetch(`/api/leads/${leadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "transition", entityId: activeEntityId, stage: newStage }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to move stage");
+      pushToast({
+        tone: "success",
+        title: "Opportunity Advanced",
+        body: `"${lead.clientName}" is now in stage "${STAGE_LABELS[newStage]}".`
+      });
+    } catch (err) {
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: previousStage } : l));
+      pushToast({ tone: "warning", title: "Could not move opportunity", body: err instanceof Error ? err.message : "Try again." });
+    }
   };
 
-  const handleCreateOrUpdate = (payload: Partial<Lead>) => {
-    if (editingLead) {
-      // Update
-      setLeads(prev => prev.map(l =>
-        l.id === editingLead.id ? { ...l, ...payload } : l
-      ));
-      pushToast({ tone: "success", title: "Deal Updated", body: `Opportunity details saved for "${payload.clientName}".` });
-      setEditingLead(undefined);
-    } else {
-      // Create
-      const newLead: Lead = {
-        id: `l${Date.now()}`,
-        clientName: payload.clientName || "Unknown Client",
-        email: payload.email || "",
-        phone: payload.phone || "",
-        budget: payload.budget || 0,
-        propertyInterest: payload.propertyInterest || "Runda Grove Villa",
-        source: payload.source || "website",
-        stage: payload.stage || "inquiry",
-        assignedAgent: payload.assignedAgent || "Amina Wanjiku",
-        createdDate: new Date().toISOString().split("T")[0],
-        notes: payload.notes,
-        timeline: payload.timeline || []
-      };
-      setLeads(prev => [newLead, ...prev]);
-      pushToast({ tone: "success", title: "Deal Opened", body: `Successfully logged pipeline lead "${newLead.clientName}".` });
+  const handleCreateOrUpdate = async (payload: Partial<Lead>) => {
+    try {
+      if (editingLead) {
+        await fetch(`/api/leads/${editingLead.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update",
+            entityId: activeEntityId,
+            propertyId: payload.propertyId ?? null,
+            assignedToId: payload.assignedToId ?? null,
+            expectedValueKes: payload.budget != null ? String(payload.budget) : undefined,
+            notes: payload.notes ?? null,
+          }),
+        }).then(async (res) => {
+          if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to update opportunity");
+        });
+        pushToast({ tone: "success", title: "Deal Updated", body: `Opportunity details saved for "${payload.clientName}".` });
+        setEditingLead(undefined);
+      } else {
+        const res = await fetch("/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entityId: activeEntityId,
+            displayName: payload.clientName || "Unknown Client",
+            email: payload.email || null,
+            phone: payload.phone || null,
+            propertyId: payload.propertyId ?? null,
+            assignedToId: payload.assignedToId ?? null,
+            expectedValueKes: payload.budget != null ? String(payload.budget) : undefined,
+            source: payload.source ?? "website",
+            notes: payload.notes ?? null,
+          }),
+        });
+        if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to create opportunity");
+        pushToast({ tone: "success", title: "Deal Opened", body: `Successfully logged pipeline lead "${payload.clientName}".` });
+      }
+      setIsModalOpen(false);
+      loadLeads();
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Could not save opportunity", body: err instanceof Error ? err.message : "Try again." });
     }
-    setIsModalOpen(false);
   };
 
   const handleDeleteLead = (id: string) => {
     setDeleteConfirmId(id);
   };
 
-  const confirmDeleteLead = () => {
+  const confirmDeleteLead = async () => {
     if (!deleteConfirmId) return;
     const lead = leads.find(l => l.id === deleteConfirmId);
-    setLeads(prev => prev.filter(l => l.id !== deleteConfirmId));
-    pushToast({
-      tone: "success",
-      title: "Opportunity Cleared",
-      body: `"${lead?.clientName || 'Record'}" was successfully scrubbed from CRM.`
-    });
-    setDeleteConfirmId(null);
+    try {
+      const res = await fetch(`/api/leads/${deleteConfirmId}?entityId=${activeEntityId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to delete opportunity");
+      setLeads(prev => prev.filter(l => l.id !== deleteConfirmId));
+      pushToast({
+        tone: "success",
+        title: "Opportunity Cleared",
+        body: `"${lead?.clientName || 'Record'}" was successfully scrubbed from CRM.`
+      });
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Could not delete opportunity", body: err instanceof Error ? err.message : "Try again." });
+    } finally {
+      setDeleteConfirmId(null);
+    }
   };
 
-  // Bulk Handlers
-  const handleBulkStageChange = (newStage: PipelineStage) => {
-    setLeads(prev => prev.map(l =>
-      selectedIds.includes(l.id) ? { ...l, stage: newStage } : l
-    ));
-    pushToast({ tone: "success", title: "Batch Updated", body: `Moved ${selectedIds.length} deals to stage "${STAGE_LABELS[newStage]}".` });
+  // Bulk Handlers - looped real calls, same convention as the valuation
+  // reassign modal's bulk actions (no bulk API route, N sequential requests).
+  const handleBulkStageChange = async (newStage: PipelineStage) => {
+    const ids = [...selectedIds];
+    setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, stage: newStage } : l));
     setSelectedIds([]);
+    try {
+      await Promise.all(ids.map((id) =>
+        fetch(`/api/leads/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "transition", entityId: activeEntityId, stage: newStage }),
+        })
+      ));
+      pushToast({ tone: "success", title: "Batch Updated", body: `Moved ${ids.length} deals to stage "${STAGE_LABELS[newStage]}".` });
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Some updates failed", body: err instanceof Error ? err.message : "Refresh to check current state." });
+    } finally {
+      loadLeads();
+    }
   };
 
   const handleBulkDelete = () => {
     setIsBulkDeleteConfirmOpen(true);
   };
 
-  const confirmBulkDelete = () => {
-    setLeads(prev => prev.filter(l => !selectedIds.includes(l.id)));
-    pushToast({ tone: "success", title: "Batch Action Completed", body: `Deleted ${selectedIds.length} opportunities.` });
-    setSelectedIds([]);
-    setIsBulkDeleteConfirmOpen(false);
+  const confirmBulkDelete = async () => {
+    const ids = [...selectedIds];
+    try {
+      await Promise.all(ids.map((id) => fetch(`/api/leads/${id}?entityId=${activeEntityId}`, { method: "DELETE" })));
+      setLeads(prev => prev.filter(l => !ids.includes(l.id)));
+      pushToast({ tone: "success", title: "Batch Action Completed", body: `Deleted ${ids.length} opportunities.` });
+    } catch (err) {
+      pushToast({ tone: "warning", title: "Some deletions failed", body: err instanceof Error ? err.message : "Refresh to check current state." });
+      loadLeads();
+    } finally {
+      setSelectedIds([]);
+      setIsBulkDeleteConfirmOpen(false);
+    }
   };
 
   const handleBulkMessage = () => {
@@ -1263,12 +1198,13 @@ export function PipelineBoard({
       <LeadDetailDrawer
         leadId={selectedLeadId}
         onClose={() => setSelectedLeadId(null)}
-        leadData={leads.find(l => l.id === selectedLeadId)}
-        onUpdateLead={(updated) => setLeads(prev => prev.map(l => l.id === updated.id ? updated : l))}
+        leadData={selectedLeadDetail}
+        onUpdateLead={(updated) => setSelectedLeadDetail(updated)}
       />
 
       <LeadFormModal
         open={isModalOpen}
+        entityId={activeEntityId}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateOrUpdate}
         initialData={editingLead}

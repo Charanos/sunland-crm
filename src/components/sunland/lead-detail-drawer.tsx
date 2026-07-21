@@ -34,7 +34,7 @@ export function LeadDetailDrawer({
 }: LeadDetailDrawerProps) {
   const { openChat } = useUIStore();
   const [newNote, setNewNote] = useState("");
-  const [timeline, setTimeline] = useState<Lead["timeline"]>([]);
+  const [timeline, setTimeline] = useState<NonNullable<Lead["timeline"]>>([]);
 
   useEffect(() => {
     if (leadData) {
@@ -48,7 +48,7 @@ export function LeadDetailDrawer({
     e.preventDefault();
     if (!newNote.trim()) return;
 
-    const newLog: Lead["timeline"][number] = {
+    const newLog: NonNullable<Lead["timeline"]>[number] = {
       id: `log-${Date.now()}`,
       date: new Date().toISOString().split("T")[0] + " " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: "message",

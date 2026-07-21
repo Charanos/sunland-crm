@@ -277,7 +277,7 @@ export async function getDashboardOverview(ctx: CallerContext, period: ChartPeri
   // literal headcounts, since no HR employee/headcount table exists yet:
   // Sales -> active pipeline, Ops -> open maintenance work, Legal -> active leases.
   const openMaintenanceCount = allMaintenanceRequests.filter((m) =>
-    ["open", "assigned", "in_progress"].includes(m.status),
+    ["reported", "awaiting_approval", "scheduled", "in_progress"].includes(m.status),
   ).length;
   const activeLeaseCount = allLeases.filter((l) => l.isActive).length;
   const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);

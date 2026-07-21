@@ -15,11 +15,13 @@ export type AuditLogFilters = {
   /**
    * Cross-entity read: matches rows belonging to ANY of these
    * (associatedType, one-of-ids) groups, in addition to / instead of the
-   * single associatedType/associatedId pair above. Lets a caller like "this
-   * property's full activity" pull its own rows plus its mandates', leases',
-   * maintenance requests', and documents' rows in one query, since audit rows
-   * are written against the entity that changed (a mandate, a lease...), not
-   * a secondary "which property is this about" column.
+   * single associatedType/associatedId pair above. Used sparingly - only for
+   * entities that genuinely have no dedicated page of their own to show
+   * their activity on (e.g. a property's own feed still merges in its
+   * maintenance requests' and documents' rows, since neither has its own
+   * full-view page yet). Mandate and lease activity are deliberately NOT
+   * merged into a property's feed anymore - each has its own dedicated
+   * full-view page with its own correctly-scoped activity tab.
    */
   associatedGroups?: Array<{ type: string; ids: string[] }>;
   dateFrom?: string;

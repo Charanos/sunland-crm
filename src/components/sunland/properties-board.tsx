@@ -28,11 +28,12 @@ import {
   IconLayoutGrid,
   IconList,
   IconUsers,
+  IconClock,
+  IconMoodEmpty,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import {
   Badge,
-  MarketBadge,
   Avatar,
   BoardHeader,
   Button,
@@ -118,27 +119,45 @@ function managerInitials(name?: string | null): string {
   return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
 }
 
-/** Status badge pill - solid market badge style */
+/**
+ * StatusPill — used in list-view table rows and mobile cards (non-image context).
+ * Uses the soft-pastel Badge system (badge-pill + badge-tone-*) consistent with
+ * leases-board and valuations-board.
+ */
+const STATUS_BADGE_TONE: Record<PropertyStatus, "success" | "neutral" | "warning" | "risk"> = {
+  available: "success",
+  occupied: "neutral",
+  under_offer: "warning",
+  maintenance: "risk",
+  off_market: "neutral",
+};
+
 function StatusPill({ status }: { status: PropertyStatus }) {
   const sc = STATUS_CONFIG[status] || STATUS_CONFIG.available;
-  const toneMap: Record<PropertyStatus, "success" | "neutral" | "warning" | "risk"> = {
-    available: "success",
-    occupied: "neutral",
-    under_offer: "warning",
-    maintenance: "risk",
-    off_market: "neutral",
-  };
   return (
-    <MarketBadge tone={toneMap[status] || "neutral"}>
+    <Badge tone={STATUS_BADGE_TONE[status] ?? "neutral"}>
       {sc.label}
-    </MarketBadge>
+    </Badge>
+  );
+}
+
+/**
+ * ImageStatusPill — same soft-pastel Badge pill as StatusPill.
+ * Used on image overlays; backdrop-blur provides legibility over photos.
+ */
+function ImageStatusPill({ status }: { status: PropertyStatus }) {
+  return (
+    <span className="badge-pill badge-tone-neutral backdrop-blur-sm shadow-sm" style={{ background: "rgba(255,255,255,0.82)" }}>
+      <span className={cn("size-1.5 rounded-full shrink-0 mr-1", STATUS_CONFIG[status]?.dot ?? "bg-slate-400")} />
+      {STATUS_CONFIG[status]?.label ?? status}
+    </span>
   );
 }
 
 /** Spec chip with icon */
 function SpecChip({ icon: Icon, value }: { icon: React.ElementType; value: string }) {
   return (
-    <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 label-caps text-slate-500">
+    <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-lg px-2 py-0.5 text-xs font-medium text-slate-500">
       <Icon size={11} stroke={1.8} className="text-slate-600 shrink-0" />
       {value}
     </span>
@@ -205,9 +224,9 @@ function PropertyGridCard({
 
         {/* Top-left: property type chip */}
         <div className="absolute top-3 left-3">
-          <MarketBadge tone="neutral">
+          <span className="badge-pill badge-tone-neutral backdrop-blur-sm shadow-sm" style={{ background: "rgba(255,255,255,0.82)" }}>
             {property.propertyType}
-          </MarketBadge>
+          </span>
         </div>
 
         {/* Top-right: feature star */}
@@ -236,9 +255,9 @@ function PropertyGridCard({
           </p>
         </div>
 
-        {/* Bottom-right: status pill */}
+        {/* Bottom-right: status pill — on-image overlay uses MarketBadge */}
         <div className="absolute bottom-3 right-3">
-          <StatusPill status={property.status} />
+          <ImageStatusPill status={property.status} />
         </div>
       </div>
 
@@ -263,7 +282,7 @@ function PropertyGridCard({
               <SpecChip key={i} icon={spec.icon} value={spec.value} />
             ))}
             {(property.amenities?.length ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-100 rounded-lg px-2 py-1 label-caps text-emerald-700">
+              <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-100 rounded-lg px-2 py-0.5 text-xs font-medium text-emerald-700">
                 +{property.amenities!.length} amenities
               </span>
             )}
@@ -350,6 +369,80 @@ export function PropertiesBoard({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [ownerDrawerId, setOwnerDrawerId] = useState<string | null>(null);
   const [managerDrawerId, setManagerDrawerId] = useState<string | null>(null);
+
+  // ── Property Activity Feed ──────────────────────────────────────────────────
+  interface AuditEntry { id: string; summary: string; createdAt: string; actorName?: string | null; associatedId?: string | null; }
+  const [propertyActivity, setPropertyActivity] = useState<AuditEntry[]>([]);
+  const [propertyActivityLoading, setPropertyActivityLoading] = useState(true);
+  const [propertyActivityLoaded, setPropertyActivityLoaded] = useState(false);
+  const [activitySearchQuery, setActivitySearchQuery] = useState("");
+  const [activityFilter, setActivityFilter] = useState("all");
+  const [activityPage, setActivityPage] = useState(1);
+  const ACTIVITY_PER_PAGE = 10;
+
+  useEffect(() => {
+    if (!entityId || propertyActivityLoaded) return;
+    fetch(`/api/audit?entityId=${entityId}&associatedType=property&limit=150`)
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        setPropertyActivity(data.entries ?? []);
+        setPropertyActivityLoading(false);
+        setPropertyActivityLoaded(true);
+      })
+      .catch(() => {
+        setPropertyActivity([]);
+        setPropertyActivityLoading(false);
+        setPropertyActivityLoaded(true);
+      });
+  }, [entityId, propertyActivityLoaded]);
+
+  const filteredPropertyActivity = useMemo(() => {
+    let result = propertyActivity;
+    if (activitySearchQuery) {
+      const q = activitySearchQuery.toLowerCase();
+      result = result.filter((e) =>
+        e.summary.toLowerCase().includes(q) || e.actorName?.toLowerCase().includes(q)
+      );
+    }
+    if (activityFilter !== "all") {
+      result = result.filter((e) => {
+        const lower = e.summary.toLowerCase();
+        if (activityFilter === "status") return lower.includes("status") || lower.includes("available") || lower.includes("occupied") || lower.includes("offer") || lower.includes("maintenance") || lower.includes("market");
+        if (activityFilter === "edits") return lower.includes("updat") || lower.includes("chang") || lower.includes("edit");
+        if (activityFilter === "mandates") return lower.includes("mandat") || lower.includes("assign") || lower.includes("manager");
+        if (activityFilter === "system") return lower.includes("system") || lower.includes("auto");
+        return true;
+      });
+    }
+    return result;
+  }, [propertyActivity, activitySearchQuery, activityFilter]);
+
+  const activityTotalPages = Math.max(1, Math.ceil(filteredPropertyActivity.length / ACTIVITY_PER_PAGE));
+  const safeActivityPage = Math.min(activityPage, activityTotalPages);
+  const paginatedPropertyActivity = filteredPropertyActivity.slice(
+    (safeActivityPage - 1) * ACTIVITY_PER_PAGE,
+    safeActivityPage * ACTIVITY_PER_PAGE,
+  );
+
+  const getActivityTone = (summary: string) => {
+    const lower = summary.toLowerCase();
+    if (lower.includes("delet") || lower.includes("remov")) return "bg-rose-300 ring-rose-50";
+    if (lower.includes("feature") || lower.includes("star")) return "bg-[#f3df27] ring-amber-50";
+    if (lower.includes("available") || lower.includes("register") || lower.includes("creat")) return "bg-emerald-400 ring-emerald-50";
+    if (lower.includes("updat") || lower.includes("chang") || lower.includes("edit") || lower.includes("status")) return "bg-indigo-300 ring-indigo-50";
+    return "bg-slate-200 ring-white";
+  };
+
+  const relativeTime = (iso: string) => {
+    const diff = new Date().getTime() - new Date(iso).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return "Just now";
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    const days = Math.floor(hr / 24);
+    return days === 1 ? "Yesterday" : `${days}d ago`;
+  };
 
   // Initialize modal state from search params
   useEffect(() => {
@@ -706,7 +799,7 @@ export function PropertiesBoard({
               <span className="font-mono text-4xl text-white">
                 KES {formatCompactKES(kpis.rentPool).replace('KES ', '')}
               </span>
-              <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mt-2">Contracted · occupied only</p>
+              <p className="text-xxs font-medium uppercase tracking-widest text-slate-400 mt-2">Contracted · occupied only</p>
             </div>
           </div>
         </div>
@@ -748,9 +841,9 @@ export function PropertiesBoard({
                 )}
                 {/* Gradient scrim for mobile readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent sm:hidden pointer-events-none" />
-                {/* Status chip */}
+                {/* Status chip — on-image overlay */}
                 <div className="absolute bottom-4 left-4">
-                  <StatusPill status={featuredProperties[safeFeaturedIndex].status} />
+                  <ImageStatusPill status={featuredProperties[safeFeaturedIndex].status} />
                 </div>
               </div>
 
@@ -1420,13 +1513,17 @@ export function PropertiesBoard({
                           <td className="px-3 py-3.5 text-center">
                             {p.mandateStatus ? (
                               <div className="flex flex-col items-center gap-1">
-                                <span className={cn(
-                                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium text-slate-900",
-                                  MANDATE_STATUS_CONFIG[p.mandateStatus].pill
-                                )}>
-                                  <span className={cn("size-1.5 rounded-full shrink-0", MANDATE_STATUS_CONFIG[p.mandateStatus].dot)} />
+                                <Badge
+                                  tone={
+                                    p.mandateStatus === "active"
+                                      ? "success"
+                                      : p.mandateStatus === "pending_approval"
+                                        ? "warning"
+                                        : "neutral"
+                                  }
+                                >
                                   {MANDATE_STATUS_CONFIG[p.mandateStatus].label}
-                                </span>
+                                </Badge>
                                 {p.manager?.name ? (
                                   <button
                                     type="button"
@@ -1500,6 +1597,131 @@ export function PropertiesBoard({
                 onPageChange={setPage}
                 label={`${sorted.length} of ${properties.length} property records`}
               />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Property Activity Logger ── */}
+      <div className="flex items-center gap-4 my-6">
+        <hr className="flex-1 border-slate-200/60" />
+        <span className="label-caps text-slate-600 tracking-wider">Property Activity</span>
+        <hr className="flex-1 border-slate-200/60" />
+      </div>
+
+      <div className="gsap-stagger mb-8 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
+        <div className="flex flex-col gap-5 mb-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
+              <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Property Activity
+            </h3>
+          </div>
+
+          {/* Search & Filter bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative flex-1">
+              <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search activity logs..."
+                value={activitySearchQuery}
+                onChange={(e) => { setActivitySearchQuery(e.target.value); setActivityPage(1); }}
+                className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400"
+              />
+            </div>
+            <div className="relative shrink-0">
+              <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <select
+                value={activityFilter}
+                onChange={(e) => { setActivityFilter(e.target.value); setActivityPage(1); }}
+                className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer"
+              >
+                <option value="all">All Events</option>
+                <option value="status">Status Changes</option>
+                <option value="edits">Modifications</option>
+                <option value="mandates">Mandates & Managers</option>
+                <option value="system">System Actions</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <IconChevronRight size={14} className="text-slate-400 rotate-90" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {propertyActivityLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="size-6 rounded-full border-2 border-slate-200 border-t-[#151936] animate-spin" />
+          </div>
+        ) : propertyActivity.length === 0 ? (
+          <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+            <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1">
+              <IconMoodEmpty size={32} className="text-slate-300" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-700">No recorded activity yet.</h3>
+            <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, mandate events, and registrations will safely log here.</p>
+          </div>
+        ) : paginatedPropertyActivity.length === 0 ? (
+          <div className="flex flex-col items-center py-12 text-center">
+            <IconSearch size={24} className="text-slate-300 mb-3" />
+            <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
+            <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6 relative ml-1">
+            <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
+            {paginatedPropertyActivity.map((entry) => {
+              const toneColor = getActivityTone(entry.summary);
+              return (
+                <div key={entry.id} className="relative flex items-start lg:items-center gap-4 z-10 group">
+                  <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
+                  <div className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/50 -my-1.5 -mx-3 p-1.5 px-3 rounded-xl transition-colors">
+                    <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
+                      {entry.actorName ? (
+                        <>
+                          <span className="font-medium text-slate-700">{entry.actorName}</span>{" "}
+                          {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}
+                        </>
+                      ) : (
+                        entry.summary
+                      )}
+                    </p>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
+                        {new Date(entry.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })},{" "}
+                        {new Date(entry.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                      <Badge tone="neutral">{relativeTime(entry.createdAt)}</Badge>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {activityTotalPages > 1 && (
+          <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+            <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+              Page {safeActivityPage} of {activityTotalPages} · {filteredPropertyActivity.length} logs
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setActivityPage(Math.max(1, safeActivityPage - 1))}
+                disabled={safeActivityPage <= 1}
+                className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+              >
+                <IconChevronLeft size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setActivityPage(Math.min(activityTotalPages, safeActivityPage + 1))}
+                disabled={safeActivityPage >= activityTotalPages}
+                className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+              >
+                <IconChevronRight size={15} />
+              </button>
             </div>
           </div>
         )}

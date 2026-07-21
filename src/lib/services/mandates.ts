@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { approvalRequests, contacts, mandateStatus, properties, propertyMandates, remittanceAdvices, transactions, users } from "@/db/schema";
+import { approvalRequests, contacts, documents, mandateStatus, properties, propertyMandates, remittanceAdvices, transactions, users, valuations } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";
@@ -52,7 +52,7 @@ async function notifyMandateApprovers(
 
 export async function listMandates(
   ctx: CallerContext,
-  filters: { propertyId?: string; status?: string; includeFinancials?: boolean } = {},
+  filters: { propertyId?: string; status?: string; paperworkStatus?: "verified" | "pending_upload"; search?: string; includeFinancials?: boolean } = {},
 ) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(ctx.entityId);
@@ -64,7 +64,7 @@ export async function listMandates(
     conditions.push(eq(propertyMandates.status, filters.status as (typeof MANDATE_STATUS_VALUES)[number]));
   }
 
-  const rows = await db
+  const baseRows = await db
     .select({
       id: propertyMandates.id,
       entityId: propertyMandates.entityId,
@@ -78,6 +78,7 @@ export async function listMandates(
       mandateRate: propertyMandates.mandateRate,
       rateJustification: propertyMandates.rateJustification,
       unitCount: propertyMandates.unitCount,
+      maintenanceAuthorityKes: propertyMandates.maintenanceAuthorityKes,
       startDate: propertyMandates.startDate,
       endDate: propertyMandates.endDate,
       status: propertyMandates.status,
@@ -94,6 +95,45 @@ export async function listMandates(
     .leftJoin(users, eq(propertyMandates.assignedPmId, users.id))
     .where(and(...conditions))
     .orderBy(desc(propertyMandates.createdAt));
+
+  // Paperwork completeness (ADR 015 §15.1) + acquisition origin (§15.3) +
+  // pending-approval holder, batched by id rather than per-row - same "fetch
+  // then reduce in JS" convention as everywhere else in this service layer.
+  const mandateIds = baseRows.map((r) => r.id);
+  const propertyIdsForPaperwork = baseRows.map((r) => r.propertyId);
+  const [letterDocs, originRows, pendingApprovals] = await Promise.all([
+    propertyIdsForPaperwork.length
+      ? db.select({ propertyId: documents.propertyId }).from(documents).where(and(eq(documents.type, "mandate_letter"), inArray(documents.propertyId, propertyIdsForPaperwork)))
+      : Promise.resolve([]),
+    mandateIds.length
+      ? db.select({ id: valuations.id, valuationCode: valuations.valuationCode, resultingMandateId: valuations.resultingMandateId }).from(valuations).where(inArray(valuations.resultingMandateId, mandateIds))
+      : Promise.resolve([]),
+    mandateIds.length
+      ? db
+        .select({ relatedId: approvalRequests.relatedId, requiredApproverRole: approvalRequests.requiredApproverRole })
+        .from(approvalRequests)
+        .where(and(eq(approvalRequests.relatedTable, "property_mandates"), eq(approvalRequests.status, "pending"), inArray(approvalRequests.relatedId, mandateIds)))
+      : Promise.resolve([]),
+  ]);
+  const propertyIdsWithLetter = new Set(letterDocs.map((d) => d.propertyId));
+  const originByMandateId = new Map(originRows.map((v) => [v.resultingMandateId as string, v]));
+  const pendingApproverByMandateId = new Map(pendingApprovals.map((a) => [a.relatedId, a.requiredApproverRole]));
+
+  let rows = baseRows.map((r) => {
+    const origin = originByMandateId.get(r.id) ?? null;
+    return {
+      ...r,
+      paperworkStatus: (propertyIdsWithLetter.has(r.propertyId) ? "verified" : "pending_upload") as "verified" | "pending_upload",
+      originValuation: origin ? { id: origin.id, valuationCode: origin.valuationCode } : null,
+      pendingApproverRole: r.status === "pending_approval" ? (pendingApproverByMandateId.get(r.id) ?? null) : null,
+    };
+  });
+
+  if (filters.paperworkStatus) rows = rows.filter((r) => r.paperworkStatus === filters.paperworkStatus);
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    rows = rows.filter((r) => r.propertyName.toLowerCase().includes(q) || r.landlordName.toLowerCase().includes(q) || r.propertyCode.toLowerCase().includes(q));
+  }
 
   if (!filters.includeFinancials || rows.length === 0) return rows;
 
@@ -240,6 +280,15 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
   // a terminated mandate being viewed here has no "this month" to show.
   const currentPeriod = property.mandate?.id === mandateId ? property.mandate.currentPeriod : undefined;
 
+  // Honest origin trail (ADR 015 §15.3): a mandate either has a real
+  // acquisition-pipeline valuation pointing at it or it doesn't - no history
+  // is fabricated for the mandates that predate the valuations module.
+  const [originValuation] = await db
+    .select({ id: valuations.id, valuationCode: valuations.valuationCode })
+    .from(valuations)
+    .where(eq(valuations.resultingMandateId, mandateId))
+    .limit(1);
+
   return {
     id: mandateRow.id,
     entityId: mandateRow.entityId,
@@ -290,6 +339,7 @@ export async function getMandateWithDetails(ctx: CallerContext, mandateId: strin
     documents: property.documents,
     collections: property.collections,
     arrears: property.arrears,
+    originValuation: originValuation ?? null,
   };
 }
 

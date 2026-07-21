@@ -23,19 +23,33 @@ export const propertyStatus = pgEnum("property_status", [
   "maintenance",
 ]);
 
+// Severity - real 3-tier vocabulary matching the Maintenance Board design
+// (ADR 015 follow-up), replacing the previous 4-tier low/normal/high/critical.
+// Column name stays `priority`; only its allowed values changed.
 export const maintenancePriority = pgEnum("maintenance_priority", [
-  "low",
-  "normal",
-  "high",
+  "routine",
+  "urgent",
   "critical",
 ]);
 
+// Real 5-stage linear flow with a genuine approval gate built in
+// (awaiting_approval), replacing the previous open/assigned/resolved/closed.
+// `reported` = new/unactioned; `awaiting_approval` = a cost estimate is
+// pending GM/CEO decision (see submitMaintenanceCostForApproval); `scheduled`
+// = a real calendar visit exists (see scheduleMaintenanceVisit); `done`
+// collapses the old resolved+closed distinction into one terminal state.
 export const maintenanceStatus = pgEnum("maintenance_status", [
-  "open",
-  "assigned",
+  "reported",
+  "awaiting_approval",
+  "scheduled",
   "in_progress",
-  "resolved",
-  "closed",
+  "done",
+]);
+
+export const maintenanceCategory = pgEnum("maintenance_category", [
+  "reactive",
+  "planned",
+  "compliance",
 ]);
 
 export const unitStatus = pgEnum("unit_status", [
@@ -157,15 +171,24 @@ export const maintenanceRequests = pgTable(
     assignedContractorId: uuid("assigned_contractor_id").references(() => contacts.id),
     title: text("title").notNull(),
     description: text("description").notNull(),
-    priority: maintenancePriority("priority").default("normal").notNull(),
-    status: maintenanceStatus("status").default("open").notNull(),
+    priority: maintenancePriority("priority").default("routine").notNull(),
+    status: maintenanceStatus("status").default("reported").notNull(),
+    category: maintenanceCategory("category").default("reactive").notNull(),
     dueAt: timestamp("due_at", { withTimezone: true }),
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    // Real cost tracking, routed through the same approval-tier mechanism
+    // property_mandates.maintenanceAuthorityKes already exists for but was
+    // never connected to actual spend - estimatedCostKes is what's submitted
+    // for approval; actualCostKes is stamped once approved (auto or via a
+    // real approvalRequests decision).
+    estimatedCostKes: numeric("estimated_cost_kes", { precision: 14, scale: 2 }),
+    actualCostKes: numeric("actual_cost_kes", { precision: 14, scale: 2 }),
     ...timestamps,
   },
   (table) => ({
     statusIdx: index("maintenance_status_idx").on(table.status),
     entityIdx: index("maintenance_entity_idx").on(table.entityId),
     priorityIdx: index("maintenance_priority_idx").on(table.priority),
+    categoryIdx: index("maintenance_category_idx").on(table.category),
   }),
 );

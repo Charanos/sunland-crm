@@ -206,6 +206,17 @@ export async function updateValuation(ctx: CallerContext, valuationId: string, r
   if (input.validUntil !== undefined) updatable.validUntil = toDateOrNull(input.validUntil);
   if (input.reportUrl !== undefined) updatable.reportUrl = input.reportUrl;
   if (input.notes !== undefined) updatable.notes = input.notes;
+  if (input.isFeatured !== undefined) updatable.isFeatured = input.isFeatured;
+
+  // A lone isFeatured toggle gets its own readable sentence, same rationale
+  // as properties.ts's describePropertyUpdate special-casing that field -
+  // "updated valuation X" is technically true but unhelpfully vague for the
+  // single most common one-click action on this page.
+  const changedKeys = Object.keys(updatable);
+  const summary =
+    changedKeys.length === 1 && changedKeys[0] === "isFeatured"
+      ? `${ctx.user.name} ${input.isFeatured ? "marked" : "removed"} ${existing.externalPropertyName ?? existing.valuationCode} ${input.isFeatured ? "as featured" : "from featured"}`
+      : `${ctx.user.name} updated valuation ${existing.valuationCode}`;
 
   return db.transaction(async (tx) => {
     const [updated] = await tx
@@ -218,7 +229,7 @@ export async function updateValuation(ctx: CallerContext, valuationId: string, r
       action: "properties.valuation.update",
       associatedType: "valuation",
       associatedId: valuationId,
-      summary: `${ctx.user.name} updated valuation ${existing.valuationCode}`,
+      summary,
       entityId,
       before: existing,
       after: updated,
@@ -350,7 +361,7 @@ export async function signMandateFromValuation(ctx: CallerContext, valuationId: 
     const newProperty = await createProperty(ctx, {
       name: existing.externalPropertyName,
       propertyType: existing.isLand ? "Land" : "Residential",
-      listingType: "Rental",
+      listingType: "let",
       location: existing.externalLocation,
       ownerContactId: existing.landlordContactId,
     });

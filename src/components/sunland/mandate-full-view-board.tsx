@@ -60,6 +60,7 @@ import { formatCompactKES, formatFileSize } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import type { Property } from "./property-constants";
 import type { LeaseSummary, PropertyDocumentSummary } from "./property-detail-types";
+import { findMandateLetterDocument, mandateLetterStatus, mandateOriginLabel, MANDATE_LETTER_STATUS_META } from "./mandate-constants";
 
 type TabKey = "overview" | "financials" | "units" | "documents" | "activity";
 type ActionTone = "amber" | "rose" | "neutral";
@@ -154,6 +155,7 @@ interface MandateDetail {
   documents: PropertyDocumentSummary[];
   collections: Array<{ period: string; expected: number; collected: number }>;
   arrears: { status: "current" | "partial" | "defaulted"; amount: number; daysInArrears: number } | null;
+  originValuation: { id: string; valuationCode: string } | null;
 }
 
 interface AuditEntry {
@@ -483,7 +485,7 @@ export function MandateFullViewBoard({
         onClick: () => setActiveTab("units"),
       });
     }
-    const hasMandateLetter = (mandate.documents ?? []).some((d) => d.type === "mandate_letter");
+    const hasMandateLetter = mandateLetterStatus(mandate.documents, mandate.property.id) === "verified";
     if (!hasMandateLetter) {
       items.push({
         key: "letter",
@@ -680,7 +682,7 @@ export function MandateFullViewBoard({
       propertyCode: mandate.property.propertyCode,
       name: mandate.property.name,
       propertyType: mandate.property.propertyType,
-      listingType: "rent",
+      listingType: "let",
       status: "occupied",
       location: mandate.property.location,
       ownerContactId: mandate.landlord.id,
@@ -769,6 +771,16 @@ export function MandateFullViewBoard({
             <h1 className="title-serif text-slate-900 truncate">
               {mandate.property.name}
             </h1>
+            {(() => {
+              const origin = mandateOriginLabel(mandate.originValuation);
+              return origin.href ? (
+                <Link href={origin.href}>
+                  <Badge tone={origin.tone}>{origin.label}</Badge>
+                </Link>
+              ) : (
+                <Badge tone={origin.tone}>{origin.label}</Badge>
+              );
+            })()}
           </div>
           <div className="flex items-center gap-3 text-slate-500 text-sm min-w-0 font-medium">
             <span className="flex items-center gap-1.5 min-w-0">
@@ -1622,13 +1634,18 @@ export function MandateFullViewBoard({
           )}
 
           {activeTab === "documents" && (() => {
-            const mandateLetterDoc = mandate.documents.find((d) => d.type === "mandate_letter");
+            const mandateLetterDoc = findMandateLetterDocument(mandate.documents, mandate.property.id);
             const hasAnyOtherDocs = mandate.documents.some((d) => d.type !== "mandate_letter");
+            const letterStatus = mandateLetterStatus(mandate.documents, mandate.property.id);
+            const letterStatusMeta = MANDATE_LETTER_STATUS_META[letterStatus];
             return (
               <div className="flex flex-col gap-4">
                 {/* Mandate Letter Card */}
                 <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5 font-mono block">Mandate Letter</span>
+                  <div className="flex items-center justify-between gap-3 mb-1.5">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-400 font-mono block">Mandate Letter</span>
+                    <Badge tone={letterStatusMeta.tone}>{letterStatusMeta.label}</Badge>
+                  </div>
                   <p className="text-desc-secondary mb-5">The signed instrument authorizing Sunland to collect rent and manage this property on {mandate.landlord.name}&apos;s behalf.</p>
 
                   {mandateLetterDoc ? (
@@ -2273,9 +2290,10 @@ export function MandateFullViewBoard({
         open={mandateLetterOpen}
         entityId={entityId}
         ownerContactId={mandate.landlord.id}
+        propertyId={mandate.property.id}
         propertyName={mandate.property.name}
         landlordName={mandate.landlord.name}
-        hasExistingLetter={mandate.documents.some((d) => d.type === "mandate_letter")}
+        hasExistingLetter={mandateLetterStatus(mandate.documents, mandate.property.id) === "verified"}
         onClose={() => setMandateLetterOpen(false)}
         onAttached={() => setRefreshCount((c) => c + 1)}
       />

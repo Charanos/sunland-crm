@@ -19,6 +19,7 @@ interface MandateLetterModalProps {
   open: boolean;
   entityId: string | null;
   ownerContactId: string;
+  propertyId: string;
   propertyName: string;
   landlordName: string;
   hasExistingLetter: boolean;
@@ -30,6 +31,7 @@ export function MandateLetterModal({
   open,
   entityId,
   ownerContactId,
+  propertyId,
   propertyName,
   landlordName,
   hasExistingLetter,
@@ -56,13 +58,14 @@ export function MandateLetterModal({
           title: `${propertyName} - Mandate Letter`,
           fileUrl: url.trim(),
           ownerContactId,
+          propertyId,
           fileSizeBytes: stagedSizeBytes,
         }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error ?? "Failed to attach mandate letter");
 
-      pushToast({ tone: "success", title: "Mandate letter attached", body: `Saved against ${landlordName}'s document record.` });
+      pushToast({ tone: "success", title: "Mandate letter attached", body: `Saved against ${propertyName}'s mandate record.` });
       onAttached();
       onClose();
       setUrl("");
@@ -138,8 +141,8 @@ export function MandateLetterModal({
           </div>
         )}
         <p className="body-sm text-slate-400">
-          Saved against {landlordName}&apos;s document record, so it stays attached to every property they own -
-          not just this one.
+          Saved against this property&apos;s mandate - the signed instrument authorizing Sunland to manage{" "}
+          {propertyName} specifically, on {landlordName}&apos;s behalf.
         </p>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">

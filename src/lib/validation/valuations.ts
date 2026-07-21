@@ -54,6 +54,7 @@ export const updateValuationSchema = z.object({
   validUntil: z.string().nullable().optional(),
   reportUrl: z.string().url().nullable().optional(),
   notes: z.string().nullable().optional(),
+  isFeatured: z.boolean().optional(),
 });
 
 // site_visit -> valued transition: captures the real assessed value/fee/

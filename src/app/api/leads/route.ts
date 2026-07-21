@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/authz/errors";
-import { createMaintenanceRequest, listMaintenanceRequests } from "@/lib/services/maintenance";
+import { createLead, listLeads } from "@/lib/services/leads";
 import { requireCallerContext } from "@/lib/services/types";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const entityId = searchParams.get("entityId") ?? null;
-    const status = searchParams.get("status") ?? undefined;
-    const priority = searchParams.get("priority") ?? undefined;
-    const category = searchParams.get("category") ?? undefined;
-    const propertyId = searchParams.get("propertyId") ?? undefined;
+    const stage = searchParams.get("stage") ?? undefined;
+    const assignedToId = searchParams.get("assignedToId") ?? undefined;
+    const search = searchParams.get("search") ?? undefined;
 
     const ctx = await requireCallerContext(entityId, request);
-    const maintenanceRequests = await listMaintenanceRequests(ctx, { status, priority, category, propertyId });
+    const leads = await listLeads(ctx, { stage, assignedToId, search });
 
-    return NextResponse.json({ maintenanceRequests });
+    return NextResponse.json({ leads });
   } catch (error) {
     return handleRouteError(error);
   }
@@ -27,9 +26,9 @@ export async function POST(request: Request) {
     const entityId = body.entityId ?? null;
 
     const ctx = await requireCallerContext(entityId, request);
-    const maintenanceRequest = await createMaintenanceRequest(ctx, body);
+    const lead = await createLead(ctx, body);
 
-    return NextResponse.json({ success: true, maintenanceRequest });
+    return NextResponse.json({ success: true, lead });
   } catch (error) {
     return handleRouteError(error);
   }

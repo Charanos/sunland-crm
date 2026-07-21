@@ -453,6 +453,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
         title: maintenanceRequests.title,
         priority: maintenanceRequests.priority,
         status: maintenanceRequests.status,
+        category: maintenanceRequests.category,
         createdAt: maintenanceRequests.createdAt,
         reportedBy: contacts.displayName,
       })
@@ -635,6 +636,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
     status: ((d.metadata as Record<string, unknown> | null)?.status as "draft" | "awaiting_signature" | "signed") ?? "signed",
     url: d.fileUrl,
     type: d.type,
+    propertyId: d.propertyId,
     createdAt: toISOStringSafe(d.createdAt),
     fileSizeBytes: d.fileSizeBytes,
   }));
@@ -711,6 +713,7 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
       reportedBy: m.reportedBy ?? undefined,
       priority: m.priority,
       status: m.status,
+      category: m.category,
     })),
     salesPipeline,
     documents: documentSummaries,
@@ -719,14 +722,14 @@ export async function getPropertyWithDetails(ctx: CallerContext, propertyId: str
 }
 
 /**
- * A property's real activity isn't just its own create/update/delete rows -
- * mandate decisions, lease signings/renewals/terminations, maintenance
- * reports, and document uploads are each written against THEIR OWN entity
- * (associatedType "property_mandate"/"lease"/"maintenance_request"/
- * "document"), never the property directly. A naive
- * associatedType=property,associatedId=X query misses all of that. This
- * looks up every related entity's id for this property and reads them all
- * in one merged, actor-named, chronologically-ordered feed.
+ * A property's own activity feed - deliberately NOT stacked with mandate or
+ * lease activity anymore (ADR 015 follow-up): both now have their own
+ * dedicated full-view pages with their own correctly-scoped activity tabs
+ * (mandate-full-view-board.tsx, lease-full-view-board.tsx), so merging their
+ * events here too was pure duplication, not a feature. Maintenance requests
+ * and documents don't have a dedicated full-view page yet, so they stay
+ * merged in here for now - drop maintenance_request from this list too once
+ * a maintenance-request detail page exists.
  */
 export async function listPropertyActivity(
   ctx: CallerContext,
@@ -739,9 +742,7 @@ export async function listPropertyActivity(
   const [prop] = await db.select({ ownerContactId: properties.ownerContactId }).from(properties).where(eq(properties.id, propertyId)).limit(1);
   if (!prop) throw new NotFoundError("Property not found");
 
-  const [mandateRows, leaseRows, maintenanceRows, documentRows] = await Promise.all([
-    db.select({ id: propertyMandates.id }).from(propertyMandates).where(eq(propertyMandates.propertyId, propertyId)),
-    db.select({ id: leases.id }).from(leases).where(eq(leases.propertyId, propertyId)),
+  const [maintenanceRows, documentRows] = await Promise.all([
     db.select({ id: maintenanceRequests.id }).from(maintenanceRequests).where(eq(maintenanceRequests.propertyId, propertyId)),
     db
       .select({ id: documents.id })
@@ -759,8 +760,6 @@ export async function listPropertyActivity(
     offset: filters.offset,
     associatedGroups: [
       { type: "property", ids: [propertyId] },
-      { type: "property_mandate", ids: mandateRows.map((r) => r.id) },
-      { type: "lease", ids: leaseRows.map((r) => r.id) },
       { type: "maintenance_request", ids: maintenanceRows.map((r) => r.id) },
       { type: "document", ids: documentRows.map((r) => r.id) },
     ],
@@ -795,6 +794,7 @@ export async function listLeases(ctx: CallerContext) {
       tenantPhone: contacts.phone,
       tenantAvatarUrl: contacts.avatarUrl,
       propertyMedia: properties.media,
+      isFeatured: properties.isFeatured,
       // Same in-flight-mandate join as listProperties:70-78 - surfaces the
       // property's manager on the lease row so the Leases hero card can show
       // a manager mini-card without a second fetch.

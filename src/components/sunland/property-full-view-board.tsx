@@ -43,7 +43,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { DropdownMenu, DropdownItem, Avatar } from "@/components/ui/erp-primitives";
+import { DropdownMenu, DropdownItem, Avatar, Badge } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PropertyFormModal } from "./property-form-modal";
@@ -63,6 +63,7 @@ import { cn } from "@/lib/utils/cn";
 import { LISTING_TYPE_LABEL, MANDATE_STATUS_CONFIG, PROPERTY_TYPE_ICON, STATUS_CONFIG, STATUS_ORDER, formatPropertyDate } from "./property-constants";
 import type { PropertyStatus } from "./property-constants";
 import type { ActivityLogEntry, LeaseSummary, PropertyDetail, PropertyDocumentSummary } from "./property-detail-types";
+import { findMandateLetterDocument, mandateLetterStatus } from "./mandate-constants";
 
 type TabKey = "overview" | "financials" | "tenancy" | "maintenance" | "activity";
 type ActionTone = "amber" | "rose" | "neutral";
@@ -237,14 +238,14 @@ export function PropertyFullViewBoard({
       icon: property.listingType === "sale" ? IconTrendingUp : IconUsers,
     });
     const openCritical = (property.maintenanceRequests ?? []).some(
-      (m) => m.priority === "critical" && m.status !== "resolved" && m.status !== "closed"
+      (m) => m.priority === "critical" && m.status !== "done"
     );
     list.push({ key: "maintenance", label: "Maintenance", icon: IconClipboardList, dot: openCritical });
     list.push({ key: "activity", label: "Activity", icon: IconHistory });
     return list;
   }, [property, canViewFinance]);
 
-  const mandateLetterDoc = property?.documents?.find((d) => d.type === "mandate_letter");
+  const mandateLetterDoc = property ? findMandateLetterDocument(property.documents, property.id) : undefined;
 
   // Who this mandate's pending decision is actually mine to make (matches the
   // viewer's own role to the tier), vs. something a CEO could override.
@@ -300,7 +301,7 @@ export function PropertyFullViewBoard({
       });
     }
     const openCritical = (property.maintenanceRequests ?? []).find(
-      (m) => m.priority === "critical" && m.status !== "resolved" && m.status !== "closed"
+      (m) => m.priority === "critical" && m.status !== "done"
     );
     if (openCritical) {
       items.push({
@@ -971,6 +972,7 @@ export function PropertyFullViewBoard({
           open={mandateLetterOpen}
           entityId={entityId}
           ownerContactId={property.owner.id}
+          propertyId={property.id}
           propertyName={property.name}
           landlordName={property.owner.name}
           hasExistingLetter={!!mandateLetterDoc?.url}
@@ -1265,7 +1267,7 @@ function getVitals(
   const currentMonth = property.collections?.[property.collections.length - 1];
   const ratio = currentMonth && currentMonth.expected > 0 ? currentMonth.collected / currentMonth.expected : null;
   const collectionTone: VitalTone = ratio == null ? "neutral" : ratio >= 0.95 ? "emerald" : ratio >= 0.7 ? "amber" : "rose";
-  const openMaint = (property.maintenanceRequests ?? []).filter((m) => ["open", "assigned", "in_progress"].includes(m.status));
+  const openMaint = (property.maintenanceRequests ?? []).filter((m) => ["reported", "awaiting_approval", "scheduled", "in_progress"].includes(m.status));
   const criticalCount = openMaint.filter((m) => m.priority === "critical").length;
 
   return [
@@ -1310,14 +1312,16 @@ function MandateStatusPill({
   status: "draft" | "pending_approval" | "active" | "terminated";
   pendingApproverRole?: "gm" | "ceo" | "department_head" | null;
 }) {
-  const c = MANDATE_STATUS_CONFIG[status];
-  // The rail card has the extra approver-role data the compact board badge
-  // doesn't, so it earns the more precise "Pending GM"/"Pending CEO" label.
   const label =
     status === "pending_approval" && pendingApproverRole
       ? `Pending ${pendingApproverRole.toUpperCase()}`
-      : c.label;
-  return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.pill}`}>{label}</span>;
+      : MANDATE_STATUS_CONFIG[status].label;
+  const tone =
+    status === "active" ? "success" :
+    status === "pending_approval" ? "warning" :
+    status === "terminated" ? "risk" :
+    "neutral";
+  return <Badge tone={tone}>{label}</Badge>;
 }
 
 function EmptyPanel({
@@ -1801,14 +1805,16 @@ function TenancyPanel({
 }
 
 function LeaseStatusPill({ status }: { status: "active" | "expiring" | "ended" | "pending_renewal" }) {
-  const config: Record<typeof status, { label: string; className: string }> = {
-    active: { label: "Active", className: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60" },
-    expiring: { label: "Expiring soon", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
-    pending_renewal: { label: "Pending renewal", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
-    ended: { label: "Ended", className: "bg-slate-100 text-slate-400 border-slate-200" },
-  };
-  const c = config[status];
-  return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.className}`}>{c.label}</span>;
+  const tone =
+    status === "active" ? "success" :
+    status === "expiring" || status === "pending_renewal" ? "warning" :
+    "neutral";
+  const label =
+    status === "active" ? "Active" :
+    status === "expiring" ? "Expiring soon" :
+    status === "pending_renewal" ? "Pending renewal" :
+    "Ended";
+  return <Badge tone={tone}>{label}</Badge>;
 }
 
 // ── Sales Pipeline (sale) - read-only: no CRM lead-mutation backend exists in
@@ -1907,7 +1913,7 @@ function MaintenancePanel({ property, canLog, onReport }: { property: PropertyDe
         </div>
         <div className="divide-y divide-slate-100">
           {requests.map((req) => {
-            const isHotCritical = req.priority === "critical" && req.status !== "resolved" && req.status !== "closed";
+            const isHotCritical = req.priority === "critical" && req.status !== "done";
             return (
               <div
                 key={req.id}
@@ -1940,29 +1946,25 @@ function MaintenancePanel({ property, canLog, onReport }: { property: PropertyDe
 }
 
 function PriorityPill({ priority }: { priority: string }) {
-  const normalized = priority === "normal" ? "medium" : priority === "critical" ? "urgent" : priority;
-  const config: Record<string, string> = {
-    low: "bg-slate-100 text-slate-400 border-slate-200",
-    medium: "bg-amber-500/15 text-amber-700 border-amber-300/60",
-    high: "bg-rose-500/15 text-rose-700 border-rose-300/60",
-    urgent: "bg-rose-500/20 text-rose-700 border-rose-400/60",
-  };
-  const style = config[normalized] || "bg-slate-100 text-slate-400 border-slate-200";
-  return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${style}`}>{normalized}</span>;
+  const tone = priority === "critical" ? "risk" : priority === "urgent" ? "warning" : "neutral";
+  const label = priority === "critical" ? "Critical" : priority === "urgent" ? "Urgent" : "Routine";
+  return <Badge tone={tone}>{label}</Badge>;
 }
 
-function MaintenanceStatusPill({ status }: { status: "open" | "assigned" | "in_progress" | "resolved" | "closed" }) {
-  const config: Record<typeof status, { label: string; className: string }> = {
-    open: { label: "Open", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
-    // Reuses the brand navy token at low opacity rather than introducing a new hue
-    // (the previous draft used `sky`, which isn't in the Terrain Identity palette).
-    assigned: { label: "Assigned", className: "bg-[#151936]/10 text-[#151936] border-[#151936]/20" },
-    in_progress: { label: "In progress", className: "bg-slate-100 text-slate-600 border-slate-200" },
-    resolved: { label: "Resolved", className: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60" },
-    closed: { label: "Closed", className: "bg-slate-50 text-slate-400 border-slate-200" },
-  };
-  const c = config[status];
-  return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.className}`}>{c.label}</span>;
+function MaintenanceStatusPill({ status }: { status: "reported" | "awaiting_approval" | "scheduled" | "in_progress" | "done" }) {
+  const tone =
+    status === "done" ? "success" :
+    status === "reported" ? "warning" :
+    status === "awaiting_approval" ? "risk" :
+    status === "scheduled" ? "data" :
+    "primary";
+  const label =
+    status === "reported" ? "Reported" :
+    status === "awaiting_approval" ? "Awaiting Approval" :
+    status === "scheduled" ? "Scheduled" :
+    status === "in_progress" ? "In Progress" :
+    "Completed";
+  return <Badge tone={tone}>{label}</Badge>;
 }
 
 // ── Activity & Documents ──
@@ -2007,7 +2009,7 @@ function ActivityPanel({
           <LoadingSpinner size="lg" />
         </div>
       ) : !entries || entries.length === 0 ? (
-        <EmptyPanel icon={IconMoodEmpty} title="No activity yet" description="Status changes, edits, and mandate events for this property will show up here." />
+        <EmptyPanel icon={IconMoodEmpty} title="No activity yet" description="Status changes, edits, and updates to this property will show up here." />
       ) : (
         <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <ul className="flex flex-col">
@@ -2033,13 +2035,15 @@ function ActivityPanel({
 }
 
 function DocumentStatusPill({ status }: { status: "draft" | "awaiting_signature" | "signed" }) {
-  const config: Record<typeof status, { label: string; className: string }> = {
-    draft: { label: "Draft", className: "bg-slate-100 text-slate-400 border-slate-200" },
-    awaiting_signature: { label: "Awaiting signature", className: "bg-amber-500/15 text-amber-700 border-amber-300/60" },
-    signed: { label: "Signed", className: "bg-emerald-500/15 text-emerald-700 border-emerald-300/60" },
-  };
-  const c = config[status];
-  return <span className={`rounded-full border px-2.5 py-0.5 label-caps ${c.className}`}>{c.label}</span>;
+  const tone =
+    status === "signed" ? "success" :
+    status === "awaiting_signature" ? "warning" :
+    "neutral";
+  const label =
+    status === "draft" ? "Draft" :
+    status === "awaiting_signature" ? "Awaiting signature" :
+    "Signed";
+  return <Badge tone={tone}>{label}</Badge>;
 }
 
 function MetricTile({

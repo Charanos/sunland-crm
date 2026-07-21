@@ -76,6 +76,8 @@ export const leads = pgTable(
     nextActionAt: timestamp("next_action_at", { withTimezone: true }),
     closedAt: timestamp("closed_at", { withTimezone: true }),
     lostReason: text("lost_reason"),
+    notes: text("notes"),
+    source: text("source"),
     ...timestamps,
   },
   (table) => ({
