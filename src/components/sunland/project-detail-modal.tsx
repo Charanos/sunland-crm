@@ -85,7 +85,7 @@ export function ProjectDetailModal({
 
   if (!project) return null;
 
-  const style = PROJECT_DEPARTMENT_STYLES[project.department];
+  const style = PROJECT_DEPARTMENT_STYLES[project.department] ?? PROJECT_DEPARTMENT_STYLES.ops;
 
   return (
     <Modal

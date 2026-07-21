@@ -287,7 +287,7 @@ export function ValuationFullViewBoard({
   const subjectName = isPortfolio ? valuation?.propertyName ?? "Portfolio property" : valuation?.externalPropertyName ?? "Unknown subject";
   const subjectLocation = isPortfolio ? valuation?.propertyLocation ?? "-" : valuation?.externalLocation ?? "-";
   const heroImg = valuation?.propertyMedia?.find((m) => m.isPrimary)?.url ?? valuation?.propertyMedia?.[0]?.url ?? null;
-  const cfg = valuation ? STAGE_META[valuation.stage] : STAGE_META.requested;
+  const cfg = valuation ? STAGE_META[valuation.stage] ?? STAGE_META.requested : STAGE_META.requested;
   const valuerDisplayName = valuation?.externalValuerName ?? valuation?.valuerName ?? (valuation?.valuersEntityName ?? "Sunland Valuers Ltd");
   const estAnnualRevenue = valuation?.marketValueKes && valuation?.proposedFeeRate
     ? Number(valuation.marketValueKes) * Number(valuation.proposedFeeRate)

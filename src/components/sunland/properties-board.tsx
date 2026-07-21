@@ -1522,7 +1522,7 @@ export function PropertiesBoard({
                                         : "neutral"
                                   }
                                 >
-                                  {MANDATE_STATUS_CONFIG[p.mandateStatus].label}
+                                  {(MANDATE_STATUS_CONFIG[p.mandateStatus] ?? MANDATE_STATUS_CONFIG.draft).label}
                                 </Badge>
                                 {p.manager?.name ? (
                                   <button

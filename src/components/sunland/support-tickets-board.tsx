@@ -326,8 +326,8 @@ export function SupportTicketsBoard({ entityId = "group" }: { entityId?: string 
         ) : (
           <div className="space-y-2.5">
             {filteredTickets.map((t) => {
-              const catMeta = CATEGORY_META[t.category];
-              const prioMeta = PRIORITY_META[t.priority];
+              const catMeta = CATEGORY_META[t.category] ?? CATEGORY_META.other;
+              const prioMeta = PRIORITY_META[t.priority] ?? PRIORITY_META.normal;
               return (
                 <div
                   key={t.id}

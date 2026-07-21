@@ -439,7 +439,7 @@ export function InternalOperationsBoard({
                 </div>
               ) : (
                 projects.slice(0, 3).map((project) => {
-                  const style = PROJECT_DEPARTMENT_STYLES[project.department];
+                  const style = PROJECT_DEPARTMENT_STYLES[project.department] ?? PROJECT_DEPARTMENT_STYLES.ops;
                   return (
                     <div key={project.id} className="relative group cursor-pointer" onClick={() => setSelectedProject(project)}>
                       <div className="flex-1 bg-white hover:bg-slate-50 p-5 rounded-[20px] border border-slate-100 shadow-[0_2px_12px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all">
