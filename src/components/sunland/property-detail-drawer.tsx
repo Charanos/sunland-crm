@@ -144,7 +144,7 @@ export function PropertyDetailDrawer({
     }
   };
 
-  const statusConfig = STATUS_CONFIG[property.status];
+  const statusConfig = STATUS_CONFIG[property.status] ?? STATUS_CONFIG.available;
   const ownerName = ownerDisplayName(property);
   const ownerHasName = ownerName !== "Unassigned owner";
   const contact = ownerContact(property);

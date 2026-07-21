@@ -330,7 +330,10 @@ export function EventsBoard({ entityId = "group" }: { entityId?: string }) {
                 </h3>
                 <div className="space-y-2.5">
                   {dayEvents.map((event) => {
-                    const meta = TYPE_META[event.type];
+                    // event.type is DB-driven and can be a legacy/unrecognized
+                    // value outside the current 4-value enum - fall back
+                    // instead of crashing the whole events list.
+                    const meta = TYPE_META[event.type] ?? TYPE_META.internal;
                     const project = projects.find((p) => p.id === event.projectId);
                     return (
                       <div key={event.id} className="flex items-start gap-4 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm hover:shadow-md hover:border-slate-300 transition-all">

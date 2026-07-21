@@ -293,9 +293,9 @@ export function MaintenanceFullViewBoard({ entityId, requestId }: { entityId: st
     );
   }
 
-  const statusMeta = STATUS_META[request.status];
-  const priorityMeta = PRIORITY_META[request.priority];
-  const slaMeta = SLA_STATE_META[request.sla.state];
+  const statusMeta = STATUS_META[request.status] ?? STATUS_META.reported;
+  const priorityMeta = PRIORITY_META[request.priority] ?? PRIORITY_META.routine;
+  const slaMeta = SLA_STATE_META[request.sla.state] ?? SLA_STATE_META.ok;
   const heroImg = request.propertyMedia?.find((m) => m.isPrimary)?.url ?? request.propertyMedia?.[0]?.url ?? null;
   const next = NEXT_STAGE[request.status];
   const costVsAuthority = request.maintenanceAuthorityKes != null && (request.estimatedCostKes ?? request.actualCostKes)

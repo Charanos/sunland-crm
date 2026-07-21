@@ -337,7 +337,7 @@ export function ComplaintsBoard({ entityId = "group" }: { entityId?: string }) {
         ) : (
           <div className="space-y-2.5">
             {complaints.map((c) => {
-              const meta = CATEGORY_META[c.category];
+              const meta = CATEGORY_META[c.category] ?? CATEGORY_META.other;
               return (
                 <div
                   key={c.id}
