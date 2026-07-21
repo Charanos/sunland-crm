@@ -1,6 +1,5 @@
-import { Pool, neonConfig, neon } from "@neondatabase/serverless";
-import { drizzle as drizzleServerless } from "drizzle-orm/neon-serverless";
-import { drizzle as drizzleHttp } from "drizzle-orm/neon-http";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
 import ws from "ws";
 import * as schema from "@/db/schema";
 import * as relations from "@/db/relations";
@@ -11,26 +10,18 @@ if (!databaseUrl && process.env.NODE_ENV === "production") {
   throw new Error("DATABASE_URL is required in production");
 }
 
-let dbInstance;
+// Always use the websocket pool driver, in production too - the stateless
+// neon-http client's db.transaction() unconditionally throws ("No
+// transactions support in neon-http driver"), and most services here rely
+// on real transactions for multi-statement writes.
+neonConfig.webSocketConstructor = ws;
+const pool = new Pool({
+  connectionString: databaseUrl ?? "postgresql://local:local@localhost:5432/sunland",
+});
+const dbInstance = drizzle(pool, { schema: { ...schema, ...relations } });
 
-if (process.env.NODE_ENV === "production") {
-  // Use stateless neon HTTP client in production for serverless speed,
-  // connection pooling, and robustness against websocket exhaustion.
-  const sql = neon(databaseUrl!);
-  dbInstance = drizzleHttp(sql, { schema: { ...schema, ...relations } });
-} else {
-  // Use websocket pool for local development and scripts
-  neonConfig.webSocketConstructor = ws;
-  const pool = new Pool({
-    connectionString: databaseUrl ?? "postgresql://local:local@localhost:5432/sunland",
-  });
-  dbInstance = drizzleServerless(pool, { schema: { ...schema, ...relations } });
-}
-
-import { NeonDatabase } from "drizzle-orm/neon-serverless";
-export type DbClient = NeonDatabase<typeof schema & typeof relations>;
-
-export const db = dbInstance as unknown as DbClient;
+export type DbClient = typeof dbInstance;
+export const db = dbInstance;
 
 
 
