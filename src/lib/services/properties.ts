@@ -19,13 +19,13 @@ export function toISOStringSafe(val: unknown): string | null {
     try {
       const d = new Date(val);
       if (!isNaN(d.getTime())) return d.toISOString();
-    } catch {}
+    } catch { }
     return val;
   }
   try {
     const d = new Date(val as string | number | Date);
     if (!isNaN(d.getTime())) return d.toISOString();
-  } catch {}
+  } catch { }
   return null;
 }
 
@@ -900,8 +900,8 @@ export async function getLeaseById(ctx: CallerContext, leaseId: string) {
   let managerData = null;
   const [mandate] = await db.select({ assignedPmId: propertyMandates.assignedPmId }).from(propertyMandates).where(and(eq(propertyMandates.propertyId, lease.propertyId), eq(propertyMandates.status, "active"))).limit(1);
   if (mandate?.assignedPmId) {
-     const [m] = await db.select({ id: users.id, name: users.name, title: users.title, email: users.email, avatarUrl: users.avatarUrl }).from(users).where(eq(users.id, mandate.assignedPmId)).limit(1);
-     managerData = m || null;
+    const [m] = await db.select({ id: users.id, name: users.name, title: users.title, email: users.email, avatarUrl: users.avatarUrl }).from(users).where(eq(users.id, mandate.assignedPmId)).limit(1);
+    managerData = m || null;
   }
 
   // Current-month collected-vs-expected balance - same "fetch then reduce"

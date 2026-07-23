@@ -5,6 +5,7 @@ import {
   IconAlertTriangle,
   IconCheck,
   IconInfoCircle,
+  IconAlertCircle,
   IconX,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
@@ -25,33 +26,37 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const toneStyles: Record<ToastTone, { icon: string; iconBg: string; artwork: string }> = {
+const toneStyles: Record<ToastTone, { icon: string; iconBg: string; barBg: string; artwork: string }> = {
   success: {
-    icon: "text-emerald-500",
-    iconBg: "bg-emerald-50 border-emerald-100/50",
+    icon: "text-emerald-600",
+    iconBg: "bg-emerald-50 border-emerald-200/80 shadow-2xs",
+    barBg: "bg-emerald-500",
     artwork: "text-emerald-500",
   },
   warning: {
-    icon: "text-amber-500",
-    iconBg: "bg-amber-50 border-amber-100/50",
+    icon: "text-amber-600",
+    iconBg: "bg-amber-50 border-amber-200/80 shadow-2xs",
+    barBg: "bg-amber-500",
     artwork: "text-amber-500",
   },
   error: {
-    icon: "text-rose-500",
-    iconBg: "bg-rose-50 border-rose-100/50",
+    icon: "text-rose-600",
+    iconBg: "bg-rose-50 border-rose-200/80 shadow-2xs",
+    barBg: "bg-rose-500",
     artwork: "text-rose-500",
   },
   info: {
-    icon: "text-blue-500",
-    iconBg: "bg-blue-50 border-blue-100/50",
-    artwork: "text-blue-500",
+    icon: "text-[#151936]",
+    iconBg: "bg-slate-100 border-slate-200/80 shadow-2xs",
+    barBg: "bg-[#151936]",
+    artwork: "text-slate-700",
   },
 };
 
 const toneIcons = {
   success: IconCheck,
   warning: IconAlertTriangle,
-  error: IconX,
+  error: IconAlertCircle,
   info: IconInfoCircle,
 };
 
@@ -105,56 +110,55 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div
               className={cn(
-                "relative overflow-hidden rounded-[16px] p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] backdrop-blur-xl bg-white/95 border border-slate-100/80 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-auto group",
+                "relative overflow-hidden rounded-2xl p-4 shadow-[0_12px_35px_rgba(0,0,0,0.08)] backdrop-blur-xl bg-white/95 border border-slate-200/80 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-auto group",
                 isExiting
                   ? "translate-x-[120%] opacity-0 scale-95"
-                  : "animate-fade-in translate-x-0 opacity-100 scale-100",
+                  : "animate-fade-in translate-x-0 opacity-100 scale-100 hover:shadow-[0_16px_45px_rgba(0,0,0,0.12)]",
               )}
               key={toast.id}
             >
+              {/* Left Tone Indicator Bar */}
+              <div className={cn("absolute left-0 top-0 bottom-0 w-1", styles.barBg)} />
+
               {/* Artwork Watermark */}
               <div className={cn("absolute -bottom-6 -right-4 opacity-[0.04] pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:opacity-[0.06]", styles.artwork)}>
-                <IconComponent size={100} stroke={1.5} />
+                <IconComponent size={96} stroke={1.5} />
               </div>
 
-              <div className="flex gap-3 items-start relative z-10">
+              <div className="flex gap-3 items-start relative z-10 pl-1">
                 <div
                   className={cn(
-                    "flex size-9 shrink-0 items-center justify-center rounded-full border shadow-sm",
+                    "flex size-8 shrink-0 items-center justify-center rounded-xl border font-medium",
                     styles.icon,
                     styles.iconBg,
                   )}
                 >
-                  <IconComponent aria-hidden size={18} stroke={2} />
+                  <IconComponent aria-hidden size={16} stroke={2.5} />
                 </div>
                 <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="text-sm font-medium text-slate-900 tracking-tight leading-snug">
+                  <p className="text-xs font-medium text-slate-900 tracking-tight leading-snug">
                     {toast.title}
                   </p>
                   {toast.body ? (
-                    <p className="mt-1 text-[13px] text-slate-500 leading-relaxed">
+                    <p className="mt-0.5 text-xxs text-slate-500 leading-relaxed font-normal">
                       {toast.body}
                     </p>
                   ) : null}
                 </div>
                 <button
                   aria-label="Dismiss notification"
-                  className="focus-ring flex size-7 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                  className="focus-ring flex size-6 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
                   onClick={() => dismissToast(toast.id)}
                   type="button"
                 >
-                  <IconX aria-hidden size={14} stroke={2.5} />
+                  <IconX aria-hidden size={13} stroke={2} />
                 </button>
               </div>
+
               {/* Auto-dismiss progress bar */}
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-100">
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-100/60">
                 <div
-                  className={cn("h-full", {
-                    "bg-emerald-400": toast.tone === "success",
-                    "bg-amber-400": toast.tone === "warning",
-                    "bg-rose-400": toast.tone === "error",
-                    "bg-blue-400": toast.tone === "info",
-                  })}
+                  className={cn("h-full", styles.barBg)}
                   style={{
                     animation: `progressShrink ${toast.duration}ms linear forwards`,
                   }}
@@ -177,3 +181,4 @@ export function useToast() {
 
   return context;
 }
+

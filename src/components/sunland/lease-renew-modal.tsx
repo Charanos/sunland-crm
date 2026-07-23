@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { IconRefresh, IconUserCheck, IconShieldCheck, IconBuildingBank } from "@tabler/icons-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/erp-primitives";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/components/ui/toast-provider";
 import { useUIStore } from "@/store/ui";
+import { formatCompactKES } from "@/lib/utils/format";
 
 export interface LeaseRenewTarget {
   id: string;
@@ -38,8 +41,6 @@ export function LeaseRenewModal({
   useEffect(() => {
     if (!open || !lease) return;
     Promise.resolve().then(() => {
-      // Default the new term to one year past the old expiry - a sensible
-      // starting point the user can adjust, not a hard rule.
       const oneYearOn = new Date(lease.endsAt);
       oneYearOn.setFullYear(oneYearOn.getFullYear() + 1);
       setEndsAt(oneYearOn.toISOString().slice(0, 10));
@@ -86,59 +87,135 @@ export function LeaseRenewModal({
     }
   };
 
+  const currentRent = parseFloat(lease.monthlyRentKes) || 0;
+  const newRent = parseFloat(monthlyRentKes) || 0;
+  const rentDiffPct = currentRent > 0 ? (((newRent - currentRent) / currentRent) * 100).toFixed(1) : "0.0";
+  const annualRentPool = newRent * 12;
+
   return (
     <Modal
       open={open}
       onClose={isSubmitting ? () => { } : onClose}
-      title="Renew Lease"
-      description={`${lease.tenantName} - ${lease.propertyName}. The current term ends ${new Date(lease.endsAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}; the new term starts immediately after.`}
-      size="md"
+      title="Renew Tenancy Agreement"
+      description={`Extend tenancy for ${lease.tenantName} at ${lease.propertyName}. The new term begins immediately after current expiry.`}
+      size="lg"
     >
-      <div className="space-y-4">
-        <div>
-          <label className="label-caps text-slate-400 mb-1.5 block">New Lease End Date</label>
-          <input
-            type="date"
-            className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            value={endsAt}
-            onChange={(e) => setEndsAt(e.target.value)}
-          />
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6 pt-1">
+        {/* Current Tenancy Summary Card */}
+        <div className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="size-11 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center shrink-0 text-[#151936] shadow-2xs">
+              <IconRefresh size={22} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <p className="text-xs font-medium text-slate-900 truncate">
+                {lease.propertyName}
+              </p>
+              <p className="text-xxs text-slate-500 truncate mt-0.5 font-mono">
+                Tenant: <span className="font-medium text-slate-700">{lease.tenantName}</span> · Expiry: <span className="font-medium text-slate-700">{new Date(lease.endsAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
+              </p>
+            </div>
+          </div>
+          <Badge tone="primary" className="text-xxs shrink-0 font-mono">
+            <IconUserCheck size={12} className="shrink-0" />
+            Consecutive Term
+          </Badge>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+
+        {/* Renewal Fields Grid */}
+        <div className="space-y-4">
           <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Rent Rate (KES / month)</label>
+            <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 block mb-1.5">
+              New Lease Expiry Date *
+            </label>
             <input
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-              value={monthlyRentKes}
-              onChange={(e) => setMonthlyRentKes(e.target.value)}
+              required
+              type="date"
+              value={endsAt}
+              onChange={(e) => setEndsAt(e.target.value)}
+              className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
             />
           </div>
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Deposit Held (KES)</label>
-            <input
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-              value={depositKes}
-              onChange={(e) => setDepositKes(e.target.value)}
-            />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 block mb-1.5">
+                New Monthly Rent (KES) *
+              </label>
+              <input
+                required
+                type="number"
+                min="0"
+                step="1000"
+                value={monthlyRentKes}
+                onChange={(e) => setMonthlyRentKes(e.target.value)}
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
+              />
+            </div>
+            <div>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 block mb-1.5">
+                Security Deposit Held (KES)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                value={depositKes}
+                onChange={(e) => setDepositKes(e.target.value)}
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
+              />
+            </div>
+          </div>
+
+          {/* Live Rate Escalation & Cashflow Card */}
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <IconBuildingBank size={16} className="text-[#151936] shrink-0" />
+              <span className="text-slate-600 font-medium">New Annual Cashflow:</span>
+              <span className="font-mono font-medium text-slate-900">{formatCompactKES(annualRentPool)}</span>
+            </div>
+            <Badge tone={parseFloat(rentDiffPct) > 0 ? "warning" : "neutral"} className="text-xxs font-mono shrink-0">
+              {parseFloat(rentDiffPct) > 0 ? `+${rentDiffPct}% Escalation` : "Rate Maintained"}
+            </Badge>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+        {/* Compliance Footer Banner */}
+        <div className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50 p-3.5 text-xs text-slate-600 leading-relaxed shadow-2xs">
+          <IconShieldCheck size={16} className="text-[#151936] shrink-0 mt-0.5" />
+          <p>
+            Lease renewal creates an immediate consecutive tenancy term starting on the day following current expiry. Tenancy history and payment audit trails remain attached.
+          </p>
+        </div>
+
+        {/* Modal Controls */}
+        <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="rounded-xl text-xs px-4 py-2 font-medium"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-[#151936] text-white hover:bg-slate-800 rounded-xl text-xs px-5 py-2 font-medium shadow-2xs"
+          >
             {isSubmitting ? (
-              <>
-                <LoadingSpinner size="sm" />
-                <span className="ml-2">Renewing…</span>
-              </>
+              <div className="flex items-center gap-2">
+                <LoadingSpinner size="sm" className="text-white" />
+                <span>Renewing...</span>
+              </div>
             ) : (
               "Renew Lease"
             )}
           </Button>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 }
+

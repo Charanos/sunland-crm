@@ -703,7 +703,7 @@ export function DashboardOverview({
               </div>
               <div className="absolute bottom-0 inset-x-0 p-5 flex flex-col justify-end text-white z-10">
                 <div>
-                  <p className="text-[#f3df27] mono-stat">{featured.price}</p>
+                  <p className="text-[#f3df27] font-mono font-medium">{featured.price}</p>
                   <h3 className="text-lg text-white mt-1 leading-snug flex items-center gap-1.5">
                     <IconBuildingSkyscraper size={18} className="text-white/70 shrink-0" />
                     {featured.name}
@@ -1136,7 +1136,7 @@ export function DashboardOverview({
                 <div>
                   <p className="label-caps mb-1.5">Income</p>
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="mono-stat text-slate-900">
+                    <span className="font-mono font-medium text-slate-900">
                       {formatCompactKES(metrics.income)}
                     </span>
                     <span
@@ -1166,7 +1166,7 @@ export function DashboardOverview({
                 <div>
                   <p className="label-caps mb-1.5">Expenses</p>
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="mono-stat text-slate-900">
+                    <span className="font-mono font-medium text-slate-900">
                       {formatCompactKES(metrics.expenses)}
                     </span>
                     <span
@@ -1196,7 +1196,7 @@ export function DashboardOverview({
                 <div>
                   <p className="label-caps mb-1.5">Profit</p>
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="mono-stat text-slate-900">
+                    <span className="font-mono font-medium text-slate-900">
                       {formatCompactKES(metrics.profit)}
                     </span>
                     <span
@@ -1249,7 +1249,7 @@ export function DashboardOverview({
                   </div>
                   <div>
                     <p className="label-caps mb-1">Total Profit</p>
-                    <p className="mono-stat text-slate-900">
+                    <p className="font-mono font-medium text-slate-900">
                       {formatCompactKES(metrics.profit)}
                     </p>
                   </div>
@@ -1299,7 +1299,7 @@ export function DashboardOverview({
               <div>
                 <p className="label-caps mb-1">Inquiries This Week</p>
                 <div className="flex items-center gap-2">
-                  <span className="mono-stat text-slate-900">
+                  <span className="font-mono font-medium text-slate-900">
                     {metrics.siteInquiries}
                   </span>
                 </div>
@@ -1326,7 +1326,7 @@ export function DashboardOverview({
                 <div>
                   <p className="label-caps mb-1">Added This Month</p>
                   <div className="flex items-center gap-2.5">
-                    <span className="mono-stat text-slate-900">
+                    <span className="font-mono font-medium text-slate-900">
                       {metrics.newLeads}
                     </span>
                     <span
@@ -1959,7 +1959,7 @@ export function DashboardOverview({
                         </div>
                       </div>
                       {item.amountKes !== null && (
-                        <span className="mono-stat text-slate-900 tracking-tight text-sm bg-white/80 px-1 py-0.5 rounded">
+                        <span className="font-mono font-medium text-slate-900 tracking-tight text-sm bg-white/80 px-1 py-0.5 rounded">
                           {formatCompactKES(item.amountKes)}
                         </span>
                       )}
@@ -2000,7 +2000,7 @@ export function DashboardOverview({
                 <div className="space-y-6 relative z-10 mb-2 mt-auto">
                   <div className="flex items-center justify-between">
                     <div className="flex items-baseline gap-3">
-                      <p className="mono-stat text-white leading-none tracking-tight text-5xl">
+                      <p className="font-mono font-medium text-white leading-none tracking-tight text-5xl">
                         {stats.systemHealth.activeUserCount}
                       </p>
                       <p className="body-md text-slate-400 font-medium">
@@ -2083,7 +2083,7 @@ export function DashboardOverview({
                         Property Management
                       </span>
                     </div>
-                    <span className="mono-stat text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">
+                    <span className="font-mono font-medium text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">
                       {stats.departmentStats.sales}
                     </span>
                   </div>
@@ -2094,7 +2094,7 @@ export function DashboardOverview({
                         Operations
                       </span>
                     </div>
-                    <span className="mono-stat text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">
+                    <span className="font-mono font-medium text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">
                       {stats.departmentStats.ops}
                     </span>
                   </div>
@@ -2105,7 +2105,7 @@ export function DashboardOverview({
                         Legal & Compliance
                       </span>
                     </div>
-                    <span className="mono-stat text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">
+                    <span className="font-mono font-medium text-slate-900 bg-white/80 px-1.5 py-0.5 rounded">
                       {stats.departmentStats.legal}
                     </span>
                   </div>

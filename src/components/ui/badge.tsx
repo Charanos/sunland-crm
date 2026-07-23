@@ -22,7 +22,7 @@ export function Badge({
   tone?: BadgeTone;
 }) {
   return (
-    <span className={cn("badge-pill", tones[tone], className)}>
+    <span className={cn("badge-pill text-xxs", tones[tone], className)}>
       {children}
     </span>
   );

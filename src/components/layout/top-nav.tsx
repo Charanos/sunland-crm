@@ -295,7 +295,7 @@ function NotificationsPanel({
         <div className="flex items-center gap-2.5">
           <span className="text-sm font-medium text-slate-800">Notifications</span>
           {unread > 0 && (
-            <Badge tone="risk" className="px-2 py-0.5 text-xs font-medium tracking-wide">
+            <Badge tone="risk" className="px-2 py-0.5 text-xxs font-medium tracking-wide">
               {unread} New
             </Badge>
           )}
@@ -891,11 +891,11 @@ function SearchBar() {
       </span>
       <kbd
         className={cn(
-          "pointer-events-none select-none rounded-[6px] border px-1.5 py-0.5 text-xxs font-medium tracking-widest transition-opacity shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
+          "pointer-events-none text-[11.5px] select-none rounded-[6px] border px-1.5 py-0.5 font-medium tracking-widest transition-opacity shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
           focused ? "opacity-0" : "border-slate-200 bg-white text-slate-400 group-hover:border-slate-300 group-hover:text-slate-500",
         )}
       >
-        ⌘K
+        ⌘ K
       </kbd>
     </button>
   );
@@ -1175,7 +1175,7 @@ export function TopNav() {
               <div className="flex flex-col min-w-0">
                 <p className="text-sm font-medium text-slate-800 truncate">{currentUser.name}</p>
                 <div className="mt-1 flex items-center">
-                  <Badge tone="neutral" className="text-xs uppercase tracking-widest bg-white border-slate-200/60 shadow-sm">
+                  <Badge tone="neutral" className="text-xxs uppercase tracking-widest bg-white border-slate-200/60 shadow-sm">
                     {currentUser.role.replace(/_/g, " ")}
                   </Badge>
                 </div>

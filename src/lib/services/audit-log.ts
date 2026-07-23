@@ -53,7 +53,14 @@ export async function listAuditLog(ctx: CallerContext, filters: AuditLogFilters 
   if (groups.length > 0) {
     conditions.push(or(...groups.map((g) => and(eq(activityLogs.associatedType, g.type), inArray(activityLogs.associatedId, g.ids))))!);
   } else {
-    if (filters.associatedType) conditions.push(eq(activityLogs.associatedType, filters.associatedType));
+    if (filters.associatedType) {
+      const types = filters.associatedType.split(",").map((t) => t.trim()).filter(Boolean);
+      if (types.length > 1) {
+        conditions.push(inArray(activityLogs.associatedType, types));
+      } else if (types.length === 1) {
+        conditions.push(eq(activityLogs.associatedType, types[0]));
+      }
+    }
     if (filters.associatedId) conditions.push(eq(activityLogs.associatedId, filters.associatedId));
   }
   if (filters.dateFrom) conditions.push(gte(activityLogs.createdAt, new Date(filters.dateFrom)));

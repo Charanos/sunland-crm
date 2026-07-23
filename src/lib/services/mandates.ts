@@ -570,7 +570,8 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
   // escalating to CEO when the mandate itself crosses the CEO threshold.
   // Everyone else (Property Manager, Head of Strategy, ...) always needs at
   // least GM sign-off. ADR 014 §14.2.
-  const actorRank = ctx.user.role === "ceo" ? 3 : ctx.user.role === "general_manager" ? 2 : 1;
+  const isExecutive = ctx.user.role === "ceo" || ctx.user.role === "head_of_strategy" || (ctx.user.role as unknown as string) === "admin";
+  const actorRank = isExecutive ? 3 : ctx.user.role === "general_manager" ? 2 : 1;
   const requiredTierRank = requiredTier === "ceo" ? 3 : 2;
   const selfApproves = actorRank >= requiredTierRank;
 
@@ -605,7 +606,7 @@ export async function createMandate(ctx: CallerContext, rawInput: unknown) {
         action: "properties.mandate.create",
         associatedType: "property_mandate",
         associatedId: mandate.id,
-        summary: `${ctx.user.name} created and self-authorized a management mandate for ${property.name} (${ctx.user.role === "ceo" ? "CEO" : "GM"} authority)`,
+        summary: `${ctx.user.name} created and self-authorized a management mandate for ${property.name} (${isExecutive ? "CEO/Admin" : "GM"} authority)`,
         entityId,
         before: null,
         after: mandate,

@@ -843,7 +843,7 @@ export function LeaseFullViewBoard({
                 <p className="text-xs font-medium uppercase tracking-widest text-slate-300">
                   {lease.balanceKes > 0 ? "Balance due" : "Rent status"}
                 </p>
-                <p className={cn("mono-stat text-2xl font-medium tracking-tight mt-0.5", lease.balanceKes > 0 ? "text-rose-300" : "text-white")}>
+                <p className={cn("font-mono font-medium text-2xl font-medium tracking-tight mt-0.5", lease.balanceKes > 0 ? "text-rose-300" : "text-white")}>
                   {lease.balanceKes > 0 ? formatCompactKES(lease.balanceKes) : "Rent Current"}
                 </p>
               </div>
@@ -902,7 +902,7 @@ export function LeaseFullViewBoard({
             <div className="flex items-start justify-between relative z-10">
               <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
                 <span className="text-desc-secondary font-medium">{v.label}</span>
-                <span className={cn("mono-stat text-2xl font-medium mt-1 leading-none", VITAL_TONE_VALUE[v.tone])}>
+                <span className={cn("font-mono font-medium text-2xl font-medium mt-1 leading-none", VITAL_TONE_VALUE[v.tone])}>
                   {v.value}
                 </span>
               </div>
@@ -1107,7 +1107,7 @@ export function LeaseFullViewBoard({
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
                               <Badge tone="neutral">{PAYMENT_TYPE_LABEL[p.type]}</Badge>
-                              <span className="mono-stat text-slate-900">{formatCompactKES(parseFloat(p.amountKes))}</span>
+                              <span className="font-mono font-medium text-slate-900">{formatCompactKES(parseFloat(p.amountKes))}</span>
                             </div>
                           </div>
                         ))}

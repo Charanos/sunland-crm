@@ -649,7 +649,7 @@ export function InternalOperationsBoard({
 
                     {/* Minimal Time Block with Right Border */}
                     <div className="w-16 shrink-0 flex flex-col items-center justify-center px-2 border-r border-slate-100/80 bg-slate-50/30">
-                      <span className="mono-stat text-[22px] leading-none mb-1 font-medium tracking-tight">{timePart}</span>
+                      <span className="font-mono font-medium text-[22px] leading-none mb-1 font-medium tracking-tight">{timePart}</span>
                       <span className="text-xxs font-medium tracking-widest opacity-70 uppercase">{periodPart ?? ""}</span>
                     </div>
 

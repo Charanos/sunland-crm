@@ -687,7 +687,7 @@ export function PropertyFullViewBoard({
                     {v.label}
                   </span>
                   <div className="flex items-baseline gap-3 z-10 mt-0.5">
-                    <span className="mono-stat text-3xl lg:text-[34px] font-medium text-slate-900 tracking-tight leading-none truncate">
+                    <span className="font-mono font-medium text-3xl lg:text-[34px] font-medium text-slate-900 tracking-tight leading-none truncate">
                       {v.value}
                     </span>
                   </div>
@@ -819,7 +819,7 @@ export function PropertyFullViewBoard({
               <>
                 <div className="flex items-baseline justify-between">
                   <div className="flex items-baseline gap-1">
-                    <span className="mono-stat text-3xl font-medium text-slate-900 tracking-tight">
+                    <span className="font-mono font-medium text-3xl font-medium text-slate-900 tracking-tight">
                       {(property.mandate.mandateRate * 100).toFixed(0)}%
                     </span>
                     <span className="text-xs text-slate-500 font-medium">management fee</span>
@@ -1020,7 +1020,7 @@ export function PropertyFullViewBoard({
             <FactRow label="Registered" value={<span className="mono-data text-xs text-slate-600">{formatPropertyDate(property.createdAt)}</span>} />
             <FactRow label="Last updated" value={<span className="mono-data text-xs text-slate-600">{formatPropertyDate(property.updatedAt)}</span>} />
             {property.unitBreakdown && property.unitBreakdown.length > 0 && (
-              <FactRow label="Total units" value={<span className="mono-stat text-xs font-medium text-slate-900">{property.unitBreakdown.reduce((sum, u) => sum + u.count, 0)}</span>} />
+              <FactRow label="Total units" value={<span className="font-mono font-medium text-xs font-medium text-slate-900">{property.unitBreakdown.reduce((sum, u) => sum + u.count, 0)}</span>} />
             )}
           </div>
 
@@ -1554,7 +1554,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
                   <IconBed size={18} />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="mono-stat text-lg font-medium text-slate-900 leading-none">{property.bedrooms}</span>
+                  <span className="font-mono font-medium text-lg font-medium text-slate-900 leading-none">{property.bedrooms}</span>
                   <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">Bedrooms</span>
                 </div>
               </div>
@@ -1566,7 +1566,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
                   <IconBath size={18} />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="mono-stat text-lg font-medium text-slate-900 leading-none">{property.bathrooms}</span>
+                  <span className="font-mono font-medium text-lg font-medium text-slate-900 leading-none">{property.bathrooms}</span>
                   <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">Bathrooms</span>
                 </div>
               </div>
@@ -1578,7 +1578,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
                   <IconCar size={18} />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="mono-stat text-lg font-medium text-slate-900 leading-none">{property.parkingSpaces}</span>
+                  <span className="font-mono font-medium text-lg font-medium text-slate-900 leading-none">{property.parkingSpaces}</span>
                   <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">Parking</span>
                 </div>
               </div>
@@ -1590,7 +1590,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
                   <IconRuler size={18} />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="mono-stat text-lg font-medium text-slate-900 leading-none">{property.sizeSqft.toLocaleString()}</span>
+                  <span className="font-mono font-medium text-lg font-medium text-slate-900 leading-none">{property.sizeSqft.toLocaleString()}</span>
                   <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">Sq Ft</span>
                 </div>
               </div>

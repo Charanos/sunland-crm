@@ -198,12 +198,12 @@ export function LeaseDetailDrawer({
               <div>
                 <p className="text-slate-400 label-caps mb-1.5 tracking-widest">Expected Monthly Rent</p>
                 <div className="flex items-baseline gap-1.5 text-slate-900">
-                  <span className="mono-stat text-4xl sm:text-5xl font-normal tracking-tight">{rentVal.replace("KES ", "").replace("/mo", "")}</span>
+                  <span className="font-mono font-medium text-4xl sm:text-5xl font-normal tracking-tight">{rentVal.replace("KES ", "").replace("/mo", "")}</span>
                   <span className="text-slate-400 label-caps font-normal">KES / mo</span>
                 </div>
               </div>
               <div className="text-left sm:text-right">
-                <span className="mono-stat text-2xl font-normal text-slate-900">
+                <span className="font-mono font-medium text-2xl font-normal text-slate-900">
                   {lease.depositKes ? formatCompactKES(parseFloat(lease.depositKes)) : "N/A"}
                 </span>
                 <p className="label-caps text-slate-400 mt-0.5 tracking-widest">Deposit Held</p>

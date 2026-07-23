@@ -738,6 +738,13 @@ export function MandateFullViewBoard({
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error ?? "Failed to generate remittance advice");
       pushToast({ tone: "success", title: "Remittance advice generated" });
+      if (data?.remittance) {
+        setSelectedRemittance(data.remittance);
+        setRemittancePanelOpen(true);
+      } else if (mandate.pendingRemittance) {
+        setSelectedRemittance(mandate.pendingRemittance);
+        setRemittancePanelOpen(true);
+      }
       loadRemittances();
       setRefreshCount((c) => c + 1);
     } catch (err) {
@@ -768,7 +775,7 @@ export function MandateFullViewBoard({
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2 animate-fade-in-up">
         <div className="flex flex-col gap-2 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="title-serif text-slate-900 truncate">
+            <h1 className="title-serif text-[#151936] text-2xl lg:text-3xl font-normal leading-tight truncate">
               {mandate.property.name}
             </h1>
             {(() => {
@@ -782,23 +789,25 @@ export function MandateFullViewBoard({
               );
             })()}
           </div>
-          <div className="flex items-center gap-3 text-slate-500 text-sm min-w-0 font-medium">
-            <span className="flex items-center gap-1.5 min-w-0">
-              <IconMapPin size={15} className="shrink-0 text-slate-600" aria-hidden="true" />
+          <div className="flex items-center gap-3 text-slate-500 text-xs min-w-0 font-medium">
+            <span className="flex items-center gap-1.5 min-w-0 text-slate-600">
+              <IconMapPin size={15} className="shrink-0 text-slate-500" aria-hidden="true" />
               <span className="truncate">{mandate.property.location}</span>
             </span>
             <span className="text-slate-200 shrink-0">|</span>
-            <span className="mono-data text-slate-500 shrink-0">MANDATE {mandate.id.slice(0, 8).toUpperCase()}</span>
+            <span className="font-mono text-slate-500 shrink-0 uppercase tracking-wider">
+              MANDATE {mandate.id.slice(0, 8).toUpperCase()}
+            </span>
           </div>
         </div>
 
         {/* CTA Actions aligned to the right */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap mt-1 sm:mt-0">
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap mt-1 sm:mt-0">
           <button
             type="button"
             onClick={handleGenerateRemittance}
             disabled={generatingRemittance}
-            className="bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80 font-medium text-sm rounded-full px-4 py-2 shadow-xs transition-colors flex items-center gap-1.5"
+            className="bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/80 font-medium text-xs rounded-xl px-4 py-2 shadow-2xs transition-colors flex items-center gap-1.5"
           >
             <IconReceipt2 size={14} /> Remittance Advice
           </button>
@@ -809,7 +818,7 @@ export function MandateFullViewBoard({
                 setSelectedRemittance(mandate.pendingRemittance);
                 setRemittancePanelOpen(true);
               }}
-              className="bg-[#151936] text-white hover:bg-[#1a1f42] font-medium text-sm rounded-full px-4 py-2 shadow-[0_2px_10px_rgb(21,25,54,0.3)] transition-all flex items-center gap-1.5"
+              className="bg-[#151936] text-white hover:bg-[#1a1f42] font-medium text-xs rounded-xl px-4 py-2 shadow-[0_2px_10px_rgb(21,25,54,0.3)] transition-all flex items-center gap-1.5"
             >
               <IconExternalLink size={14} /> Release Payment
             </button>
@@ -818,7 +827,7 @@ export function MandateFullViewBoard({
             <button
               type="button"
               onClick={() => setOverrideModalOpen(true)}
-              className="bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] font-medium text-sm rounded-full px-4 py-2 shadow-[0_2px_10px_rgb(243,223,39,0.3)] transition-all hover:shadow-[0_4px_14px_rgb(243,223,39,0.4)] flex items-center gap-1.5 border border-amber-300/40"
+              className="bg-tertiary-gradient text-slate-200 hover:scale-105 transition-all  font-medium text-xs rounded-xl px-4 py-2  flex items-center gap-1.5 border border-slate-200/80"
             >
               <IconBolt size={14} /> Decide Directly
             </button>
@@ -828,7 +837,7 @@ export function MandateFullViewBoard({
               label="More actions"
               align="right"
               trigger={
-                <div className="inline-flex size-[38px] items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs cursor-pointer">
+                <div className="inline-flex size-[36px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer">
                   <IconDotsVertical size={16} />
                 </div>
               }
@@ -846,174 +855,189 @@ export function MandateFullViewBoard({
         </div>
       </div>
 
-      {/* ── Flagship Mandate Hero ── */}
-      <div className="flex flex-col gap-3">
-        <button
-          type="button"
+      {/* ── Flagship Mandate Hero Deck with Side Gallery ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch">
+        {/* Main Hero Card */}
+        <div
           onClick={() => {
             if (mediaList.length > 0) {
               setLightboxIndex(activeMediaIndex);
               setLightboxOpen(true);
             }
           }}
-          disabled={mediaList.length === 0}
-          aria-label="Open photo gallery"
-          className="group relative rounded-[28px] overflow-hidden min-h-[300px] lg:min-h-[340px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] bg-[#1e2336] text-white flex flex-col justify-between p-6 lg:p-8 mt-2 border border-slate-800 transition-all duration-500 hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] text-left w-full cursor-pointer disabled:cursor-default"
+          className={cn(
+            "group relative rounded-[32px] overflow-hidden min-h-[360px] lg:min-h-[410px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] bg-[#0c0f20] text-white flex flex-col justify-between p-6 lg:p-8 border border-slate-800 transition-all duration-500 hover:shadow-[0_20px_50px_rgb(0,0,0,0.14)] text-left w-full",
+            mediaList.length > 1 ? "lg:col-span-8" : "lg:col-span-12",
+            mediaList.length > 0 ? "cursor-pointer" : "cursor-default"
+          )}
         >
           {primaryImage ? (
             <Image
               src={primaryImage}
               alt={mandate.property.name}
               fill
-              sizes="(max-width: 1024px) 100vw, 80vw"
-              className="object-cover absolute inset-0 transition-transform duration-700 group-hover:scale-103"
+              sizes="(max-width: 1024px) 100vw, 65vw"
+              className="object-cover absolute inset-0 transition-transform duration-700 group-hover:scale-103 opacity-75"
               priority
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-[#1e2336]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0c0f20] via-[#151936] to-slate-900" />
           )}
-          {/* Scrim */}
+
+          {/* Premium Gradient Scrim */}
           <div
-            className="absolute inset-0 z-0"
-            style={{ background: "linear-gradient(180deg, rgba(12,15,32,0.38) 0%, rgba(12,15,32,0.08) 34%, rgba(10,13,28,0.55) 68%, rgba(8,10,22,0.9) 100%)" }}
+            className="absolute inset-0 z-0 bg-gradient-to-t from-[#090d1a] via-[#090d1a]/55 to-black/35"
             aria-hidden="true"
           />
 
-          {/* Elegant Hover Overlay */}
+          {/* Gallery Hover Chip */}
           {mediaList.length > 0 && (
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500 flex items-center justify-center z-0">
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-500 flex items-center justify-center z-0">
               <span className="opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 bg-white/95 backdrop-blur-md text-[#151936] font-medium px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 text-xs border border-white/20 uppercase tracking-wider">
-                <IconPhoto size={14} aria-hidden="true" /> View {mediaList.length} photos
+                <IconPhoto size={14} aria-hidden="true" /> View All {mediaList.length} photos
               </span>
             </div>
           )}
 
-          {/* Top Overlays */}
+          {/* Top Floating Header Controls */}
           <div className="relative z-10 flex justify-between items-start w-full gap-4">
-            <span className="bg-[#f3df27] text-[#151936] px-3 py-1.5 text-xs rounded-md text-xs font-medium tracking-wider flex items-center gap-1.5 shadow-sm shrink-0 uppercase">
-              <IconStarFilled size={14} /> FLAGSHIP MANDATE
+            <span className="bg-[#f3df27] text-[#151936] px-3.5 py-1.5 rounded-full text-xxs font-mono font-medium tracking-wider flex items-center gap-1.5 shadow-sm shrink-0 uppercase">
+              <IconStarFilled size={13} /> FLAGSHIP MANDATE
             </span>
-            <div className="flex flex-col items-end gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-              <span className="bg-white/10 font-mono backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-xxs font-medium uppercase tracking-wider whitespace-nowrap">
+
+            <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <span className="bg-black/50 font-mono backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full text-xxs font-medium uppercase tracking-wider text-white">
                 {(MANDATE_STATUS_LABEL[mandate.status] ?? mandate.status).toUpperCase()} · {(mandate.mandateRate * 100).toFixed(1)}% FEE
               </span>
-              <div className="hidden sm:flex w-fit bg-white/95 backdrop-blur-md rounded-[18px] p-3.5 shadow-xl items-center gap-3 border border-white/60 text-slate-900">
-                <div className="relative size-11 flex items-center justify-center shrink-0">
-                  <svg className="size-full -rotate-90">
-                    <circle cx="22" cy="22" r="18" fill="transparent" stroke="#f1f5f9" strokeWidth="5" />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      fill="transparent"
-                      stroke="#151936"
-                      strokeWidth="5"
-                      strokeDasharray={2 * Math.PI * 18}
-                      strokeDashoffset={(2 * Math.PI * 18) - (collectionPctDisplay / 100) * (2 * Math.PI * 18)}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Collection</p>
-                  <p className="text-lg font-medium text-slate-900 mt-0.5 font-mono leading-none">
-                    {collectionPctDisplay}%{collectionPct > 100 && <span className="text-emerald-600"> +over</span>}
-                  </p>
-                  <p className="text-xs text-slate-600">of {currentMonthName} rent</p>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Bottom Overlays */}
-          <div className="relative z-10 flex flex-col gap-4 w-full mt-auto">
-            {/* Landlord & Property Manager Avatar Pills */}
-            <div className="flex flex-wrap gap-2.5" onClick={(e) => e.stopPropagation()}>
+          {/* Middle Stakeholders Strip */}
+          <div className="relative z-10 flex flex-wrap items-center gap-2.5 my-auto pt-6" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setOwnerDrawerOpen(true)}
+              className="bg-black/50 hover:bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full flex items-center gap-2.5 border border-white/15 transition-all cursor-pointer text-left shadow-sm group/landlord"
+            >
+              <Avatar
+                src={mandate.landlord.avatarUrl || undefined}
+                fallback={getInitials(mandate.landlord.name)}
+                className="size-7 bg-white text-slate-800 text-xs font-medium border border-slate-200 shadow-2xs"
+              />
+              <div className="text-left leading-none">
+                <p className="text-xs font-medium text-white group-hover/landlord:underline">{mandate.landlord.name}</p>
+                <span className="text-xxs uppercase tracking-wider text-slate-300 font-mono block mt-0.5">Landlord</span>
+              </div>
+            </button>
+
+            {mandate.manager && (
               <button
                 type="button"
-                onClick={() => setOwnerDrawerOpen(true)}
-                className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-3xl flex items-center gap-2.5 border border-white/10 transition-colors cursor-pointer text-left focus:outline-hidden"
+                onClick={() => setManagerDrawerOpen(true)}
+                className="bg-black/50 hover:bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full flex items-center gap-2.5 border border-white/15 transition-all cursor-pointer text-left shadow-sm group/pm"
               >
                 <Avatar
-                  src={mandate.landlord.avatarUrl || undefined}
-                  fallback={getInitials(mandate.landlord.name)}
-                  className="size-7 bg-slate-100 text-slate-800 text-xs font-medium"
+                  src={mandate.manager.avatarUrl || undefined}
+                  fallback={getInitials(mandate.manager.name || "Unassigned")}
+                  className="size-7 bg-[#151936] text-white text-xs font-medium border border-white/20 shadow-2xs"
                 />
                 <div className="text-left leading-none">
-                  <p className="text-sm font-medium text-white">{mandate.landlord.name}</p>
-                  <span className="text-xxs uppercase tracking-widest text-slate-300 block">Landlord</span>
+                  <p className="text-xs font-medium text-white group-hover/pm:underline">{mandate.manager.name}</p>
+                  <span className="text-xxs uppercase tracking-wider text-slate-300 font-mono block mt-0.5">Property Manager</span>
                 </div>
               </button>
-              {mandate.manager && (
-                <button
-                  type="button"
-                  onClick={() => setManagerDrawerOpen(true)}
-                  className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-3xl flex items-center gap-2.5 border border-white/10 transition-colors cursor-pointer text-left focus:outline-hidden"
+            )}
+          </div>
+
+          {/* Bottom Financial & Progress Deck */}
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end w-full pt-4 border-t border-white/15 mt-4">
+            {/* Left Financial Headline */}
+            <div className="lg:col-span-6 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+              <span className="text-xxs font-medium uppercase tracking-wider text-slate-300 font-mono">
+                Remittance Due to Landlord
+              </span>
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="font-mono text-2xl lg:text-3xl font-medium tracking-tight text-white">
+                  {formatCompactKES(remittanceDue)}
+                </span>
+                <Link
+                  href={`/admin/properties/${mandate.property.id}`}
+                  className="bg-white/15 hover:bg-white/25 text-white border border-white/20 font-medium text-xs rounded-xl px-3.5 py-1.5 transition-all flex items-center gap-1.5 backdrop-blur-md shadow-xs shrink-0"
                 >
-                  <Avatar
-                    src={mandate.manager.avatarUrl || undefined}
-                    fallback={getInitials(mandate.manager.name || "Unassigned")}
-                    className="size-7 bg-[#f3df27] text-[#151936] text-xs font-medium"
-                  />
-                  <div className="text-left leading-none">
-                    <p className="text-sm font-medium text-white">{mandate.manager.name}</p>
-                    <span className="text-xxs uppercase tracking-widest text-slate-300 block">Property Manager</span>
-                  </div>
-                </button>
-              )}
+                  View Property <IconArrowUpRight size={13} />
+                </Link>
+              </div>
             </div>
 
-            {/* Collection Slider Progress Bar */}
-            <div className="w-full mt-2 pr-8 lg:pr-12" onClick={(e) => e.stopPropagation()}>
-              <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden mb-2">
+            {/* Right Collection Gauge Card */}
+            <div className="lg:col-span-6 flex flex-col gap-2 bg-black/40 backdrop-blur-md p-3.5 rounded-2xl border border-white/15 shadow-sm" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-xxs font-mono uppercase tracking-wider text-slate-300">Collection MTD ({currentMonthName})</span>
+                <span className="font-mono text-xs font-medium text-white">{collectionPctDisplay}% Collected</span>
+              </div>
+              <div className="h-2 w-full bg-white/15 rounded-full overflow-hidden">
                 <div
-                  className={cn("h-full rounded-full transition-all duration-500", collectionPct >= 90 ? "bg-emerald-400" : collectionPct >= 70 ? "bg-[#f3df27]" : "bg-rose-400")}
+                  className={cn("h-full rounded-full transition-all duration-500", collectionPct >= 90 ? "bg-emerald-400" : collectionPct >= 50 ? "bg-[#f3df27]" : "bg-rose-400")}
                   style={{ width: `${Math.min(100, collectionPct)}%` }}
                 />
               </div>
-              <div className="flex justify-between items-center text-xs font-medium text-slate-300">
-                <span className="font-mono text-white tracking-tight">{formatCompactKES(collectedAmount)} collected</span>
-                <span>of <span className="font-mono text-slate-300">{formatCompactKES(expectedAmount)}</span> expected</span>
+              <div className="flex items-center justify-between text-xxs font-mono text-slate-300">
+                <span>{formatCompactKES(collectedAmount)} collected</span>
+                <span>Target: {formatCompactKES(expectedAmount)}</span>
               </div>
-            </div>
-
-            {/* Remittance Due Text & View Property Button */}
-            <div className="mt-2 pt-4 border-t border-white/10 flex items-center justify-between gap-4 w-full" onClick={(e) => e.stopPropagation()}>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-widest text-slate-300">
-                  Remittance due to landlord
-                </p>
-                <p className="mono-stat text-2xl font-medium tracking-tight text-white mt-0.5">
-                  {formatCompactKES(remittanceDue)}
-                </p>
-              </div>
-
-              <Link
-                href={`/admin/properties/${mandate.property.id}`}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-medium text-xs rounded-xl px-4 py-2 transition-all flex items-center gap-1.5 backdrop-blur-md shadow-sm shrink-0"
-              >
-                View Property <IconArrowUpRight size={13} />
-              </Link>
             </div>
           </div>
-        </button>
+        </div>
 
-        {/* Thumbnail slider */}
+        {/* Side Media Gallery Cards Column */}
         {mediaList.length > 1 && (
-          <div className="flex gap-2.5 overflow-x-auto pb-1 -mt-1" style={scrollHiddenStyle}>
-            {mediaList.map((media, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => setActiveMediaIndex(index)}
-                className={cn(
-                  "relative size-[64px] rounded-xl overflow-hidden border-2 shrink-0 transition-all duration-300",
-                  activeMediaIndex === index ? "border-slate-800 scale-95 shadow-sm" : "border-slate-200/60 opacity-70 hover:opacity-100 hover:scale-95"
-                )}
-              >
-                <Image src={media.url} alt={media.alt || `Property photo ${index + 1}`} fill sizes="64px" className="object-cover" />
-              </button>
-            ))}
+          <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-4 h-full">
+            {mediaList.slice(1, 3).map((media, idx) => {
+              const actualIndex = idx + 1;
+              const isLastVisible = idx === 1 && mediaList.length > 3;
+              const remainingCount = mediaList.length - 3;
+
+              return (
+                <div
+                  key={actualIndex}
+                  onClick={() => {
+                    setLightboxIndex(actualIndex);
+                    setLightboxOpen(true);
+                  }}
+                  className="group/side relative rounded-[28px] overflow-hidden bg-slate-900 border border-slate-800/80 shadow-sm flex-1 min-h-[170px] cursor-pointer hover:border-slate-400 transition-all duration-300"
+                >
+                  {media.url ? (
+                    <Image
+                      src={media.url}
+                      alt={media.alt || `Property photo ${actualIndex + 1}`}
+                      fill
+                      sizes="(max-width: 1024px) 50vw, 35vw"
+                      className="object-cover transition-transform duration-500 group-hover/side:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-800 flex items-center justify-center text-slate-500">
+                      <IconBuildingCommunity size={28} />
+                    </div>
+                  )}
+
+                  {/* Gradient Scrim */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+
+                  {/* Overlay Badges */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-10">
+                    <span className="text-xxs font-mono text-white/90 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 uppercase tracking-wider">
+                      Photo {actualIndex + 1}
+                    </span>
+
+                    {isLastVisible && (
+                      <span className="bg-[#151936] backdrop-blur-md text-[#f3df27] font-medium text-xs px-3 py-1.5 rounded-full border border-amber-300/30 shadow-md flex items-center gap-1.5">
+                        <IconPhoto size={13} /> +{remainingCount} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -1042,7 +1066,7 @@ export function MandateFullViewBoard({
             <div className="flex items-start justify-between relative z-10">
               <div className="flex flex-col gap-1 max-w-[calc(100%-48px)]">
                 <span className="text-desc-secondary font-medium">{v.label}</span>
-                <span className={cn("mono-stat text-2xl font-medium mt-1 leading-none", VITAL_TONE_VALUE[v.tone])}>
+                <span className={cn("font-mono font-medium text-2xl font-medium mt-1 leading-none", VITAL_TONE_VALUE[v.tone])}>
                   {v.value}
                 </span>
               </div>
@@ -1228,28 +1252,28 @@ export function MandateFullViewBoard({
                         <span className="size-2.5 rounded-full bg-slate-300" />
                         <span className="text-xs text-slate-600 font-medium uppercase tracking-wide">Rent collected (landlord-payable)</span>
                       </div>
-                      <span className="mono-stat text-sm font-normal text-slate-900">{formatCompactKES(period.collectedAmount)}</span>
+                      <span className="font-mono font-medium text-sm font-normal text-slate-900">{formatCompactKES(period.collectedAmount)}</span>
                     </div>
                     <div className="flex items-center justify-between py-3 border-b border-slate-100/50">
                       <div className="flex items-center gap-2">
                         <span className="size-2.5 rounded-full bg-[#f3df27]" />
                         <span className="text-xs text-slate-600 font-medium uppercase tracking-wide">Less management fee — Sunland revenue</span>
                       </div>
-                      <span className="mono-stat text-sm font-normal text-[#b49818]">- {formatCompactKES(period.managementFee)}</span>
+                      <span className="font-mono font-medium text-sm font-normal text-[#b49818]">- {formatCompactKES(period.managementFee)}</span>
                     </div>
                     <div className="flex items-center justify-between py-3 border-b border-slate-100/50">
                       <div className="flex items-center gap-2">
                         <span className="size-2.5 rounded-full bg-slate-400" />
                         <span className="text-xs text-slate-600 font-medium uppercase tracking-wide">Less approved expenses</span>
                       </div>
-                      <span className="mono-stat text-sm font-normal text-slate-500">- {formatCompactKES(period.expenses)}</span>
+                      <span className="font-mono font-medium text-sm font-normal text-slate-500">- {formatCompactKES(period.expenses)}</span>
                     </div>
                     <div className="flex items-center justify-between py-3">
                       <div className="flex items-center gap-2">
                         <span className="size-2.5 rounded-full bg-[#122a20]" />
                         <span className="text-xs text-slate-800 font-normal uppercase tracking-wide">Landlord remittance due</span>
                       </div>
-                      <span className="mono-stat text-lg font-medium text-[#122a20]">{formatCompactKES(period.landlordRemittance)}</span>
+                      <span className="font-mono font-medium text-lg font-medium text-[#122a20]">{formatCompactKES(period.landlordRemittance)}</span>
                     </div>
                   </div>
                 </div>
@@ -1339,7 +1363,7 @@ export function MandateFullViewBoard({
                               </p>
                               <p className="text-xs text-slate-600 mt-0.5 capitalize">{r.status}</p>
                             </div>
-                            <span className="mono-stat text-slate-900">{formatCompactKES(Number(r.netRemittanceKes))}</span>
+                            <span className="font-mono font-medium text-slate-900">{formatCompactKES(Number(r.netRemittanceKes))}</span>
                           </button>
                         ))}
                       </div>

@@ -21,7 +21,6 @@ import {
   IconUserCog,
   IconX,
   IconMapPin,
-  IconTelescope,
   IconBuildingCommunity,
 } from "@tabler/icons-react";
 import Image from "next/image";
@@ -377,7 +376,7 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
 
           <div className="flex items-center justify-between mt-auto">
             <span className="font-mono text-xs text-[#122a20] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
-            <Badge tone={isStalled ? "risk" : "neutral"} className="font-mono text-xs px-1.5 py-0.5 shrink-0 flex items-center gap-0.5">
+            <Badge tone={isStalled ? "risk" : "neutral"} className="font-mono text-xxs px-1.5 py-0.5 shrink-0 flex items-center gap-0.5">
               <IconClock size={10} /> {age}d
             </Badge>
           </div>

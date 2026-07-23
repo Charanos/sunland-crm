@@ -511,7 +511,7 @@ export function FinanceAssuranceBoard({ tabId = "generate" }: { tabId: string })
                     <div className="size-10 rounded-xl bg-slate-50 group-hover:bg-slate-100 border border-slate-100 flex items-center justify-center text-slate-400 transition-colors">
                       <IconFolder size={20} />
                     </div>
-                    <Badge tone="success" className="tracking-wide uppercase px-2 font-mono h-5 text-sm">Verified</Badge>
+                    <Badge tone="success" className="tracking-wide uppercase px-2 font-mono h-5 text-xxs">Verified</Badge>
                   </div>
 
                   <div>

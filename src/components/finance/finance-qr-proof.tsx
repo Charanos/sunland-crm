@@ -121,17 +121,17 @@ export function FinanceQrProof({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/50 shadow-sm transition-all duration-300 hover:shadow-md",
-        compact ? "p-5" : "p-6"
+        "rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/50 shadow-xs transition-all duration-300",
+        compact ? "p-4 sm:p-5" : "p-6"
       )}
       aria-label="Secure QR artifact verification"
     >
-      <div className={cn("grid gap-5 items-start", compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-[auto_1fr]")}>
+      <div className={cn("grid gap-5 items-start", compact ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[auto_1fr]")}>
 
-        {/* ── QR Code ────────────────────────────────────────── */}
-        <div className="flex flex-col items-center gap-3 shrink-0">
+        {/* ── QR Code + Header Header ────────────────────────── */}
+        <div className={cn("flex gap-4 shrink-0", compact ? "items-center" : "flex-col items-center")}>
           <div className={cn(
-            "relative rounded-2xl border border-slate-200 bg-white p-3 shadow-sm overflow-hidden group",
+            "relative rounded-2xl border border-slate-200 bg-white p-2.5 shadow-2xs overflow-hidden group shrink-0",
             verified && "ring-2 ring-emerald-400 ring-offset-2"
           )}>
             {/* Scan animation line */}
@@ -140,7 +140,7 @@ export function FinanceQrProof({
             <QRCodeSVG
               ref={qrRef}
               value={qrPayload}
-              size={compact ? 120 : 148}
+              size={compact ? 104 : 148}
               bgColor="#ffffff"
               fgColor="#151936"
               level="H"
@@ -149,113 +149,116 @@ export function FinanceQrProof({
                 src: "/logo.png",
                 x: undefined,
                 y: undefined,
-                height: 24,
-                width: 24,
+                height: 20,
+                width: 20,
                 excavate: true,
               }}
             />
 
             {/* Verified badge overlay */}
             {verified && (
-              <div className="absolute -bottom-2 -right-2 flex size-7 items-center justify-center rounded-full bg-emerald-500 text-white border-2 border-white shadow-sm animate-scale-in">
-                <IconCheck size={13} stroke={3} />
+              <div className="absolute -bottom-2 -right-2 flex size-6 items-center justify-center rounded-full bg-emerald-500 text-white border-2 border-white shadow-2xs animate-scale-in">
+                <IconCheck size={12} stroke={3} />
               </div>
             )}
           </div>
 
-          {/* Download button */}
-          <button
-            type="button"
-            onClick={downloadQr}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-tiny text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            <IconDownload size={12} />
-            Download QR
-          </button>
+          <div className="flex flex-col gap-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge tone={verified ? "success" : "primary"} className="gap-1 px-2 py-0.5 text-xxs font-mono">
+                {verified ? <IconShieldCheck size={13} /> : <IconQrcode size={13} />}
+                {verified ? "Verified Authentic" : "Scan to Verify"}
+              </Badge>
+              <span className="font-mono text-xxs bg-slate-100 text-slate-600 border border-slate-200/80 px-2 py-0.5 rounded-full font-medium">
+                {artifactRef}
+              </span>
+            </div>
+
+            <h3 className="text-base sm:text-lg font-medium tracking-tight text-slate-900 mt-1 leading-snug">{artifactType}</h3>
+
+            {compact && (
+              <button
+                type="button"
+                onClick={downloadQr}
+                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xxs font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs mt-1 w-fit"
+              >
+                <IconDownload size={12} /> Download QR
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ── Metadata + Actions ──────────────────────────────── */}
         <div className="min-w-0 flex flex-col justify-center h-full">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Badge tone={verified ? "success" : "primary"} className="gap-1.5 px-2.5 py-1 text-caption">
-                {verified ? <IconShieldCheck size={14} /> : <IconQrcode size={14} />}
-                {verified ? "Verified Authentic" : "Scan to Verify"}
-              </Badge>
-              <Badge tone="neutral" className="font-mono bg-slate-100 text-slate-600 border-slate-200 text-caption">
-                {artifactRef}
-              </Badge>
-            </div>
-          </div>
-
-          <h3 className="title-serif mt-3.5 font-normal tracking-tight text-slate-900 leading-none">{artifactType}</h3>
-          <p className="mt-2 leading-relaxed text-slate-400 max-w-xl text-caption">
-            This document carries a cryptographically generated QR code ensuring its authenticity. Scan the code to verify this artifact against the central immutable registry.
-          </p>
+          {!compact && (
+            <p className="leading-relaxed text-slate-500 text-xs max-w-xl">
+              This document carries a cryptographically generated QR code ensuring its authenticity. Scan the code to verify this artifact against the central immutable registry.
+            </p>
+          )}
 
           {/* Meta grid */}
-          <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className={cn("grid gap-2.5", compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4 mt-4")}>
             {[
               { label: "Entity", value: entityName },
-              { label: "Generated", value: generatedAt },
-              { label: "Token ID", value: token, mono: true },
+              { label: "Generated", value: new Date(generatedAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) },
+              { label: "Token ID", value: token.slice(0, 8).toUpperCase(), mono: true },
               { label: "Value Auth", value: typeof amount === "number" ? formatCompactKES(amount) : "Document only", mono: true },
             ].map(item => (
-              <div key={item.label} className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-colors hover:border-slate-200">
-                <p className="text-slate-400 label-caps">{item.label}</p>
-                <p className={cn("mt-1 text-slate-800 truncate text-caption", item.mono && "font-mono")}>{item.value}</p>
+              <div key={item.label} className="rounded-xl border border-slate-100 bg-white p-2.5 shadow-2xs transition-colors hover:border-slate-200">
+                <p className="text-slate-400 font-mono text-xxs uppercase tracking-wider">{item.label}</p>
+                <p className={cn("mt-0.5 text-slate-800 truncate text-xs font-medium", item.mono && "font-mono")}>{item.value}</p>
               </div>
             ))}
 
             {/* Extra metadata fields */}
             {metadata && Object.entries(metadata).map(([key, val]) => (
-              <div key={key} className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-colors hover:border-slate-200">
-                <p className="text-slate-400 label-caps">{key}</p>
-                <p className="mt-1 text-slate-800 truncate text-caption font-mono">{String(val)}</p>
+              <div key={key} className="rounded-xl border border-slate-100 bg-white p-2.5 shadow-2xs transition-colors hover:border-slate-200">
+                <p className="text-slate-400 font-mono text-xxs uppercase tracking-wider">{key}</p>
+                <p className="mt-0.5 text-slate-800 truncate text-xs font-mono font-medium">{String(val)}</p>
               </div>
             ))}
           </div>
 
           {/* Actions */}
-          <div className="mt-5 flex flex-wrap items-center gap-2.5">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <Button
               type="button"
               size="sm"
               onClick={() => setVerified(true)}
               disabled={verified}
               className={cn(
-                "transition-all",
+                "transition-all text-xs rounded-xl px-3.5 py-1.5 font-medium flex-1 sm:flex-none justify-center",
                 verified ? "bg-emerald-500 text-white hover:bg-emerald-600" : "bg-[#151936] text-white hover:bg-slate-800"
               )}
             >
               <IconShieldCheck size={14} />
-              {verified ? "Authentication Successful" : "Authenticate Record"}
+              {verified ? "Verified" : "Authenticate Record"}
             </Button>
             <Button
               type="button"
               variant="secondary"
               size="sm"
               onClick={handleCopy}
-              className="bg-white hover:bg-slate-50 border-slate-200 shadow-sm"
+              className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 rounded-xl text-xs px-3 py-1.5 shadow-2xs font-medium flex-1 sm:flex-none justify-center"
             >
               <IconCopy size={14} />
-              {copied ? "Copied Link" : "Copy Secure Link"}
+              {copied ? "Copied" : "Copy Link"}
             </Button>
             <Button
               type="button"
               variant="secondary"
               size="sm"
               onClick={handleShare}
-              className="bg-white hover:bg-slate-50 border-slate-200 shadow-sm"
+              className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 rounded-xl text-xs px-3 py-1.5 shadow-2xs font-medium flex-1 sm:flex-none justify-center"
             >
               <IconShare size={14} />
               Share
             </Button>
             <Link
               href={verificationPath}
-              className="inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-slate-100 px-3.5 transition-colors hover:bg-slate-200 hover:text-slate-900 shadow-sm text-caption"
+              className="inline-flex h-[32px] items-center gap-1 rounded-xl bg-slate-100 border border-slate-200/80 px-3 transition-colors hover:bg-slate-200 text-slate-700 text-xs font-medium flex-1 sm:flex-none justify-center"
             >
-              View Registry <IconExternalLink size={14} />
+              View Registry <IconExternalLink size={13} />
             </Link>
           </div>
         </div>

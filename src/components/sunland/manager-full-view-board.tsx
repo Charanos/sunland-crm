@@ -241,7 +241,7 @@ export function ManagerFullViewBoard({ entityId, managerId }: { entityId: string
                 <v.icon size={18} className={VITAL_TONE_ICON[v.tone]} aria-hidden="true" />
                 <div>
                   <p className="label-caps text-slate-400">{v.label}</p>
-                  <p className="mono-stat text-xl text-slate-900 mt-1">{v.value}</p>
+                  <p className="font-mono font-medium text-xl text-slate-900 mt-1">{v.value}</p>
                 </div>
               </div>
             ))}

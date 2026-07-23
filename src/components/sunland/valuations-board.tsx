@@ -620,7 +620,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             </svg>
             <div>
               <p className="body-sm text-slate-300 mb-0.5">Offer→Mandate</p>
-              <p className="mono-stat  text-white text-2xl leading-none">{Math.round(kpis.convPct)}%</p>
+              <p className="font-mono font-medium  text-white text-2xl leading-none">{Math.round(kpis.convPct)}%</p>
               <p className="mt-1 text-xxs font-medium uppercase tracking-wide text-emerald-300">last 12 months</p>
             </div>
           </div>
@@ -771,7 +771,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       {(STAGE_META[featuredProspect.stage] ?? STAGE_META.requested).label}
                     </Badge>
                     {scoreOf(featuredProspect) && (
-                      <span className="text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold">
+                      <span className="text-xs font-mono text-slate-600 tracking-wider uppercase font-medium">
                         Grade {scoreOf(featuredProspect)?.grade} Fit
                       </span>
                     )}
@@ -880,7 +880,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                   <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-center items-center w-full min-h-[140px] shadow-xs relative overflow-hidden">
                     <div className="absolute top-0 right-0 size-16 bg-[#122a20]/5 rounded-bl-full pointer-events-none" />
                     <span className="text-[10px] font-mono tracking-wider text-slate-600 uppercase">Methodology</span>
-                    <span className="font-serif text-slate-800 text-sm font-semibold mt-1.5 block">
+                    <span className="font-serif text-slate-800 text-sm font-medium mt-1.5 block">
                       {featuredProspect.methodology || "Comparative Method"}
                     </span>
                     <div className="h-px bg-slate-200 w-12 my-3.5" />
@@ -1078,7 +1078,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
 
                               <div className="flex items-center justify-between mt-auto">
                                 <span className="font-mono text-xs text-[#122a20] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
-                                <Badge tone="neutral" className="font-mono text-xs px-1.5 py-0.5 shrink-0">
+                                <Badge tone="neutral" className="font-mono text-xxs px-1.5 py-0.5 shrink-0">
                                   {ageDaysOf(v)}d
                                 </Badge>
                               </div>
@@ -1114,13 +1114,13 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                 >
                   {/* Property Image Banner */}
                   <div className="relative h-36 w-full bg-[#0d211a] overflow-hidden shrink-0">
-                      <Image
-                        src={firstImage}
-                        alt={subject.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw"
-                        className="object-cover transition-transform duration-500 group-hover/card:scale-105"
-                      />
+                    <Image
+                      src={firstImage}
+                      alt={subject.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw"
+                      className="object-cover transition-transform duration-500 group-hover/card:scale-105"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
 
                     {/* Floating Badges inside Image */}
@@ -1132,7 +1132,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
 
                     <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
                       {score && (
-                        <span className="bg-white/95 text-slate-800 rounded-lg px-2 py-0.5 text-xs font-mono font-medium shadow-xs border border-slate-150" title="Acquisition Fit Score">
+                        <span className="bg-white/95 text-slate-800 rounded-lg px-2 py-0.5 text-xxs font-mono font-medium shadow-xs border border-slate-150" title="Acquisition Fit Score">
                           <span style={{ color: score.color }} className="font-medium mr-0.5">{score.grade}</span> {score.score}
                         </span>
                       )}
@@ -1195,7 +1195,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
 
                     <div className="flex items-center justify-between mt-auto">
                       <span className="font-mono text-sm text-[#122a20] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
-                      <Badge tone="neutral" className="font-mono text-xs px-2.5 py-1 shrink-0">
+                      <Badge tone="neutral" className="font-mono text-xxs px-2.5 py-1 shrink-0">
                         {ageDaysOf(v)}d
                       </Badge>
                     </div>
@@ -1312,13 +1312,13 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                     >
                       <span className="flex items-center gap-2 min-w-0">
                         <span className="relative size-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0">
-                            <Image
-                              src={firstImage}
-                              alt={subject.name}
-                              fill
-                              sizes="32px"
-                              className="object-cover"
-                            />
+                          <Image
+                            src={firstImage}
+                            alt={subject.name}
+                            fill
+                            sizes="32px"
+                            className="object-cover"
+                          />
                         </span>
                         <span className="text-xs font-medium text-slate-900 truncate">{subject.name}</span>
                       </span>

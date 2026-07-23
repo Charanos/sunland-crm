@@ -12,7 +12,6 @@ import {
   IconUser,
   IconShieldCheck,
   IconReceipt2,
-  IconBan,
   IconTimeline,
   IconTransfer,
   IconScale
@@ -709,13 +708,13 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2.5 mb-1">
                     <span className="text-slate-900 mono-amount">{item.ref}</span>
-                    <Badge tone={item.tone} className="h-5 font-normal px-2 shadow-sm label-caps text-xs">{item.status}</Badge>
+                    <Badge tone={item.tone} className="h-5 font-normal px-2 shadow-sm label-caps text-xxs">{item.status}</Badge>
                   </div>
                   <p className="truncate font-medium text-slate-800 leading-snug body-md">{item.label}</p>
                   <p className="mt-0.5 truncate text-desc-secondary">{item.meta}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors mono-stat">
+                  <span className="tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors font-mono font-medium">
                     {formatMoney(item.amount)}
                   </span>
                 </div>
@@ -880,7 +879,7 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                 >
                   <p className={cn("text-sm font-medium uppercase tracking-widest", isRisk ? "text-rose-700" : "text-slate-400")}>{bucket}</p>
                   <div className="mt-auto pt-4">
-                    <p className="tracking-tight text-slate-900 mono-stat">{formatMoney(bucketValue)}</p>
+                    <p className="tracking-tight text-slate-900 font-mono font-medium">{formatMoney(bucketValue)}</p>
                     <p className="mt-1 text-desc-secondary">{bucketRows.length} records</p>
                   </div>
                 </div>
@@ -1002,8 +1001,8 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                       <p className="text-title-primary leading-snug">{b.vendorName}</p>
                       <p className="text-sm text-slate-400 mt-0.5">{b.description}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        <Badge tone="data" className="h-5 text-sm ">{b.source}</Badge>
-                        <Badge tone={b.disputed ? "risk" : "neutral"} className="h-5 text-sm ">
+                        <Badge tone="data" className="h-5 text-xxs ">{b.source}</Badge>
+                        <Badge tone={b.disputed ? "risk" : "neutral"} className="h-5 text-xxs ">
                           {b.disputed ? "Dispute hold" : b.owner}
                         </Badge>
                       </div>
@@ -1084,8 +1083,8 @@ export function PayablesReceivablesBoard({ tabId = "payables" }: { tabId: string
                       <p className="text-title-primary leading-snug">{inv.clientName}</p>
                       <p className="text-sm text-slate-400 mt-0.5">{inv.description}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        <Badge tone="data" className="h-5 text-sm ">{inv.source}</Badge>
-                        <Badge tone={inv.disputed ? "risk" : "neutral"} className="h-5 text-sm ">
+                        <Badge tone="data" className="h-5 text-xxs ">{inv.source}</Badge>
+                        <Badge tone={inv.disputed ? "risk" : "neutral"} className="h-5 text-xxs ">
                           {inv.disputed ? "Dispute hold" : inv.owner}
                         </Badge>
                       </div>

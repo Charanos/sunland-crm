@@ -26,7 +26,7 @@ When working within the Sunland CRM Next.js codebase, please adhere to these gui
    - **`font-medium` inline is acceptable** for subtle weight variation where no semantic class maps precisely.
    - **NO INLINE TEXT SIZING**: Never use arbitrary Tailwind sizing classes like `text-ms`, `text-[15px]`, `text-[42px]`.
    - **USE SEMANTIC CSS** where a matching class exists in `globals.css`: `.headline-lg`, `.headline-md`, `.title-serif`, `.body-md`, `.body-sm`, `.label-caps`, `.text-heading-primary`, `.text-title-primary`, `.text-body-primary`, `.text-body-regular`, `.text-desc-secondary`, `.text-meta-muted`, `.text-meta-muted-strong`.
-   - **NUMBERS USE MONO**: ALL numerals (KPIs, stats, prices) must utilize `.mono-stat`, `.mono-data`, or `.mono-amount` rather than generic font rendering.
+   - **NUMBERS USE MONO**: ALL numerals (KPIs, stats, prices) must utilize `.font-mono font-medium`, `.mono-data`, or `.mono-amount` rather than generic font rendering.
 
 # Role Architecture (client-finalized, 2026 Q3 - full record in `docs/ARCHITECTURE_DECISIONS.md` ADR 013)
 

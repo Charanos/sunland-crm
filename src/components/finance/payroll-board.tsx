@@ -1083,7 +1083,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
                   </div>
                   <div className="text-right">
                     <p className="text-slate-400 font-mono label-caps">Net Salary Outflow</p>
-                    <p className="text-indigo-700 leading-none mt-1 mono-stat">
+                    <p className="text-indigo-700 leading-none mt-1 font-mono font-medium">
                       {formatMoney(selectedRun.netPay)}
                     </p>
                   </div>
@@ -1377,7 +1377,7 @@ export function PayrollBoard({ tabId = "runs" }: { tabId: string }) {
 
                 <div className="my-3">
                   <p className="text-slate-400 font-mono label-caps">Liability Accrual</p>
-                  <p className="text-slate-900 leading-none mt-1 mono-stat">
+                  <p className="text-slate-900 leading-none mt-1 font-mono font-medium">
                     {formatMoney(selectedRemittance.amount)}
                   </p>
                 </div>

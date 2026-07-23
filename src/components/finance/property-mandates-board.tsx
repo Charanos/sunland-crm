@@ -511,15 +511,15 @@ export function PropertyMandatesBoard({ tabId = "active" }: { tabId: string }) {
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="rounded-xl border border-slate-200/60 bg-gradient-to-b from-slate-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-slate-300">
                 <span className="text-slate-400 label-caps">Total Collected Rent</span>
-                <p className="tracking-tight text-slate-900 mt-2 mono-stat">KES {financialSplitTotals.collected.toLocaleString()}</p>
+                <p className="tracking-tight text-slate-900 mt-2 font-mono font-medium">KES {financialSplitTotals.collected.toLocaleString()}</p>
               </div>
               <div className="rounded-xl border border-indigo-200/60 bg-gradient-to-b from-indigo-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-indigo-300">
                 <span className="text-indigo-700 label-caps">Accrued Mgmt Fees</span>
-                <p className="tracking-tight text-indigo-700 mt-2 mono-stat">KES {financialSplitTotals.fees.toLocaleString()}</p>
+                <p className="tracking-tight text-indigo-700 mt-2 font-mono font-medium">KES {financialSplitTotals.fees.toLocaleString()}</p>
               </div>
               <div className="rounded-xl border border-amber-200/60 bg-gradient-to-b from-amber-50/80 to-white p-4 transition-all hover:shadow-sm hover:-translate-y-0.5 hover:border-amber-300">
                 <span className="text-amber-700 label-caps">Utility/Legal Deductions</span>
-                <p className="tracking-tight text-amber-700 mt-2 mono-stat">KES {financialSplitTotals.expenses.toLocaleString()}</p>
+                <p className="tracking-tight text-amber-700 mt-2 font-mono font-medium">KES {financialSplitTotals.expenses.toLocaleString()}</p>
               </div>
             </div>
           </div>

@@ -671,7 +671,7 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                   <p className="mt-0.5 truncate text-desc-secondary">{item.source} - {item.holder}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors mono-stat">
+                  <span className="tracking-tight text-slate-900 group-hover/item:text-indigo-700 transition-colors font-mono font-medium">
                     {formatMoney(item.amount)}
                   </span>
                 </div>
@@ -911,11 +911,11 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                     <p className="text-title-primary leading-snug">{c.payerName}</p>
                     <p className="text-sm text-slate-400 mt-0.5">{c.description}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      <Badge tone="data" className="h-5 text-sm ">{c.source}</Badge>
-                      <Badge tone={c.approvalStatus ? "warning" : c.status === "Returned" ? "risk" : "neutral"} className="h-5 text-sm ">{c.holder}</Badge>
+                      <Badge tone="data" className="h-5 text-xxs ">{c.source}</Badge>
+                      <Badge tone={c.approvalStatus ? "warning" : c.status === "Returned" ? "risk" : "neutral"} className="h-5 text-xxs ">{c.holder}</Badge>
                     </div>
                     {c.approvalStatus ? (
-                      <Badge tone="warning" className="mt-2 h-5 text-sm ">
+                      <Badge tone="warning" className="mt-2 h-5 text-xxs ">
                         {c.approvalRef} awaiting GM/CEO
                       </Badge>
                     ) : null}

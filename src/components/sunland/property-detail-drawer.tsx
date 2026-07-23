@@ -210,7 +210,7 @@ export function PropertyDetailDrawer({
               />
             ) : (
               <div className="size-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-                <IconBuildingSkyscraper size={48} className="text-slate-200" stroke={1.2} />
+                <IconBuildingSkyscraper size={48} className="text-slate-400" stroke={1.2} />
               </div>
             )}
 
@@ -229,7 +229,7 @@ export function PropertyDetailDrawer({
                     disabled={updating}
                     onChange={(e) => applyStatusChange(e.target.value as PropertyStatus)}
                     aria-label={`Change status for ${property.name}`}
-                    className="appearance-none bg-transparent outline-none cursor-pointer disabled:cursor-wait label-caps text-slate-900 tracking-widest font-medium pl-5 pr-6 w-full h-full relative z-10"
+                    className="appearance-none bg-transparent outline-none text-xs cursor-pointer disabled:cursor-wait font-mono uppercase text-slate-900 tracking-widest font-medium pl-5 pr-4 w-full h-full relative z-10"
                   >
                     {STATUS_ORDER.map((s) => (
                       <option key={s} value={s}>
@@ -237,7 +237,7 @@ export function PropertyDetailDrawer({
                       </option>
                     ))}
                   </select>
-                  <IconChevronDown size={14} stroke={2.5} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-all group-hover:text-slate-900 z-10" />
+                  <IconChevronDown size={14} stroke={2.5} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none transition-all group-hover:text-slate-900 z-10" />
                 </div>
               ) : (
                 <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 backdrop-blur-md bg-white/70 border border-white/40 shadow-sm">
@@ -259,26 +259,26 @@ export function PropertyDetailDrawer({
           <div className="flex flex-col gap-5 border-b border-slate-100 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
-                <p className="text-slate-400 label-caps mb-1.5 tracking-widest">{isForSale ? "Asking Price" : "Monthly Rent"}</p>
+                <p className="text-slate-600 label-caps mb-1.5 tracking-widest">{isForSale ? "Asking Price" : "Monthly Rent"}</p>
                 <div className="flex items-baseline gap-1.5 text-slate-900">
-                  <span className="mono-stat text-4xl sm:text-5xl font-normal tracking-tight">{priceVal.replace("KES ", "").replace("/mo", "")}</span>
-                  <span className="text-slate-400 label-caps font-normal">{priceVal.includes("KES") ? "KES" : ""}{priceVal.includes("/mo") ? " / mo" : ""}</span>
+                  <span className="font-mono text-3xl sm:text-4xl font-normal tracking-tight">{priceVal.replace("KES ", "").replace("/mo", "")}</span>
+                  <span className="text-slate-600 label-caps font-normal">{priceVal.includes("KES") ? "KES" : ""}{priceVal.includes("/mo") ? " / mo" : ""}</span>
                 </div>
               </div>
               <div className="text-left sm:text-right">
-                <span className="mono-stat text-2xl font-normal text-slate-900">N/A</span>
-                <p className="label-caps text-slate-400 mt-0.5 tracking-widest">Annual ROI</p>
+                <span className="font-mono font-medium text-2xl font-normal text-slate-900">N/A</span>
+                <p className="label-caps text-slate-600 mt-0.5 tracking-widest">Annual ROI</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-slate-500">
-              <IconMapPin size={16} stroke={1.2} className="text-slate-400 shrink-0" />
+              <IconMapPin size={16} stroke={1.2} className="text-slate-600 shrink-0" />
               <span className="body-sm">{property.location}</span>
             </div>
           </div>
 
           {/* ── Key Specs (Sleek Grid) ── */}
           <div>
-            <p className="label-caps text-slate-400 mb-5 tracking-widest">Property Specifications</p>
+            <p className="label-caps text-slate-600 mb-5 tracking-widest">Property Specifications</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
               {[
                 { icon: IconBed, label: "Bedrooms", value: property.bedrooms != null ? String(property.bedrooms) : "—" },
@@ -289,11 +289,11 @@ export function PropertyDetailDrawer({
                 { icon: IconTag, label: "Listing", value: LISTING_TYPE_LABEL[property.listingType as keyof typeof LISTING_TYPE_LABEL] ?? (property.listingType?.toLowerCase() === "sale" ? "For Sale" : property.listingType || "—") },
               ].map((tile, idx) => (
                 <div key={tile.label + idx} className="flex flex-col gap-1.5 border-l border-slate-100 pl-4">
-                  <div className="flex items-center gap-1.5 text-slate-400">
+                  <div className="flex items-center gap-1.5 text-slate-600">
                     <tile.icon size={14} stroke={1.5} />
                     <span className="label-caps tracking-widest">{tile.label}</span>
                   </div>
-                  <span className="mono-stat text-xl text-slate-800 font-normal">{tile.value}</span>
+                  <span className="font-mono text-xl text-slate-800 font-normal">{tile.value}</span>
                 </div>
               ))}
             </div>
@@ -302,7 +302,7 @@ export function PropertyDetailDrawer({
           {/* ── Amenities (Minimal List) ── */}
           {property.amenities && property.amenities.length > 0 && (
             <div className="border-t border-slate-100 pt-8">
-              <p className="label-caps text-slate-400 mb-5 tracking-widest">Amenities & Features</p>
+              <p className="label-caps text-slate-600 mb-5 tracking-widest">Amenities & Features</p>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
                 {property.amenities.map((amenity: string) => (
                   <span key={amenity} className="flex items-center gap-2 text-slate-600 body-sm">
@@ -317,7 +317,7 @@ export function PropertyDetailDrawer({
           {/* ── Property Owner (Flush Row) ── */}
           {ownerHasName && (
             <div className="border-t border-slate-100 pt-8">
-              <p className="label-caps text-slate-400 mb-5 tracking-widest">Property Owner</p>
+              <p className="label-caps text-slate-600 mb-5 tracking-widest">Property Owner</p>
               <div className="flex items-center justify-between gap-4 group">
                 <div className="flex items-center gap-4">
                   <Avatar
@@ -334,7 +334,7 @@ export function PropertyDetailDrawer({
                   {contact?.phone && (
                     <a
                       href={`tel:${contact.phone}`}
-                      className="size-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                      className="size-10 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                       aria-label="Call owner"
                     >
                       <IconPhone size={18} stroke={1.5} />
@@ -343,7 +343,7 @@ export function PropertyDetailDrawer({
                   {contact?.email && (
                     <a
                       href={`mailto:${contact.email}`}
-                      className="size-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                      className="size-10 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                       aria-label="Email owner"
                     >
                       <IconMail size={18} stroke={1.5} />
@@ -356,9 +356,9 @@ export function PropertyDetailDrawer({
 
           {/* ── Activity Timeline (Delicate) ── */}
           <div className="border-t border-slate-100 pt-8">
-            <p className="label-caps text-slate-400 mb-6 tracking-widest">Recent Activity</p>
+            <p className="label-caps text-slate-600 mb-6 tracking-widest">Recent Activity</p>
             {activity.length === 0 ? (
-              <p className="body-sm text-slate-400 italic">No recorded activity yet.</p>
+              <p className="body-sm text-slate-600 italic">No recorded activity yet.</p>
             ) : (
               <div className="space-y-5 pl-1.5 relative">
                 <div className="absolute left-[9px] top-2 bottom-2 w-px bg-slate-100" />
@@ -367,7 +367,7 @@ export function PropertyDetailDrawer({
                     <div className="size-[6px] rounded-full bg-slate-300 shrink-0 mt-[6px] z-10" />
                     <div className="flex-1 min-w-0">
                       <p className="body-sm text-slate-700 leading-snug">{entry.summary}</p>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs text-slate-600 mt-1">
                         {relativeTime(entry.createdAt)}
                       </p>
                     </div>

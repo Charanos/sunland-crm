@@ -30,6 +30,8 @@ import {
   IconUsers,
   IconClock,
   IconMoodEmpty,
+  IconBuildingSkyscraper,
+  IconKey,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import {
@@ -514,7 +516,10 @@ export function PropertiesBoard({
     const rentPool = properties
       .filter((p) => p.status === "occupied" && p.monthlyRentKes)
       .reduce((sum, p) => sum + parseFloat(p.monthlyRentKes!), 0);
-    return { total, occupied, available, rate, rentPool };
+    const vacantRentRoll = properties
+      .filter((p) => p.status === "available" && p.monthlyRentKes)
+      .reduce((sum, p) => sum + parseFloat(p.monthlyRentKes!), 0);
+    return { total, occupied, available, rate, rentPool, vacantRentRoll };
   }, [properties, statusCounts]);
 
   const featuredProperties = useMemo(() => properties.filter((p) => p.isFeatured), [properties]);
@@ -714,101 +719,128 @@ export function PropertiesBoard({
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
-      {/* ── Dense, High-Contrast Dark KPI Tier - driven fully from STATUS_CONFIG ── */}
-      <div className="gsap-stagger bg-tertiary-gradient border border-[#122a20]/80 p-1.5 rounded-[24px] shadow-xl relative overflow-hidden group">
-        <div className="absolute right-0 top-0 size-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-700" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10">
-          {/* Total */}
-          <div className="py-6 px-6 lg:py-8 lg:px-8 flex flex-col justify-between h-[150px] relative overflow-hidden group/card">
-            <div className="absolute -bottom-16 -right-12 opacity-5 text-emerald-500 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
-              <IconBuildingCommunity size={180} stroke={1} />
+      {/* ── Executive 4-Card Dark KPI Tier ── */}
+      <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-8 border border-slate-800/80">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
+          {/* Card 1: Total Estate Portfolio */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-emerald-500 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconBuildingCommunity size={140} stroke={1} />
             </div>
 
-            <span className="text-xs font-medium text-slate-300 relative z-10">Total Properties</span>
-            <div className="flex items-end justify-between gap-3 relative z-10">
-              <span className="font-mono text-4xl font-medium text-white">{kpis.total}</span>
-              <div className="text-right mb-0.5">
-                <span className="text-xxs font-medium uppercase tracking-widest text-emerald-400">{kpis.available} AVAILABLE</span>
+            <span className="text-xs font-medium text-slate-300 relative z-10 uppercase tracking-wider">Total Estate Portfolio</span>
+            <div className="relative z-10 mt-4">
+              <span className="font-mono mono-stat text-4xl font-normal text-white">{kpis.total}</span>
+              {kpis.total > 0 && (
+                <>
+                  <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    {portfolioMix.map(({ status, pct, config }) =>
+                      statusCounts[status] > 0 ? (
+                        <div
+                          key={status}
+                          className={cn("h-full transition-all duration-1000", config.dot)}
+                          style={{ width: `${pct}%` }}
+                          title={`${config.label}: ${statusCounts[status]}`}
+                        />
+                      ) : null
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-center text-xxs gap-2 flex-wrap">
+                    {portfolioMix.map(({ status, count, config }) => {
+                      if (count === 0) return null;
+                      const textColors: Record<string, string> = {
+                        available: "text-emerald-400",
+                        occupied: "text-slate-200",
+                        under_offer: "text-amber-400",
+                        maintenance: "text-rose-400",
+                        off_market: "text-slate-400",
+                      };
+                      return (
+                        <span
+                          key={status}
+                          className={cn(
+                            "flex items-center gap-1 text-xxs font-medium uppercase tracking-wider",
+                            textColors[status] || "text-slate-300"
+                          )}
+                        >
+                          <span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />
+                          {count} {config.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Card 2: Occupancy & Inventory */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card bg-white/[0.02]">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-indigo-500 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconBuildingSkyscraper size={140} stroke={1} />
+            </div>
+            <span className="text-xs font-medium text-slate-300 relative z-10 uppercase tracking-wider">Occupancy & Inventory</span>
+            <div className="relative z-10 mt-4 flex items-center gap-4">
+              <svg width="52" height="52" viewBox="0 0 64 64" role="img" aria-label={`Occupancy ${kpis.rate.toFixed(0)}%`} className="shrink-0">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+                <circle
+                  cx="32" cy="32" r="26" fill="none" stroke="#f3df27" strokeWidth="7" strokeLinecap="round"
+                  strokeDasharray={`${((kpis.rate / 100) * 163.4).toFixed(1)} 163.4`}
+                  transform="rotate(-90 32 32)"
+                />
+              </svg>
+              <div className="flex flex-col min-w-0">
+                <span className="font-mono mono-stat text-3xl font-normal text-white">{kpis.rate.toFixed(0)}%</span>
+                <p className="text-xxs font-medium uppercase tracking-widest text-emerald-400 flex items-center gap-1 mt-0.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  {kpis.occupied} OCCUPIED OF {kpis.total} UNITS
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Occupancy - SVG ring gauge, matches design spec exactly */}
-          <div className="py-6 px-6 lg:py-8 lg:px-8 flex items-center gap-6 h-[150px]">
-            <svg width="60" height="60" viewBox="0 0 64 64" role="img" aria-label={`Occupancy ${kpis.rate.toFixed(0)}%`} className="shrink-0">
-              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
-              <circle
-                cx="32" cy="32" r="26" fill="none" stroke="#f3df27" strokeWidth="7" strokeLinecap="round"
-                strokeDasharray={`${((kpis.rate / 100) * 163.4).toFixed(1)} 163.4`}
-                transform="rotate(-90 32 32)"
-              />
-            </svg>
-            <div className="flex flex-col justify-between h-full py-1">
-              <p className="text-xs font-medium text-slate-300">Occupancy</p>
-              <span className="font-mono text-4xl font-medium text-white">{kpis.rate.toFixed(0)}%</span>
-              <p className="text-xxs font-medium uppercase tracking-widest text-emerald-400">{kpis.occupied} occupied</p>
+          {/* Card 3: Vacant & Pipeline Opportunity */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-amber-500 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconKey size={140} stroke={1} />
             </div>
-          </div>
+            <span className="text-xs font-medium text-slate-300 relative z-10 uppercase tracking-wider">Vacant & Pipeline Opportunity</span>
+            <div className="relative z-10 mt-4">
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono mono-stat text-4xl font-normal text-white">{kpis.available}</span>
+                <span className="text-xxs font-medium uppercase tracking-widest text-amber-400">UNITS AVAILABLE</span>
+              </div>
 
-          {/* Portfolio mix - segment bar + legend, all 5 STATUS_ORDER segments */}
-          <div className="py-6 px-6 lg:py-8 lg:px-8 flex flex-col justify-between h-[150px] relative overflow-hidden group/card bg-white/[0.01]">
-            <div className="absolute -bottom-10 -right-10 opacity-[0.02] text-white pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
-              <IconChartBar size={140} stroke={1} />
-            </div>
-            <span className="text-xs font-medium text-slate-300 relative z-10">Portfolio mix</span>
-            <div className="relative z-10 mt-auto">
-              {/* Full status segment bar - all 5 segments from STATUS_ORDER */}
-              <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                {portfolioMix.map(({ status, pct, config }) =>
-                  statusCounts[status] > 0 ? (
-                    <div
-                      key={status}
-                      className={cn("h-full transition-all duration-1000", config.dot)}
-                      style={{ width: `${pct}%` }}
-                      title={`${config.label}: ${statusCounts[status]}`}
-                    />
-                  ) : null
+              <div className="mt-3 flex items-center justify-between pt-2 border-t border-white/10">
+                <div className="flex flex-col min-w-0">
+                  <span className="font-mono mono-stat text-sm font-medium text-white">{formatCompactKES(kpis.vacantRentRoll)}</span>
+                  <span className="text-xxs font-medium uppercase tracking-widest text-emerald-400 mt-0.5">
+                    POTENTIAL MONTHLY RENT
+                  </span>
+                </div>
+                {statusCounts.under_offer > 0 && (
+                  <div className="text-right min-w-0">
+                    <span className="font-mono mono-stat text-sm font-medium text-amber-300">{statusCounts.under_offer}</span>
+                    <span className="text-xxs font-medium uppercase tracking-widest text-slate-400 block mt-0.5">
+                      UNDER OFFER
+                    </span>
+                  </div>
                 )}
               </div>
-              <div className="mt-2.5 flex items-center gap-x-3 text-xxs gap-y-1 flex-wrap">
-                {portfolioMix.map(({ status, count, config }) => {
-                  if (count === 0) return null;
-                  const textColors: Record<string, string> = {
-                    available: "text-emerald-400",
-                    occupied: "text-slate-100",
-                    under_offer: "text-amber-400",
-                    maintenance: "text-rose-400",
-                    off_market: "text-slate-300",
-                  };
-                  return (
-                    <span
-                      key={status}
-                      className={cn(
-                        "flex items-center gap-1 text-xxs font-medium uppercase tracking-wider",
-                        textColors[status] || "text-slate-300"
-                      )}
-                    >
-                      <span className={cn("h-1.5 w-1.5  rounded-full", config.dot)} />
-                      {count} {config.label}
-                    </span>
-                  );
-                })}
-              </div>
             </div>
           </div>
 
-          {/* Rent pool */}
-          <div className="py-6 px-6 lg:py-8 lg:px-8 flex flex-col justify-between h-[150px] relative overflow-hidden group/card">
-            <div className="absolute -bottom-12 -right-8 opacity-[0.02] text-white pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
-              <IconCash size={180} stroke={1} />
+          {/* Card 4: Monthly Rent Pool */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card bg-white/[0.02]">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-emerald-500 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconCash size={140} stroke={1} />
             </div>
-
-            <span className="text-xs font-medium text-slate-300 relative z-10">Monthly Rent Pool</span>
-            <div className="relative z-10">
-              <span className="font-mono text-4xl text-white">
-                KES {formatCompactKES(kpis.rentPool).replace('KES ', '')}
+            <span className="text-xs font-medium text-slate-300 relative z-10 uppercase tracking-wider">Monthly Rent Pool</span>
+            <div className="flex flex-col relative z-10 mt-4">
+              <span className="font-mono mono-stat text-3xl font-normal text-white">
+                {formatCompactKES(kpis.rentPool)}
               </span>
-              <p className="text-xxs font-medium uppercase tracking-widest text-slate-400 mt-2">Contracted · occupied only</p>
+              <p className="text-xxs font-medium uppercase tracking-widest text-slate-400 mt-2">CONTRACTED ACTIVE CASHFLOW</p>
             </div>
           </div>
         </div>
@@ -884,10 +916,10 @@ export function PropertiesBoard({
 
                 {/* Listing type + name + location */}
                 <div className="mb-4">
-                  <span className="inline-flex bg-slate-50 border border-slate-200/60 rounded-full px-3 py-0.5 label-caps text-slate-500 mb-2">
+                  <Badge className="inline-flex bg-slate-50 border border-slate-200/60 rounded-full px-3 py-0.5 label-caps text-slate-500 mb-2">
                     {LISTING_TYPE_LABEL[featuredProperties[safeFeaturedIndex].listingType as keyof typeof LISTING_TYPE_LABEL]
                       ?? (isSale(featuredProperties[safeFeaturedIndex]) ? "For Sale" : "To Let")}
-                  </span>
+                  </Badge>
                   <h4 className="text-xl sm:text-2xl lg:text-3xl font-medium text-slate-900 leading-snug tracking-tight mb-1.5">
                     {featuredProperties[safeFeaturedIndex].name}
                   </h4>
@@ -1084,7 +1116,7 @@ export function PropertiesBoard({
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="mono-stat text-slate-800 w-6 text-right text-sm">{count}</span>
+                  <span className="font-mono font-medium text-slate-800 w-6 text-right text-sm">{count}</span>
                 </div>
               </div>
             ))}
@@ -1102,7 +1134,7 @@ export function PropertiesBoard({
                         <PropertyTypeIcon type={type} size={14} />
                       </div>
                       <span className="text-sm text-slate-600 flex-1">{type}</span>
-                      <span className="mono-stat text-slate-800 text-sm">{count}</span>
+                      <span className="font-mono font-medium text-slate-800 text-sm">{count}</span>
                     </div>
                   ))}
                 </div>

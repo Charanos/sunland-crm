@@ -298,7 +298,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [], rev
               <h3 className="text-lg font-medium text-slate-900 tracking-tight mb-1">Market Revenue Overview</h3>
               <p className="body-sm text-slate-400">Available rental income this month</p>
               <div className="mt-4 flex items-center gap-3">
-                <span className="mono-stat text-slate-900 leading-none text-3xl">KES {analytics.revenue}</span>
+                <span className="font-mono font-medium text-slate-900 leading-none text-3xl">KES {analytics.revenue}</span>
                 <span className="text-xs label-caps font-medium text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full flex items-center shadow-sm">
                   {analytics.growth}
                 </span>
@@ -374,7 +374,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [], rev
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="mono-stat text-3xl leading-none mb-1.5 text-slate-800 tracking-tight">{analytics.totalProps}</span>
+                <span className="font-mono font-medium text-3xl leading-none mb-1.5 text-slate-800 tracking-tight">{analytics.totalProps}</span>
                 <span className="label-caps text-slate-400 text-center leading-tight">Total<br />{activeType === 'All Properties' ? 'Units' : activeType}</span>
               </div>
             </div>
@@ -403,7 +403,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [], rev
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-xs text-slate-400 font-medium bg-white px-2 py-0.5 rounded-md shadow-sm border border-slate-100">{item.value}%</span>
-                    <span className="mono-stat text-slate-800 w-4 text-right">{item.count}</span>
+                    <span className="font-mono font-medium text-slate-800 w-4 text-right">{item.count}</span>
                   </div>
                 </div>
               );

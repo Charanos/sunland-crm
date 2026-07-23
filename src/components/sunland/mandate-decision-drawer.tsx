@@ -93,11 +93,11 @@ export function MandateDecisionDrawer({
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3">
             <p className="label-caps text-slate-400 mb-1">Rate</p>
-            <p className="mono-stat text-slate-900 text-lg">{(mandateRate * 100).toFixed(1)}%</p>
+            <p className="font-mono font-medium text-slate-900 text-lg">{(mandateRate * 100).toFixed(1)}%</p>
           </div>
           <div className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3">
             <p className="label-caps text-slate-400 mb-1">Expected / mo</p>
-            <p className="mono-stat text-slate-900 text-lg">{formatCompactKES(expectedMonthlyKes)}</p>
+            <p className="font-mono font-medium text-slate-900 text-lg">{formatCompactKES(expectedMonthlyKes)}</p>
           </div>
         </div>
 

@@ -142,41 +142,33 @@ button:disabled {
 
 .label-caps {
   font-family: var(--font-nunito), sans-serif;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.mono-stat {
-  font-family: var(--font-jetbrains), monospace;
-  font-size: clamp(18px, 1.8vw, 24px);
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: 0;
-}
-
 .mono-data {
   font-family: var(--font-jetbrains), monospace;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 500;
   letter-spacing: 0;
 }
 
 .mono-amount {
   font-family: var(--font-jetbrains), monospace;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 500;
   letter-spacing: 0;
 }
 
 /* Standardized Typography Helpers */
 .text-tiny {
-  font-size: 13px;
+  font-size: 10px;
 }
 
 .text-caption {
-  font-size: 13.5px;
+  font-size: 11.5px;
 }
 
 .text-label {
@@ -544,8 +536,8 @@ body.modal-open {
   padding-right: 10px;
   border-radius: 9999px;
   font-family: var(--font-jetbrains), monospace;
-  font-size: var(--text-xs);
-  /* 10.5px */
+  font-size: 10px;
+  /* 10px */
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;

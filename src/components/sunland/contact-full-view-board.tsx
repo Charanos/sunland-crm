@@ -400,7 +400,7 @@ export function ContactFullViewBoard({ entityId, contactId }: { entityId: string
                 <v.icon size={18} className={VITAL_TONE_ICON[v.tone]} aria-hidden="true" />
                 <div>
                   <p className="label-caps text-slate-400">{v.label}</p>
-                  <p className="mono-stat text-xl text-slate-900 mt-1">{v.value}</p>
+                  <p className="font-mono font-medium text-xl text-slate-900 mt-1">{v.value}</p>
                 </div>
               </div>
             ))}
@@ -490,7 +490,7 @@ export function ContactFullViewBoard({ entityId, contactId }: { entityId: string
                           <p className="body-md text-slate-800 font-medium truncate">{p.name}</p>
                           <p className="text-xs text-slate-400 mt-0.5">{p.propertyCode} · {p.managerName ? `Managed by ${p.managerName}` : "Unassigned manager"}</p>
                         </div>
-                        <span className="mono-stat text-slate-900 shrink-0">{p.monthlyRentKes ? `${formatCompactKES(parseFloat(p.monthlyRentKes))}/mo` : "—"}</span>
+                        <span className="font-mono font-medium text-slate-900 shrink-0">{p.monthlyRentKes ? `${formatCompactKES(parseFloat(p.monthlyRentKes))}/mo` : "—"}</span>
                       </Link>
                     ))}
                   </div>
@@ -528,7 +528,7 @@ export function ContactFullViewBoard({ entityId, contactId }: { entityId: string
                           <p className="body-sm text-slate-800 font-medium">{r.createdAt ? formatPropertyDate(r.createdAt) : "—"}</p>
                           <p className="text-xs text-slate-400 mt-0.5 capitalize">{r.status}</p>
                         </div>
-                        <span className="mono-stat text-slate-900">{formatCompactKES(parseFloat(r.netRemittanceKes))}</span>
+                        <span className="font-mono font-medium text-slate-900">{formatCompactKES(parseFloat(r.netRemittanceKes))}</span>
                       </div>
                     ))}
                   </div>
@@ -558,7 +558,7 @@ export function ContactFullViewBoard({ entityId, contactId }: { entityId: string
                           <p className="text-xs text-slate-400 mt-0.5">{l.propertyCode} · {l.isActive ? "Active" : "Ended"}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className="mono-stat text-slate-900 block">{formatCompactKES(parseFloat(l.monthlyRentKes))}/mo</span>
+                          <span className="font-mono font-medium text-slate-900 block">{formatCompactKES(parseFloat(l.monthlyRentKes))}/mo</span>
                           {l.balanceKes > 0 && <span className="text-xs text-rose-600 font-medium">{formatCompactKES(l.balanceKes)} due</span>}
                         </div>
                       </Link>
