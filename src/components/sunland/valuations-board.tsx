@@ -768,7 +768,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                 <div className="flex-1 flex flex-col justify-between relative z-10 gap-5">
                   <div className="flex items-center gap-3 flex-wrap">
                     <Badge tone={stageTone(featuredProspect.stage)}>
-                      {STAGE_META[featuredProspect.stage].label}
+                      {(STAGE_META[featuredProspect.stage] ?? STAGE_META.requested).label}
                     </Badge>
                     {scoreOf(featuredProspect) && (
                       <span className="text-xs font-mono text-slate-600 tracking-wider uppercase font-semibold">
@@ -1101,7 +1101,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {visible.map((v) => {
               const subject = subjectOf(v);
-              const cfg = STAGE_META[v.stage];
+              const cfg = STAGE_META[v.stage] ?? STAGE_META.requested;
               const score = scoreOf(v);
               const firstImage = coverImageOf(v);
               return (
@@ -1210,7 +1210,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             <div className="flex flex-col gap-3.5 lg:hidden">
               {visible.map((v) => {
                 const subject = subjectOf(v);
-                const cfg = STAGE_META[v.stage];
+                const cfg = STAGE_META[v.stage] ?? STAGE_META.requested;
                 const score = scoreOf(v);
                 return (
                   <div
@@ -1299,7 +1299,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                 </div>
                 {visible.map((v) => {
                   const subject = subjectOf(v);
-                  const cfg = STAGE_META[v.stage];
+                  const cfg = STAGE_META[v.stage] ?? STAGE_META.requested;
                   const score = scoreOf(v);
                   const firstImage = coverImageOf(v);
                   return (

@@ -449,7 +449,7 @@ export function LeaseFullViewBoard({
     if (paymentSearchQuery) {
       const q = paymentSearchQuery.toLowerCase();
       filtered = filtered.filter((p) =>
-        PAYMENT_TYPE_LABEL[p.type].toLowerCase().includes(q) ||
+        (PAYMENT_TYPE_LABEL[p.type] ?? p.type).toLowerCase().includes(q) ||
         (p.notes ?? "").toLowerCase().includes(q)
       );
     }

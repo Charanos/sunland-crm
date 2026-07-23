@@ -157,7 +157,7 @@ function dayLabel(iso: string): string {
 function slaLineFor(r: { createdAt: string; resolvedAt: string | null; status: MaintenanceStatus }, targetHours: number): { text: string; color: string } {
   const sla = slaStateFor({ createdAt: r.createdAt, resolvedAt: r.resolvedAt, targetHours });
   const display = slaDisplayStateFor(r.status, sla.state);
-  const meta = SLA_STATE_META[display];
+  const meta = SLA_STATE_META[display] ?? SLA_STATE_META.ok;
   if (display === "done") {
     const days = Math.max(0, Math.round(sla.hoursElapsed / 24));
     return { text: `Closed in ${days} day${days === 1 ? "" : "s"}`, color: meta.color };
@@ -316,7 +316,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
       items.push({
         id: criticalActive.id, tone: "rose", icon: IconDroplet,
         title: `Urgent: ${criticalActive.title}`,
-        meta: `${criticalActive.propertyName} · ${STATUS_META[criticalActive.status].label}`,
+        meta: `${criticalActive.propertyName} · ${(STATUS_META[criticalActive.status] ?? STATUS_META.reported).label}`,
         ctaLabel: "Track",
       });
     }
@@ -379,7 +379,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
           day: dayLabel(e.startsAt),
           time: new Date(e.startsAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }),
           what: linked ? `${linked.title} — ${linked.propertyName}` : e.title,
-          dotClass: linked ? PRIORITY_META[linked.priority].rail : "bg-slate-300",
+          dotClass: linked ? (PRIORITY_META[linked.priority] ?? PRIORITY_META.routine).rail : "bg-slate-300",
           onOpen: () => linked && openDrawer(linked.id),
         };
       });
@@ -710,23 +710,23 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                     onClick={() => openDrawer(r.id)}
                     className="flex items-center gap-3.5 w-full text-left bg-white border border-slate-100 rounded-[18px] p-3.5 shadow-[0_4px_14px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-shadow"
                   >
-                    <span className={cn("w-1 self-stretch rounded-full shrink-0", PRIORITY_META[r.priority].rail)} />
+                    <span className={cn("w-1 self-stretch rounded-full shrink-0", (PRIORITY_META[r.priority] ?? PRIORITY_META.routine).rail)} />
                     <div className="size-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shrink-0">
                       <IconTool size={22} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-[11px] text-slate-400">{r.propertyCode}</span>
-                        <span className={cn(PILL, CATEGORY_META[r.category].pill)}>{CATEGORY_META[r.category].label}</span>
-                        <span className={cn(PILL, PRIORITY_META[r.priority].pill)}>{PRIORITY_META[r.priority].label}</span>
+                        <span className={cn(PILL, (CATEGORY_META[r.category] ?? CATEGORY_META.reactive).pill)}>{(CATEGORY_META[r.category] ?? CATEGORY_META.reactive).label}</span>
+                        <span className={cn(PILL, (PRIORITY_META[r.priority] ?? PRIORITY_META.routine).pill)}>{(PRIORITY_META[r.priority] ?? PRIORITY_META.routine).label}</span>
                       </div>
                       <p className="text-sm font-medium text-slate-900 mt-1 truncate">{r.title}</p>
                       <p className="text-xs text-slate-400 mt-0.5 truncate">{r.propertyName} · {r.assignedContractorName ?? "Unassigned"}</p>
                     </div>
                     <div className="shrink-0 flex flex-col items-end gap-1.5">
-                      <span className={cn(PILL, STATUS_META[r.status].pill)}>
-                        <span className={cn("size-1.5 rounded-full", STATUS_META[r.status].dot)} />
-                        {STATUS_META[r.status].label}
+                      <span className={cn(PILL, (STATUS_META[r.status] ?? STATUS_META.reported).pill)}>
+                        <span className={cn("size-1.5 rounded-full", (STATUS_META[r.status] ?? STATUS_META.reported).dot)} />
+                        {(STATUS_META[r.status] ?? STATUS_META.reported).label}
                       </span>
                       <span className="font-mono text-xs text-[#122a20]">{fmtKes(r.actualCostKes ?? r.estimatedCostKes)}</span>
                       <span className="text-[10.5px] font-mono font-medium" style={{ color: sla.color }}>{sla.text}</span>
@@ -850,10 +850,10 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
               <div className="absolute inset-0 bg-gradient-to-b from-[#0a0d1c]/35 to-[#0a0d1c]/85" />
               <div className="relative h-full flex flex-col justify-end p-5">
                 <div className="flex items-center gap-1.5 mb-auto">
-                  <span className={cn(PILL, "bg-white/[0.18] text-white")}>{PRIORITY_META[detail.priority].label}</span>
-                  <span className={cn(PILL, "bg-[#f3df27]/90 text-[#151936]")}>{STATUS_META[detail.status].label}</span>
+                  <span className={cn(PILL, "bg-white/[0.18] text-white")}>{(PRIORITY_META[detail.priority] ?? PRIORITY_META.routine).label}</span>
+                  <span className={cn(PILL, "bg-[#f3df27]/90 text-[#151936]")}>{(STATUS_META[detail.status] ?? STATUS_META.reported).label}</span>
                 </div>
-                <p className="font-mono text-[11px] text-white/70">{detail.propertyCode} · {CATEGORY_META[detail.category].label}</p>
+                <p className="font-mono text-[11px] text-white/70">{detail.propertyCode} · {(CATEGORY_META[detail.category] ?? CATEGORY_META.reactive).label}</p>
                 <p className="font-serif text-xl text-white mt-0.5 leading-tight">{detail.title}</p>
               </div>
             </div>

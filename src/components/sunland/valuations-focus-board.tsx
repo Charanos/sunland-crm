@@ -548,7 +548,7 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
               </button>
               <div className="absolute top-3 left-4 z-10">
                 <Badge tone={stageTone(peek.stage)} className="bg-white/95 text-slate-800 border-none shadow-xs">
-                  {STAGE_META[peek.stage].label}
+                  {(STAGE_META[peek.stage] ?? STAGE_META.requested).label}
                 </Badge>
               </div>
               <div className="absolute left-4 right-4 bottom-3">

@@ -895,7 +895,7 @@ export function MandateFullViewBoard({
             </span>
             <div className="flex flex-col items-end gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
               <span className="bg-white/10 font-mono backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full text-xxs font-medium uppercase tracking-wider whitespace-nowrap">
-                {MANDATE_STATUS_LABEL[mandate.status].toUpperCase()} · {(mandate.mandateRate * 100).toFixed(1)}% FEE
+                {(MANDATE_STATUS_LABEL[mandate.status] ?? mandate.status).toUpperCase()} · {(mandate.mandateRate * 100).toFixed(1)}% FEE
               </span>
               <div className="hidden sm:flex w-fit bg-white/95 backdrop-blur-md rounded-[18px] p-3.5 shadow-xl items-center gap-3 border border-white/60 text-slate-900">
                 <div className="relative size-11 flex items-center justify-center shrink-0">

@@ -1627,7 +1627,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                       const remittanceDisplay = m.status === "active" && collected > 0 ? formatCompactKES(remittanceDue) : "—";
                       const statusLabel = m.status === "pending_approval"
                         ? (m.id.charCodeAt(0) % 2 === 0 ? "PENDING GM" : "PENDING CEO")
-                        : MANDATE_STATUS_LABEL[m.status].toUpperCase();
+                        : (MANDATE_STATUS_LABEL[m.status] ?? m.status).toUpperCase();
                       const pmInitials = m.managerName ? getInitials(m.managerName) : "??";
                       const pctColor = pct >= 100 ? "bg-emerald-500" : pct >= 80 ? "bg-emerald-400" : pct >= 50 ? "bg-amber-400" : pct > 0 ? "bg-red-400" : "bg-transparent";
                       const pctTextColor = pct >= 100 ? "text-emerald-600" : pct >= 80 ? "text-emerald-500" : pct >= 50 ? "text-amber-500" : pct > 0 ? "text-red-500" : "text-slate-600";
@@ -1770,7 +1770,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                           const remittanceDisplay = m.status === "active" && collected > 0 ? formatCompactKES(remittanceDue) : "—";
                           const statusLabel = m.status === "pending_approval"
                             ? (m.id.charCodeAt(0) % 2 === 0 ? "PENDING GM" : "PENDING CEO")
-                            : MANDATE_STATUS_LABEL[m.status].toUpperCase();
+                            : (MANDATE_STATUS_LABEL[m.status] ?? m.status).toUpperCase();
 
                           return (
                             <tr key={m.id} onClick={() => router.push(`/admin/mandates/${m.id}`)} className="transition-colors hover:bg-slate-50/40 group cursor-pointer">

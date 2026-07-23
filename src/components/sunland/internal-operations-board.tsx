@@ -439,7 +439,7 @@ export function InternalOperationsBoard({
                 </div>
               ) : (
                 projects.slice(0, 3).map((project) => {
-                  const style = PROJECT_DEPARTMENT_STYLES[project.department];
+                  const style = PROJECT_DEPARTMENT_STYLES[project.department] ?? PROJECT_DEPARTMENT_STYLES.ops;
                   return (
                     <div key={project.id} className="relative group cursor-pointer" onClick={() => setSelectedProject(project)}>
                       <div className="flex-1 bg-white hover:bg-slate-50 p-5 rounded-[20px] border border-slate-100 shadow-[0_2px_12px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all">
@@ -636,7 +636,10 @@ export function InternalOperationsBoard({
 
             <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
               {selectedDateEvents.slice(0, 3).map((evt) => {
-                const style = TYPE_STYLES[evt.type];
+                // evt.type is DB-driven and can be a legacy/unrecognized value
+                // (e.g. a stale "viewing" row predating the current 4-value
+                // enum) - fall back to a default style instead of crashing.
+                const style = TYPE_STYLES[evt.type] ?? TYPE_STYLES.internal;
                 const [timePart, periodPart] = new Date(evt.startsAt)
                   .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
                   .split(" ");
