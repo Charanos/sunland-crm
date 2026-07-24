@@ -410,7 +410,7 @@ export function PortfolioSchedulerBoard({ entityId }: { entityId: string }) {
         className="gsap-stagger relative rounded-[26px] overflow-hidden shadow-[0_16px_40px_rgba(21,25,54,0.16)]"
         style={{ background: "linear-gradient(120deg,#0d1020 0%,#151936 46%,#122a20 100%)" }}
       >
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(680px 220px at 88% -10%,rgba(243,223,39,0.16),transparent 70%)" }} />
+        <div className="absolute inset-0 pointer-events-none bg-tertiary-gradient" />
         <div className="relative grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-5 p-6">
           <div className="min-w-0">
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(243,223,39,0.4)] bg-[rgba(243,223,39,0.16)] px-2.5 py-1 text-xxs font-medium uppercase tracking-[0.08em] text-[#f3df27]">

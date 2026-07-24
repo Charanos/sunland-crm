@@ -218,7 +218,7 @@ function ConsolePulse({ pulse, scope, onGoSecurity, onGoPolicies, onGoDirectory 
   const cellBase = "relative px-6 py-5 flex flex-col gap-3 overflow-hidden text-left cursor-pointer transition-colors hover:bg-white/[0.04]";
   const border = "border-l border-white/[0.08]";
   return (
-    <div className="gsap-stagger rounded-3xl overflow-hidden border border-[rgba(18,42,32,0.8)] shadow-[0_16px_40px_rgba(12,31,36,0.28)]" style={{ background: "linear-gradient(135deg,#0c1f24 0%,#122a20 50%,#1e1b4b 100%)" }}>
+    <div className="gsap-stagger rounded-3xl overflow-hidden border border-[rgba(18,42,32,0.8)] shadow-[0_16px_40px_rgba(12,31,36,0.28)] bg-tertiary-gradient">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {scope === "personal" ? (
           <>

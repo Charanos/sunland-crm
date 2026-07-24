@@ -576,8 +576,8 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
               </Badge>
             </div>
             <div className="relative z-10 mt-4">
-              <span className="font-mono text-3xl font-medium text-white">{kpis.open.length} <span className="text-xs font-mono text-slate-400 font-normal">Orders</span></span>
-              <p className="text-xs text-slate-400 font-mono mt-2 flex items-center gap-2">
+              <span className="font-mono text-3xl font-medium text-white">{kpis.open.length} <span className="text-xxs font-mono text-slate-300 font-normal">Orders</span></span>
+              <p className="text-xxs text-slate-400 font-mono mt-2 flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 text-amber-300">
                   <span className="size-1.5 rounded-full bg-amber-400" />
                   {kpis.open.filter((r) => r.status === "in_progress").length} in progress
@@ -650,7 +650,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                   />
                 ))}
               </div>
-              <div className="flex items-center justify-between text-xs font-mono text-slate-300">
+              <div className="flex items-center justify-between text-xxs font-mono text-slate-300">
                 {kpis.mix.map((m) => (
                   <span key={m.cat} className="flex items-center gap-1">
                     <span
