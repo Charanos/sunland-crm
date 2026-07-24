@@ -563,7 +563,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
       {/* ── Executive 4-Card Dark KPI Tier ── */}
       <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-6 border border-slate-800/80">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
-          
+
           {/* Card 1: Active Work Orders */}
           <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
             <div className="absolute -bottom-10 -right-10 opacity-5 text-amber-400 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
@@ -606,7 +606,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
               <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                 <div className="h-full bg-emerald-400 transition-all duration-500" style={{ width: `${kpis.slaCompliancePct}%` }} />
               </div>
-              <p className="text-xs text-slate-400 font-mono mt-2">
+              <p className="text-xxs text-slate-300 font-mono mt-2">
                 {kpis.avgResponseHours != null ? `Avg resolution: ${kpis.avgResponseHours < 1 ? "<1h" : kpis.avgResponseHours.toFixed(1) + "h"}` : "No resolved orders yet"}
               </p>
             </div>
@@ -623,7 +623,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
             </div>
             <div className="relative z-10 mt-4">
               <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(kpis.spendTotal)}</span>
-              <p className="text-xs text-slate-400 font-mono mt-2">
+              <p className="text-xxs text-slate-300 font-mono mt-2">
                 Nets directly against monthly landlord remittances
               </p>
             </div>
@@ -1029,8 +1029,8 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                       {detail.pendingApproval
                         ? `Pending ${detail.pendingApproval.requiredApproverRole.toUpperCase()}`
                         : detail.actualCostKes
-                        ? "Approved & Auto-Logged"
-                        : "PM Self-Approval"}
+                          ? "Approved & Auto-Logged"
+                          : "PM Self-Approval"}
                     </span>
                   </div>
                 </div>

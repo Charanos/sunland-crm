@@ -551,7 +551,17 @@ body.modal-open {
 
 .badge-tone-neutral {
   background-color: rgba(0, 0, 0, 0.06);
-  color: var(--on-surface);
+  color: #334155;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.bg-tertiary-gradient .badge-tone-neutral,
+.text-white .badge-tone-neutral,
+[class*="bg-[#151936]"] .badge-tone-neutral,
+[class*="bg-slate-900"] .badge-tone-neutral {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .badge-tone-success {
