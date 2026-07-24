@@ -151,6 +151,10 @@ export const navSections: NavSection[] = [
       // of executive oversight, not under Account & System.
       { href: "/admin/support", label: "Support Tickets", icon: IconLifebuoy },
       { href: "/admin/reports", label: "Reports Center", icon: IconReportAnalytics },
+      // System Administration now opens the Account & System console in its
+      // Organization scope (ADR 018 folded the old system-admin-board tabs into
+      // Directory & Roles / Access Policies / System). It stays in Oversight -
+      // it's an org-governance surface, not personal self-service.
       { href: "/admin/system", label: "System Administration", icon: IconDatabase },
     ],
   },
@@ -186,13 +190,16 @@ export const navSections: NavSection[] = [
 
 
   // ── Executive: Scheduling ──────────────────────────────────────────────────
+  // The Scheduler is the unified calendar + gantt surface (ADR 019); Projects
+  // is the deeper kanban/timeline board it links out to. /admin/events now
+  // redirects into the Scheduler's Events mode.
   {
     id: "exec-scheduling",
     label: "Scheduling",
     icon: IconLayoutKanban,
     items: [
+      { href: "/admin/scheduler", label: "Scheduler", icon: IconCalendarEvent },
       { href: "/admin/projects", label: "Projects", icon: IconLayoutKanban },
-      { href: "/admin/events", label: "Events", icon: IconCalendarEvent },
     ],
   },
 
@@ -208,17 +215,21 @@ export const navSections: NavSection[] = [
     ],
   },
 
-  // ── Executive: Account & System (self-service - kept for non-fin /admin routes) ──
-  // NOTE: Self-service links in the nav remain here for the CEO/admin portal.
-  // Finance portal self-service is handled exclusively by the profile footer popup.
+  // ── Executive: Account & System (dual-scope console - ADR 018/019) ────────
+  // These four are the console's Personal scope. They stay separate grouped
+  // links - uniform with every other nav group - and each owns a real route
+  // that renders the console at that section (ADR 019), because the sidebar
+  // matches the active item on pathname and query strings don't count.
+  // The Organization scope is reached from Oversight → System Administration,
+  // or from the console's own scope switcher.
   {
     id: "exec-account",
     label: "Account & System",
     icon: IconUserCog,
     items: [
-      { href: "/admin/messages", label: "Messages", icon: IconMessageCircle, badge: "3" },
-      { href: "/admin/settings", label: "Settings", icon: IconSettings },
+      { href: "/admin/messages", label: "Messages", icon: IconMessageCircle },
       { href: "/admin/notifications", label: "Notifications", icon: IconBell },
+      { href: "/admin/settings", label: "Preferences", icon: IconSettings },
       { href: "/admin/security", label: "Security", icon: IconShieldLock },
     ],
   },

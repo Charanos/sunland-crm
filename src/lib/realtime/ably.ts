@@ -1,7 +1,7 @@
 import Ably from "ably";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { conversationParticipants } from "@/db/schema";
+import { conversationParticipants, users } from "@/db/schema";
 
 let restClient: Ably.Rest | null = null;
 
@@ -34,16 +34,24 @@ export async function getAblyToken(userId: string) {
     throw new Error("ABLY_API_KEY is not configured");
   }
 
-  const myConversations = await db
-    .select({ conversationId: conversationParticipants.conversationId })
-    .from(conversationParticipants)
-    .where(eq(conversationParticipants.userId, userId));
+  const [myConversations, [me]] = await Promise.all([
+    db
+      .select({ conversationId: conversationParticipants.conversationId })
+      .from(conversationParticipants)
+      .where(eq(conversationParticipants.userId, userId)),
+    db.select({ primaryEntityId: users.primaryEntityId }).from(users).where(eq(users.id, userId)).limit(1),
+  ]);
 
   const capability: Record<string, Ably.capabilityOp[]> = {
     [`private-user-${userId}`]: ["subscribe"],
   };
   for (const { conversationId } of myConversations) {
     capability[`conversation-${conversationId}`] = ["subscribe"];
+  }
+  // Real "who's online" presence, scoped to the user's own entity channel -
+  // powers the Directory/messages online dots without a fabricated status.
+  if (me?.primaryEntityId) {
+    capability[`presence-entity-${me.primaryEntityId}`] = ["subscribe", "presence"];
   }
 
   return ably.auth.createTokenRequest({ clientId: userId, capability });

@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
@@ -65,5 +65,37 @@ export async function revokeSession(ctx: CallerContext, sessionId: string) {
     });
 
     return updated;
+  });
+}
+
+/**
+ * "Sign out all other devices" (Account console → Security). Revokes every
+ * one of the caller's own live sessions except the current one - no
+ * permission needed (own account). `currentSessionId` is the JWT jti of this
+ * request, so the device the CEO is looking at stays signed in.
+ */
+export async function revokeAllOtherSessions(ctx: CallerContext, currentSessionId: string | null) {
+  return db.transaction(async (tx) => {
+    const conditions = [eq(sessions.userId, ctx.user.id), isNull(sessions.revokedAt)];
+    if (currentSessionId) conditions.push(ne(sessions.id, currentSessionId));
+
+    const revoked = await tx
+      .update(sessions)
+      .set({ revokedAt: new Date() })
+      .where(and(...conditions))
+      .returning({ id: sessions.id });
+
+    if (revoked.length > 0) {
+      await writeAudit(tx, ctx, {
+        action: "identity.session.revoke_all",
+        associatedType: "user",
+        associatedId: ctx.user.id,
+        summary: `${ctx.user.name} signed out ${revoked.length} other device${revoked.length === 1 ? "" : "s"}`,
+        entityId: null,
+        after: { revokedCount: revoked.length },
+      });
+    }
+
+    return { revokedCount: revoked.length };
   });
 }

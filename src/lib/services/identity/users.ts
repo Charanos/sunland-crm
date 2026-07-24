@@ -22,6 +22,7 @@ const PUBLIC_COLUMNS = {
   name: users.name,
   role: users.role,
   title: users.title,
+  phone: users.phone,
   avatarUrl: users.avatarUrl,
   primaryEntityId: users.primaryEntityId,
   isActive: users.isActive,

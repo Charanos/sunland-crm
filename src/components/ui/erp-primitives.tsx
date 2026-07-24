@@ -178,45 +178,86 @@ export function PaginationControls({
   totalPages,
   onPageChange,
   label,
+  totalItems,
+  pageSize,
+  itemLabel = "items",
+  className,
 }: {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  label: ReactNode;
+  label?: ReactNode;
+  totalItems?: number;
+  pageSize?: number;
+  itemLabel?: string;
+  className?: string;
 }) {
+  if (totalPages <= 1) return null;
+
+  const startItem = pageSize ? (currentPage - 1) * pageSize + 1 : null;
+  const endItem = pageSize && totalItems ? Math.min(currentPage * pageSize, totalItems) : null;
+
   return (
-    <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-3">
-      <p className="text-sm font-medium text-slate-400">{label}</p>
-      <div className="flex items-center gap-1">
+    <div
+      className={cn(
+        "bg-white border border-slate-200/80 rounded-2xl p-3 shadow-[0_2px_15px_rgb(0,0,0,0.02)] flex flex-col sm:flex-row items-center justify-between gap-3 mt-3",
+        className
+      )}
+    >
+      <div className="text-xs font-mono text-slate-600 font-medium">
+        {label ? (
+          label
+        ) : startItem && endItem && totalItems ? (
+          <>
+            Showing <span className="text-slate-900 font-medium">{startItem}</span>–
+            <span className="text-slate-900 font-medium">{endItem}</span> of{" "}
+            <span className="text-slate-900 font-medium">{totalItems}</span> {itemLabel}
+          </>
+        ) : (
+          <>
+            Page <span className="text-slate-900 font-medium">{currentPage}</span> of{" "}
+            <span className="text-slate-900 font-medium">{totalPages}</span>
+          </>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1.5">
         <button
+          type="button"
           aria-label="Previous page"
-          className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-          disabled={currentPage === 1}
+          disabled={currentPage <= 1}
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          className="h-8 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
         >
-          <IconChevronLeft size={16} />
+          <IconChevronLeft size={14} /> Prev
         </button>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <button
-            key={page}
-            className={cn(
-              "flex size-8 items-center justify-center rounded-lg text-base font-medium transition-colors",
-              page === currentPage
-                ? "bg-[#151936] text-white"
-                : "text-slate-400 hover:bg-slate-100",
-            )}
-            onClick={() => onPageChange(page)}
-          >
-            {page}
-          </button>
-        ))}
+
+        <div className="flex items-center gap-1 px-1">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+            <button
+              key={pg}
+              type="button"
+              onClick={() => onPageChange(pg)}
+              className={cn(
+                "size-8 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer",
+                pg === currentPage
+                  ? "bg-[#151936] text-white shadow-2xs"
+                  : "text-slate-600 hover:bg-slate-100"
+              )}
+            >
+              {pg}
+            </button>
+          ))}
+        </div>
+
         <button
+          type="button"
           aria-label="Next page"
-          className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-          disabled={currentPage === totalPages}
+          disabled={currentPage >= totalPages}
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          className="h-8 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
         >
-          <IconChevronRight size={16} />
+          Next <IconChevronRight size={14} />
         </button>
       </div>
     </div>

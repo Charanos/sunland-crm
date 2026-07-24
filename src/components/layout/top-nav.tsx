@@ -55,6 +55,7 @@ import { cn } from "@/lib/utils/cn";
 import { useUIStore, type ModalType } from "@/store/ui";
 import { getEntityById } from "@/data/entities";
 import { getActiveNavItem, navSections } from "@/components/layout/nav-model";
+import { useAblyChannel } from "@/hooks/use-ably-channel";
 import { CommandPalette } from "./command-palette";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -982,6 +983,7 @@ export function TopNav() {
   const portalPrefix = pathname.startsWith("/fin") ? "/fin" : "/admin";
 
   const [currentUser, setCurrentUser] = useState({
+    id: "",
     name: "Paul Amos",
     role: "ceo",
     avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
@@ -993,6 +995,7 @@ export function TopNav() {
       .then((data) => {
         if (data?.user) {
           setCurrentUser({
+            id: data.user.id || "",
             name: data.user.name || "Paul Amos",
             role: data.user.role || "ceo",
             avatarUrl: data.user.avatarUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
@@ -1042,6 +1045,31 @@ export function TopNav() {
       active = false;
     };
   }, []);
+
+  // Live notifications: subscribe to the per-user Ably channel createNotification
+  // already publishes to (previously a publisher with no subscriber - the bell
+  // was fetch-once). A new notification now lands in the bell in real time.
+  const handleLiveNotification = useCallback((data: { id: string; type: string; title: string; body: string; createdAt: string }) => {
+    setNotifications((prev) => {
+      if (prev.some((n) => n.id === data.id)) return prev;
+      return [
+        {
+          id: data.id,
+          tone: toneForType(data.type),
+          title: data.title,
+          body: data.body,
+          time: "just now",
+          read: false,
+        },
+        ...prev,
+      ];
+    });
+  }, []);
+  useAblyChannel<{ id: string; type: string; title: string; body: string; createdAt: string }>(
+    currentUser.id ? `private-user-${currentUser.id}` : null,
+    "notification",
+    handleLiveNotification,
+  );
 
   const handleMarkRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));

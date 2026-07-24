@@ -8,6 +8,8 @@ const attendeeSchema = z.object({
 
 const eventTypeSchema = z.enum(["internal", "external", "legal", "maintenance", "viewing"]);
 const eventOutcomeSchema = z.enum(["pending", "completed", "deferred", "cancelled", "no_show"]);
+// Mirrors RoleTier in components/sunland/account-constants.ts.
+const roleTierSchema = z.enum(["superadmin", "admin", "manager", "finance", "agent", "viewer"]);
 
 export const createCalendarEventSchema = z.object({
   entityId: z.string().min(1),
@@ -21,6 +23,8 @@ export const createCalendarEventSchema = z.object({
   projectId: z.string().uuid().optional(),
   contactId: z.string().uuid().optional(),
   leadId: z.string().uuid().optional(),
+  isCritical: z.boolean().default(false),
+  notifyRoleTiers: z.array(roleTierSchema).default([]),
 });
 
 export const updateCalendarEventSchema = z.object({
@@ -34,8 +38,15 @@ export const updateCalendarEventSchema = z.object({
   projectId: z.string().uuid().nullable().optional(),
   contactId: z.string().uuid().nullable().optional(),
   leadId: z.string().uuid().nullable().optional(),
+  isCritical: z.boolean().optional(),
+  notifyRoleTiers: z.array(roleTierSchema).optional(),
 });
 
 export const setEventOutcomeSchema = z.object({
   outcome: eventOutcomeSchema,
+});
+
+/** Re-notify the event's role tiers, optionally with added context. */
+export const notifyEventSchema = z.object({
+  note: z.string().max(500).optional(),
 });

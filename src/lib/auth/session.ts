@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { sessions, users } from "@/db/schema";
+import { activityLogs, sessions, users } from "@/db/schema";
 import type { UserRole } from "@/types";
 
 export type SessionUser = {
@@ -68,6 +68,27 @@ export async function setSession(user: SessionUser, metadata: SessionMetadata = 
     ip: metadata.ip,
     userAgent: metadata.userAgent,
   });
+
+  // Real login audit - the Account console's Security "access log" and the
+  // org audit log both surface these. Best-effort: a signed session must
+  // still be issued even if the audit insert hiccups. A real users.id row
+  // only (skip the mock emulation ids, which aren't uuids).
+  if (/^[0-9a-f-]{36}$/i.test(user.id)) {
+    try {
+      await db.insert(activityLogs).values({
+        entityId: null,
+        actorId: user.id,
+        associatedType: "session",
+        associatedId: jti,
+        action: "auth.login",
+        summary: `${user.name} signed in`,
+        metadata: metadata.userAgent ? { userAgent: metadata.userAgent, ip: metadata.ip ?? null } : {},
+      });
+      await db.update(users).set({ lastSignedInAt: new Date() }).where(eq(users.id, user.id));
+    } catch {
+      // Audit is a convenience; never block issuing the session on it.
+    }
+  }
 
   const token = await createSessionToken(user, jti);
   const cookieStore = await cookies();
@@ -140,6 +161,23 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     }
 
     return user;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The current request's session row id (the JWT jti) - lets the Security
+ * surface tell "this device" from the others so revoke-all / mark-current
+ * work correctly. Returns null when unauthenticated.
+ */
+export async function getCurrentSessionId(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(cookieName)?.value;
+  if (!token || !process.env.JWT_SECRET) return null;
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    return typeof payload.jti === "string" ? payload.jti : null;
   } catch {
     return null;
   }

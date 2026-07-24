@@ -1,13 +1,43 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
-import { notifications } from "@/db/schema";
+import { notificationPrefs, notifications } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";
 import { resolveEntityId } from "@/lib/services/entity";
 import { publishToChannel } from "@/lib/realtime/ably";
 import type { CallerContext } from "@/lib/services/types";
+import { parseInput } from "@/lib/validation/parse";
+import { updateNotificationPrefsSchema } from "@/lib/validation/identity";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+// The routing-matrix categories (Account console → Notifications → Routing).
+// A notification's dotted `type` prefix maps to one of these; anything
+// unrecognized falls through to "system".
+export const NOTIFICATION_CATEGORIES = ["viewing", "remittance", "maintenance", "approval", "renewal", "system"] as const;
+export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
+
+// Maintenance in-app alerts are non-negotiable (critical repairs) - the UI
+// locks this and the gate below always honours it, matching the design.
+const FORCE_IN_APP: Record<string, boolean> = { maintenance: true };
+
+export function categoryForType(type: string): NotificationCategory {
+  const prefix = (type.split(".")[0] ?? "").toLowerCase();
+  const alias: Record<string, NotificationCategory> = {
+    viewing: "viewing",
+    remittance: "remittance",
+    finance: "remittance",
+    maintenance: "maintenance",
+    approval: "approval",
+    approvals: "approval",
+    renewal: "renewal",
+    lease: "renewal",
+    system: "system",
+    security: "system",
+    manual: "system",
+  };
+  return alias[prefix] ?? "system";
+}
 
 export type CreateNotificationInput = {
   userId: string;
@@ -18,6 +48,10 @@ export type CreateNotificationInput = {
   associatedType?: string;
   associatedId?: string;
   href?: string;
+  // Set by explicit human-initiated sends (sendManualNotification) so a
+  // deliberate "notify this person" action isn't silently dropped by their
+  // category mute - the automated fan-out path leaves this false.
+  bypassPrefs?: boolean;
 };
 
 /**
@@ -29,6 +63,22 @@ export type CreateNotificationInput = {
  * runs, so failures are swallowed after the DB write succeeds.
  */
 export async function createNotification(tx: Tx, input: CreateNotificationInput) {
+  // Real routing: respect the recipient's stored in-app preference for this
+  // category. No stored row = deliver (default on). A force-on category
+  // (maintenance) always delivers regardless of the stored value.
+  const category = categoryForType(input.type);
+  if (!input.bypassPrefs && !FORCE_IN_APP[category]) {
+    const [pref] = await tx
+      .select({ inApp: notificationPrefs.inApp })
+      .from(notificationPrefs)
+      .where(and(eq(notificationPrefs.userId, input.userId), eq(notificationPrefs.category, category)))
+      .limit(1);
+    if (pref && pref.inApp === false) {
+      // The recipient has muted in-app alerts for this category - honour it.
+      return null;
+    }
+  }
+
   const [notification] = await tx
     .insert(notifications)
     .values({
@@ -98,8 +148,66 @@ export async function sendManualNotification(
       associatedType: input.associatedType,
       associatedId: input.associatedId,
       href: input.href,
+      bypassPrefs: true,
     }),
   );
+}
+
+// ─── Notification routing preferences (Account console → Notifications) ──────
+
+const DEFAULT_PREF_MATRIX: Record<NotificationCategory, { inApp: boolean; email: boolean; sms: boolean }> = {
+  viewing: { inApp: true, email: false, sms: false },
+  remittance: { inApp: true, email: true, sms: false },
+  maintenance: { inApp: true, email: true, sms: true },
+  approval: { inApp: true, email: true, sms: false },
+  renewal: { inApp: true, email: false, sms: false },
+  system: { inApp: true, email: false, sms: false },
+};
+
+/** The caller's own routing matrix, defaults filled in for any unset category. */
+export async function getNotificationPrefs(ctx: CallerContext) {
+  const rows = await db
+    .select({ category: notificationPrefs.category, inApp: notificationPrefs.inApp, email: notificationPrefs.email, sms: notificationPrefs.sms })
+    .from(notificationPrefs)
+    .where(eq(notificationPrefs.userId, ctx.user.id));
+  const byCat = new Map(rows.map((r) => [r.category, r]));
+  return NOTIFICATION_CATEGORIES.map((category) => {
+    const stored = byCat.get(category);
+    const def = DEFAULT_PREF_MATRIX[category];
+    return {
+      category,
+      inApp: stored?.inApp ?? def.inApp,
+      email: stored?.email ?? def.email,
+      sms: stored?.sms ?? def.sms,
+    };
+  });
+}
+
+/** Upsert the caller's own routing matrix. Maintenance in-app is always forced on. */
+export async function updateNotificationPrefs(ctx: CallerContext, rawInput: unknown) {
+  const input = parseInput(updateNotificationPrefsSchema, rawInput);
+  const userId = ctx.user.id;
+
+  await db.transaction(async (tx) => {
+    for (const row of input.rows) {
+      const inApp = FORCE_IN_APP[row.category] ? true : row.inApp;
+      const [existing] = await tx
+        .select({ id: notificationPrefs.id })
+        .from(notificationPrefs)
+        .where(and(eq(notificationPrefs.userId, userId), eq(notificationPrefs.category, row.category)))
+        .limit(1);
+      if (existing) {
+        await tx
+          .update(notificationPrefs)
+          .set({ inApp, email: row.email, sms: row.sms, updatedAt: new Date() })
+          .where(eq(notificationPrefs.id, existing.id));
+      } else {
+        await tx.insert(notificationPrefs).values({ userId, category: row.category, inApp, email: row.email, sms: row.sms });
+      }
+    }
+  });
+
+  return getNotificationPrefs(ctx);
 }
 
 export async function listNotifications(ctx: CallerContext, filters: { unreadOnly?: boolean } = {}) {

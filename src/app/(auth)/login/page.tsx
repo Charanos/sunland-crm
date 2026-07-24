@@ -355,11 +355,11 @@ export default function LoginPage() {
               Establishing a secure workspace session for the {EMULATION_PROFILES.find(p => p.role === loadingRole)?.title || "Administrator"} portal.
             </p>
 
-            <div className="mt-8 flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5">
-              <IconLoader2 className="animate-spin text-[#f3df27]" size={12} />
-              <span className="font-mono text-[#f3df27] label-caps">
+            <div className="mt-8 flex items-center gap-2 text-slate-900 bg-white rounded-full border border-white/10 px-4 py-1.5">
+              <IconLoader2 className="animate-spin" size={12} />
+              <Badge className="font-mono font-medium">
                 Routing Secure Session...
-              </span>
+              </Badge>
             </div>
           </div>
         </div>

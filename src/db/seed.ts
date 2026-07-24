@@ -39,6 +39,7 @@ import {
   transactions,
   approvalRequests,
   notifications,
+  notificationPrefs,
   activityLogs,
   documents,
   reportExports,
@@ -2067,8 +2068,36 @@ async function runSeed() {
       ...leaseActivitySeed,
       ...mandateActivitySeed,
       ...dashboardActivityVariety,
+      // Real auth events so the Account console's Security "access log" and the
+      // org audit log have security-relevant content on first load (ADR 018).
+      {
+        entityId: null as unknown as string,
+        actorId: ceoUser.id,
+        associatedType: "session",
+        associatedId: groupEntity.id,
+        action: "auth.login",
+        summary: `${ceoUser.name} signed in`,
+        createdAt: hoursAgo(3),
+      },
+      {
+        entityId: null as unknown as string,
+        actorId: ceoUser.id,
+        associatedType: "user",
+        associatedId: ceoUser.id,
+        action: "identity.security.2fa_enabled",
+        summary: `${ceoUser.name} enabled two-factor authentication`,
+        createdAt: hoursAgo(48),
+      },
     ]);
-    console.log(`Created ${1 + leaseActivitySeed.length + mandateActivitySeed.length + dashboardActivityVariety.length} activity log entries across mandates, leases, and the dashboard variety batch.`);
+    console.log(`Created ${3 + leaseActivitySeed.length + mandateActivitySeed.length + dashboardActivityVariety.length} activity log entries across mandates, leases, auth, and the dashboard variety batch.`);
+
+    // Real Account-console content on first load (ADR 018): stamp the CEO's
+    // password-age baseline + a couple of notification routing prefs.
+    await db.update(users).set({ passwordChangedAt: hoursAgo(42 * 24), phone: "+254 722 000 118" }).where(eq(users.id, ceoUser.id));
+    await db.insert(notificationPrefs).values([
+      { userId: ceoUser.id, category: "remittance", inApp: true, email: true, sms: false },
+      { userId: ceoUser.id, category: "maintenance", inApp: true, email: true, sms: true },
+    ]).onConflictDoNothing();
 
     // 10. Cross-Department Projects - real rows behind the Overview's
     // "Cross-Department Operations" panel and the /admin/projects page,
@@ -2091,6 +2120,14 @@ async function runSeed() {
             progressPercent: 60,
             assigneeIds: [salesAgent1User.id, salesAgent2User.id],
             createdById: gmUser.id,
+            startDate: daysFromNow(-24),
+            dueDate: daysFromNow(18),
+            budgetKes: "350000.00",
+            milestones: [
+              { label: "Shortlist drawn up", done: true },
+              { label: "First-round interviews", done: true },
+              { label: "Offers issued", done: false },
+            ],
           },
           {
             entityId: groupEntity.id,
@@ -2100,6 +2137,14 @@ async function runSeed() {
             status: "awaiting_review",
             assigneeIds: [legalOfficerUser.id, financeHeadUser.id],
             createdById: financeHeadUser.id,
+            startDate: daysFromNow(-12),
+            dueDate: daysFromNow(9),
+            budgetKes: "120000.00",
+            milestones: [
+              { label: "Deed pack assembled", done: true },
+              { label: "Tax clearance filed", done: false },
+              { label: "Transfer registered", done: false },
+            ],
           },
           {
             entityId: groupEntity.id,
@@ -2108,7 +2153,14 @@ async function runSeed() {
             department: "ops",
             status: "planning",
             assigneeIds: [propertyManager1User.id],
+            startDate: daysFromNow(3),
             dueDate: daysFromNow(14),
+            budgetKes: "96500.00",
+            milestones: [
+              { label: "Inspector booked", done: false },
+              { label: "Site walks complete", done: false },
+              { label: "Findings filed", done: false },
+            ],
             createdById: pmUser.id,
           },
           {
@@ -2120,6 +2172,17 @@ async function runSeed() {
             progressPercent: 35,
             assigneeIds: [financeHeadUser.id],
             createdById: financeHeadUser.id,
+            // Genuinely behind: gives the Projects Board an At Risk column
+            // and the Scheduler's at-risk hero stat something real on load.
+            atRisk: true,
+            startDate: daysFromNow(-40),
+            dueDate: daysFromNow(6),
+            budgetKes: "210000.00",
+            milestones: [
+              { label: "Vendor scope signed", done: true },
+              { label: "Parallel run", done: false },
+              { label: "Cutover", done: false },
+            ],
           },
           {
             entityId: groupEntity.id,
@@ -2129,6 +2192,12 @@ async function runSeed() {
             status: "on_hold",
             assigneeIds: [hrHeadUser.id],
             dueDate: daysFromNow(30),
+            startDate: daysFromNow(-6),
+            budgetKes: "40000.00",
+            milestones: [
+              { label: "Draft checklist", done: true },
+              { label: "Department sign-off", done: false },
+            ],
             createdById: hrHeadUser.id,
           },
         ])
@@ -2156,6 +2225,9 @@ async function runSeed() {
           { name: gmUser.name, userId: gmUser.id },
           { name: financeHeadUser.name, userId: financeHeadUser.id },
         ],
+        // Real notify-role selection so the Scheduler's role chips, reminder
+        // queue and "Re-notify" action have something to act on at first load.
+        notifyRoleTiers: ["superadmin", "admin"],
       },
       {
         entityId: groupEntity.id,
@@ -2180,6 +2252,9 @@ async function runSeed() {
         organizerId: legalOfficerUser.id,
         attendees: [{ name: financeHeadUser.name, userId: financeHeadUser.id }],
         projectId: escrowProject.id,
+        // A deed transfer signing genuinely is a critical, sign-off-gated date.
+        isCritical: true,
+        notifyRoleTiers: ["superadmin", "admin", "finance"],
       },
       {
         entityId: groupEntity.id,

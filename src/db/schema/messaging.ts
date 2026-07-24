@@ -1,7 +1,10 @@
 import { index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { entities, timestamps, users } from "@/db/schema/platform";
 
-export const conversationType = pgEnum("conversation_type", ["dm", "channel"]);
+// "system" threads are produced by real ERP events (a remittance releasing, a
+// maintenance work order changing state) - they are appended to by the
+// services that own those events, never invented for display.
+export const conversationType = pgEnum("conversation_type", ["dm", "channel", "system"]);
 export const messageType = pgEnum("message_type", ["text", "system"]);
 
 export const conversations = pgTable(
@@ -14,11 +17,19 @@ export const conversations = pgTable(
     // client-side from the other participant.
     name: text("name"),
     description: text("description"),
+    // What this thread is about. Powers the inbox row's category badge and
+    // record code, the thread header's linked-record strip, and its
+    // "Open record" deep link. The code (e.g. WO-1188, RMT-0619) is
+    // denormalised so the inbox list doesn't need a join per row.
+    linkedRecordType: text("linked_record_type"),
+    linkedRecordId: uuid("linked_record_id"),
+    linkedRecordCode: text("linked_record_code"),
     createdById: uuid("created_by_id").references(() => users.id).notNull(),
     ...timestamps,
   },
   (table) => ({
     entityTypeIdx: index("conversations_entity_type_idx").on(table.entityId, table.type),
+    linkedRecordIdx: index("conversations_linked_record_idx").on(table.linkedRecordType, table.linkedRecordId),
   }),
 );
 
@@ -32,6 +43,9 @@ export const conversationParticipants = pgTable(
     userId: uuid("user_id").references(() => users.id).notNull(),
     lastReadAt: timestamp("last_read_at", { withTimezone: true }),
     mutedAt: timestamp("muted_at", { withTimezone: true }),
+    // Per-user archive - the thread header's archive button hides the thread
+    // for you only, it does not touch anyone else's inbox.
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({

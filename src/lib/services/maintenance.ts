@@ -9,6 +9,7 @@ import { createApprovalRequest } from "@/lib/services/finance/approvals";
 import { resolveEntityId } from "@/lib/services/entity";
 import { getGroupSettingValue } from "@/lib/services/settings";
 import { toISOStringSafe } from "@/lib/services/properties";
+import { appendSystemMessage, resolveUserIdsByTiers } from "@/lib/services/messaging";
 import type { CallerContext } from "@/lib/services/types";
 import { type CostApprovalTier, costApprovalTierFor, slaStateFor } from "@/components/sunland/maintenance-constants";
 import {
@@ -226,6 +227,25 @@ export async function updateMaintenanceRequest(ctx: CallerContext, requestId: st
       before: existing,
       after: updated,
     });
+
+    // Real producer for the Messenger's "Maintenance Desk" system feed - only
+    // on an actual status move, so the feed reflects work-order progress
+    // rather than every incidental field edit (ADR 019).
+    if (updatable.status && updatable.status !== existing.status) {
+      const recipients = await resolveUserIdsByTiers(tx, ["superadmin", "admin", "manager"]);
+      if (recipients.length > 0) {
+        const code = `WO-${existing.id.slice(0, 6).toUpperCase()}`;
+        await appendSystemMessage(tx, ctx.user.id, {
+          entityId: existing.entityId,
+          feedName: "Maintenance Desk",
+          content: `${code} "${updated.title}" moved to ${MAINT_STATUS_LABELS[updated.status] ?? updated.status}.`,
+          recipientUserIds: recipients,
+          linkedRecordType: "maintenance_request",
+          linkedRecordId: existing.id,
+          linkedRecordCode: code,
+        });
+      }
+    }
 
     return updated;
   });

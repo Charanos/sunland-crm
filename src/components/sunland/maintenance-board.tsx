@@ -5,8 +5,11 @@ import Link from "next/link";
 import {
   IconArrowUpRight,
   IconBan,
+  IconBuildingBank,
   IconBuildingCommunity,
   IconCalendarPlus,
+  IconChevronLeft,
+  IconChevronRight,
   IconCheck,
   IconDroplet,
   IconFileDescription,
@@ -15,13 +18,16 @@ import {
   IconPlus,
   IconRefresh,
   IconSearch,
+  IconShieldCheck,
   IconShieldX,
   IconTool,
 } from "@tabler/icons-react";
-import { Badge, BoardHeader, Button, ConfirmDialog, Drawer, SkeletonBlock } from "@/components/ui/erp-primitives";
+import { BoardHeader, Button, ConfirmDialog, Drawer, PaginationControls, SkeletonBlock } from "@/components/ui/erp-primitives";
+import { Badge } from "@/components/ui/badge";
 import { PageTransition } from "@/components/shared/page-transition";
 import { useToast } from "@/components/ui/toast-provider";
 import { cn } from "@/lib/utils/cn";
+import { formatCompactKES } from "@/lib/utils/format";
 import { ReportIssueModal } from "./report-issue-modal";
 import { PortfolioHubNav } from "./portfolio-hub-nav";
 import {
@@ -111,11 +117,6 @@ const FILTERS: Array<{ id: "all" | "urgent" | MaintenanceStatus; label: string }
   { id: "scheduled", label: "Scheduled" },
   { id: "done", label: "Completed" },
 ];
-
-// KPI-tier "Works mix" segment colors - brighter than CATEGORY_META's badge
-// colors (which are tuned for a white background), matching the design's own
-// distinct palette for the dark strip.
-const MIX_COLORS: Record<MaintenanceCategory, string> = { reactive: "#f3df27", planned: "#6ee7b7", compliance: "#fda4af" };
 
 const PILL = "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-medium";
 
@@ -326,14 +327,17 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
       .sort((a, b) => parseFloat(b.estimatedCostKes || "0") - parseFloat(a.estimatedCostKes || "0"))[0];
     if (awaitingApproval) {
       items.push({
-        id: awaitingApproval.id, tone: "amber", icon: IconFileInvoice,
+        id: awaitingApproval.id,
+        tone: "amber",
+        icon: IconFileInvoice,
         title: `${awaitingApproval.title} awaiting approval`,
         meta: `${awaitingApproval.propertyName} · ${fmtKes(awaitingApproval.estimatedCostKes)}`,
         ctaLabel: "Review",
       });
     }
 
-    return items.slice(0, 3);
+    const unique = items.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id));
+    return unique.slice(0, 3);
   }, [requests, nowMs]);
 
   const filterCounts = useMemo(() => ({
@@ -345,6 +349,9 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
     done: requests.filter((r) => r.status === "done").length,
   }), [requests]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return requests
@@ -352,6 +359,13 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
       .filter((r) => !q || [r.title, r.propertyName, r.propertyCode, r.assignedContractorName].some((s) => s?.toLowerCase().includes(q)))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [requests, filter, query]);
+
+  const totalPages = useMemo(() => Math.ceil(visible.length / pageSize) || 1, [visible.length, pageSize]);
+
+  const pagedVisible = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return visible.slice(start, start + pageSize);
+  }, [visible, currentPage, pageSize]);
 
   const crew = useMemo(() => {
     return contractors
@@ -542,274 +556,384 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
 
       <div className="flex items-center gap-4 mt-2">
         <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-400 tracking-wider">Works Signals</span>
+        <span className="label-caps text-slate-600 tracking-wider">Works Signals</span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
-      {/* ── Works Signals KPI tier ── */}
-      <div className="gsap-stagger bg-tertiary-gradient border border-[#122a20]/80 p-1.5 rounded-[24px] shadow-xl relative overflow-hidden group">
-        <div className="absolute right-0 top-0 size-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-700 -z-10" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10">
-          {/* Open Work Orders */}
-          <div className="p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden">
-            <IconTool size={140} stroke={1} className="absolute -right-6 -bottom-6 opacity-[0.05] pointer-events-none" />
-            <span className="text-xs font-medium text-slate-300 relative z-10">Open Work Orders</span>
-            <div className="relative z-10 flex items-end justify-between gap-2 mt-4">
-              <span className="font-mono text-[32px] font-medium text-white leading-none">{kpis.open.length}</span>
-              <span className="text-[10.5px] font-medium uppercase tracking-wider text-rose-300">{kpis.urgent.length} urgent</span>
+      {/* ── Executive 4-Card Dark KPI Tier ── */}
+      <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-6 border border-slate-800/80">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
+          
+          {/* Card 1: Active Work Orders */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-amber-400 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconTool size={140} stroke={1} />
             </div>
-          </div>
-
-          {/* SLA Compliance ring gauge */}
-          <div className="p-5 sm:p-6 flex items-center gap-4">
-            <svg width="62" height="62" viewBox="0 0 64 64" className="shrink-0">
-              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="7" />
-              <circle cx="32" cy="32" r="26" fill="none" stroke="#f3df27" strokeWidth="7" strokeLinecap="round" strokeDasharray={`${((kpis.slaCompliancePct / 100) * 163.4).toFixed(1)} 163.4`} transform="rotate(-90 32 32)" />
-            </svg>
-            <div>
-              <p className="text-xs font-medium text-slate-300 mb-1">SLA Compliance</p>
-              <span className="font-mono text-[27px] font-medium text-white leading-none">{kpis.slaCompliancePct}%</span>
-              <p className="text-[10.5px] font-medium uppercase tracking-wider text-emerald-300 mt-1.5">
-                {kpis.avgResponseHours != null ? `avg resolve ${kpis.avgResponseHours < 1 ? "<1h" : kpis.avgResponseHours.toFixed(1) + "h"}` : "no closed orders yet"}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Active Work Orders</span>
+              <Badge tone={kpis.urgent.length > 0 ? "risk" : "success"}>
+                {kpis.urgent.length > 0 ? `${kpis.urgent.length} URGENT / CRITICAL` : "QUEUE CLEAR"}
+              </Badge>
+            </div>
+            <div className="relative z-10 mt-4">
+              <span className="font-mono text-3xl font-medium text-white">{kpis.open.length} <span className="text-xs font-mono text-slate-400 font-normal">Orders</span></span>
+              <p className="text-xs text-slate-400 font-mono mt-2 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-amber-300">
+                  <span className="size-1.5 rounded-full bg-amber-400" />
+                  {kpis.open.filter((r) => r.status === "in_progress").length} in progress
+                </span>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1 text-slate-300">
+                  {kpis.open.filter((r) => r.status === "awaiting_approval").length} pending sign-off
+                </span>
               </p>
             </div>
           </div>
 
-          {/* Works mix */}
-          <div className="p-5 sm:p-6 flex flex-col gap-3 justify-center">
-            <p className="text-xs font-medium text-slate-300">Works mix</p>
-            <div className="flex h-[9px] rounded-full overflow-hidden gap-0.5" aria-hidden="true">
-              {kpis.mix.filter((m) => m.count > 0).map((m) => (
-                <div key={m.cat} style={{ background: MIX_COLORS[m.cat], width: `${(m.count / kpis.mixTotal) * 100}%` }} />
-              ))}
+          {/* Card 2: SLA Response & Compliance Rate */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-emerald-400 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconShieldCheck size={140} stroke={1} />
             </div>
-            <div className="flex flex-wrap gap-x-3.5 gap-y-1.5">
-              {kpis.mix.map((m) => (
-                <span key={m.cat} className="inline-flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-wider text-white/50">
-                  <span className="size-2 rounded-full inline-block" style={{ background: MIX_COLORS[m.cat] }} />
-                  {CATEGORY_META[m.cat].label} · <span className="font-mono">{m.count}</span>
-                </span>
-              ))}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">SLA Compliance Rate</span>
+              <Badge tone={kpis.slaCompliancePct >= 90 ? "success" : kpis.slaCompliancePct >= 75 ? "warning" : "risk"}>
+                {kpis.slaCompliancePct >= 90 ? "OPTIMAL" : kpis.slaCompliancePct >= 75 ? "AT RISK" : "CRITICAL"}
+              </Badge>
+            </div>
+            <div className="relative z-10 mt-4">
+              <span className="font-mono text-3xl font-medium text-emerald-400">{kpis.slaCompliancePct}%</span>
+              <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="h-full bg-emerald-400 transition-all duration-500" style={{ width: `${kpis.slaCompliancePct}%` }} />
+              </div>
+              <p className="text-xs text-slate-400 font-mono mt-2">
+                {kpis.avgResponseHours != null ? `Avg resolution: ${kpis.avgResponseHours < 1 ? "<1h" : kpis.avgResponseHours.toFixed(1) + "h"}` : "No resolved orders yet"}
+              </p>
             </div>
           </div>
 
-          {/* Month Works Spend */}
-          <div className="p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden">
-            <IconFileInvoice size={140} stroke={1} className="absolute -right-6 -bottom-6 opacity-[0.05] pointer-events-none" style={{ color: "#f3df27" }} />
-            <span className="text-xs font-medium text-slate-300 relative z-10">{kpis.monthLabel} Works Spend</span>
+          {/* Card 3: Monthly Maintenance Spend */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-indigo-400 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconBuildingBank size={140} stroke={1} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">{kpis.monthLabel} Spend</span>
+              <Badge tone="neutral">FINANCIAL MTD</Badge>
+            </div>
             <div className="relative z-10 mt-4">
-              <span className="font-mono text-[32px] font-medium text-white leading-none">{kpis.spendTotal >= 1000 ? `KES ${(kpis.spendTotal / 1000).toFixed(0)}K` : fmtKes(kpis.spendTotal)}</span>
-              <p className="text-[10.5px] font-medium uppercase tracking-wider text-white/40 mt-2">nets against landlord remittances</p>
+              <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(kpis.spendTotal)}</span>
+              <p className="text-xs text-slate-400 font-mono mt-2">
+                Nets directly against monthly landlord remittances
+              </p>
             </div>
           </div>
+
+          {/* Card 4: Works Category Mix */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-rose-400 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconTool size={140} stroke={1} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Works Category Mix</span>
+              <Badge tone="primary">CATEGORIES</Badge>
+            </div>
+            <div className="relative z-10 mt-4 flex flex-col gap-2.5">
+              <div className="flex h-2 rounded-full overflow-hidden gap-0.5 bg-white/10">
+                {kpis.mix.filter((m) => m.count > 0).map((m) => (
+                  <div
+                    key={m.cat}
+                    style={{
+                      background: m.cat === "reactive" ? "#f59e0b" : m.cat === "planned" ? "#10b981" : "#f43f5e",
+                      width: `${(m.count / kpis.mixTotal) * 100}%`,
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center justify-between text-xs font-mono text-slate-300">
+                {kpis.mix.map((m) => (
+                  <span key={m.cat} className="flex items-center gap-1">
+                    <span
+                      className="size-2 rounded-full"
+                      style={{ background: m.cat === "reactive" ? "#f59e0b" : m.cat === "planned" ? "#10b981" : "#f43f5e" }}
+                    />
+                    {CATEGORY_META[m.cat].label}: <span className="font-medium text-white">{m.count}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {/* ── Needs Attention ── */}
+      {/* ── Needs Attention Executive Banners (2-Column Grid) ── */}
       {attentionItems.length > 0 && (
-        <>
-          <div className="flex items-center gap-4 mt-2">
-            <hr className="flex-1 border-slate-200/60" />
-            <span className="label-caps text-slate-400 tracking-wider">Needs Attention</span>
-            <hr className="flex-1 border-slate-200/60" />
-          </div>
-          <div className="flex flex-wrap gap-2.5">
-            {attentionItems.map((item) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "flex items-center gap-3 rounded-2xl p-3.5 flex-1 min-w-[280px] border shadow-sm",
-                  item.tone === "rose" ? "bg-rose-50/60 border-rose-200/70" : "bg-amber-50/60 border-amber-200/70",
-                )}
-              >
-                <span className={cn("size-8.5 rounded-full flex items-center justify-center shrink-0", item.tone === "rose" ? "bg-rose-500/10 text-rose-600" : "bg-amber-500/[0.14] text-amber-700")}>
-                  <item.icon size={16} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-slate-900 truncate">{item.title}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">{item.meta}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openDrawer(item.id)}
-                  className="shrink-0 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-1">
+          {attentionItems.map((item, idx) => (
+            <div
+              key={`${item.id}-${idx}`}
+              className={cn(
+                "rounded-[22px] p-4 flex items-center justify-between gap-3.5 shadow-2xs hover:shadow-xs transition-all duration-300 border group",
+                item.tone === "rose"
+                  ? "bg-gradient-to-r from-rose-50/90 via-white to-rose-50/20 border-rose-200/90 hover:border-rose-300"
+                  : "bg-gradient-to-r from-amber-50/90 via-white to-amber-50/20 border-amber-200/90 hover:border-amber-300"
+              )}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={cn(
+                    "size-10 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs",
+                    item.tone === "rose"
+                      ? "bg-rose-100/80 text-rose-700 border-rose-200/60"
+                      : "bg-amber-100/80 text-amber-700 border-amber-200/60"
+                  )}
                 >
-                  {item.ctaLabel}
-                </button>
+                  <item.icon size={18} />
+                </div>
+                <div className="min-w-0 flex flex-col justify-center">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-xs font-medium text-slate-900 leading-snug truncate">{item.title}</p>
+                    <Badge tone={item.tone === "rose" ? "risk" : "warning"} className="shrink-0 text-[10px]">
+                      ACTION REQUIRED
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1 font-mono truncate">{item.meta}</p>
+                </div>
               </div>
-            ))}
-          </div>
-        </>
+
+              <button
+                type="button"
+                onClick={() => openDrawer(item.id)}
+                className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200/90 rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all shadow-2xs hover:shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+              >
+                {item.ctaLabel} <IconArrowUpRight size={13} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
+              </button>
+            </div>
+          ))}
+        </div>
       )}
 
-      <div className="flex items-center gap-4 mt-2">
-        <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-400 tracking-wider">Work Order Queue</span>
-        <hr className="flex-1 border-slate-200/60" />
+      {/* ── Work Order Queue Section Header ── */}
+      <div className="flex items-center justify-between gap-4 mt-6 mb-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-medium text-slate-900">Work Order Queue</h3>
+          <Badge tone="data">{requests.length} RECORDS</Badge>
+        </div>
+        <button
+          type="button"
+          onClick={() => setNewOpen(true)}
+          className="bg-[#151936] text-white hover:bg-[#1f254e] font-medium text-xs rounded-xl px-3.5 py-2 shadow-2xs transition-all flex items-center gap-1.5 shrink-0"
+        >
+          <IconPlus size={14} /> New Work Order
+        </button>
       </div>
 
-      {/* ── Queue + Rail ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_330px] gap-4 items-start">
-        <div className="min-w-0">
-          {/* Filters */}
-          <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-            <div className="inline-flex gap-1 bg-white border border-slate-100 rounded-2xl p-1 flex-wrap">
+      {/* ── Queue + Rail Layout ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
+        <div className="min-w-0 flex flex-col gap-4">
+          {/* Filters & Search Toolbar */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-[0_2px_15px_rgb(0,0,0,0.02)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
               {FILTERS.map((f) => {
                 const count = filterCounts[f.id as keyof typeof filterCounts];
+                const isActive = filter === f.id;
                 return (
                   <button
                     key={f.id}
                     type="button"
-                    onClick={() => setFilter(f.id)}
+                    onClick={() => { setFilter(f.id); setCurrentPage(1); }}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors",
-                      filter === f.id ? "bg-[#151936] text-white" : "text-slate-500 hover:text-slate-800",
+                      "inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all shrink-0",
+                      isActive
+                        ? "bg-[#151936] text-white shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     )}
                   >
                     {f.label}
-                    <span className="font-mono text-[10.5px] opacity-70">{count}</span>
+                    <span className={cn("font-mono text-[10.5px] px-1.5 py-0.5 rounded-md", isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500")}>
+                      {count}
+                    </span>
                   </button>
                 );
               })}
             </div>
-            <div className="relative flex items-center group">
-              <IconSearch size={15} className="absolute left-3 text-slate-400 group-focus-within:text-[#151936] transition-colors" />
+
+            <div className="relative flex items-center shrink-0 min-w-[220px]">
+              <IconSearch size={15} className="absolute left-3 text-slate-600 pointer-events-none" />
               <input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search ref, property, issue…"
-                className="bg-white border border-slate-200 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-[#151936]/10 focus:border-[#151936]/30 transition-all shadow-sm min-w-[220px]"
+                onChange={(e) => { setQuery(e.target.value); setCurrentPage(1); }}
+                placeholder="Search work orders..."
+                className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-xs font-medium text-slate-900 outline-none placeholder:text-slate-600 focus:bg-white focus:border-[#151936]/40 transition-all shadow-2xs"
               />
             </div>
           </div>
 
-          {/* Rows */}
+          {/* Work Orders List */}
           {loading ? (
             <WorkOrderRowsSkeleton />
           ) : requests.length === 0 ? (
-            <div className="border border-dashed border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center gap-3">
-              <div className="size-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
+            <div className="bg-white border border-slate-200/80 rounded-[24px] p-12 text-center flex flex-col items-center gap-3 shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
+              <div className="size-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
                 <IconTool size={26} />
               </div>
-              <h3 className="text-title-primary">No work orders yet</h3>
-              <p className="text-desc-secondary max-w-sm">Reported issues and planned works will appear here as a real-time queue.</p>
-              <Button size="sm" onClick={() => setNewOpen(true)} className="mt-1">
+              <h3 className="text-sm font-medium text-slate-900">No work orders yet</h3>
+              <p className="text-xs text-slate-600 max-w-sm font-medium">Reported issues and planned maintenance tasks will appear here in real time.</p>
+              <Button size="sm" onClick={() => setNewOpen(true)} className="mt-1 rounded-xl">
                 <IconPlus size={14} /> New Work Order
               </Button>
             </div>
           ) : visible.length === 0 ? (
-            <div className="border-[1.5px] border-dashed border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-400">No work orders match this view.</div>
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-10 text-center text-xs font-mono text-slate-600">
+              No work orders match this filter or search query.
+            </div>
           ) : (
-            <div className="flex flex-col gap-2.5">
-              {visible.map((r) => {
+            <div className="flex flex-col gap-3">
+              {pagedVisible.map((r) => {
                 const sla = slaLineFor(r, slaHours[r.priority]);
+                const isUrgentOrCritical = r.priority !== "routine";
+                const isDone = r.status === "done";
+                const isInProgress = r.status === "in_progress";
+                const isAwaiting = r.status === "awaiting_approval";
+
                 return (
                   <button
                     key={r.id}
                     type="button"
                     onClick={() => openDrawer(r.id)}
-                    className="flex items-center gap-3.5 w-full text-left bg-white border border-slate-100 rounded-[18px] p-3.5 shadow-[0_4px_14px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-shadow"
+                    className="flex items-center gap-3.5 w-full text-left bg-white border border-slate-200/80 rounded-2xl p-4 shadow-[0_2px_15px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_25px_rgb(0,0,0,0.06)] hover:border-slate-300 transition-all duration-300 group cursor-pointer"
                   >
                     <span className={cn("w-1 self-stretch rounded-full shrink-0", (PRIORITY_META[r.priority] ?? PRIORITY_META.routine).rail)} />
-                    <div className="size-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shrink-0">
-                      <IconTool size={22} />
+                    <div className="size-12 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-600 shrink-0 shadow-2xs">
+                      <IconTool size={20} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-[11px] text-slate-400">{r.propertyCode}</span>
-                        <span className={cn(PILL, (CATEGORY_META[r.category] ?? CATEGORY_META.reactive).pill)}>{(CATEGORY_META[r.category] ?? CATEGORY_META.reactive).label}</span>
-                        <span className={cn(PILL, (PRIORITY_META[r.priority] ?? PRIORITY_META.routine).pill)}>{(PRIORITY_META[r.priority] ?? PRIORITY_META.routine).label}</span>
+                        <span className="font-mono text-xs text-slate-600 font-medium">{r.propertyCode}</span>
+                        <Badge tone="neutral">{(CATEGORY_META[r.category] ?? CATEGORY_META.reactive).label}</Badge>
+                        <Badge tone={isUrgentOrCritical ? "risk" : "neutral"}>
+                          {(PRIORITY_META[r.priority] ?? PRIORITY_META.routine).label}
+                        </Badge>
                       </div>
-                      <p className="text-sm font-medium text-slate-900 mt-1 truncate">{r.title}</p>
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">{r.propertyName} · {r.assignedContractorName ?? "Unassigned"}</p>
+                      <p className="text-xs font-medium text-slate-900 mt-1 truncate leading-snug group-hover:text-amber-800 transition-colors">
+                        {r.title}
+                      </p>
+                      <p className="text-xs text-slate-600 mt-0.5 truncate font-medium">
+                        {r.propertyName} · {r.assignedContractorName ?? "Unassigned Vendor"}
+                      </p>
                     </div>
-                    <div className="shrink-0 flex flex-col items-end gap-1.5">
-                      <span className={cn(PILL, (STATUS_META[r.status] ?? STATUS_META.reported).pill)}>
-                        <span className={cn("size-1.5 rounded-full", (STATUS_META[r.status] ?? STATUS_META.reported).dot)} />
+                    <div className="shrink-0 flex flex-col items-end gap-1">
+                      <Badge tone={isDone ? "success" : isInProgress ? "primary" : isAwaiting ? "warning" : "neutral"}>
                         {(STATUS_META[r.status] ?? STATUS_META.reported).label}
-                      </span>
-                      <span className="font-mono text-xs text-[#122a20]">{fmtKes(r.actualCostKes ?? r.estimatedCostKes)}</span>
-                      <span className="text-[10.5px] font-mono font-medium" style={{ color: sla.color }}>{sla.text}</span>
+                      </Badge>
+                      <span className="font-mono text-xs font-medium text-[#151936] mt-0.5">{fmtKes(r.actualCostKes ?? r.estimatedCostKes)}</span>
+                      <span className="text-xs font-mono font-medium" style={{ color: sla.color }}>{sla.text}</span>
                     </div>
                   </button>
                 );
               })}
+
+              {/* Executive Mobile-Responsive Shared Pagination ERP Primitive */}
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={visible.length}
+                pageSize={pageSize}
+                itemLabel="work orders"
+                onPageChange={setCurrentPage}
+              />
             </div>
           )}
         </div>
 
-        {/* ── Rail ── */}
-        <div className="flex flex-col gap-3.5 lg:sticky lg:top-4">
-          <div className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4.5">
-            <p className="text-sm font-medium text-slate-800 mb-3">Crew & Vendors</p>
+        {/* ── Side Rail Cards ── */}
+        <div className="flex flex-col gap-4 lg:sticky lg:top-4">
+          {/* Card 1: Crew & Vendors */}
+          <div className=" flex flex-col gap-3.5">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-medium text-slate-900 uppercase tracking-wider font-mono">Crew & Vendors</h4>
+              <Badge tone="neutral">{contractors.length} ON FILE</Badge>
+            </div>
             {crew.length === 0 ? (
-              <p className="text-xs text-slate-400">No contractors on file yet.</p>
+              <p className="text-xs text-slate-600 font-mono">No contractors on file yet.</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {crew.map((c) => (
-                  <div key={c.id} className="flex items-center gap-2.5 bg-slate-50/70 border border-slate-100 rounded-xl px-3 py-2">
-                    <span className="size-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                      <IconTool size={14} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-slate-900 truncate">{c.displayName}</p>
-                      <p className="text-[10.5px] text-slate-400 truncate">{c.metadata?.specialty ?? "General"}</p>
+                  <div key={c.id} className="flex items-center justify-between gap-3 bg-slate-50/70 hover:bg-slate-100/70 border border-slate-200/60 rounded-2xl p-3 transition-colors">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="size-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-600 shrink-0 shadow-2xs">
+                        <IconTool size={14} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-900 truncate">{c.displayName}</p>
+                        <p className="text-xs text-slate-600 font-mono truncate">{c.metadata?.specialty ?? "General Repairs"}</p>
+                      </div>
                     </div>
-                    <span className={cn(PILL, c.tone === "emerald" ? "bg-emerald-500/[0.12] text-emerald-700" : c.tone === "amber" ? "bg-amber-500/[0.14] text-amber-700" : "bg-slate-100 text-slate-500")}>
+                    <Badge tone={c.tone === "emerald" ? "success" : c.tone === "amber" ? "warning" : "neutral"}>
                       {c.load}
-                    </span>
+                    </Badge>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4.5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-slate-800">Scheduled Visits</p>
-              <Link href="/admin/events" className="text-[11.5px] font-medium text-[#122a20] hover:underline inline-flex items-center gap-1">
-                Scheduler <IconArrowUpRight size={12} />
+          {/* Card 2: Scheduled Visits */}
+          <div className="bg-white border border-slate-200/80 rounded-[24px] shadow-[0_2px_15px_rgb(0,0,0,0.02)] p-5 flex flex-col gap-3.5">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-medium text-slate-900 uppercase tracking-wider font-mono">Scheduled Visits</h4>
+              <Link href="/admin/events" className="text-xs font-medium text-[#151936] hover:underline flex items-center gap-1 font-mono">
+                Scheduler <IconArrowUpRight size={13} />
               </Link>
             </div>
             {scheduledVisits.length === 0 ? (
-              <p className="text-xs text-slate-400">No visits scheduled yet.</p>
+              <p className="text-xs text-slate-600 font-mono">No site visits scheduled yet.</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {scheduledVisits.map((v) => (
-                  <button key={v.id} type="button" onClick={v.onOpen} className="flex items-center gap-2.5 bg-slate-50/70 border border-slate-100 rounded-xl px-3 py-2 text-left w-full hover:bg-slate-100/70 transition-colors">
-                    <span className="w-8.5 text-center shrink-0">
-                      <span className="block font-mono text-[10px] text-slate-400">{v.day}</span>
-                      <span className="block font-mono text-[9.5px] text-slate-300">{v.time}</span>
-                    </span>
+                  <button key={v.id} type="button" onClick={v.onOpen} className="flex items-center gap-2.5 bg-slate-50/70 border border-slate-200/60 rounded-2xl p-3 text-left w-full hover:bg-slate-100/70 transition-colors">
+                    <div className="shrink-0 text-center bg-tertiary-gradient border border-slate-200/80 rounded-xl px-2 py-1 shadow-2xs">
+                      <span className="block font-mono text-xxs text-slate-300 font-medium">{v.day}</span>
+                      <span className="block font-mono text-xl text-slate-200">{v.time}</span>
+                    </div>
                     <span className={cn("size-2 rounded-full shrink-0", v.dotClass)} />
-                    <span className="text-[11.5px] font-medium text-slate-700 truncate flex-1 min-w-0">{v.what}</span>
+                    <span className="text-xs font-medium text-slate-800 truncate flex-1 min-w-0">{v.what}</span>
                   </button>
                 ))}
               </div>
             )}
-            <p className="text-[11px] text-slate-400 leading-relaxed mt-2.5">Scheduling a work-order visit auto-creates the Scheduler event; closing the order closes the event.</p>
+            <p className="text-xs text-slate-600 font-mono leading-relaxed mt-1">
+              Scheduling a visit auto-syncs with the Scheduler. Closing work orders marks visits complete.
+            </p>
           </div>
 
-          <div className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4.5">
-            <p className="text-sm font-medium text-slate-800 mb-3">{kpis.monthLabel} Spend by Property</p>
+          {/* Card 3: Spend by Property */}
+          <div className="bg-white border border-slate-200/80 rounded-[24px] shadow-[0_2px_15px_rgb(0,0,0,0.02)] p-5 flex flex-col gap-3.5">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-medium text-slate-900 uppercase tracking-wider font-mono">{kpis.monthLabel} Spend</h4>
+              <Badge tone="neutral">REMITTANCE NET</Badge>
+            </div>
             {spendByProperty.length === 0 ? (
-              <p className="text-xs text-slate-400">No spend recorded this month.</p>
+              <p className="text-xs text-slate-600 font-mono">No spend recorded this month.</p>
             ) : (
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-3">
                 {spendByProperty.map((sp) => (
-                  <div key={sp.name}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-[11.5px] font-medium text-slate-700 truncate">{sp.name}</span>
-                      <span className="font-mono text-[11px] text-slate-500 shrink-0">{fmtKes(sp.amt)}</span>
+                  <div key={sp.name} className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-medium text-slate-800 truncate">{sp.name}</span>
+                      <span className="font-mono text-xs font-medium text-[#151936] shrink-0">{fmtKes(sp.amt)}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${sp.pct}%`, background: "linear-gradient(90deg,#f3df27,#151936)" }} />
+                      <div className="h-full rounded-full bg-[#151936]" style={{ width: `${sp.pct}%` }} />
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            <p className="text-[11px] text-slate-400 leading-relaxed mt-2.5">Approved costs post to the mandate ledger and net against the next remittance advice.</p>
+            <p className="text-xs text-slate-600 font-mono leading-relaxed mt-1">
+              Approved costs post to mandate ledgers and net against landlord remittances.
+            </p>
           </div>
         </div>
       </div>
@@ -828,153 +952,195 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
       />
 
       {/* ── Work Order drawer ── */}
-      <Drawer open={!!selectedId} onClose={closeDrawer} title={drawerRequest?.title ?? "Work Order"} width="34rem">
+      <Drawer open={!!selectedId} onClose={closeDrawer} title={drawerRequest?.title ?? "Work Order Detail"} width="36rem">
         {detailLoading || !detail ? (
           <div className="flex flex-col gap-4">
-            <SkeletonBlock className="h-36 w-[calc(100%+2.5rem)] rounded-none -mt-5 -mx-5" />
+            <SkeletonBlock className="h-40 w-[calc(100%+2.5rem)] rounded-none -mt-5 -mx-5" />
             <div className="px-5 flex flex-col gap-4">
               <SkeletonBlock className="h-4 w-1/2" />
-              <SkeletonBlock className="h-24 w-full rounded-2xl" />
+              <SkeletonBlock className="h-28 w-full rounded-2xl" />
+              <SkeletonBlock className="h-32 w-full rounded-2xl" />
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-5 -mt-5 -mx-5">
-            {/* Hero */}
-            <div className="relative h-36 overflow-hidden shrink-0">
+          <div className="flex flex-col gap-5 -mt-5 -mx-5 pb-4">
+            {/* Hero Header Banner */}
+            <div className="relative h-40 overflow-hidden shrink-0">
               {detail.propertyMedia?.[0]?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={detail.propertyMedia[0].url} alt="" className="absolute inset-0 size-full object-cover" />
+                <img src={detail.propertyMedia[0].url} alt={detail.title} className="absolute inset-0 size-full object-cover" />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-[#122a20] to-[#1e1b4b]" />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#122a20] via-[#151936] to-[#1e1b4b]" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-b from-[#0a0d1c]/35 to-[#0a0d1c]/85" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-[#0a0d1c]/90" />
               <div className="relative h-full flex flex-col justify-end p-5">
-                <div className="flex items-center gap-1.5 mb-auto">
-                  <span className={cn(PILL, "bg-white/[0.18] text-white")}>{(PRIORITY_META[detail.priority] ?? PRIORITY_META.routine).label}</span>
-                  <span className={cn(PILL, "bg-[#f3df27]/90 text-[#151936]")}>{(STATUS_META[detail.status] ?? STATUS_META.reported).label}</span>
+                <div className="flex items-center gap-2 mb-auto pt-1">
+                  <span className="font-mono text-xs text-white/80 font-medium px-2.5 py-1 rounded-md bg-white/15 backdrop-blur-md border border-white/20">
+                    {detail.propertyCode}
+                  </span>
+                  <Badge tone={detail.priority === "critical" ? "risk" : detail.priority === "urgent" ? "warning" : "neutral"}>
+                    {(PRIORITY_META[detail.priority] ?? PRIORITY_META.routine).label}
+                  </Badge>
+                  <Badge tone={detail.status === "done" ? "success" : detail.status === "in_progress" ? "primary" : detail.status === "awaiting_approval" ? "warning" : "neutral"}>
+                    {(STATUS_META[detail.status] ?? STATUS_META.reported).label}
+                  </Badge>
                 </div>
-                <p className="font-mono text-[11px] text-white/70">{detail.propertyCode} · {(CATEGORY_META[detail.category] ?? CATEGORY_META.reactive).label}</p>
-                <p className="font-serif text-xl text-white mt-0.5 leading-tight">{detail.title}</p>
+                <p className="font-mono text-xs text-amber-300 font-medium">
+                  {(CATEGORY_META[detail.category] ?? CATEGORY_META.reactive).label} Works
+                </p>
+                <h3 className="text-lg font-medium text-white mt-0.5 leading-snug truncate">{detail.title}</h3>
               </div>
             </div>
 
             <div className="flex flex-col gap-5 px-5">
-              {/* Fact cells */}
+              {/* Fact cells Grid */}
               <div className="grid grid-cols-2 gap-2.5">
                 {[
-                  { label: "Property / unit", value: `${detail.propertyName} · ${detail.propertyLocation}` },
-                  { label: "Assigned to", value: detail.assignedContractorName ?? "Unassigned" },
-                  { label: "Reported by", value: detail.reportedByName ?? "—" },
-                  { label: "Opened", value: fmtDate(detail.createdAt) },
-                  { label: "Next visit", value: detail.scheduledVisit ? fmtDateTime(detail.scheduledVisit.startsAt) : "Not scheduled" },
-                  { label: "SLA", value: slaLineFor(detail, slaTarget).text },
+                  { label: "Property / Unit", value: `${detail.propertyName} · ${detail.propertyLocation}` },
+                  { label: "Assigned Vendor", value: detail.assignedContractorName ?? "Unassigned" },
+                  { label: "Reported By", value: detail.reportedByName ?? "—" },
+                  { label: "Opened Date", value: fmtDate(detail.createdAt) },
+                  { label: "Scheduled Visit", value: detail.scheduledVisit ? fmtDateTime(detail.scheduledVisit.startsAt) : "Not scheduled" },
+                  { label: "SLA Status", value: slaLineFor(detail, slaTarget).text },
                 ].map((kv) => (
-                  <div key={kv.label} className="bg-slate-50/70 border border-slate-100 rounded-xl px-3 py-2.5 min-w-0">
-                    <p className="text-[10.5px] text-slate-400 mb-0.5">{kv.label}</p>
+                  <div key={kv.label} className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-3 min-w-0 shadow-2xs">
+                    <p className="text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider mb-1">{kv.label}</p>
                     <p className="text-xs font-medium text-slate-900 truncate">{kv.value}</p>
                   </div>
                 ))}
               </div>
 
-              {/* Cost & Approval */}
-              <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-4">
-                <p className="text-xs font-medium text-slate-800 mb-2">Cost & Approval</p>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-slate-500">Estimate</span>
-                  <span className="font-mono font-medium text-slate-900">{fmtKes(detail.estimatedCostKes)}</span>
+              {/* Cost & Approval Card */}
+              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-medium text-slate-900 uppercase tracking-wider font-mono">Cost & Financial Approval</h4>
+                  <Badge tone="neutral">FINANCIAL LEDGER</Badge>
                 </div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-slate-500">Approved by</span>
-                  <span className="font-medium text-slate-900">
-                    {detail.pendingApproval ? `Pending — ${detail.pendingApproval.requiredApproverRole.toUpperCase()} decision` : detail.actualCostKes ? "Auto / on file" : "—"}
-                  </span>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="bg-slate-50/70 border border-slate-200/60 rounded-xl p-3">
+                    <span className="text-slate-500 font-mono block text-[10.5px] mb-0.5">Estimated Cost</span>
+                    <span className="font-mono text-sm font-medium text-[#151936]">{fmtKes(detail.estimatedCostKes)}</span>
+                  </div>
+
+                  <div className="bg-slate-50/70 border border-slate-200/60 rounded-xl p-3">
+                    <span className="text-slate-500 font-mono block text-[10.5px] mb-0.5">Approval Status</span>
+                    <span className="font-medium text-slate-900 truncate block">
+                      {detail.pendingApproval
+                        ? `Pending ${detail.pendingApproval.requiredApproverRole.toUpperCase()}`
+                        : detail.actualCostKes
+                        ? "Approved & Auto-Logged"
+                        : "PM Self-Approval"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Posts to</span>
-                  <Link href="/admin/leases?mode=mandates" className="font-medium text-[#122a20] hover:underline inline-flex items-center gap-1">
-                    Mandate ledger <IconArrowUpRight size={11} />
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-500 font-mono">Ledger Posting:</span>
+                  <Link href="/admin/leases?mode=mandates" className="font-medium text-[#151936] hover:underline inline-flex items-center gap-1 font-mono">
+                    Mandate ledger <IconArrowUpRight size={12} />
                   </Link>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed mt-2.5">
+
+                <div className="bg-gradient-to-r from-slate-50 to-white border border-slate-200/70 rounded-xl p-3 text-xs text-slate-700 font-mono leading-relaxed shadow-2xs">
                   {(() => {
                     const cost = detail.actualCostKes ?? detail.estimatedCostKes;
                     const costNum = cost ? parseFloat(cost) : 0;
                     const ceiling = detail.maintenanceAuthorityKes ?? 25000;
-                    if (costNum <= ceiling) return `Within the PM's KES ${ceiling.toLocaleString()} self-approval authority — auto-approved and logged.`;
-                    if (detail.pendingApproval?.requiredApproverRole === "ceo") return "Above the CEO threshold: routed to the CEO approval queue (approval engine, dual sign-off).";
-                    return `Above PM authority: requires GM sign-off before crew mobilization.`;
+                    if (costNum <= ceiling) return `Within PM KES ${ceiling.toLocaleString()} self-approval ceiling — auto-approved and posted.`;
+                    if (detail.pendingApproval?.requiredApproverRole === "ceo") return "Above CEO threshold: queued for dual CEO sign-off approval.";
+                    return `Above PM authority ceiling: requires GM sign-off prior to mobilization.`;
                   })()}
-                </p>
+                </div>
               </div>
 
               {/* Linked Records */}
-              <div>
-                <p className="text-xs font-medium text-slate-800 mb-2">Linked Records</p>
-                <div className="flex flex-col gap-1.5">
-                  <Link href={`/admin/properties/${detail.propertyId}`} className="flex items-center gap-2.5 bg-slate-50/70 border border-slate-100 rounded-xl px-3 py-2 hover:bg-slate-100/70 transition-colors">
-                    <span className="size-7.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[#151936] shrink-0"><IconBuildingCommunity size={14} /></span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-xs font-medium text-slate-900 truncate">Property file</span>
-                      <span className="block text-[10.5px] text-slate-400 truncate">{detail.propertyName}</span>
-                    </span>
-                    <IconArrowUpRight size={13} className="text-slate-300 shrink-0" />
-                  </Link>
-                  {detail.maintenanceAuthorityKes != null && (
-                    <Link href="/admin/leases?mode=mandates" className="flex items-center gap-2.5 bg-slate-50/70 border border-slate-100 rounded-xl px-3 py-2 hover:bg-slate-100/70 transition-colors">
-                      <span className="size-7.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[#151936] shrink-0"><IconFileDescription size={14} /></span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-medium text-slate-900 truncate">Mandate & remittance</span>
-                        <span className="block text-[10.5px] text-slate-400 truncate">Costs net against next advice</span>
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-slate-900 uppercase tracking-wider font-mono">Linked Operations Records</h4>
+                <div className="flex flex-col gap-2">
+                  <Link href={`/admin/properties/${detail.propertyId}`} className="flex items-center justify-between bg-slate-50/80 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl p-3 transition-all shadow-2xs group">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="size-9 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shrink-0 shadow-2xs">
+                        <IconBuildingCommunity size={16} />
                       </span>
-                      <IconArrowUpRight size={13} className="text-slate-300 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-900 group-hover:text-amber-800 transition-colors truncate">Property File</p>
+                        <p className="text-xs text-slate-500 font-mono truncate">{detail.propertyName}</p>
+                      </div>
+                    </div>
+                    <IconArrowUpRight size={14} className="text-slate-400 group-hover:text-slate-900 transition-colors shrink-0" />
+                  </Link>
+
+                  {detail.maintenanceAuthorityKes != null && (
+                    <Link href="/admin/leases?mode=mandates" className="flex items-center justify-between bg-slate-50/80 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl p-3 transition-all shadow-2xs group">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="size-9 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shrink-0 shadow-2xs">
+                          <IconFileDescription size={16} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-slate-900 group-hover:text-amber-800 transition-colors truncate">Mandate & Remittance File</p>
+                          <p className="text-xs text-slate-500 font-mono truncate">Net expenses deducted on advice generation</p>
+                        </div>
+                      </div>
+                      <IconArrowUpRight size={14} className="text-slate-400 group-hover:text-slate-900 transition-colors shrink-0" />
                     </Link>
                   )}
+
                   {detail.scheduledVisit && (
-                    <Link href="/admin/events" className="flex items-center gap-2.5 bg-slate-50/70 border border-slate-100 rounded-xl px-3 py-2 hover:bg-slate-100/70 transition-colors">
-                      <span className="size-7.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[#151936] shrink-0"><IconTool size={14} /></span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-medium text-slate-900 truncate">Scheduler event</span>
-                        <span className="block text-[10.5px] text-slate-400 truncate">{fmtDateTime(detail.scheduledVisit.startsAt)}</span>
-                      </span>
-                      <IconArrowUpRight size={13} className="text-slate-300 shrink-0" />
+                    <Link href="/admin/events" className="flex items-center justify-between bg-slate-50/80 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl p-3 transition-all shadow-2xs group">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="size-9 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shrink-0 shadow-2xs">
+                          <IconTool size={16} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-slate-900 group-hover:text-amber-800 transition-colors truncate">Scheduler Visit Event</p>
+                          <p className="text-xs text-slate-500 font-mono truncate">{fmtDateTime(detail.scheduledVisit.startsAt)}</p>
+                        </div>
+                      </div>
+                      <IconArrowUpRight size={14} className="text-slate-400 group-hover:text-slate-900 transition-colors shrink-0" />
                     </Link>
                   )}
                 </div>
               </div>
 
               {/* Timeline (activity log) */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-medium text-slate-800">Timeline</p>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-medium text-slate-900 uppercase tracking-wider font-mono">Audit Timeline & Activity Log</h4>
+                  <Badge tone="neutral" className="font-mono">{filteredActivity.length} EVENTS</Badge>
                 </div>
+
                 <div className="relative">
                   <input
                     value={activityQuery}
                     onChange={(e) => setActivityQuery(e.target.value)}
-                    placeholder="Search activity…"
-                    className="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg pl-8 pr-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-[#151936]/10 placeholder:text-slate-400"
+                    placeholder="Search activity log..."
+                    className="w-full h-9 bg-slate-50/60 border border-slate-200/80 text-xs rounded-xl pl-9 pr-3 font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:bg-white focus:border-[#151936]/40 transition-all shadow-2xs"
                   />
-                  <IconSearch size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 -mt-[6px] text-slate-400" />
+                  <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
+
                 {activityLoading ? (
                   <div className="flex justify-center py-6"><SkeletonBlock className="h-4 w-1/2" /></div>
                 ) : filteredActivity.length === 0 ? (
-                  <div className="flex flex-col items-center py-8 text-center gap-2">
-                    <IconMoodEmpty size={22} className="text-slate-300" />
-                    <p className="text-xs text-slate-400">No activity recorded yet.</p>
+                  <div className="flex flex-col items-center py-8 text-center gap-2 bg-slate-50/50 border border-slate-200/60 rounded-2xl">
+                    <IconMoodEmpty size={22} className="text-slate-400" />
+                    <p className="text-xs text-slate-500 font-mono font-medium">No activity log entries found.</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3 relative ml-0.5">
-                    <div className="absolute left-[3px] top-1.5 bottom-4 w-px bg-slate-100 z-0" />
+                  <div className="flex flex-col gap-2.5 relative ml-1">
+                    <div className="absolute left-[3px] top-1.5 bottom-4 w-px bg-slate-200 z-0" />
                     {filteredActivity.map((entry) => (
                       <div key={entry.id} className="relative flex items-start gap-3 z-10">
-                        <span className={cn("size-[7px] rounded-full mt-1.5 shrink-0 ring-4", activityTone(entry.summary))} />
-                        <div className="flex-1 min-w-0 flex items-center justify-between gap-2 bg-slate-50/50 rounded-lg px-2.5 py-1.5">
-                          <p className="text-xs text-slate-600 leading-snug min-w-0">
-                            {entry.actorName && <span className="font-medium text-slate-800">{entry.actorName} </span>}
+                        <span className={cn("size-2 rounded-full mt-1.5 shrink-0 ring-4 ring-white", activityTone(entry.summary))} />
+                        <div className="flex-1 min-w-0 flex items-center justify-between gap-2 bg-slate-50/70 border border-slate-200/60 rounded-xl px-3 py-2">
+                          <p className="text-xs text-slate-700 leading-snug min-w-0">
+                            {entry.actorName && <span className="font-medium text-slate-900">{entry.actorName} </span>}
                             {entry.summary.replace(entry.actorName ?? "", "").replace(/^ - |^ — /, "").trim()}
                           </p>
-                          <Badge tone="neutral" className="shrink-0 whitespace-nowrap">{relativeTime(entry.createdAt)}</Badge>
+                          <span className="text-[10px] font-mono font-medium text-slate-400 shrink-0 whitespace-nowrap">
+                            {relativeTime(entry.createdAt)}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -982,10 +1148,10 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                 )}
               </div>
 
-              {/* Move to */}
-              <div>
-                <p className="text-xs font-medium text-slate-800 mb-2">Move to</p>
-                <div className="flex flex-wrap gap-1.5">
+              {/* Move Work Order Status */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-slate-900 uppercase tracking-wider font-mono">Move Work Order Status</h4>
+                <div className="flex flex-wrap gap-2">
                   {(["reported", "awaiting_approval", "scheduled", "in_progress", "done"] as MaintenanceStatus[]).map((k) => {
                     const active = detail.status === k;
                     return (
@@ -994,50 +1160,93 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                         type="button"
                         onClick={() => handleStepperClick(detail.id, detail.status, k)}
                         className={cn(
-                          "inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium border transition-colors",
-                          active ? "bg-[#151936] text-white border-[#151936]" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300",
+                          "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium transition-all duration-200 border cursor-pointer shadow-2xs",
+                          active
+                            ? "bg-[#151936] text-white border-[#151936] shadow-xs"
+                            : "bg-slate-50/70 text-slate-700 border-slate-200/80 hover:bg-slate-100 hover:border-slate-300"
                         )}
                       >
-                        {STATUS_META[k].label}
+                        <span className={cn("size-1.5 rounded-full", (STATUS_META[k] ?? STATUS_META.reported).dot)} />
+                        {(STATUS_META[k] ?? STATUS_META.reported).label}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
+              {/* Schedule Visit Modal Form inside Drawer */}
               {scheduleOpen && (
-                <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 flex flex-col gap-3">
-                  <p className="text-xs font-medium text-slate-800">{detail.scheduledVisit ? "Reschedule visit" : "Schedule visit"}</p>
-                  <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 border border-amber-200/80 rounded-2xl p-4 flex flex-col gap-3 shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <IconCalendarPlus size={16} className="text-amber-700" />
+                    <p className="text-xs font-medium text-slate-900">
+                      {detail.scheduledVisit ? "Reschedule Site Visit" : "Schedule Site Visit"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10.5px] text-slate-400 block mb-1">Starts</label>
-                      <input type="datetime-local" value={scheduleStart} onChange={(e) => setScheduleStart(e.target.value)} className="w-full h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:outline-none focus:border-[#151936]/40" />
+                      <label className="text-[10px] font-mono font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                        Start Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={scheduleStart}
+                        onChange={(e) => setScheduleStart(e.target.value)}
+                        className="w-full h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-900 outline-none focus:border-[#151936] transition-all shadow-2xs"
+                      />
                     </div>
                     <div>
-                      <label className="text-[10.5px] text-slate-400 block mb-1">Ends</label>
-                      <input type="datetime-local" value={scheduleEnd} onChange={(e) => setScheduleEnd(e.target.value)} className="w-full h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:outline-none focus:border-[#151936]/40" />
+                      <label className="text-[10px] font-mono font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                        End Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={scheduleEnd}
+                        onChange={(e) => setScheduleEnd(e.target.value)}
+                        className="w-full h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-900 outline-none focus:border-[#151936] transition-all shadow-2xs"
+                      />
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="secondary" size="sm" onClick={() => setScheduleOpen(false)}>Cancel</Button>
-                    <Button size="sm" onClick={submitSchedule} disabled={isScheduling || !scheduleStart || !scheduleEnd}>
-                      {isScheduling ? "Saving..." : "Confirm"}
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button variant="secondary" size="sm" onClick={() => setScheduleOpen(false)} className="rounded-xl">
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={submitSchedule} disabled={isScheduling || !scheduleStart || !scheduleEnd} className="rounded-xl bg-[#151936] text-white hover:bg-[#1f254e]">
+                      {isScheduling ? "Saving..." : "Confirm Schedule"}
                     </Button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Footer actions */}
-            <div className="sticky bottom-0 bg-white border-t border-slate-100 px-5 py-3.5 flex items-center justify-between gap-2 flex-wrap">
-              <Button variant="secondary" size="sm" onClick={() => setScheduleOpen((v) => !v)} disabled={detail.status === "done"}>
+            {/* Sticky Bottom Actions Bar */}
+            <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-5 py-3.5 flex items-center justify-between gap-3 flex-wrap mt-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setScheduleOpen((v) => !v)}
+                disabled={detail.status === "done"}
+                className="rounded-xl border-slate-200/90 text-slate-800 hover:bg-slate-50"
+              >
                 <IconCalendarPlus size={14} /> {detail.scheduledVisit ? "Reschedule Visit" : "Schedule Visit"}
               </Button>
+
               <div className="flex items-center gap-2">
-                <Button variant="secondary" size="sm" className="text-rose-600 hover:bg-rose-50 hover:border-rose-200" onClick={() => setCancelConfirmId(detail.id)}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-xl text-rose-600 hover:bg-rose-50 border-rose-200/90"
+                  onClick={() => setCancelConfirmId(detail.id)}
+                >
                   <IconBan size={14} /> Cancel Order
                 </Button>
-                <Button size="sm" onClick={handleComplete} disabled={detail.status === "done" || isCompleting}>
+
+                <Button
+                  size="sm"
+                  onClick={handleComplete}
+                  disabled={detail.status === "done" || isCompleting}
+                  className="rounded-xl bg-[#151936] text-white hover:bg-[#1f254e]"
+                >
                   <IconCheck size={14} /> {isCompleting ? "Saving..." : "Mark Complete"}
                 </Button>
               </div>

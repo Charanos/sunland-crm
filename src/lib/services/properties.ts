@@ -778,6 +778,7 @@ export async function listLeases(ctx: CallerContext) {
       id: leases.id,
       entityId: leases.entityId,
       propertyId: leases.propertyId,
+      unitId: leases.unitId,
       tenantContactId: leases.tenantContactId,
       startsAt: leases.startsAt,
       endsAt: leases.endsAt,
@@ -789,12 +790,16 @@ export async function listLeases(ctx: CallerContext) {
       propertyName: properties.name,
       propertyCode: properties.propertyCode,
       propertyType: properties.propertyType,
+      unitBreakdown: properties.unitBreakdown,
       tenantName: contacts.displayName,
       tenantEmail: contacts.email,
       tenantPhone: contacts.phone,
       tenantAvatarUrl: contacts.avatarUrl,
       propertyMedia: properties.media,
       isFeatured: properties.isFeatured,
+      // Unit-level fields from property_units table if present
+      unitLabel: propertyUnits.unitLabel,
+      unitType: propertyUnits.unitType,
       // Same in-flight-mandate join as listProperties:70-78 - surfaces the
       // property's manager on the lease row so the Leases hero card can show
       // a manager mini-card without a second fetch.
@@ -805,6 +810,7 @@ export async function listLeases(ctx: CallerContext) {
     .from(leases)
     .innerJoin(properties, eq(leases.propertyId, properties.id))
     .innerJoin(contacts, eq(leases.tenantContactId, contacts.id))
+    .leftJoin(propertyUnits, eq(leases.unitId, propertyUnits.id))
     .leftJoin(
       propertyMandates,
       and(
@@ -906,6 +912,8 @@ export async function getLeaseById(ctx: CallerContext, leaseId: string) {
 
   // Current-month collected-vs-expected balance - same "fetch then reduce"
   // pattern as listLeases:821-837.
+  // Current-month collected-vs-expected balance - same "fetch then reduce"
+  // pattern as listLeases:821-837.
   let balanceKes = 0;
   if (lease.isActive) {
     const now = new Date();
@@ -918,7 +926,57 @@ export async function getLeaseById(ctx: CallerContext, leaseId: string) {
     balanceKes = Math.max(0, parseFloat(lease.monthlyRentKes) - collected);
   }
 
-  return { ...lease, landlord: landlordData, manager: managerData, balanceKes };
+  // Multi-unit property-centric data: fetch all units & active tenancies for this property
+  const propertyUnitRows = await db
+    .select()
+    .from(propertyUnits)
+    .where(eq(propertyUnits.propertyId, lease.propertyId));
+
+  const propertyLeaseRows = await db
+    .select({
+      id: leases.id,
+      tenantContactId: leases.tenantContactId,
+      startsAt: leases.startsAt,
+      endsAt: leases.endsAt,
+      monthlyRentKes: leases.monthlyRentKes,
+      depositKes: leases.depositKes,
+      isActive: leases.isActive,
+      tenantName: contacts.displayName,
+      tenantEmail: contacts.email,
+      tenantPhone: contacts.phone,
+      tenantAvatarUrl: contacts.avatarUrl,
+      unitLabel: propertyUnits.unitLabel,
+      unitType: propertyUnits.unitType,
+    })
+    .from(leases)
+    .innerJoin(contacts, eq(leases.tenantContactId, contacts.id))
+    .leftJoin(propertyUnits, eq(leases.unitId, propertyUnits.id))
+    .where(and(eq(leases.propertyId, lease.propertyId), eq(leases.isActive, true)));
+
+  // Calculate unit type counts & property occupancy
+  const unitTypeCounts: Record<string, number> = {};
+  for (const u of propertyUnitRows) {
+    if (u.unitType) {
+      unitTypeCounts[u.unitType] = (unitTypeCounts[u.unitType] ?? 0) + 1;
+    }
+  }
+
+  const totalUnits = Math.max(1, propertyUnitRows.length, propertyLeaseRows.length);
+  const occupancyPct = Math.min(100, Math.round((propertyLeaseRows.length / totalUnits) * 100));
+  const totalPropertyRentPool = propertyLeaseRows.reduce((sum, l) => sum + parseFloat(l.monthlyRentKes || "0"), 0);
+
+  return {
+    ...lease,
+    landlord: landlordData,
+    manager: managerData,
+    balanceKes,
+    propertyUnits: propertyUnitRows,
+    propertyActiveLeases: propertyLeaseRows,
+    unitTypeCounts,
+    totalUnits,
+    occupancyPct,
+    totalPropertyRentPool,
+  };
 }
 
 export async function terminateLease(ctx: CallerContext, leaseId: string, reason?: string) {

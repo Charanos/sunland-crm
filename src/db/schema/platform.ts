@@ -96,10 +96,22 @@ export const users = pgTable(
     name: text("name").notNull(),
     role: userRole("role").notNull(),
     title: text("title"),
+    // Real self-service contact number surfaced on the Account console's
+    // Preferences → Identity card (there was no phone column before v3).
+    phone: text("phone"),
     avatarUrl: text("avatar_url"),
     primaryEntityId: uuid("primary_entity_id").references(() => entities.id),
     isActive: boolean("is_active").default(true).notNull(),
     lastSignedInAt: timestamp("last_signed_in_at", { withTimezone: true }),
+    // Real password-age signal feeding the Security posture score - set by the
+    // change-password flow (Account console → Security).
+    passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+    // Real TOTP two-factor state. totpSecret is the base32 shared secret set at
+    // enrollment; totpEnabledAt is set only once a 6-digit code is verified.
+    // Login-time enforcement is deliberately deferred this pass (ADR 018) -
+    // enrollment/verify and the security-score contribution are real now.
+    totpSecret: text("totp_secret"),
+    totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => ({
@@ -219,6 +231,49 @@ export const settings = pgTable(
   },
   (table) => ({
     entityKeyIdx: uniqueIndex("settings_entity_key_idx").on(table.entityId, table.key),
+  }),
+);
+
+// ─── Per-user preferences (Account console → Preferences, ADR 018) ──────────
+// The `settings` table above is ENTITY-scoped (org-wide config). This is the
+// USER-scoped equivalent for personal display prefs (language, dateFmt,
+// accent, density, navMode, topBar) that only affect the individual viewer's
+// own UI - deliberately a separate table rather than overloading entity
+// settings, so one user's accent choice never leaks org-wide.
+export const userPreferences = pgTable(
+  "user_preferences",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    key: text("key").notNull(),
+    value: jsonb("value").$type<unknown>().notNull(),
+    ...timestamps,
+  },
+  (table) => ({
+    userKeyIdx: uniqueIndex("user_preferences_user_key_idx").on(table.userId, table.key),
+  }),
+);
+
+// ─── Notification routing prefs (Account console → Notifications, ADR 018) ──
+// Real per-user, per-category delivery matrix. `inApp` is genuinely enforced
+// (createNotification consults it); `email`/`sms` are stored preferences a
+// future provider integration will honor - no email/SMS provider exists yet,
+// so those channels are surfaced honestly as "pending" rather than faked.
+export const notificationPrefs = pgTable(
+  "notification_prefs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    // Free-text category matching a notification's dotted `type` prefix
+    // (viewing/remittance/maintenance/approval/renewal/system).
+    category: text("category").notNull(),
+    inApp: boolean("in_app").default(true).notNull(),
+    email: boolean("email").default(false).notNull(),
+    sms: boolean("sms").default(false).notNull(),
+    ...timestamps,
+  },
+  (table) => ({
+    userCategoryIdx: uniqueIndex("notification_prefs_user_category_idx").on(table.userId, table.category),
   }),
 );
 

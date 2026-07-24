@@ -6,6 +6,7 @@ import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";
 import type { CallerContext } from "@/lib/services/types";
+import { appendSystemMessage, resolveUserIdsByTiers } from "@/lib/services/messaging";
 import { decideRemittanceSchema, generateRemittanceSchema } from "@/lib/validation/finance";
 import { parseInput } from "@/lib/validation/parse";
 
@@ -160,6 +161,23 @@ export async function decideRemittanceAdvice(ctx: CallerContext, remittanceId: s
       before: existing,
       after: updated,
     });
+
+    // Real producer for the Messenger's "Ledger" system feed - the thread
+    // exists because a payout actually released, not for display (ADR 019).
+    if (input.action === "release") {
+      const recipients = await resolveUserIdsByTiers(tx, ["superadmin", "admin", "finance"]);
+      if (recipients.length > 0) {
+        await appendSystemMessage(tx, ctx.user.id, {
+          entityId: existing.entityId,
+          feedName: "Ledger",
+          content: `Remittance run RMT-${existing.id.slice(0, 6).toUpperCase()} released: KES ${Number(existing.netRemittanceKes).toLocaleString()} net to the landlord.`,
+          recipientUserIds: recipients,
+          linkedRecordType: "remittance_advice",
+          linkedRecordId: existing.id,
+          linkedRecordCode: `RMT-${existing.id.slice(0, 6).toUpperCase()}`,
+        });
+      }
+    }
 
     return updated;
   });

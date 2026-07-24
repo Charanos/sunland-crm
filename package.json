@@ -34,6 +34,7 @@
     "next": "16.2.9",
     "next-cloudinary": "^6.17.5",
     "nuqs": "^2.8.9",
+    "otplib": "^13.4.1",
     "qrcode.react": "^4.2.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",

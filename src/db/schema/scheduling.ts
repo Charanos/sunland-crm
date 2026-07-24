@@ -1,4 +1,4 @@
-import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { entities, timestamps, users } from "@/db/schema/platform";
 import { projects } from "@/db/schema/operations";
 import { maintenanceRequests } from "@/db/schema/properties";
@@ -60,6 +60,14 @@ export const calendarEvents = pgTable(
     contactId: uuid("contact_id").references(() => contacts.id),
     leadId: uuid("lead_id").references(() => leads.id),
     outcome: calendarEventOutcome("outcome").default("pending").notNull(),
+    // Flags the event as needing sign-off/escalation. Drives the agenda's
+    // "Critical" badge and the drawer's warning banner.
+    isCritical: boolean("is_critical").default(false).notNull(),
+    // Which presentation role tiers (account-constants.ts roleTierFor) get
+    // notified about this event. notifyEventRoleTiers() resolves these to real
+    // users and writes real in-app notifications; SMS has no provider yet and
+    // is labelled as such rather than faked.
+    notifyRoleTiers: jsonb("notify_role_tiers").$type<string[]>().default([]),
     ...timestamps,
   },
   (table) => ({
