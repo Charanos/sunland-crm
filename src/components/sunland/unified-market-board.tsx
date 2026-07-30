@@ -123,7 +123,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [], rev
   // Map initialListings to ListingCard format
   const activeInventory: ListingCard[] = useMemo(() => {
     if (!initialListings.length) return [];
-    return initialListings.map((prop, idx) => ({
+    return initialListings.map((prop) => ({
       id: prop.id,
       title: prop.name,
       type: (prop.type as PropertyType) || "House",
@@ -217,7 +217,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [], rev
       vacantPercent,
       agents
     };
-  }, [activeType, activeInventory, realAgents, managerTimeFilter, revenueTrend]);
+  }, [activeType, activeInventory, realAgents, revenueTrend]);
 
   // Real revenue-per-period bars (no synthetic sine-wave noise layered on
   // top, and no fully-fabricated fallback series when data is thin - an

@@ -1530,7 +1530,6 @@ export function ChequesClearanceBoard({ tabId = "deposited" }: { tabId: string }
                     {logPhotoUrl && (
                       <div className="shrink-0">
                         <p className="label-caps text-slate-400 mb-1.5">Cheque Photo</p>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <Image src={logPhotoUrl} width={128} height={80} alt="Cheque" className="w-32 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
                       </div>
                     )}

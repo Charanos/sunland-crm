@@ -8,6 +8,10 @@ import type { UserRole } from "@/types";
 // get their own route groups, their entries are added here too.
 
 export const UNIVERSAL_PATHS = [
+  // The maintenance notice (ADR 020). Every authenticated role must be able to
+  // reach it - it is where proxy.ts sends everyone while maintenance mode is
+  // on, so gating it by role would produce a redirect loop.
+  "/maintenance",
   "/admin/profile",
   "/admin/settings",
   "/admin/notifications",

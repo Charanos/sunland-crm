@@ -8,8 +8,6 @@ import {
   IconBuildingBank,
   IconBuildingCommunity,
   IconCalendarPlus,
-  IconChevronLeft,
-  IconChevronRight,
   IconCheck,
   IconDroplet,
   IconFileDescription,
@@ -117,8 +115,6 @@ const FILTERS: Array<{ id: "all" | "urgent" | MaintenanceStatus; label: string }
   { id: "scheduled", label: "Scheduled" },
   { id: "done", label: "Completed" },
 ];
-
-const PILL = "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-medium";
 
 const DEFAULT_SLA_HOURS: Record<MaintenancePriority, number> = { routine: 72, urgent: 24, critical: 6 };
 

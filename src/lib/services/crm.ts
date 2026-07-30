@@ -1,7 +1,7 @@
-import { eq, and, or, ilike, desc, gte, lte, inArray, getTableColumns, SQL } from "drizzle-orm";
+import { eq, and, or, ilike, desc, inArray, getTableColumns, SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts } from "@/db/schema/crm";
-import { properties, propertyMandates, leases, transactions, documents, remittanceAdvices, users, leads, calendarEvents } from "@/db/schema";
+import { properties, propertyMandates, leases, transactions, documents, remittanceAdvices, users, leads } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { ConflictError, DomainValidationError, NotFoundError } from "@/lib/authz/errors";

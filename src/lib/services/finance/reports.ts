@@ -1,14 +1,14 @@
 import { randomBytes } from "crypto";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { db } from "@/db";
-import { contacts, entities, properties, reportExports, transactions } from "@/db/schema";
+import { contacts, entities, properties, reportExports, reportSchedules, transactions, users } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";
 import { computeExpenses, computeIncome, MANAGEMENT_FEE_RATE } from "@/lib/services/dashboard";
 import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
-import { generatePnLReportSchema } from "@/lib/validation/finance";
+import { generatePnLReportSchema, upsertReportScheduleSchema } from "@/lib/validation/finance";
 import { parseInput } from "@/lib/validation/parse";
 
 function generateVerificationToken(): string {
@@ -196,4 +196,123 @@ export async function getRevenueStreamBreakdown(ctx: CallerContext, entityIdOrSl
     streams,
     totalRevenueKes: streams.reduce((s, st) => s + st.totalKes, 0),
   };
+}
+
+// ─── Report schedules (Oversight Console, ADR 020) ───────────────────────────
+// Real, editable delivery intent. There is no scheduler in this codebase, so
+// nothing here fires on its own - the console says so plainly and offers a
+// "Run now" that performs the genuine generation below and stamps lastRunAt.
+
+export async function listReportSchedules(ctx: CallerContext, entityIdOrSlug?: string) {
+  const entityId = await resolveEntityId(entityIdOrSlug || ctx.entityId || "group");
+  await authorize(ctx, "finance.transaction.read", entityId);
+
+  return db
+    .select()
+    .from(reportSchedules)
+    .where(eq(reportSchedules.entityId, entityId))
+    .orderBy(reportSchedules.reportType);
+}
+
+/** One schedule per (entity, reportType) - toggling or re-cadencing updates in place. */
+export async function upsertReportSchedule(ctx: CallerContext, rawInput: unknown) {
+  const input = parseInput(upsertReportScheduleSchema, rawInput);
+  const entityId = await resolveEntityId(input.entityId);
+  await authorize(ctx, "finance.transaction.write", entityId);
+
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(reportSchedules)
+      .where(and(eq(reportSchedules.entityId, entityId), eq(reportSchedules.reportType, input.reportType)))
+      .limit(1);
+
+    const [saved] = existing
+      ? await tx
+        .update(reportSchedules)
+        .set({
+          cadence: input.cadence,
+          recipientIds: input.recipientIds,
+          enabled: input.enabled,
+          updatedAt: new Date(),
+        })
+        .where(eq(reportSchedules.id, existing.id))
+        .returning()
+      : await tx
+        .insert(reportSchedules)
+        .values({
+          entityId,
+          reportType: input.reportType,
+          cadence: input.cadence,
+          recipientIds: input.recipientIds,
+          enabled: input.enabled,
+          createdById: ctx.user.id,
+        })
+        .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "finance.report.schedule",
+      associatedType: "report_schedule",
+      associatedId: saved.id,
+      summary: `${ctx.user.name} ${existing ? "updated" : "created"} the ${input.cadence} schedule for ${input.reportType} (${input.enabled ? "enabled" : "paused"})`,
+      entityId,
+      before: existing ?? null,
+      after: saved,
+    });
+
+    return saved;
+  });
+}
+
+/**
+ * Runs a scheduled report immediately. This is a real generation - it produces
+ * a genuine, QR-verifiable report_exports row through the same path the manual
+ * button uses - and stamps lastRunAt so the console shows when it truly last
+ * produced output.
+ */
+export async function runReportSchedule(ctx: CallerContext, scheduleId: string) {
+  const [schedule] = await db.select().from(reportSchedules).where(eq(reportSchedules.id, scheduleId)).limit(1);
+  if (!schedule) throw new NotFoundError("Report schedule not found");
+  await authorize(ctx, "finance.transaction.write", schedule.entityId);
+
+  if (schedule.reportType !== "pnl") {
+    throw new DomainValidationError(`No generator exists for report type "${schedule.reportType}"`);
+  }
+
+  const now = new Date();
+  const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const report = await generatePnLReport(ctx, {
+    entityId: schedule.entityId,
+    periodStart,
+    periodEnd: now.toISOString(),
+  });
+
+  const [updated] = await db
+    .update(reportSchedules)
+    .set({ lastRunAt: new Date(), updatedAt: new Date() })
+    .where(eq(reportSchedules.id, scheduleId))
+    .returning();
+
+  return { schedule: updated, report };
+}
+
+/** Recent verifiable exports for the console's "Recent exports" rail. */
+export async function listRecentReportExports(ctx: CallerContext, entityIdOrSlug?: string, limit = 8) {
+  const entityId = await resolveEntityId(entityIdOrSlug || ctx.entityId || "group");
+  await authorize(ctx, "finance.transaction.read", entityId);
+
+  return db
+    .select({
+      id: reportExports.id,
+      reportType: reportExports.reportType,
+      verificationToken: reportExports.verificationToken,
+      generatedById: reportExports.generatedById,
+      generatedByName: users.name,
+      createdAt: reportExports.createdAt,
+    })
+    .from(reportExports)
+    .innerJoin(users, eq(reportExports.generatedById, users.id))
+    .where(eq(reportExports.entityId, entityId))
+    .orderBy(desc(reportExports.createdAt))
+    .limit(limit);
 }

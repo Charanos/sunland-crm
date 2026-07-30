@@ -9,7 +9,6 @@ import {
   IconPalette,
   IconInfoCircle,
   IconCheck,
-  IconChevronRight,
   IconDatabase,
   IconDownload,
   IconMail,

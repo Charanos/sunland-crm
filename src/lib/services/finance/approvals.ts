@@ -8,8 +8,10 @@ import { createNotification } from "@/lib/services/notifications";
 import { resolveEntityId } from "@/lib/services/entity";
 import type { CallerContext } from "@/lib/services/types";
 import {
+  bulkDecideApprovalsSchema,
   createApprovalRequestSchema,
   decideApprovalRequestSchema,
+  delegateApprovalSchema,
 } from "@/lib/validation/finance";
 import { parseInput } from "@/lib/validation/parse";
 
@@ -270,5 +272,137 @@ export async function decideApprovalRequest(ctx: CallerContext, rawInput: unknow
     }
 
     return updated;
+  });
+}
+
+/**
+ * Decides several queued approvals in one operator action (Oversight Console).
+ *
+ * Each item goes through the real decideApprovalRequest, so every per-item
+ * guard and side-effect - the already-decided race check, mandate activation,
+ * maintenance cost reversion, bypass notifications - still fires exactly as it
+ * would one at a time.
+ *
+ * Deliberately NOT one big transaction: a single stale row must not roll back
+ * the decisions that genuinely succeeded. Failures come back per-item so the
+ * console can report "7 approved, 1 already decided" honestly instead of
+ * claiming a clean sweep.
+ */
+export async function bulkDecideApprovalRequests(ctx: CallerContext, rawInput: unknown) {
+  const input = parseInput(bulkDecideApprovalsSchema, rawInput);
+
+  const succeeded: string[] = [];
+  const failed: Array<{ requestId: string; reason: string }> = [];
+
+  for (const requestId of input.requestIds) {
+    try {
+      await decideApprovalRequest(ctx, {
+        requestId,
+        status: input.status,
+        decisionNotes: input.decisionNotes,
+      });
+      succeeded.push(requestId);
+    } catch (err) {
+      failed.push({
+        requestId,
+        reason: err instanceof Error ? err.message : "Decision failed",
+      });
+    }
+  }
+
+  return { requested: input.requestIds.length, succeeded, failed };
+}
+
+/**
+ * Delegates a pending approval to a different authority tier.
+ *
+ * Rather than adding a delegation model, this reuses what the schema already
+ * has: the original is marked "escalated" (a real approval_status member) and
+ * a fresh pending request is created for the target tier, linked back through
+ * the existing self-referencing escalatedFromId. The chain therefore stays
+ * queryable and the original decision trail is never overwritten.
+ */
+export async function delegateApprovalRequest(ctx: CallerContext, rawInput: unknown) {
+  const input = parseInput(delegateApprovalSchema, rawInput);
+
+  const [existing] = await db
+    .select()
+    .from(approvalRequests)
+    .where(eq(approvalRequests.id, input.requestId))
+    .limit(1);
+  if (!existing) throw new NotFoundError("Approval request not found");
+
+  await authorize(ctx, "finance.approval.decide", existing.entityId);
+
+  if (existing.status !== "pending") {
+    throw new ConflictError("Only a pending request can be delegated");
+  }
+  if (existing.requiredApproverRole === input.toRole) {
+    throw new DomainValidationError("The request is already awaiting that authority tier");
+  }
+
+  return db.transaction(async (tx) => {
+    const [closed] = await tx
+      .update(approvalRequests)
+      .set({
+        status: "escalated",
+        decidedById: ctx.user.id,
+        decidedAt: new Date(),
+        decisionNotes: `Delegated to ${input.toRole.toUpperCase()} by ${ctx.user.name}: ${input.note.trim()}`,
+      })
+      .where(and(eq(approvalRequests.id, input.requestId), eq(approvalRequests.status, "pending")))
+      .returning();
+
+    if (!closed) throw new ConflictError("Approval request is already decided");
+
+    const [delegated] = await tx
+      .insert(approvalRequests)
+      .values({
+        entityId: existing.entityId,
+        requestType: existing.requestType,
+        relatedTable: existing.relatedTable,
+        relatedId: existing.relatedId,
+        requestedById: existing.requestedById,
+        amountKes: existing.amountKes,
+        requiredApproverRole: input.toRole,
+        status: "pending",
+        escalatedFromId: existing.id,
+        dueOn: existing.dueOn,
+        metadata: existing.metadata,
+      })
+      .returning();
+
+    await writeAudit(tx, ctx, {
+      action: "finance.approval.delegate",
+      associatedType: "approval_request",
+      associatedId: delegated.id,
+      summary: `${ctx.user.name} delegated a ${existing.requestType.replace(/_/g, " ")} approval to ${input.toRole.toUpperCase()}: ${input.note.trim()}`,
+      entityId: existing.entityId,
+      before: existing,
+      after: delegated,
+    });
+
+    // Tell the receiving tier it now owns a decision.
+    const targetRoles =
+      input.toRole === "ceo"
+        ? (["ceo"] as const)
+        : input.toRole === "gm"
+          ? (["general_manager"] as const)
+          : (["finance_head", "hr_head", "front_office_head"] as const);
+    const recipients = await tx.select().from(users).where(inArray(users.role, targetRoles));
+    for (const recipient of recipients) {
+      await createNotification(tx, {
+        userId: recipient.id,
+        entityId: existing.entityId,
+        type: "approval.delegated",
+        title: "An approval was delegated to you",
+        body: `${ctx.user.name} delegated a ${existing.requestType.replace(/_/g, " ")} request: "${input.note.trim()}"`,
+        associatedType: "approval_request",
+        associatedId: delegated.id,
+        href: "/admin/approvals",
+      });
+    }
+
+    return delegated;
   });
 }

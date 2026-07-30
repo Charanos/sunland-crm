@@ -1,7 +1,6 @@
 import type { Icon } from "@tabler/icons-react";
 import {
   IconBuildingBank,
-  IconBuildingCommunity,
   IconCashBanknote,
   IconChartBar,
   IconClipboardCheck,

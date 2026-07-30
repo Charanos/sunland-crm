@@ -17,12 +17,12 @@ import {
   IconFileTypePdf,
   IconHistory,
   IconMail,
+  IconMapPin,
   IconMessageCircle,
   IconPhone,
   IconSend,
   IconShieldCheck,
   IconShieldHalf,
-  IconTelescope,
   IconUpload,
   IconUserCog,
   IconX,
@@ -47,6 +47,17 @@ import {
   stageTone,
 } from "./valuation-constants";
 import { Badge } from "@/components/ui/erp-primitives";
+
+const VALUATION_COVER_POOL = [
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80",
+  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80",
+  "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=1200&q=80",
+  "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&q=80",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80",
+  "https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=1200&q=80",
+  "https://images.unsplash.com/photo-1469022563428-aa54fca6bce1?w=1200&q=80",
+];
 import { ValuationFormModal, type ValuationEditTarget } from "./valuation-form-modal";
 import { ValuationSubmitModal, type ValuationSubmitTarget } from "./valuation-complete-modal";
 import { ValuationDocumentModal } from "./valuation-document-modal";
@@ -61,6 +72,7 @@ interface Vital {
   tone: VitalTone;
   hasBar?: boolean;
   barRatio?: number;
+  onClick?: () => void;
 }
 
 const VITAL_TONE_BG: Record<VitalTone, string> = {
@@ -287,6 +299,13 @@ export function ValuationFullViewBoard({
   const subjectName = isPortfolio ? valuation?.propertyName ?? "Portfolio property" : valuation?.externalPropertyName ?? "Unknown subject";
   const subjectLocation = isPortfolio ? valuation?.propertyLocation ?? "-" : valuation?.externalLocation ?? "-";
   const heroImg = valuation?.propertyMedia?.find((m) => m.isPrimary)?.url ?? valuation?.propertyMedia?.[0]?.url ?? null;
+  const fallbackCoverImg = useMemo(() => {
+    if (!valuation?.id) return VALUATION_COVER_POOL[0];
+    const hash = parseInt(valuation.id.replace(/-/g, "").slice(-4), 16);
+    return VALUATION_COVER_POOL[hash % VALUATION_COVER_POOL.length];
+  }, [valuation?.id]);
+  const displayCoverImg = heroImg ?? fallbackCoverImg;
+
   const cfg = valuation ? STAGE_META[valuation.stage] ?? STAGE_META.requested : STAGE_META.requested;
   const valuerDisplayName = valuation?.externalValuerName ?? valuation?.valuerName ?? (valuation?.valuersEntityName ?? "Sunland Valuers Ltd");
   const estAnnualRevenue = valuation?.marketValueKes && valuation?.proposedFeeRate
@@ -298,37 +317,39 @@ export function ValuationFullViewBoard({
     const scoreTone: VitalTone = score ? (score.grade === "A" || score.grade === "B" ? "emerald" : "amber") : "neutral";
     return [
       {
-        label: "Assessed Value",
+        label: "Assessed Market Value",
         value: valuation.marketValueKes ? formatCompactKES(Number(valuation.marketValueKes)) : "—",
-        sub: score ? `${score.grade} · ${score.label}` : "Not yet valued",
+        sub: score ? `Grade ${score.grade} · ${score.label}` : "Pending valuation assessment",
         icon: IconArrowUpRight,
         tone: scoreTone,
         hasBar: !!score,
         barRatio: score ? score.score / 100 : undefined
       },
       {
-        label: "Proposed Fee",
+        label: "Proposed Fee Rate",
         value: valuation.proposedFeeRate ? `${(Number(valuation.proposedFeeRate) * 100).toFixed(1)}%` : "—",
-        sub: estAnnualRevenue ? `${formatCompactKES(estAnnualRevenue)}/yr est.` : "Set on submission",
+        sub: estAnnualRevenue ? `${formatCompactKES(estAnnualRevenue)}/yr est. annual` : "Set upon submission",
         icon: IconFileCertificate,
         tone: valuation.proposedFeeRate ? "amber" : "neutral",
       },
       {
-        label: "Valuer",
-        value: valuerDisplayName,
-        sub: valuation.externalValuerName ? "Independent firm" : "Sunland Valuers",
-        icon: IconShieldHalf,
-        tone: "neutral",
+        label: "Prospective Landlord",
+        value: valuation.landlordName ?? "Unassigned",
+        sub: valuation.landlordVerifiedAt ? "Verified Landlord ✓" : "Landlord Unverified",
+        icon: IconShieldCheck,
+        tone: valuation.landlordVerifiedAt ? "emerald" : "neutral",
+        onClick: () => { if (valuation.landlordContactId) setOwnerContactId(valuation.landlordContactId); },
       },
       {
-        label: "Site Visit",
-        value: fmtDate(valuation.siteVisitAt),
-        sub: valuation.completedAt ? `Valued ${fmtDate(valuation.completedAt)}` : "Pending",
-        icon: IconCalendarEvent,
-        tone: valuation.completedAt ? "emerald" : "neutral",
+        label: "Assigned Property Manager",
+        value: valuation.managerName ?? "Unassigned",
+        sub: "Sunland Property Manager",
+        icon: IconUserCog,
+        tone: "neutral",
+        onClick: () => { if (valuation.assignedManagerId) setManagerUserId(valuation.assignedManagerId); },
       },
     ];
-  }, [valuation, score, estAnnualRevenue, valuerDisplayName]);
+  }, [valuation, score, estAnnualRevenue]);
 
   if (isLoading) {
     return (
@@ -416,12 +437,6 @@ export function ValuationFullViewBoard({
   else if (valuation.stage === "accepted") primary = { label: "Create Mandate", icon: IconFileCertificate, onClick: () => setSignConfirmOpen(true) };
   else if (valuation.stage === "declined") primary = { label: "Re-open Prospect", icon: IconChevronRight, onClick: () => transitionStage("valued") };
 
-  const steps = STAGE_ORDER.map((s, i) => {
-    const curIdx = STAGE_ORDER.indexOf(valuation.stage);
-    const done = valuation.stage !== "declined" && i <= curIdx;
-    return { key: s, label: STAGE_META[s].label, done, isLast: i === STAGE_ORDER.length - 1 };
-  });
-
   const editTarget: ValuationEditTarget = {
     id: valuation.id,
     valuationCode: valuation.valuationCode,
@@ -455,165 +470,262 @@ export function ValuationFullViewBoard({
 
   return (
     <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
-      {/* Sticky Command Header */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md py-4 border-b border-slate-100/80 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="flex flex-col gap-2.5">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-            <Link href="/admin/valuations" className="hover:text-slate-900 transition-colors flex items-center gap-1">
-              <IconChevronLeft size={14} /> Valuations Board
-            </Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-400 font-mono">{valuation.valuationCode}</span>
+      {/* ── Standardized Executive Page Header Toolbar ── */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2 animate-fade-in-up">
+        <div className="flex flex-col gap-2 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => router.push("/admin/valuations")}
+              aria-label="Back to valuations board"
+              className="size-8 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center shrink-0 shadow-2xs"
+            >
+              <IconChevronLeft size={16} />
+            </button>
+            <h1 className="title-serif text-[#151936] text-2xl lg:text-3xl font-normal leading-tight truncate">
+              {subjectName}
+            </h1>
+            <Badge tone={stageTone(valuation.stage)}>
+              {cfg.label}
+            </Badge>
           </div>
-
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3 flex-wrap min-w-0">
-              <h1 className="title-serif text-slate-900 truncate text-2xl sm:text-3xl">{subjectName}</h1>
-              <Badge tone={stageTone(valuation.stage)}>
-                {cfg.label}
-              </Badge>
-            </div>
-
-            {canManage && (
-              <div className="flex items-center gap-2 shrink-0">
-                {primary && (
-                  <button
-                    type="button"
-                    onClick={primary.onClick}
-                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium bg-[#151936] text-white hover:bg-[#1a1f42] shadow-[0_2px_10px_rgb(21,25,54,0.25)] transition-colors"
-                  >
-                    <primary.icon size={15} /> {primary.label}
-                  </button>
-                )}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setMenuOpen((v) => !v)}
-                    aria-label="More actions"
-                    className="size-[38px] inline-flex items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors shadow-xs"
-                  >
-                    <IconDotsVertical size={16} />
-                  </button>
-                  {menuOpen && (
-                    <div className="absolute right-0 top-[44px] z-20 w-52 bg-white border border-slate-100 rounded-2xl shadow-xl p-1.5">
-                      <button onClick={() => { setEditModalOpen(true); setMenuOpen(false); }} className="w-full text-left flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                        <IconUserCog size={15} className="text-slate-400" /> Edit prospect
-                      </button>
-                      {valuation.stage !== "mandate_signed" && valuation.stage !== "declined" && (
-                        <button onClick={() => { transitionStage("declined"); setMenuOpen(false); }} className="w-full text-left flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50">
-                          <IconX size={15} /> Decline prospect
-                        </button>
-                      )}
-                      <div className="h-px bg-slate-100 my-1" />
-                      <button onClick={() => { setDeleteConfirmOpen(true); setMenuOpen(false); }} className="w-full text-left flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50">
-                        <IconX size={15} /> Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="flex items-center gap-3 text-slate-500 text-xs min-w-0 font-medium">
+            <span className="flex items-center gap-1.5 min-w-0 text-slate-600">
+              <IconMapPin size={15} className="shrink-0 text-slate-500" aria-hidden="true" />
+              <span className="truncate">{subjectLocation}</span>
+            </span>
+            <span className="text-slate-200 shrink-0">|</span>
+            <span className="font-mono text-slate-500 shrink-0 uppercase tracking-wider">
+              VALUATION {valuation.valuationCode}
+            </span>
+            <span className="text-slate-200 shrink-0">|</span>
+            <span className="shrink-0 text-slate-500">
+              {valuation.isLand ? "Land Subject" : "Built Property"}
+            </span>
           </div>
         </div>
+
+        {/* CTA Actions aligned to the right */}
+        {canManage && (
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap mt-1 sm:mt-0">
+            {primary && (
+              <button
+                type="button"
+                onClick={primary.onClick}
+                className="bg-[#151936] text-[#f3df27] hover:bg-[#1a1f42] border border-white/20 font-medium text-xs sm:text-sm rounded-xl px-4 py-2 shadow-md transition-colors flex items-center gap-2"
+              >
+                <primary.icon size={15} /> {primary.label}
+              </button>
+            )}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="More actions"
+                className="size-[38px] inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs"
+              >
+                <IconDotsVertical size={16} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-[44px] z-30 w-52 bg-white border border-slate-200/90 rounded-2xl shadow-xl p-1.5 animate-in fade-in zoom-in-95">
+                  <button
+                    onClick={() => { setEditModalOpen(true); setMenuOpen(false); }}
+                    className="w-full text-left flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <IconUserCog size={15} className="text-slate-400" /> Edit prospect details
+                  </button>
+                  <button
+                    onClick={() => { setDocModalOpen(true); setMenuOpen(false); }}
+                    className="w-full text-left flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <IconUpload size={15} className="text-slate-400" /> Attach document
+                  </button>
+                  {valuation.stage !== "mandate_signed" && valuation.stage !== "declined" && (
+                    <button
+                      onClick={() => { transitionStage("declined"); setMenuOpen(false); }}
+                      className="w-full text-left flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                    >
+                      <IconX size={15} /> Decline prospect
+                    </button>
+                  )}
+                  <div className="h-px bg-slate-100 my-1" />
+                  <button
+                    onClick={() => { setDeleteConfirmOpen(true); setMenuOpen(false); }}
+                    className="w-full text-left flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                  >
+                    <IconX size={15} /> Delete prospect
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ── Image-led hero ── */}
-      <div className="relative rounded-[28px] overflow-hidden min-h-[300px] lg:min-h-[340px] bg-[#1e2336] flex flex-col animate-fade-in-up">
-        {heroImg ? (
+      {/* ── Standardized High-Contrast Photo Hero Banner ── */}
+      <div className="relative rounded-[28px] overflow-hidden h-[260px] sm:h-[300px] bg-[#151936] flex flex-col shadow-md animate-fade-in-up border border-slate-200/80">
+        {displayCoverImg ? (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={heroImg} alt={subjectName} className="absolute inset-0 w-full h-full object-cover" />
+          <img src={displayCoverImg} alt={subjectName} className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#151936] via-[#1e2336] to-[#0c1f24]" />
         )}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(12,15,32,0.38) 0%, rgba(12,15,32,0.08) 34%, rgba(10,13,28,0.55) 68%, rgba(8,10,22,0.9) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(15,23,42,0.15) 0%, rgba(15,23,42,0.85) 100%)" }} />
 
-        <div className="relative z-10 flex items-start justify-between gap-3 p-6">
-          <span className="inline-flex items-center gap-1.5 bg-[#f3df27] text-[#151936] rounded-lg px-3 py-1.5 text-xs font-medium shadow-md">
-            <IconTelescope size={13} /> Acquisition Prospect
-          </span>
-          {!isPortfolio && (
-            <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-1.5 text-xs font-medium">
-              New Prospect
-            </span>
-          )}
-        </div>
-
-        {/* Floating assessed-value glass card */}
-        <div className="hidden sm:block absolute top-[76px] right-6 w-[190px] bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl">
-          <p className="label-caps text-slate-400 mb-1.5">Assessed Value</p>
-          <p className="mono-amount text-2xl text-slate-900 leading-none">{valuation.marketValueKes ? formatCompactKES(Number(valuation.marketValueKes)) : "—"}</p>
-          <div className="h-px bg-slate-100 my-2.5" />
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-400">Proposed fee</span>
-            <span className="font-mono text-[#122a20]">{valuation.proposedFeeRate ? `${(Number(valuation.proposedFeeRate) * 100).toFixed(1)}%` : "—"}</span>
-          </div>
-          <div className="flex justify-between text-xs mt-1">
-            <span className="text-slate-400">Est. annual</span>
-            <span className="font-mono text-slate-700">{estAnnualRevenue ? formatCompactKES(estAnnualRevenue) : "—"}</span>
-          </div>
-        </div>
-
-        <div className="relative z-10 p-6 mt-auto flex flex-col gap-4">
+        {/* High contrast text overlay on bottom left */}
+        <div className="relative z-10 p-6 mt-auto flex items-end justify-between gap-4">
           <div>
-            <p className="font-mono text-xs text-white/60">{valuation.valuationCode} · {subjectLocation}</p>
-            <p className="title-serif text-white text-3xl mt-0.5">{subjectName}</p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {valuation.landlordName && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (valuation.landlordContactId) setOwnerContactId(valuation.landlordContactId);
-                }}
-                className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-3xl flex items-center gap-2.5 border border-white/10 transition-colors"
-              >
-                {valuation.landlordAvatarUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={valuation.landlordAvatarUrl} alt="" className="size-7 rounded-full object-cover" />
-                ) : (
-                  <span className="size-7 rounded-full bg-slate-100 text-slate-800 text-xs font-medium flex items-center justify-center">{valuation.landlordName.slice(0, 1)}</span>
-                )}
-                <span className="text-left leading-none">
-                  <span className="block text-sm font-medium text-white">{valuation.landlordName}</span>
-                  <span className="block text-xs uppercase tracking-widest text-slate-300 mt-0.5">Prospective Landlord</span>
-                </span>
-              </button>
-            )}
-            {valuation.managerName && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (valuation.assignedManagerId) setManagerUserId(valuation.assignedManagerId);
-                }}
-                className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-3xl flex items-center gap-2.5 border border-white/10 transition-colors text-left font-sans"
-              >
-                <span className="size-7 rounded-full bg-[#f3df27] text-[#151936] text-xs font-medium flex items-center justify-center">{valuation.managerName.split(" ").map((w) => w[0]).slice(0, 2).join("")}</span>
-                <span className="text-left leading-none">
-                  <span className="block text-sm font-medium text-white">{valuation.managerName}</span>
-                  <span className="block text-xs uppercase tracking-widest text-slate-300 mt-0.5">Property Manager</span>
-                </span>
-              </button>
-            )}
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="font-mono text-xs font-medium text-amber-300 bg-black/40 backdrop-blur-md border border-white/20 px-2.5 py-0.5 rounded-md">
+                {valuation.valuationCode}
+              </span>
+              <span className="text-xs font-medium text-white/90 bg-black/40 backdrop-blur-md border border-white/20 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                <IconMapPin size={13} className="text-amber-400" /> {subjectLocation}
+              </span>
+            </div>
+            <h2 className="title-serif text-white text-2xl sm:text-3xl font-normal drop-shadow-md">
+              {subjectName}
+            </h2>
           </div>
         </div>
       </div>
 
-      {/* ── Stage stepper ── */}
-      <div className="bg-white border border-slate-100 rounded-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5">
-        <div className="flex items-center mb-2">
-          {steps.map((s) => (
-            <div key={s.key} className="flex items-center flex-1">
-              <span className={cn("size-5 rounded-full flex items-center justify-center shrink-0", s.done ? "bg-[#122a20] text-white" : "bg-slate-200 text-transparent")}>
-                {s.done && <IconCheck size={11} />}
-              </span>
-              {!s.isLast && <div className={cn("h-0.5 flex-1 mx-1", STAGE_ORDER.indexOf(valuation.stage) > STAGE_ORDER.indexOf(s.key) ? "bg-[#122a20]" : "bg-slate-200")} />}
+      {/* ── Executive Stage Pipeline & Velocity Timeline ── */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs transition-all duration-300">
+        {/* Top Velocity & SLA Summary Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 mb-5 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <span className="size-9 rounded-xl bg-[#151936] text-[#f3df27] flex items-center justify-center shrink-0 shadow-2xs">
+              <IconHistory size={18} />
+            </span>
+            <div>
+              <h3 className="text-sm font-medium text-slate-900 leading-tight">Pipeline Stage & Velocity Tracker</h3>
+              <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mt-0.5">
+                Stage progression, velocity SLA & transition history
+              </p>
             </div>
-          ))}
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {valuation.stage !== "declined" ? (
+              <>
+                <Badge tone="neutral" className="font-mono text-xs">
+                  {daysSince(valuation.stageEnteredAt)}d in current stage
+                </Badge>
+                {daysSince(valuation.stageEnteredAt) > 21 ? (
+                  <Badge tone="warning" className="font-mono text-xs flex items-center gap-1">
+                    <IconAlertTriangle size={13} /> SLA Warning (&gt;21d)
+                  </Badge>
+                ) : (
+                  <Badge tone="success" className="font-mono text-xs flex items-center gap-1">
+                    ⚡ Velocity On Track
+                  </Badge>
+                )}
+              </>
+            ) : (
+              <Badge tone="risk" className="font-mono text-xs">
+                Prospect Declined
+              </Badge>
+            )}
+          </div>
         </div>
-        <p className="text-sm font-medium text-[#122a20]">
-          {valuation.stage === "declined" ? "Declined - prospect not proceeding" : `${cfg.label} · updated ${daysSince(valuation.stageEnteredAt)} days ago`}
-        </p>
+
+        {/* Visual Timeline Nodes */}
+        {valuation.stage === "declined" ? (
+          <div className="bg-rose-50/60 border border-rose-200/80 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="size-8 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0">
+                <IconX size={16} />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-rose-900">Prospect Marked as Declined</p>
+                <p className="text-xxs text-rose-700 font-mono mt-0.5">
+                  Declined {daysSince(valuation.stageEnteredAt)} days ago. Re-open at any time to resume valuation pipeline.
+                </p>
+              </div>
+            </div>
+            {canManage && (
+              <button
+                type="button"
+                onClick={() => transitionStage("valued")}
+                className="bg-white border border-rose-200 text-rose-700 hover:bg-rose-100 font-medium text-xs rounded-xl px-3.5 py-1.5 transition-colors shrink-0 shadow-2xs"
+              >
+                Re-open Prospect
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center w-full px-1">
+              {STAGE_ORDER.map((s, i) => {
+                const curIdx = STAGE_ORDER.indexOf(valuation.stage);
+                const isPast = i < curIdx;
+                const isCurrent = s === valuation.stage;
+                const isLast = i === STAGE_ORDER.length - 1;
+
+                return (
+                  <div key={s} className="flex items-center flex-1 min-w-0 group relative">
+                    {/* Node Circle */}
+                    <div className="flex flex-col items-center relative z-10 shrink-0">
+                      {isPast ? (
+                        <span className="size-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-2xs border-2 border-white">
+                          <IconCheck size={14} />
+                        </span>
+                      ) : isCurrent ? (
+                        <span className="size-8 rounded-full bg-[#151936] text-[#f3df27] font-mono text-xs font-medium flex items-center justify-center shadow-md ring-4 ring-[#151936]/15 border-2 border-[#f3df27] animate-pulse">
+                          {i + 1}
+                        </span>
+                      ) : (
+                        <span className="size-6 rounded-full bg-slate-100 border border-slate-300 text-slate-400 font-mono text-[10px] flex items-center justify-center">
+                          {i + 1}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Line Segment */}
+                    {!isLast && (
+                      <div
+                        className={cn(
+                          "h-1 flex-1 mx-1.5 rounded-full transition-colors",
+                          i < curIdx ? "bg-emerald-500" : "bg-slate-200/80"
+                        )}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Stage Labels Row */}
+            <div className="grid grid-cols-6 gap-1 w-full pt-1 text-center">
+              {STAGE_ORDER.map((s, i) => {
+                const isCurrent = s === valuation.stage;
+                const isPast = i < STAGE_ORDER.indexOf(valuation.stage);
+                return (
+                  <div key={s} className="flex flex-col items-center">
+                    <span
+                      className={cn(
+                        "text-[11px] font-medium truncate w-full px-1",
+                        isCurrent
+                          ? "text-[#151936] font-medium"
+                          : isPast
+                            ? "text-slate-700 font-medium"
+                            : "text-slate-400"
+                      )}
+                    >
+                      {STAGE_META[s].label}
+                    </span>
+                    {isCurrent && (
+                      <Badge tone="warning" className="mt-1">
+                        ACTIVE
+                      </Badge>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Vitals ── */}
@@ -621,8 +733,10 @@ export function ValuationFullViewBoard({
         {vitals.map((v) => (
           <div
             key={v.label}
+            onClick={v.onClick}
             className={cn(
               "relative overflow-hidden rounded-2xl border p-5 flex flex-col justify-between group/vital shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 h-[140px]",
+              v.onClick && "cursor-pointer",
               VITAL_TONE_BG[v.tone]
             )}
           >
@@ -678,7 +792,7 @@ export function ValuationFullViewBoard({
               <p className="text-xs text-slate-500 mt-0.5">{valuation.managerName ?? "The assigned manager"} completed the site visit; valued at {valuation.marketValueKes ? formatCompactKES(Number(valuation.marketValueKes)) : "—"}.</p>
             </div>
           </div>
-          <button type="button" onClick={() => transitionStage("offer_sent")} className="rounded-xl px-4 py-1.5 text-xs font-medium whitespace-nowrap bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] shadow-sm">
+          <button type="button" onClick={() => transitionStage("offer_sent")} className="rounded-xl px-4 py-1.5 text-xxs font-medium whitespace-nowrap bg-[#f3df27] text-[#151936] hover:bg-[#e6d220] shadow-sm">
             Send Offer Letter
           </button>
         </div>
@@ -695,11 +809,11 @@ export function ValuationFullViewBoard({
                 aria-selected={activeTab === t.key}
                 onClick={() => setActiveTab(t.key)}
                 className={cn(
-                  "px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 shrink-0 whitespace-nowrap font-medium text-sm",
+                  "px-4 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 shrink-0 whitespace-nowrap font-medium text-sm",
                   activeTab === t.key ? "bg-[#151936] text-white shadow-md" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50",
                 )}
               >
-                <t.icon size={14} /> {t.label}
+                <t.icon size={12} /> {t.label}
               </button>
             ))}
           </div>
@@ -707,7 +821,7 @@ export function ValuationFullViewBoard({
           {activeTab === "overview" && (
             <>
               <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                <h3 className="title-serif text-slate-900 mb-4">Property Particulars</h3>
+                <h3 className="text-sm font-medium text-slate-900 mb-4">Property Particulars</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                   <div className="border border-slate-100 bg-slate-50 rounded-2xl p-4">
                     <p className="label-caps text-slate-400 mb-1">Subject Type</p>
@@ -724,7 +838,7 @@ export function ValuationFullViewBoard({
                 </div>
               </Card>
               <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                <h3 className="title-serif text-slate-900 mb-3">Notes</h3>
+                <h3 className="text-sm font-medium text-slate-900 mb-3">Notes</h3>
                 <p className="text-body-regular text-slate-600 whitespace-pre-line">{valuation.notes || "No notes recorded."}</p>
               </Card>
             </>
@@ -732,7 +846,7 @@ export function ValuationFullViewBoard({
 
           {activeTab === "comparables" && (
             <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <h3 className="title-serif text-slate-900 mb-1">Comparable Evidence</h3>
+              <h3 className="text-sm font-medium text-slate-900 mb-1">Comparable Evidence</h3>
               <p className="text-desc-secondary mb-4">Entered by the valuer when the valuation was submitted.</p>
               {!valuation.comparables || valuation.comparables.length === 0 ? (
                 <p className="text-slate-400 text-center py-10 text-sm bg-slate-50 rounded-2xl border border-dashed border-slate-200">No comparable evidence recorded.</p>
@@ -763,7 +877,7 @@ export function ValuationFullViewBoard({
 
           {activeTab === "methodology" && (
             <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <h3 className="title-serif text-slate-900 mb-3">Methodology &amp; Assumptions</h3>
+              <h3 className="text-sm font-medium text-slate-900 mb-3">Methodology &amp; Assumptions</h3>
               <p className="text-body-regular text-slate-600 whitespace-pre-line leading-relaxed">{valuation.methodology || "Not yet recorded - captured when the valuation is submitted."}</p>
             </Card>
           )}
@@ -771,7 +885,7 @@ export function ValuationFullViewBoard({
           {activeTab === "documents" && (
             <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="title-serif text-slate-900">Documents</h3>
+                <h3 className="text-sm font-medium text-slate-900">Documents</h3>
                 <button onClick={() => setDocModalOpen(true)} className="inline-flex items-center gap-1.5 text-xs font-medium border border-slate-200 rounded-xl px-3 py-1.5 hover:border-[#f3df27] hover:bg-[#fffdf0] transition-colors">
                   <IconUpload size={13} /> Attach
                 </button>
@@ -799,7 +913,7 @@ export function ValuationFullViewBoard({
 
           {activeTab === "activity" && (
             <Card className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <h3 className="title-serif text-slate-900 mb-4">Activity Log</h3>
+              <h3 className="text-sm font-medium text-slate-900 mb-4">Activity Log</h3>
               {activityLoading ? (
                 <div className="flex justify-center py-10"><LoadingSpinner size="md" /></div>
               ) : !activityLog || activityLog.length === 0 ? (
@@ -837,7 +951,7 @@ export function ValuationFullViewBoard({
                   )}
                   <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(21,25,54,0.3) 0%, rgba(21,25,54,0) 40%, rgba(21,25,54,0.5) 100%)" }} />
                   <div className="absolute top-3.5 left-0 right-0 text-center">
-                    <p className="title-serif text-white text-lg" style={{ textShadow: "0 2px 12px rgba(21,25,54,0.4)" }}>{valuation.landlordName}</p>
+                    <p className="text-white text-base font-medium" style={{ textShadow: "0 2px 12px rgba(21,25,54,0.4)" }}>{valuation.landlordName}</p>
                     <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-white/90">
                       {valuation.landlordVerifiedAt ? <><IconShieldCheck size={12} /> Verified landlord</> : <><IconShieldHalf size={12} /> Unverified - confirm before offer</>}
                     </p>
@@ -877,7 +991,7 @@ export function ValuationFullViewBoard({
 
           {/* Valuer card */}
           <Card className="bg-white border border-slate-100 rounded-[24px] p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <p className="title-serif text-slate-900 mb-2.5">Valuer</p>
+            <p className="text-xs font-mono font-medium uppercase tracking-wider text-slate-500 mb-2.5">Valuer</p>
             <div className="flex items-center gap-2.5">
               <span className="size-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#122a20] shrink-0"><IconShieldHalf size={17} /></span>
               <div className="min-w-0">

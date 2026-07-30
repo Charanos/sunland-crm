@@ -24,7 +24,6 @@ import { FinanceModuleNav } from "@/components/finance/finance-module-nav";
 import { FinanceQrProof } from "@/components/finance/finance-qr-proof";
 import { BoardHeader, BoardPanel, Button, PaginationControls } from "@/components/ui/erp-primitives";
 import { formatCompactKES } from "@/lib/utils/format";
-import { useUIStore } from "@/store/ui";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 

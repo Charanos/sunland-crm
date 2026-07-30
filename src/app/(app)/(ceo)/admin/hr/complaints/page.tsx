@@ -1,10 +1,17 @@
-import { ComplaintsBoard } from "@/components/sunland/complaints-board";
+"use client";
 
-export const metadata = {
-  title: "Complaints Queue - Sunland ERP",
-  description: "Confidential complaints queue and escalation tracking.",
-};
+import { Suspense } from "react";
+import { useUIStore } from "@/store/ui";
+import { OversightBoard } from "@/components/sunland/oversight-board";
 
-export default function ComplaintsPage() {
-  return <ComplaintsBoard />;
+// Renders the Oversight Console at its own section (ADR 020). Each Oversight
+// route keeps a real pathname because the sidebar matches the active item on
+// pathname and query strings are dropped - the ADR 019 routing rule.
+export default function OversightSectionPage() {
+  const { activeEntityId } = useUIStore();
+  return (
+    <Suspense fallback={null}>
+      <OversightBoard entityId={activeEntityId} startSection="complaints" />
+    </Suspense>
+  );
 }

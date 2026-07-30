@@ -6,11 +6,14 @@ import { setSession } from "@/lib/auth/session";
 import { getDefaultPortal } from "@/lib/auth/roles";
 import type { UserRole } from "@/types";
 
+type DbUser = typeof users.$inferSelect;
+type MockUser = { id: string; email: string; name: string; role: UserRole };
+
 export async function POST(request: NextRequest) {
   try {
     const { role } = await request.json();
 
-    let user: any = null;
+    let user: DbUser | MockUser | null = null;
     try {
       const [dbUser] = await db
         .select()

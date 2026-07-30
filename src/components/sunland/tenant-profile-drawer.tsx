@@ -15,7 +15,6 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/drawer";
-import { Avatar } from "@/components/ui/avatar";
 import { ProfileDrawerRow } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
 import { formatCompactKES } from "@/lib/utils/format";

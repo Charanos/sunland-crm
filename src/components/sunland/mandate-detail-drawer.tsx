@@ -77,7 +77,6 @@ export function MandateDetailDrawer({
   open,
   entityId,
   onClose,
-  canManage,
   onToggleFeature,
   onOpenLandlordProfile,
   onOpenRemittanceAdvice,
@@ -88,7 +87,6 @@ export function MandateDetailDrawer({
   open: boolean;
   entityId?: string;
   onClose: () => void;
-  canManage?: boolean;
   onToggleFeature?: (propertyId: string, currentlyFeatured: boolean) => void;
   onOpenLandlordProfile?: (mandate: MandateDrawerItem) => void;
   onOpenRemittanceAdvice?: (mandate: MandateDrawerItem) => void;

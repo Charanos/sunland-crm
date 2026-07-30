@@ -2,7 +2,6 @@
 
 import {
   IconCash,
-  IconArrowRight,
 } from "@tabler/icons-react";
 import { ModulePage } from "@/components/sunland/module-page";
 import { useRouter } from "next/navigation";

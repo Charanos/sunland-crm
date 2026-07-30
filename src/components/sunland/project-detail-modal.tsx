@@ -33,15 +33,6 @@ interface AuditLog {
   actorId: string;
 }
 
-const PROJECT_DEPARTMENT_STYLES: Record<Project["department"], { bg: string; text: string; border: string }> = {
-  sales: { bg: "bg-teal-50", text: "text-teal-700", border: "border-teal-200" },
-  legal: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
-  ops: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
-  finance: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  hr: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-  front_office: { bg: "bg-sky-50", text: "text-sky-700", border: "border-sky-200" },
-};
-
 const PROJECT_STATUS_LABEL: Record<Project["status"], string> = {
   planning: "Planning",
   in_progress: "In Progress",
@@ -84,8 +75,6 @@ export function ProjectDetailModal({
   }, [project, open]);
 
   if (!project) return null;
-
-  const style = PROJECT_DEPARTMENT_STYLES[project.department] ?? PROJECT_DEPARTMENT_STYLES.ops;
 
   return (
     <Modal

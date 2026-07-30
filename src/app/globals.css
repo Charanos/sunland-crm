@@ -558,10 +558,13 @@ body.modal-open {
 .bg-tertiary-gradient .badge-tone-neutral,
 .text-white .badge-tone-neutral,
 [class*="bg-[#151936]"] .badge-tone-neutral,
+[class*="bg-[#0d211a]"] .badge-tone-neutral,
+[class*="bg-[#0a0d1c]"] .badge-tone-neutral,
 [class*="bg-slate-900"] .badge-tone-neutral {
-  background-color: rgba(255, 255, 255, 0.14);
+  background-color: rgba(21, 25, 54, 0.85);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
 }
 
 .badge-tone-success {

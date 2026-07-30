@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import {
   IconSearch,
   IconPlus,
@@ -703,10 +704,12 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 {/* Property Card 1 */}
                 <div className="flex flex-col rounded-xl border border-slate-200/60 bg-white overflow-hidden shadow-sm hover:shadow-md transition duration-200 group">
                   <div className="relative h-28 w-full overflow-hidden">
-                    <img
+                    <Image
                       src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80"
                       alt="Unit 4B Runda"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <span className="absolute bottom-2 left-2 text-sm  font-mono text-white/90 font-medium bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded">
@@ -733,10 +736,12 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 {/* Property Card 2 */}
                 <div className="flex flex-col rounded-xl border border-slate-200/60 bg-white overflow-hidden shadow-sm hover:shadow-md transition duration-200 group">
                   <div className="relative h-28 w-full overflow-hidden">
-                    <img
+                    <Image
                       src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80"
                       alt="Office petty cash"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <span className="absolute bottom-2 left-2 text-sm  font-mono text-white/90 font-medium bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded">
@@ -763,10 +768,12 @@ export function LedgerAccountsBoard({ tabId = "journal-entries" }: { tabId: stri
                 {/* Property Card 3 */}
                 <div className="flex flex-col rounded-xl border border-slate-200/60 bg-white overflow-hidden shadow-sm hover:shadow-md transition duration-200 group">
                   <div className="relative h-28 w-full overflow-hidden">
-                    <img
+                    <Image
                       src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80"
                       alt="Reversals & Voids"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <span className="absolute bottom-2 left-2 text-sm  font-mono text-white/90 font-medium bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded">

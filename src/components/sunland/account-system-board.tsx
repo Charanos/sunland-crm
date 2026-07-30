@@ -10,7 +10,6 @@ import {
   IconCash,
   IconFileCertificate,
   IconMessage2,
-  IconServerCog,
   IconShieldCheck,
   IconShieldLock,
   IconUser,
@@ -33,7 +32,6 @@ import {
   PoliciesSection,
   PreferencesSection,
   SecuritySection,
-  SystemSection,
   type Pulse,
 } from "./account-sections";
 import {
@@ -54,7 +52,6 @@ function tLabel(s: string): string {
     security: "Account Protection",
     directory: "Directory & Roles",
     policies: "Access Policies",
-    system: "System & Integrations",
   };
   return map[s] ?? s;
 }
@@ -120,7 +117,6 @@ export function AccountSystemBoard({ entityId, startScope, startSection }: {
   const oTabs: Array<{ key: OrgSection; label: string; icon: Icon }> = [
     { key: "directory", label: "Directory & Roles", icon: IconUsersGroup },
     { key: "policies", label: "Access Policies", icon: IconShieldCheck },
-    { key: "system", label: "System", icon: IconServerCog },
   ];
 
   return (
@@ -204,7 +200,6 @@ export function AccountSystemBoard({ entityId, startScope, startSection }: {
       {isPersonal && pSection === "security" && <SecuritySection onChanged={loadPulse} />}
       {!isPersonal && oSection === "directory" && <DirectorySection entityId={entityId} presentIds={presentIds} onOpenChat={openChat} onChanged={loadPulse} />}
       {!isPersonal && oSection === "policies" && <PoliciesSection entityId={entityId} memberTotal={pulse?.memberCount ?? 0} onChanged={loadPulse} />}
-      {!isPersonal && oSection === "system" && <SystemSection entityId={entityId} />}
 
       <p className="mt-5 text-xs text-slate-400">Sunland ERP · Account &amp; System · Viewing as {me?.name ?? "—"} (super-admin)</p>
     </PageTransition>

@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { neon } from "@neondatabase/serverless";
 import type { UserRole } from "@/types";
 import { canAccess, getDefaultPortal } from "@/lib/auth/roles";
 
@@ -67,6 +68,56 @@ function isApiPath(pathname: string): boolean {
   return pathname.startsWith("/api/");
 }
 
+// ─── Maintenance mode (ADR 020) ───────────────────────────────────────────────
+
+/**
+ * Roles that keep working while maintenance mode is on. This is what makes the
+ * toggle safe: whoever can turn it on can always still reach the console to
+ * turn it back off, so the switch can never lock its own operator out.
+ */
+const MAINTENANCE_BYPASS_ROLES: UserRole[] = ["ceo"];
+
+const MAINTENANCE_PATH = "/maintenance";
+
+/**
+ * Short-lived per-isolate cache. Maintenance mode changes roughly never, but
+ * the proxy runs on every page navigation - without this the gate would add a
+ * query to each one.
+ */
+let maintenanceCache: { enabled: boolean; checkedAt: number } | null = null;
+const MAINTENANCE_TTL_MS = 15_000;
+
+/**
+ * Reads the real `ops.maintenance_mode` settings row.
+ *
+ * Uses Neon's HTTP client rather than the app's websocket pool (`@/db`), which
+ * is not edge-compatible. Deliberately FAILS OPEN: any missing config, query
+ * error or timeout returns `false`, because a monitoring blip must never take
+ * the whole application offline.
+ */
+async function isMaintenanceModeOn(): Promise<boolean> {
+  if (maintenanceCache && Date.now() - maintenanceCache.checkedAt < MAINTENANCE_TTL_MS) {
+    return maintenanceCache.enabled;
+  }
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) return false;
+
+  try {
+    const sql = neon(databaseUrl);
+    const rows = (await sql`
+      SELECT value FROM settings WHERE key = 'ops.maintenance_mode' LIMIT 1
+    `) as Array<{ value: unknown }>;
+    const enabled = rows[0]?.value === true;
+    maintenanceCache = { enabled, checkedAt: Date.now() };
+    return enabled;
+  } catch {
+    // Fail open - never take the app down because the flag couldn't be read.
+    maintenanceCache = { enabled: false, checkedAt: Date.now() };
+    return false;
+  }
+}
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
 export async function proxy(request: NextRequest) {
@@ -84,6 +135,22 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Maintenance mode (ADR 020) - a real gate, not a banner. Checked only for
+  // non-bypass roles, so the CEO never pays the lookup cost and can always
+  // reach the console to switch it back off. The maintenance page itself stays
+  // reachable so the redirect can't loop.
+  if (pathname !== MAINTENANCE_PATH && !MAINTENANCE_BYPASS_ROLES.includes(user.role)) {
+    if (await isMaintenanceModeOn()) {
+      return NextResponse.redirect(new URL(MAINTENANCE_PATH, request.url));
+    }
+  }
+
+  // Someone sitting on the maintenance page after it is switched off should
+  // land back in their portal rather than stare at a stale notice.
+  if (pathname === MAINTENANCE_PATH && !(await isMaintenanceModeOn())) {
+    return NextResponse.redirect(new URL(getDefaultPortal(user.role), request.url));
   }
 
   // Root "/" → role-based portal

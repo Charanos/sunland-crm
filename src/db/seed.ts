@@ -732,7 +732,7 @@ async function runSeed() {
         status: "draft",
       };
     });
-    const insertedDraftMandates = await db.insert(propertyMandates).values(draftMandatesToInsert).returning();
+    await db.insert(propertyMandates).values(draftMandatesToInsert).returning();
 
     // Real property_units rows for propRes, generated the same way
     // generateUnitsFromBreakdown would - the first "2 Bedroom" unit is
@@ -910,9 +910,9 @@ async function runSeed() {
       leadViewing,
       leadOffer,
       leadNegotiation,
-      leadClosedWon1,
-      leadClosedWon2,
-      leadClosedLost,
+      ,
+      ,
+      ,
     ] = await db.insert(leads).values([
       {
         entityId: groupEntity.id,

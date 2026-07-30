@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { and, eq, getTableColumns } from "drizzle-orm";
 import { db } from "@/db";
-import { contacts, entities, properties, propertyMandates, users, valuations } from "@/db/schema";
+import { contacts, entities, properties, users, valuations } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
 import { DomainValidationError, NotFoundError } from "@/lib/authz/errors";

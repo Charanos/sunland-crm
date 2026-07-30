@@ -25,7 +25,6 @@ import {
 } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/erp-primitives";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageTransition } from "@/components/shared/page-transition";
 import { useToast } from "@/components/ui/toast-provider";
@@ -35,7 +34,6 @@ import {
   PRIORITY_META,
   SLA_STATE_META,
   STATUS_META,
-  slaStateFor,
   type MaintenancePriority,
   type MaintenanceStatus,
 } from "./maintenance-constants";

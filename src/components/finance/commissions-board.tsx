@@ -6,22 +6,15 @@ import {
   IconCoins,
   IconClock,
   IconCheck,
-  IconArrowUpRight,
-  IconTrendingDown,
   IconUser,
   IconShieldCheck,
   IconReceipt2,
   IconTimeline,
-  IconTransfer,
   IconPlus,
-  IconDotsVertical,
   IconEye,
   IconFileExport,
   IconFilter,
-  IconCalendar,
   IconAlertCircle,
-  IconBookmark,
-  IconArrowRight
 } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast-provider";
@@ -31,7 +24,6 @@ import { FinanceModuleNav } from "@/components/finance/finance-module-nav";
 import { BoardHeader, BoardPanel, Button, PaginationControls } from "@/components/ui/erp-primitives";
 import { cn } from "@/lib/utils/cn";
 import { formatCompactKES } from "@/lib/utils/format";
-import { useUIStore } from "@/store/ui";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -269,7 +261,6 @@ const downloadCsv = (filename: string, csvContent: string) => {
 
 export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
   const { pushToast } = useToast();
-  const activeEntityId = useUIStore((state) => state.activeEntityId);
   const mounted = useSyncExternalStore(
     () => () => { },
     () => true,
@@ -328,7 +319,6 @@ export function CommissionsBoard({ tabId = "deals" }: { tabId: string }) {
   }, []);
 
   const formatMoney = (val: number) => formatCompactKES(val);
-  const isGMorCEO = currentRole === "ceo" || currentRole === "general_manager";
   const isCEO = currentRole === "ceo";
 
   // Watch category to reset standard rate

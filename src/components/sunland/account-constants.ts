@@ -5,10 +5,14 @@
 
 export type ConsoleScope = "personal" | "org";
 export type PersonalSection = "messages" | "notifications" | "preferences" | "security";
-export type OrgSection = "directory" | "policies" | "system";
+// ADR 020 moved the org "system" section (integrations, org audit log,
+// platform operations) into the Oversight Console, which is now the single
+// system-administration home. What stays here is org *governance*: who is in
+// the directory and what the access policies are.
+export type OrgSection = "directory" | "policies";
 
 export const PERSONAL_SECTIONS: PersonalSection[] = ["messages", "notifications", "preferences", "security"];
-export const ORG_SECTIONS: OrgSection[] = ["directory", "policies", "system"];
+export const ORG_SECTIONS: OrgSection[] = ["directory", "policies"];
 
 export type ConsoleSection = PersonalSection | OrgSection;
 
@@ -24,18 +28,21 @@ const PATH_TO_STATE: Record<string, { scope: ConsoleScope; section: ConsoleSecti
   "/admin/notifications": { scope: "personal", section: "notifications" },
   "/admin/settings": { scope: "personal", section: "preferences" },
   "/admin/security": { scope: "personal", section: "security" },
-  "/admin/system": { scope: "org", section: "directory" },
   "/admin/account": { scope: "personal", section: "messages" },
 };
 
+// The four personal sections each own a nav entry, so each needs a distinct
+// pathname. The two org sections have no nav entry of their own - they are
+// reached through the console's scope switcher - so they can safely share
+// /admin/account with a query param without any nav item tying on the prefix.
+// (/admin/system is no longer ours: ADR 020 gave it to the Oversight Console.)
 const STATE_TO_PATH: Record<string, string> = {
   "personal:messages": "/admin/messages",
   "personal:notifications": "/admin/notifications",
   "personal:preferences": "/admin/settings",
   "personal:security": "/admin/security",
-  "org:directory": "/admin/system",
-  "org:policies": "/admin/system?section=policies",
-  "org:system": "/admin/system?section=system",
+  "org:directory": "/admin/account?scope=org&section=directory",
+  "org:policies": "/admin/account?scope=org&section=policies",
 };
 
 export function consoleStateForPath(pathname: string) {

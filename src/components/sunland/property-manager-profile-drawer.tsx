@@ -1,34 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  IconBuildingCommunity,
   IconChevronRight,
   IconMail,
   IconMessageCircle,
   IconBriefcase,
-  IconCash,
   IconArrowUpRight,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Drawer } from "@/components/ui/drawer";
-import { ProfileDrawerRow } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
 import { formatCompactKES } from "@/lib/utils/format";
-import { PROPERTY_TYPE_ICON, type Property } from "./property-constants";
+import { type Property } from "./property-constants";
+
+const PROPERTY_IMAGE_FALLBACKS = [
+  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&q=80",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&q=80",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
+];
+
+function getPropertyCover(p: Property): string {
+  const primary = p.media?.find((m) => m.isPrimary)?.url ?? p.media?.[0]?.url;
+  if (primary) return primary;
+  const hash = parseInt(p.id.replace(/-/g, "").slice(-4), 16);
+  return PROPERTY_IMAGE_FALLBACKS[hash % PROPERTY_IMAGE_FALLBACKS.length];
+}
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
-}
-
-interface InfoRow {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  label: string;
-  value: string;
-  mono?: boolean;
 }
 
 export function PropertyManagerProfileDrawer({
@@ -49,7 +53,10 @@ export function PropertyManagerProfileDrawer({
   const { pushToast } = useToast();
   const [collectedYtd, setCollectedYtd] = useState<number | null>(null);
 
-  const assignedProperties = managerId ? properties.filter((p) => p.manager?.id === managerId) : [];
+  const assignedProperties = useMemo(
+    () => (managerId ? properties.filter((p) => p.manager?.id === managerId) : []),
+    [managerId, properties],
+  );
   const manager = assignedProperties[0]?.manager ?? null;
   const managerName = manager?.name || "Property Manager";
 
@@ -79,25 +86,14 @@ export function PropertyManagerProfileDrawer({
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, managerId, entityId]);
+  }, [open, managerId, entityId, assignedProperties]);
 
   if (!managerId) return null;
 
-  const infoRows: InfoRow[] = [
-    ...(manager?.title ? [{ icon: IconBriefcase, label: "Title", value: manager.title }] : []),
-    ...(manager?.email ? [{ icon: IconMail, label: "Mail", value: manager.email }] : []),
-  ];
-
-  const statRows: InfoRow[] = [
-    { icon: IconBuildingCommunity, label: "Assigned properties", value: String(assignedProperties.length), mono: true },
-    { icon: IconCash, label: "Collected YTD", value: collectedYtd != null ? formatCompactKES(collectedYtd) : "-", mono: true },
-  ];
-
   return (
     <Drawer open={open} onClose={onClose} title="Property Manager" width="34rem">
-      <div className="flex flex-col gap-5">
-        {/* Premium photo-hero matching the owner profile design */}
+      <div className="flex flex-col gap-5 pb-6">
+        {/* Restored Photo Hero Card matching user preference */}
         <div className="relative h-64 rounded-3xl overflow-hidden shadow-sm flex flex-col justify-end bg-slate-900 border border-slate-100/10">
           {manager?.avatarUrl ? (
             <Image src={manager.avatarUrl} alt={managerName} fill className="object-cover opacity-80" />
@@ -112,7 +108,7 @@ export function PropertyManagerProfileDrawer({
             <div>
               <h2 className="title-serif text-white mt-8">{managerName}</h2>
               <div className="flex items-center justify-center gap-1.5 text-slate-300 body-sm mb-5">
-                <IconBriefcase size={14} /> {manager?.title || "Property Manager"} · Sunland staff
+                <IconBriefcase size={14} /> {manager?.title || "Senior Property Manager"} · Sunland staff
               </div>
             </div>
 
@@ -121,14 +117,14 @@ export function PropertyManagerProfileDrawer({
                 type="button"
                 onClick={() => pushToast({ tone: "info", title: "Message drafted", body: "Opens the internal messaging composer." })}
                 aria-label="Message manager"
-                className="size-9 rounded-full bg-white hover:bg-slate-50 text-[#151936] flex items-center justify-center shadow-lg transition-all hover:scale-105"
+                className="size-9 rounded-full bg-white hover:bg-slate-50 text-[#151936] flex items-center justify-center shadow-lg transition-all hover:scale-105 cursor-pointer"
               >
                 <IconMessageCircle size={16} />
               </button>
               {manager?.email && (
                 <a
                   href={`mailto:${manager.email}`}
-                  className="inline-flex items-center gap-2 bg-[#151936] text-white border border-white/20 rounded-full px-4 py-2 body-sm hover:bg-[#1f2547] transition-all shadow-lg hover:scale-105"
+                  className="inline-flex items-center gap-2 bg-[#151936] text-white border border-white/20 rounded-full px-4 py-2 body-sm hover:bg-[#1f2547] transition-all shadow-lg hover:scale-105 font-medium"
                 >
                   <IconMail size={16} /> Email
                 </a>
@@ -137,32 +133,55 @@ export function PropertyManagerProfileDrawer({
           </div>
         </div>
 
-        {infoRows.length > 0 && (
-          <div>
-            <p className="label-caps text-slate-400 mb-3 px-1">Main info</p>
-            <div className="flex flex-col gap-2">
-              {infoRows.map((row) => (
-                <ProfileDrawerRow key={row.label} {...row} />
-              ))}
-            </div>
+        {/* Portfolio Executive 2-Stat KPI Bar */}
+        <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 shadow-2xs grid grid-cols-2 divide-x divide-slate-200/80 text-center">
+          <div className="px-2">
+            <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Assigned Properties</span>
+            <span className="font-mono text-2xl font-medium text-slate-900 mt-1 block">{assignedProperties.length}</span>
           </div>
-        )}
-
-        <div>
-          <p className="label-caps text-slate-400 mb-3 px-1">Portfolio</p>
-          <div className="flex flex-col gap-2">
-            {statRows.map((row) => (
-              <ProfileDrawerRow key={row.label} {...row} />
-            ))}
+          <div className="px-2">
+            <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Collected YTD</span>
+            <span className="font-mono text-lg font-medium text-[#151936] mt-1.5 block">
+              {collectedYtd != null ? formatCompactKES(collectedYtd) : "—"}
+            </span>
           </div>
         </div>
 
+        {/* Fact Cells Grid — Main Info */}
+        <div className="space-y-2">
+          <span className="label-caps text-slate-500 px-1">Officer Details</span>
+          <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 shadow-2xs grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="size-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center text-slate-500 shrink-0">
+                <IconBriefcase size={15} />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Title</span>
+                <span className="block text-xs font-medium text-slate-900 truncate">{manager?.title || "Senior Property Manager"}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="size-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center text-slate-500 shrink-0">
+                <IconMail size={15} />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Work Email</span>
+                <span className="block text-xs font-mono font-medium text-slate-900 truncate">{manager?.email || "—"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Assigned Properties List */}
         {assignedProperties.length > 0 && (
-          <div>
-            <p className="label-caps text-slate-400 mb-3 px-1">Assigned properties</p>
-            <div className="flex flex-col gap-2">
+          <div className="space-y-2 my-4">
+            <div className="flex items-center justify-between px-1">
+              <span className="label-caps text-slate-500">Assigned Properties ({assignedProperties.length})</span>
+              <span className="text-xxs font-mono text-slate-400">CLICK TO OPEN</span>
+            </div>
+            <div className="flex flex-col gap-4">
               {assignedProperties.map((p) => {
-                const TypeIcon = (PROPERTY_TYPE_ICON as Record<string, React.ElementType>)[p.propertyType] ?? IconBuildingCommunity;
                 return (
                   <button
                     key={p.id}
@@ -171,16 +190,29 @@ export function PropertyManagerProfileDrawer({
                       onClose();
                       onOpenProperty(p);
                     }}
-                    className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl p-3 text-left hover:border-slate-200 hover:shadow-[0_4px_14px_rgba(0,0,0,0.03)] transition-all"
+                    className="flex items-center gap-3 bg-white border border-slate-200/80 rounded-2xl p-3 text-left hover:border-slate-300 hover:shadow-xs transition-all group/prop cursor-pointer"
                   >
-                    <span className="size-11 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 shrink-0">
-                      <TypeIcon size={18} stroke={1.5} />
-                    </span>
-                    <span className="flex-1 min-w-0">
-                      <span className="block body-sm text-slate-900 truncate">{p.name}</span>
-                      <span className="block label-caps text-slate-400 mt-0.5">{p.propertyCode}</span>
-                    </span>
-                    <IconChevronRight size={15} className="text-slate-300 shrink-0" />
+                    <div className="relative size-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/80 shrink-0">
+                      <Image
+                        src={getPropertyCover(p)}
+                        alt={p.name}
+                        fill
+                        sizes="48px"
+                        className="object-cover group-hover/prop:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-slate-900 group-hover/prop:text-[#151936] transition-colors truncate">{p.name}</span>
+                        <span className="font-mono text-xxs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 shrink-0">
+                          {p.propertyCode}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5 truncate">
+                        {p.location || "Nairobi"}
+                      </p>
+                    </div>
+                    <IconChevronRight size={16} className="text-slate-400 group-hover/prop:text-slate-900 transition-colors shrink-0" />
                   </button>
                 );
               })}
@@ -188,9 +220,10 @@ export function PropertyManagerProfileDrawer({
           </div>
         )}
 
+        {/* Footer Trigger */}
         <Link
           href={`/admin/team/${managerId}`}
-          className="flex items-center justify-center gap-2 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center justify-center gap-2 py-3 border border-slate-200/90 text-slate-800 hover:bg-slate-50 rounded-xl text-xs font-medium transition-all shadow-2xs mt-2"
         >
           View Full Details <IconArrowUpRight size={14} />
         </Link>

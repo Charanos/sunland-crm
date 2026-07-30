@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  IconArrowUpRight,
   IconBuildingCommunity,
   IconChevronLeft,
   IconChevronRight,
@@ -30,10 +31,13 @@ import {
   IconFilter,
   IconClock,
   IconMoodEmpty,
+  IconAward,
+  IconUserCog,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
+  ActionLoadingOverlay,
   Badge,
   BoardHeader,
   Button,
@@ -114,9 +118,22 @@ interface AuditEntry {
   associatedId?: string | null;
 }
 
-type ViewMode = "board" | "grid" | "list";
+const VALUATION_COVER_POOL = [
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
+  "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=800&q=80",
+  "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+  "https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=800&q=80",
+  "https://images.unsplash.com/photo-1469022563428-aa54fca6bce1?w=800&q=80",
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
+  "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
+  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+];
 
-// ── Board ──────────────────────────────────────────────────────────────────────
+type ViewMode = "board" | "grid" | "list";
 
 export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
   const { pushToast } = useToast();
@@ -146,8 +163,8 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
   const [managerUserId, setManagerUserId] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
 
-  const loadValuations = useCallback(async () => {
-    Promise.resolve().then(() => setLoading(true));
+  const loadValuations = useCallback(async (silent = false) => {
+    if (!silent) Promise.resolve().then(() => setLoading(true));
     try {
       const res = await fetch(`/api/valuations?entityId=${entityId}`);
       const data = await res.json();
@@ -157,7 +174,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
       const message = err instanceof Error ? err.message : "Failed to load valuations";
       pushToast({ tone: "error", title: "Error", body: message });
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [entityId, pushToast]);
 
@@ -230,25 +247,6 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
     return { name: v.externalPropertyName ?? "Unknown subject", location: v.externalLocation ?? "-", portfolio: false };
   }, []);
 
-  // Deterministic curated-image fallback so every valuation card always has a
-  // property banner. Real propertyMedia wins; external/unlinked valuations get
-  // a stable Unsplash image derived from the valuation's UUID (last 4 hex
-  // chars → index into the pool), so the same prospect never flickers between
-  // images across renders or sessions.
-  const VALUATION_COVER_POOL = [
-    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
-    "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
-    "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=800&q=80",
-    "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80",
-    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
-    "https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=800&q=80",
-    "https://images.unsplash.com/photo-1469022563428-aa54fca6bce1?w=800&q=80",
-    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
-    "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
-    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
-  ];
   const coverImageOf = useCallback((v: Valuation): string => {
     const primary = v.propertyMedia?.find((m) => m.isPrimary)?.url ?? v.propertyMedia?.[0]?.url;
     if (primary) return primary;
@@ -319,11 +317,6 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
   const safeFeaturedCarouselIndex = curatedFeatured.length === 0 ? 0 : Math.min(featuredCarouselIndex, curatedFeatured.length - 1);
   const featuredProspect = curatedFeatured.length > 0 ? curatedFeatured[safeFeaturedCarouselIndex] : scoreBasedProspect;
   const isCuratedFeatured = curatedFeatured.length > 0;
-
-  const featuredPropertyMedia = useMemo(() => {
-    if (!featuredProspect) return null;
-    return featuredProspect.propertyMedia ?? null;
-  }, [featuredProspect]);
 
   const actionItems = useMemo(() => {
     const items: Array<{ key: string; tone: "amber" | "rose"; icon: typeof IconFileCertificate; title: string; meta: string; cta: string; onClick: () => void; primary: boolean }> = [];
@@ -480,9 +473,9 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to move stage");
       pushToast({ tone: toStage === "declined" ? "info" : "success", title: `${v.valuationCode} → ${STAGE_META[toStage].label}`, body: "" });
-      loadValuations();
+      loadValuations(true);
     } catch (err) {
-      loadValuations();
+      loadValuations(true);
       pushToast({ tone: "error", title: "Error", body: err instanceof Error ? err.message : "Failed to move stage" });
     }
   };
@@ -499,7 +492,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to sign mandate");
       pushToast({ tone: "success", title: "Mandate Created", body: "The prospect is now a real management mandate." });
-      loadValuations();
+      loadValuations(true);
     } catch (err) {
       pushToast({ tone: "error", title: "Error", body: err instanceof Error ? err.message : "Failed to sign mandate" });
     } finally {
@@ -516,7 +509,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete valuation");
       pushToast({ tone: "success", title: "Valuation Deleted", body: "The prospect has been removed." });
-      loadValuations();
+      loadValuations(true);
     } catch (err) {
       pushToast({ tone: "error", title: "Error", body: err instanceof Error ? err.message : "Failed to delete valuation" });
     } finally {
@@ -563,118 +556,164 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
-      {/* ── Tertiary-gradient KPI tier ── */}
-      <div className="gsap-stagger bg-tertiary-gradient border border-[#122a20]/80 p-1.5 rounded-[24px] shadow-xl relative overflow-hidden group">
-        <div className="absolute right-0 top-0 size-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-700 -z-10" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-white/10">
-          <div className="relative p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
-            <IconTelescope size={96} stroke={1} className="absolute right-[-10px] bottom-[-16px] text-white/[0.05] pointer-events-none" />
-            <div>
-              <p className="relative body-sm text-slate-300">In Pipeline</p>
-              <div className="relative mt-2">
-                <span className="font-mono text-white text-4xl leading-none">{kpis.inPipeline}</span>
+      {/* ── Executive 5-Card Dark KPI Tier ── */}
+      <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-6 border border-slate-800/80">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-white/10 relative z-10">
+
+          {/* Card 1: In Pipeline */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-emerald-400 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconTelescope size={140} stroke={1} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xxs font-mono font-medium text-slate-300 uppercase tracking-wider">In Pipeline</span>
+              <Badge tone="primary">SCOUTING</Badge>
+            </div>
+            <div className="relative z-10 mt-4">
+              <span className="font-mono text-3xl font-medium text-white">{kpis.inPipeline} <span className="text-xs font-mono text-slate-300 font-normal">Prospects</span></span>
+              {pipelineBreakdown.total > 0 && (
+                <div className="mt-3 flex flex-col gap-2">
+                  <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    {pipelineBreakdown.setup > 0 && (
+                      <div className="h-full bg-slate-300" style={{ width: `${(pipelineBreakdown.setup / pipelineBreakdown.total) * 100}%` }} />
+                    )}
+                    {pipelineBreakdown.offer > 0 && (
+                      <div className="h-full bg-amber-400" style={{ width: `${(pipelineBreakdown.offer / pipelineBreakdown.total) * 100}%` }} />
+                    )}
+                    {pipelineBreakdown.accepted > 0 && (
+                      <div className="h-full bg-emerald-400" style={{ width: `${(pipelineBreakdown.accepted / pipelineBreakdown.total) * 100}%` }} />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="flex items-center gap-1 text-xxs font-mono font-medium uppercase tracking-wider text-slate-300">
+                      <span className="size-1.5 rounded-full bg-slate-300" />{pipelineBreakdown.setup} prospecting
+                    </span>
+                    <span className="flex items-center gap-1 text-xxs font-mono font-medium uppercase tracking-wider text-amber-300">
+                      <span className="size-1.5 rounded-full bg-amber-400" />{pipelineBreakdown.offer} valuation
+                    </span>
+                    <span className="flex items-center gap-1 text-xxs font-mono font-medium uppercase tracking-wider text-emerald-300">
+                      <span className="size-1.5 rounded-full bg-emerald-400" />{pipelineBreakdown.accepted} accepted
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 2: Prospective Value */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Prospective Value</span>
+              <Badge tone="neutral">PROSPECT POOL</Badge>
+            </div>
+            <div className="relative z-10 mt-4">
+              <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(kpis.pipelineValue)}</span>
+              <p className="text-xxs text-slate-300 font-mono mt-2 uppercase tracking-wide">
+                Valued, not yet mandated
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Offer to Mandate Conversion */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Offer→Mandate</span>
+              <Badge tone={kpis.convPct >= 50 ? "success" : "warning"}>
+                {kpis.convPct >= 50 ? "STRONG" : "NEEDS FOLLOW-UP"}
+              </Badge>
+            </div>
+            <div className="relative z-10 mt-4 flex items-center gap-3.5">
+              <svg width="48" height="48" viewBox="0 0 64 64" role="img" aria-label={`Conversion rate ${Math.round(kpis.convPct)}%`} className="shrink-0">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="7" />
+                <circle
+                  cx="32" cy="32" r="26" fill="none" stroke="#f3df27" strokeWidth="7" strokeLinecap="round"
+                  strokeDasharray={`${(kpis.convPct / 100) * 163.4} 163.4`}
+                  transform="rotate(-90 32 32)"
+                />
+              </svg>
+              <div>
+                <span className="font-mono font-medium text-white text-3xl leading-none">{Math.round(kpis.convPct)}%</span>
+                <p className="text-xs text-emerald-300 font-mono mt-1 uppercase tracking-wide">Last 12 Months</p>
               </div>
             </div>
-            {pipelineBreakdown.total > 0 && (
-              <div className="relative mt-3">
-                <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                  {pipelineBreakdown.setup > 0 && (
-                    <div className="h-full bg-slate-300" style={{ width: `${(pipelineBreakdown.setup / pipelineBreakdown.total) * 100}%` }} />
-                  )}
-                  {pipelineBreakdown.offer > 0 && (
-                    <div className="h-full bg-amber-400" style={{ width: `${(pipelineBreakdown.offer / pipelineBreakdown.total) * 100}%` }} />
-                  )}
-                  {pipelineBreakdown.accepted > 0 && (
-                    <div className="h-full bg-emerald-400" style={{ width: `${(pipelineBreakdown.accepted / pipelineBreakdown.total) * 100}%` }} />
-                  )}
-                </div>
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-slate-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />{pipelineBreakdown.setup} prospecting
-                  </span>
-                  <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-amber-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />{pipelineBreakdown.offer} valuation
-                  </span>
-                  <span className="flex items-center gap-1 text-xxs font-medium uppercase tracking-wider text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{pipelineBreakdown.accepted} accepted
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
-          <div className="p-5 sm:p-6 flex flex-col justify-between gap-3">
-            <p className="body-sm text-slate-300">Prospective Value</p>
-            <div>
-              <span className="font-mono text-white text-4xl leading-none">{formatCompactKES(kpis.pipelineValue)}</span>
-              <p className="mt-1.5 text-xxs font-medium uppercase tracking-wide text-white/40">valued, not yet mandated</p>
+
+          {/* Card 4: Mandates Signed YTD */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-indigo-400 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconFileCertificate size={140} stroke={1} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Mandates Signed YTD</span>
+              <Badge tone="success">CONVERTED</Badge>
+            </div>
+            <div className="relative z-10 mt-4">
+              <span className="font-mono text-3xl font-medium text-white">{kpis.signedYtd}</span>
+              <p className="text-xxs text-slate-300 font-mono mt-2 uppercase tracking-wide">From this pipeline</p>
             </div>
           </div>
-          <div className="p-5 sm:p-6 flex items-center gap-3.5">
-            <svg width="56" height="56" viewBox="0 0 64 64" role="img" aria-label={`Conversion rate ${Math.round(kpis.convPct)}%`}>
-              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="7" />
-              <circle
-                cx="32" cy="32" r="26" fill="none" stroke="#f3df27" strokeWidth="7" strokeLinecap="round"
-                strokeDasharray={`${(kpis.convPct / 100) * 163.4} 163.4`}
-                transform="rotate(-90 32 32)"
-              />
-            </svg>
-            <div>
-              <p className="body-sm text-slate-300 mb-0.5">Offer→Mandate</p>
-              <p className="font-mono font-medium  text-white text-2xl leading-none">{Math.round(kpis.convPct)}%</p>
-              <p className="mt-1 text-xxs font-medium uppercase tracking-wide text-emerald-300">last 12 months</p>
+
+          {/* Card 5: Stalled > 21 Days */}
+          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
+            <div className="absolute -bottom-10 -right-10 opacity-5 text-rose-500 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
+              <IconClockExclamation size={140} stroke={1} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Stalled &gt; 21 Days</span>
+              <Badge tone={kpis.stalled > 0 ? "risk" : "success"}>
+                {kpis.stalled > 0 ? "ACTION REQD" : "ON TRACK"}
+              </Badge>
+            </div>
+            <div className="relative z-10 mt-4">
+              <span className="font-mono text-3xl font-medium text-rose-300">{kpis.stalled}</span>
+              <p className="text-xxs text-rose-300 font-mono mt-2 uppercase tracking-wide">No landlord response</p>
             </div>
           </div>
-          <div className="relative p-5 sm:p-6 flex flex-col justify-between gap-3 overflow-hidden">
-            <IconFileCertificate size={96} stroke={1} className="absolute right-[-10px] bottom-[-16px] text-[#f3df27]/[0.09] pointer-events-none" />
-            <p className="relative body-sm text-slate-300">Mandates Signed YTD</p>
-            <div className="relative">
-              <span className="font-mono text-white text-4xl leading-none">{kpis.signedYtd}</span>
-              <p className="mt-1.5 text-xxs font-medium uppercase tracking-wide text-slate-400">from this pipeline</p>
-            </div>
-          </div>
-          <div className="relative p-5 sm:p-6 flex flex-col justify-between gap-3 overflow-hidden">
-            <IconClockExclamation size={96} stroke={1} className="absolute right-[-10px] bottom-[-16px] text-rose-500/10 pointer-events-none" />
-            <p className="relative body-sm text-slate-300">Stalled &gt; 21 days</p>
-            <div className="relative">
-              <span className="font-mono text-white text-4xl leading-none">{kpis.stalled}</span>
-              <p className="mt-1.5 text-xxs font-medium uppercase tracking-wide text-rose-300">no landlord response</p>
-            </div>
-          </div>
+
         </div>
       </div>
 
-      {/* ── Action-required band ── */}
+      {/* ── Needs Attention / Action Required Banners (2-Column Grid) ── */}
       {actionItems.length > 0 && (
-        <div className={cn("grid gap-3.5 animate-fade-in-up", actionItems.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1")}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-1">
           {actionItems.map((item) => (
             <div
               key={item.key}
               className={cn(
-                "rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm transition-all duration-300 hover:shadow-md",
-                item.tone === "amber" ? "border-amber-200 bg-amber-500/[0.04]" : "border-rose-100 bg-rose-500/[0.02]",
+                "rounded-[22px] p-4 flex items-center justify-between gap-3.5 shadow-2xs hover:shadow-xs transition-all duration-300 border group",
+                item.tone === "rose"
+                  ? "bg-gradient-to-r from-rose-50/90 via-white to-rose-50/20 border-rose-200/90 hover:border-rose-300"
+                  : "bg-gradient-to-r from-amber-50/90 via-white to-amber-50/20 border-amber-200/90 hover:border-amber-300"
               )}
             >
-              <div className="flex items-start gap-3 min-w-0">
-                <span className={cn(
-                  "size-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
-                  item.tone === "amber" ? "bg-amber-100/80 text-amber-700" : "bg-rose-100/80 text-rose-600",
-                )}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={cn(
+                    "size-10 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs",
+                    item.tone === "rose"
+                      ? "bg-rose-100/80 text-rose-700 border-rose-200/60"
+                      : "bg-amber-100/80 text-amber-700 border-amber-200/60"
+                  )}
+                >
                   <item.icon size={18} />
-                </span>
-                <div className="min-w-0">
-                  <p className="font-sans text-sm font-medium text-slate-950 truncate leading-snug">{item.title}</p>
-                  <p className="text-xs text-slate-500 mt-0.5 truncate font-medium">{item.meta}</p>
+                </div>
+                <div className="min-w-0 flex flex-col justify-center">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-xs font-medium text-slate-900 leading-snug truncate">{item.title}</p>
+                    <Badge tone={item.tone === "rose" ? "risk" : "warning"} className="shrink-0 text-xxs ">
+                      ACTION REQUIRED
+                    </Badge>
+                  </div>
+                  <p className="text-xxs text-slate-500 mt-1 font-mono truncate">{item.meta}</p>
                 </div>
               </div>
+
               <button
                 type="button"
                 onClick={item.onClick}
-                className={cn(
-                  "rounded-xl px-4 py-1.5 text-xs font-medium whitespace-nowrap transition-colors shadow-sm",
-                  item.primary ? "bg-[#f3df27] text-[#151936] hover:bg-[#e6d220]" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50",
-                )}
+                className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200/90 rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all shadow-2xs hover:shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
               >
-                {item.cta}
+                {item.cta} <IconArrowUpRight size={13} className="text-slate-600 group-hover:text-slate-900 transition-colors" />
               </button>
             </div>
           ))}
@@ -691,36 +730,37 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
 
           <div className="gsap-stagger mb-8 relative">
-            <div className="bg-white border border-slate-100 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col lg:flex-row group transition-all duration-500 hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] relative z-10">
+            <div className="bg-white border border-slate-200/80 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col lg:flex-row group transition-all duration-500 hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] relative z-10">
 
-              {/* Left Side: Gradient artwork or media image */}
-              <div className="lg:w-[35%] shrink-0 relative min-h-[280px] lg:min-h-0 bg-[#0d211a]">
+              {/* Left Side: Property Image & Overlay */}
+              <div className="lg:w-[36%] shrink-0 relative min-h-[300px] lg:min-h-0 bg-[#0d211a] overflow-hidden">
                 <div className="absolute top-5 left-5 z-20 flex items-center gap-2">
-                  <span className="bg-[#151936] text-[#f3df27] flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium uppercase tracking-wider shadow-sm border border-slate-700/30">
-                    <IconStarFilled size={12} className="text-[#f3df27] shrink-0" /> {isCuratedFeatured ? "Featured" : "High-Value Prospect"}
+                  <span className="bg-[#151936]/90 backdrop-blur-md text-[#f3df27] flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-mono font-medium uppercase tracking-wider shadow-sm border border-slate-700/40">
+                    <IconStarFilled size={13} className="text-[#f3df27] shrink-0" /> {isCuratedFeatured ? "Featured Prospect" : "High-Value Prospect"}
                   </span>
                 </div>
+
                 <div className="absolute top-5 right-5 z-20 flex items-center gap-2">
                   {curatedFeatured.length > 1 && (
-                    <>
+                    <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-xl border border-white/10">
                       <button
                         type="button"
                         onClick={() => setFeaturedCarouselIndex((i) => (i === 0 ? curatedFeatured.length - 1 : i - 1))}
                         aria-label="Previous featured prospect"
-                        className="size-7 rounded-full bg-white/15 backdrop-blur-sm text-white flex items-center justify-center hover:bg-white/25 transition-colors"
+                        className="size-6 rounded-lg text-white flex items-center justify-center hover:bg-white/20 transition-colors"
                       >
                         <IconChevronLeft size={14} />
                       </button>
-                      <span className="label-caps text-white/70 tabular-nums">{safeFeaturedCarouselIndex + 1}&thinsp;/&thinsp;{curatedFeatured.length}</span>
+                      <span className="font-mono text-xs text-white/90 font-medium px-1">{safeFeaturedCarouselIndex + 1}/{curatedFeatured.length}</span>
                       <button
                         type="button"
                         onClick={() => setFeaturedCarouselIndex((i) => (i === curatedFeatured.length - 1 ? 0 : i + 1))}
                         aria-label="Next featured prospect"
-                        className="size-7 rounded-full bg-white/15 backdrop-blur-sm text-white flex items-center justify-center hover:bg-white/25 transition-colors"
+                        className="size-6 rounded-lg text-white flex items-center justify-center hover:bg-white/20 transition-colors"
                       >
                         <IconChevronRight size={14} />
                       </button>
-                    </>
+                    </div>
                   )}
                   <button
                     type="button"
@@ -728,11 +768,11 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                     aria-label={featuredProspect.isFeatured ? "Remove from featured" : "Add to featured"}
                     aria-pressed={!!featuredProspect.isFeatured}
                     className={cn(
-                      "size-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors",
-                      featuredProspect.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-white/15 text-white hover:bg-amber-400 hover:text-[#151936]"
+                      "size-8 rounded-xl backdrop-blur-md flex items-center justify-center transition-all cursor-pointer shadow-2xs",
+                      featuredProspect.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-black/40 text-white border border-white/15 hover:bg-amber-400 hover:text-[#151936]"
                     )}
                   >
-                    {featuredProspect.isFeatured ? <IconStarFilled size={13} /> : <IconStar size={13} />}
+                    {featuredProspect.isFeatured ? <IconStarFilled size={14} /> : <IconStar size={14} />}
                   </button>
                 </div>
 
@@ -740,51 +780,53 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                   src={coverImageOf(featuredProspect)}
                   alt={subjectOf(featuredProspect).name}
                   fill
-                  sizes="(max-width: 1024px) 100vw, 35vw"
+                  sizes="(max-width: 1024px) 100vw, 36vw"
                   className="object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d1c] via-[#0a0d1c]/40 to-transparent" />
 
                 {/* Overlay Data */}
                 <div className="absolute bottom-6 left-6 right-6">
-                  <p className="mono-data text-xs text-slate-400 font-mono mb-1">
+                  <span className="font-mono text-xs font-medium text-amber-300 px-2 py-0.5 rounded-md bg-black/40 border border-white/10 inline-block mb-1.5">
                     {featuredProspect.valuationCode}
-                  </p>
-                  <h3 className="text-2xl font-serif text-white font-medium">
+                  </span>
+                  <h3 className="text-xl font-medium text-white leading-tight">
                     {subjectOf(featuredProspect).name}
                   </h3>
-                  <p className="text-xs text-white/60 truncate mt-1">
+                  <p className="text-xs text-white/70 truncate mt-1 flex items-center gap-1 font-mono">
+                    <IconMapPin size={13} className="text-amber-400 shrink-0" />
                     {subjectOf(featuredProspect).location}
                   </p>
                 </div>
               </div>
 
-              {/* Right Side: Valuation & Fit Data */}
-              <div className="flex-1 p-8 lg:p-10 flex flex-col lg:flex-row gap-8 relative bg-white overflow-hidden justify-between items-stretch">
-                <div className="absolute -top-32 -right-32 opacity-[0.015] text-[#122a20] pointer-events-none">
+              {/* Center & Right: Valuation & Fit Data */}
+              <div className="flex-1 p-6 lg:p-8 flex flex-col lg:flex-row gap-6 relative bg-white overflow-hidden justify-between items-stretch">
+                <div className="absolute -top-32 -right-32 opacity-[0.015] text-[#151936] pointer-events-none">
                   <IconTelescope size={400} stroke={0.5} />
                 </div>
 
                 <div className="flex-1 flex flex-col justify-between relative z-10 gap-5">
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2.5 flex-wrap">
                     <Badge tone={stageTone(featuredProspect.stage)}>
                       {(STAGE_META[featuredProspect.stage] ?? STAGE_META.requested).label}
                     </Badge>
                     {scoreOf(featuredProspect) && (
-                      <span className="text-xs font-mono text-slate-600 tracking-wider uppercase font-medium">
+                      <span className="text-xs font-mono text-slate-700 tracking-wider uppercase font-medium bg-slate-100/80 px-2.5 py-1 rounded-lg border border-slate-200/60">
                         Grade {scoreOf(featuredProspect)?.grade} Fit
                       </span>
                     )}
                   </div>
 
-                  <div>
+                  {/* Acquisition Fit Score Progress Container */}
+                  <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 shadow-2xs space-y-2">
                     {scoreOf(featuredProspect) ? (
                       <>
-                        <div className="flex items-center justify-between text-xs text-slate-500 font-mono tracking-wider mb-2">
+                        <div className="flex items-center justify-between text-xs font-mono text-slate-600 font-medium">
                           <span>ACQUISITION FIT SCORE</span>
-                          <span className="font-medium text-slate-950">{scoreOf(featuredProspect)?.score}%</span>
+                          <span className="font-mono text-sm font-medium text-slate-900">{scoreOf(featuredProspect)?.score}%</span>
                         </div>
-                        <div className="h-2 bg-slate-200/60 rounded-full overflow-hidden w-full">
+                        <div className="h-2.5 bg-slate-200/80 rounded-full overflow-hidden w-full">
                           <div
                             style={{ width: `${scoreOf(featuredProspect)?.score}%` }}
                             className="h-full rounded-full bg-emerald-500 transition-all duration-500"
@@ -792,34 +834,34 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                         </div>
                       </>
                     ) : (
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between gap-4">
+                      <div className="flex items-center justify-between gap-4">
                         <div>
-                          <p className="text-xs text-slate-500 font-medium">ESTIMATED VALUE PENDING</p>
-                          <p className="text-xs text-slate-600 mt-1">Acquisition fit score will be determined upon submission of assessed market values.</p>
+                          <p className="text-xs text-slate-500 font-mono uppercase tracking-wider font-medium">Acquisition Fit Pending</p>
+                          <p className="text-xs text-slate-600 mt-0.5">Fit score is determined upon assessed market value entry.</p>
                         </div>
-                        <span className="text-xs font-mono text-slate-600 uppercase tracking-widest shrink-0">Stage: {featuredProspect.stage}</span>
+                        <Badge tone="neutral" className="font-mono text-xxs shrink-0">Stage: {featuredProspect.stage}</Badge>
                       </div>
                     )}
                   </div>
 
-                  {/* Landlord and Manager Avatars */}
-                  <div className="flex items-center gap-6 flex-wrap mt-2">
+                  {/* Landlord & Manager Identity Stack */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {featuredProspect.landlordName && (
                       <button
                         type="button"
                         onClick={() => {
                           if (featuredProspect.landlordContactId) setOwnerContactId(featuredProspect.landlordContactId);
                         }}
-                        className="flex items-center gap-3 hover:bg-slate-50 transition-colors p-1.5 rounded-2xl text-left border border-transparent hover:border-slate-100/80 group/avatar shrink-0"
+                        className="flex items-center gap-3 bg-slate-50/70 hover:bg-slate-100/80 transition-all p-2.5 rounded-2xl border border-slate-200/70 group/avatar shrink-0 text-left shadow-2xs"
                       >
                         <Avatar
                           src={featuredProspect.landlordAvatarUrl ?? undefined}
                           fallback={featuredProspect.landlordName.slice(0, 1)}
-                          className="size-10 shrink-0"
+                          className="size-9 shrink-0 shadow-2xs"
                         />
                         <div className="min-w-0">
-                          <span className="block text-sm font-medium text-slate-950 group-hover/avatar:text-[#151936] transition-colors leading-tight truncate">{featuredProspect.landlordName}</span>
-                          <span className="block text-xs text-slate-500 tracking-wider font-mono uppercase mt-0.5">Landlord</span>
+                          <span className="block text-xs font-medium text-slate-900 group-hover/avatar:text-[#151936] transition-colors truncate">{featuredProspect.landlordName}</span>
+                          <span className="block text-[10px] text-slate-500 tracking-wider font-mono uppercase mt-0.5">Landlord</span>
                         </div>
                       </button>
                     )}
@@ -830,26 +872,26 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                         onClick={() => {
                           if (featuredProspect.assignedManagerId) setManagerUserId(featuredProspect.assignedManagerId);
                         }}
-                        className="flex items-center gap-3 hover:bg-slate-50 transition-colors p-1.5 rounded-2xl text-left border border-transparent hover:border-slate-100/80 group/avatar shrink-0"
+                        className="flex items-center gap-3 bg-slate-50/70 hover:bg-slate-100/80 transition-all p-2.5 rounded-2xl border border-slate-200/70 group/avatar shrink-0 text-left shadow-2xs"
                       >
                         <Avatar
                           src={featuredProspect.managerAvatarUrl ?? undefined}
                           fallback={featuredProspect.managerName.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-                          className="size-10 shrink-0"
+                          className="size-9 shrink-0 shadow-2xs"
                         />
                         <div className="min-w-0">
-                          <span className="block text-sm font-medium text-slate-950 group-hover/avatar:text-[#151936] transition-colors leading-tight truncate">{featuredProspect.managerName}</span>
-                          <span className="block text-xs text-slate-500 tracking-wider font-mono uppercase mt-0.5">Manager</span>
+                          <span className="block text-xs font-medium text-slate-900 group-hover/avatar:text-[#151936] transition-colors truncate">{featuredProspect.managerName}</span>
+                          <span className="block text-[10px] text-slate-500 tracking-wider font-mono uppercase mt-0.5">Manager</span>
                         </div>
                       </button>
                     )}
                   </div>
 
                   {/* Financials & Action Buttons */}
-                  <div className="border-t border-slate-100 pt-4 flex items-center justify-between gap-4 flex-wrap mt-2">
+                  <div className="border-t border-slate-200/70 pt-4 flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex flex-col">
-                      <span className="text-xxs font-mono tracking-wider text-slate-600 uppercase">Prospective Market Value</span>
-                      <span className="font-mono text-xl font-medium text-slate-900 mt-0.5">
+                      <span className="text-[10px] font-mono font-medium tracking-wider text-slate-500 uppercase">Prospective Market Value</span>
+                      <span className="font-mono text-2xl font-medium text-[#151936] mt-0.5">
                         {featuredProspect.marketValueKes ? formatCompactKES(Number(featuredProspect.marketValueKes)) : "—"}
                       </span>
                     </div>
@@ -858,7 +900,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       <Button
                         variant="secondary"
                         onClick={() => router.push(`/admin/valuations/${featuredProspect.id}`)}
-                        className="h-9 px-4 text-xs font-medium rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-xs"
+                        className="h-10 px-4 text-xs font-medium rounded-xl border border-slate-200 text-slate-800 hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-2xs"
                       >
                         Open Valuation File <IconExternalLink size={14} />
                       </Button>
@@ -866,7 +908,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       {featuredProspect.stage === "site_visit" && (
                         <Button
                           onClick={() => setSubmittingValuation(featuredProspect)}
-                          className="bg-[#151936] text-white hover:bg-opacity-90 transition rounded-xl px-4 h-9 text-xs font-medium flex items-center gap-1.5 shadow-sm"
+                          className="bg-[#151936] text-white hover:bg-[#1f254e] transition rounded-xl px-4 h-10 text-xs font-medium flex items-center gap-1.5 shadow-2xs"
                         >
                           Submit Valuation <IconShieldCheck size={14} />
                         </Button>
@@ -875,18 +917,22 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                   </div>
                 </div>
 
-                {/* Right-most mini column slot */}
-                <div className="hidden lg:flex w-[200px] shrink-0 border-l border-slate-100 pl-8 flex-col justify-center items-center text-center">
-                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-center items-center w-full min-h-[140px] shadow-xs relative overflow-hidden">
-                    <div className="absolute top-0 right-0 size-16 bg-[#122a20]/5 rounded-bl-full pointer-events-none" />
-                    <span className="text-[10px] font-mono tracking-wider text-slate-600 uppercase">Methodology</span>
-                    <span className="font-serif text-slate-800 text-sm font-medium mt-1.5 block">
-                      {featuredProspect.methodology || "Comparative Method"}
-                    </span>
-                    <div className="h-px bg-slate-200 w-12 my-3.5" />
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-white border border-slate-200 px-2 py-0.5 rounded-full">
+                {/* Right Side: Methodology Executive Card */}
+                <div className="hidden lg:flex w-[210px] shrink-0 border-l border-slate-200/70 pl-6 flex-col justify-center items-center">
+                  <div className="bg-gradient-to-br from-slate-50 to-slate-100/60 border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between items-center w-full min-h-[220px] shadow-2xs relative overflow-hidden text-center">
+                    <div className="absolute top-0 right-0 size-16 bg-[#151936]/5 rounded-bl-full pointer-events-none" />
+                    
+                    <span className="text-[10px] font-mono font-medium tracking-wider text-slate-500 uppercase">Methodology</span>
+                    
+                    <div className="my-auto py-2">
+                      <span className="text-xs font-medium text-slate-900 block leading-snug">
+                        {featuredProspect.methodology || "Comparative Income Capitalization"}
+                      </span>
+                    </div>
+
+                    <Badge tone="neutral" className="font-mono text-xxs uppercase tracking-widest shrink-0 mt-2">
                       {featuredProspect.isLand ? "Land Plot" : "Built Property"}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
 
@@ -960,8 +1006,8 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             />
           </div>
         ) : viewMode === "board" ? (
-          <div className="overflow-x-auto">
-            <div className="grid grid-flow-col auto-cols-[230px] gap-3.5 items-start">
+          <div className="overflow-x-auto pb-4">
+            <div className="grid grid-flow-col auto-cols-[270px] sm:auto-cols-[290px] gap-4 items-start">
               {stageColumns.map(({ stage, cards }) => {
                 const cfg = STAGE_META[stage];
                 const draggedCard = dragId ? valuations.find((v) => v.id === dragId) : null;
@@ -970,7 +1016,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                 return (
                   <div
                     key={stage}
-                    className="flex flex-col gap-2.5"
+                    className="flex flex-col gap-3"
                     onDragOver={(e) => { if (canDrop) { e.preventDefault(); if (dragOverStage !== stage) setDragOverStage(stage); } }}
                     onDragLeave={() => { if (dragOverStage === stage) setDragOverStage(null); }}
                     onDrop={(e) => {
@@ -983,16 +1029,19 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       transitionStage(card, stage);
                     }}
                   >
-                    <div className={cn("flex items-center justify-between gap-2 px-1 py-1 rounded-lg transition-colors", isOver && "bg-slate-100")}>
-                      <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-                        <span className={cn("size-2 rounded-full", cfg.dot)} /> {cfg.label}
+                    {/* Header */}
+                    <div className={cn("flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl border transition-colors bg-slate-50/70 border-slate-200/70", isOver && "bg-slate-100 border-slate-300")}>
+                      <span className="flex items-center gap-2 text-xs font-mono font-medium text-slate-800 uppercase tracking-wider">
+                        <span className={cn("size-2.5 rounded-full", cfg.dot)} /> {cfg.label}
                       </span>
-                      <span className="text-xs font-mono text-slate-600 bg-slate-100 rounded-full px-2 py-0.5">{cards.length}</span>
+                      <span className="text-xxs font-mono font-medium text-slate-700 bg-white border border-slate-200/80 rounded-full px-2 py-0.5 shadow-2xs">{cards.length}</span>
                     </div>
+
+                    {/* Drag Container */}
                     <div className={cn(
-                      "flex flex-col gap-2 rounded-2xl p-0.5 transition-all",
-                      isOver ? "bg-slate-50 ring-2 ring-slate-300 ring-inset" : (draggedCard && canDrop ? "ring-1 ring-slate-200 ring-inset" : ""),
-                    )} style={{ minHeight: draggedCard && canDrop ? 56 : 8 }}>
+                      "flex flex-col gap-3 rounded-2xl p-1 transition-all",
+                      isOver ? "bg-slate-100/70 ring-2 ring-slate-300 ring-inset" : (draggedCard && canDrop ? "ring-1 ring-slate-200 ring-inset" : ""),
+                    )} style={{ minHeight: draggedCard && canDrop ? 80 : 8 }}>
                       {cards.map((v) => {
                         const subject = subjectOf(v);
                         const score = scoreOf(v);
@@ -1008,30 +1057,30 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                             role="button"
                             tabIndex={0}
                             className={cn(
-                              "text-left w-full bg-white border rounded-2xl overflow-hidden hover:shadow-[0_8px_20px_rgb(0,0,0,0.05)] hover:border-slate-200 transition-all cursor-grab group/card flex flex-col gap-0",
-                              dragId === v.id ? "opacity-50 border-[#f3df27]" : "border-slate-100",
+                              "text-left w-full bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:shadow-[0_8px_20px_rgb(0,0,0,0.06)] hover:border-slate-300 transition-all duration-300 cursor-grab group/card flex flex-col gap-0 shadow-2xs",
+                              dragId === v.id ? "opacity-50 border-[#f3df27] ring-2 ring-[#f3df27]" : "",
                             )}
                           >
                             {/* Property Media / Artwork Banner */}
-                            <div className="relative h-24 w-full bg-[#0d211a] overflow-hidden shrink-0">
+                            <div className="relative h-28 w-full bg-[#0d211a] overflow-hidden shrink-0">
                               <Image
                                 src={firstImage}
                                 alt={subject.name}
                                 fill
-                                sizes="180px"
+                                sizes="280px"
                                 className="object-cover transition-transform duration-500 group-hover/card:scale-105"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d1c]/80 via-transparent to-transparent" />
 
                               {/* Floating Badges inside Banner */}
-                              <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
-                                <div className={cn("size-6 rounded-md flex items-center justify-center bg-[#151936]/80 text-white backdrop-blur-xs shadow-xs border border-slate-700/20")}>
-                                  {subject.portfolio ? <IconBuildingCommunity size={12} /> : <IconExternalLink size={12} />}
+                              <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10">
+                                <div className="size-6 rounded-lg flex items-center justify-center bg-[#151936]/80 text-white backdrop-blur-md shadow-2xs border border-white/15">
+                                  {subject.portfolio ? <IconBuildingCommunity size={13} /> : <IconExternalLink size={13} />}
                                 </div>
                                 {isStalled && (
-                                  <span className="bg-rose-50 text-white text-xxs font-medium uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm">
+                                  <Badge tone="risk" className="text-[9px] uppercase tracking-wider px-1.5 py-0.5">
                                     Stalled
-                                  </span>
+                                  </Badge>
                                 )}
                                 <button
                                   type="button"
@@ -1039,46 +1088,46 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                                   aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
                                   aria-pressed={!!v.isFeatured}
                                   className={cn(
-                                    "size-6 rounded-md flex items-center justify-center backdrop-blur-xs shadow-xs border transition-colors",
-                                    v.isFeatured ? "bg-amber-400 border-amber-300 text-[#151936]" : "bg-[#151936]/80 border-slate-700/20 text-white hover:bg-amber-400 hover:text-[#151936]"
+                                    "size-6 rounded-lg flex items-center justify-center backdrop-blur-md shadow-2xs border transition-colors cursor-pointer",
+                                    v.isFeatured ? "bg-amber-400 border-amber-300 text-[#151936]" : "bg-[#151936]/80 border-white/15 text-white hover:bg-amber-400 hover:text-[#151936]"
                                   )}
                                 >
-                                  {v.isFeatured ? <IconStarFilled size={11} /> : <IconStar size={11} />}
+                                  {v.isFeatured ? <IconStarFilled size={12} /> : <IconStar size={12} />}
                                 </button>
                               </div>
 
                               {score && (
-                                <span className="absolute top-2 right-2 bg-white/95 text-slate-800 rounded px-1.5 py-0.5 text-xxs font-mono font-medium shadow-xs border border-slate-150" title="Acquisition Fit Score">
-                                  <span style={{ color: score.color }} className="font-medium mr-0.5">{score.grade}</span> {score.score}
+                                <span className="absolute top-2.5 right-2.5 bg-white/95 text-slate-900 rounded-lg px-2 py-0.5 text-xxs font-mono font-medium shadow-2xs border border-slate-200/80" title="Acquisition Fit Score">
+                                  <span style={{ color: score.color }} className="font-medium mr-0.5">{score.grade}</span> {score.score}%
                                 </span>
                               )}
 
                               {v.managerName && (
-                                <span className="absolute bottom-2 right-2 size-6 rounded-full bg-[#151936] text-[#f3df27] text-xxs font-mono font-medium flex items-center justify-center border border-white shadow-xs" title={`Assigned PM: ${v.managerName}`}>
+                                <span className="absolute bottom-2 right-2.5 size-6 rounded-full bg-[#151936] text-[#f3df27] text-xxs font-mono font-medium flex items-center justify-center border-2 border-white shadow-2xs" title={`Assigned PM: ${v.managerName}`}>
                                   {v.managerName.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                                 </span>
                               )}
                             </div>
 
                             {/* Card Body */}
-                            <div className="p-3 flex flex-col flex-1">
-                              <p className="text-md font-medium text-slate-900 leading-snug truncate group-hover/card:text-[#151936] transition-colors">{subject.name}</p>
+                            <div className="p-3.5 flex flex-col flex-1 gap-2.5">
+                              <p className="text-xs font-medium text-slate-900 leading-snug truncate group-hover/card:text-[#151936] transition-colors">{subject.name}</p>
 
                               {/* Landlord Row */}
-                              <div className="flex items-center gap-1.5 mt-2">
+                              <div className="flex items-center gap-2">
                                 <Avatar
                                   src={v.landlordAvatarUrl ?? undefined}
                                   fallback={v.landlordName ? v.landlordName.slice(0, 1) : "?"}
-                                  className="size-5 bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-medium shrink-0"
+                                  className="size-5 bg-slate-100 border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
                                 />
-                                <span className="text-xs text-slate-500 font-medium truncate">{v.landlordName || "No Landlord"}</span>
+                                <span className="text-xs text-slate-600 font-medium truncate">{v.landlordName || "No Landlord"}</span>
                               </div>
 
-                              <div className="h-px bg-slate-100/80 my-2" />
+                              <div className="h-px bg-slate-100/90" />
 
                               <div className="flex items-center justify-between mt-auto">
-                                <span className="font-mono text-xs text-[#122a20] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
-                                <Badge tone="neutral" className="font-mono text-xxs px-1.5 py-0.5 shrink-0">
+                                <span className="font-mono text-xs text-[#151936] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
+                                <Badge tone="neutral" className="font-mono text-xxs px-2 py-0.5 shrink-0">
                                   {ageDaysOf(v)}d
                                 </Badge>
                               </div>
@@ -1087,7 +1136,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                         );
                       })}
                       {cards.length === 0 && draggedCard && canDrop && (
-                        <div className="flex items-center justify-center h-14 border-[1.5px] border-dashed border-slate-300 rounded-xl text-xs font-medium text-slate-600">
+                        <div className="flex items-center justify-center h-16 border-2 border-dashed border-slate-300 rounded-2xl text-xs font-medium text-slate-500 bg-slate-50/50">
                           Drop here
                         </div>
                       )}
@@ -1098,111 +1147,125 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             </div>
           </div>
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {visible.map((v) => {
-              const subject = subjectOf(v);
-              const cfg = STAGE_META[v.stage] ?? STAGE_META.requested;
-              const score = scoreOf(v);
-              const firstImage = coverImageOf(v);
-              return (
-                <div
-                  key={v.id}
-                  onClick={() => router.push(`/admin/valuations/${v.id}`)}
-                  role="button"
-                  tabIndex={0}
-                  className="bg-white border border-slate-100 rounded-3xl overflow-hidden hover:shadow-[0_12px_30px_rgb(0,0,0,0.06)] transition-all cursor-pointer group/card flex flex-col gap-0"
-                >
-                  {/* Property Image Banner */}
-                  <div className="relative h-36 w-full bg-[#0d211a] overflow-hidden shrink-0">
-                    <Image
-                      src={firstImage}
-                      alt={subject.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw"
-                      className="object-cover transition-transform duration-500 group-hover/card:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visible.map((v) => {
+                const subject = subjectOf(v);
+                const cfg = STAGE_META[v.stage] ?? STAGE_META.requested;
+                const score = scoreOf(v);
+                const firstImage = coverImageOf(v);
+                return (
+                  <div
+                    key={v.id}
+                    onClick={() => router.push(`/admin/valuations/${v.id}`)}
+                    role="button"
+                    tabIndex={0}
+                    className="bg-white border border-slate-200/80 rounded-[24px] overflow-hidden hover:shadow-[0_12px_30px_rgb(0,0,0,0.06)] hover:border-slate-300 transition-all duration-300 cursor-pointer group/card flex flex-col gap-0 shadow-2xs"
+                  >
+                    {/* Property Image Banner */}
+                    <div className="relative h-40 w-full bg-[#0d211a] overflow-hidden shrink-0">
+                      <Image
+                        src={firstImage}
+                        alt={subject.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw"
+                        className="object-cover transition-transform duration-500 group-hover/card:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d1c]/80 via-transparent to-transparent" />
 
-                    {/* Floating Badges inside Image */}
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
-                      <Badge tone={stageTone(v.stage)} className="backdrop-blur-xs">
-                        {cfg.label}
-                      </Badge>
-                    </div>
+                      {/* Floating Badges inside Image */}
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+                        <Badge tone={stageTone(v.stage)}>
+                          {cfg.label}
+                        </Badge>
+                      </div>
 
-                    <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
-                      {score && (
-                        <span className="bg-white/95 text-slate-800 rounded-lg px-2 py-0.5 text-xxs font-mono font-medium shadow-xs border border-slate-150" title="Acquisition Fit Score">
-                          <span style={{ color: score.color }} className="font-medium mr-0.5">{score.grade}</span> {score.score}
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                        {score && (
+                          <span className="bg-white/95 text-slate-900 rounded-lg px-2 py-0.5 text-xxs font-mono font-medium shadow-2xs border border-slate-200/80" title="Acquisition Fit Score">
+                            <span style={{ color: score.color }} className="font-medium mr-0.5">{score.grade}</span> {score.score}%
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleToggleFeature(v.id, !!v.isFeatured); }}
+                          aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
+                          aria-pressed={!!v.isFeatured}
+                          className={cn(
+                            "size-8 rounded-xl flex items-center justify-center backdrop-blur-md shadow-2xs transition-colors cursor-pointer",
+                            v.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-black/40 text-white border border-white/15 hover:bg-amber-400 hover:text-[#151936]"
+                          )}
+                        >
+                          {v.isFeatured ? <IconStarFilled size={14} /> : <IconStar size={14} />}
+                        </button>
+                      </div>
+
+                      {v.managerName && (
+                        <span className="absolute bottom-3 right-3 size-8 rounded-full bg-[#151936] text-[#f3df27] text-xs font-mono font-medium flex items-center justify-center border-2 border-white shadow-md" title={`Assigned PM: ${v.managerName}`}>
+                          {v.managerName.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                         </span>
                       )}
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleToggleFeature(v.id, !!v.isFeatured); }}
-                        aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
-                        aria-pressed={!!v.isFeatured}
-                        className={cn(
-                          "size-7 rounded-lg flex items-center justify-center backdrop-blur-sm shadow-xs transition-colors",
-                          v.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-black/30 text-white hover:bg-amber-400 hover:text-[#151936]"
-                        )}
-                      >
-                        {v.isFeatured ? <IconStarFilled size={13} /> : <IconStar size={13} />}
-                      </button>
                     </div>
 
-                    {v.managerName && (
-                      <span className="absolute bottom-3 right-3 size-8 rounded-full bg-[#151936] text-[#f3df27] text-xs font-mono font-medium flex items-center justify-center border-2 border-white shadow-md" title={`Assigned PM: ${v.managerName}`}>
-                        {v.managerName.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Info Area */}
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <div className="min-w-0 mb-4">
-                      <p className="text-base font-medium text-slate-900 truncate leading-snug group-hover/card:text-[#151936] transition-colors">{subject.name}</p>
-                      <p className="text-xs text-slate-500 truncate mt-1.5 flex items-center gap-1">
-                        <IconMapPin size={12} className="text-slate-600 shrink-0" /> {subject.location}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-4">
-                      <Avatar
-                        src={v.landlordAvatarUrl ?? undefined}
-                        fallback={v.landlordName ? v.landlordName.slice(0, 1) : "?"}
-                        className="size-6 bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-medium shrink-0"
-                      />
+                    {/* Info Area */}
+                    <div className="p-5 flex-1 flex flex-col justify-between gap-4">
                       <div className="min-w-0">
-                        {v.landlordName ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (v.landlordContactId) setOwnerContactId(v.landlordContactId);
-                            }}
-                            className="block text-xs font-medium text-slate-900 hover:text-[#151936] hover:underline truncate leading-none"
-                          >
-                            {v.landlordName}
-                          </button>
-                        ) : (
-                          <span className="block text-xs font-medium text-slate-600 leading-none">No Landlord</span>
-                        )}
-                        <span className="block text-xs text-slate-600 font-mono uppercase tracking-wider mt-0.5">Prospective Landlord</span>
+                        <p className="text-base font-medium text-slate-900 truncate leading-snug group-hover/card:text-[#151936] transition-colors">{subject.name}</p>
+                        <p className="text-xs text-slate-500 truncate mt-1 flex items-center gap-1 font-mono">
+                          <IconMapPin size={13} className="text-amber-500 shrink-0" /> {subject.location}
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-50/80 border border-slate-200/60 rounded-xl p-2.5 flex items-center gap-2.5">
+                        <Avatar
+                          src={v.landlordAvatarUrl ?? undefined}
+                          fallback={v.landlordName ? v.landlordName.slice(0, 1) : "?"}
+                          className="size-7 bg-slate-100 border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          {v.landlordName ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (v.landlordContactId) setOwnerContactId(v.landlordContactId);
+                              }}
+                              className="block text-xs font-medium text-slate-900 hover:text-[#151936] hover:underline truncate leading-tight cursor-pointer"
+                            >
+                              {v.landlordName}
+                            </button>
+                          ) : (
+                            <span className="block text-xs font-medium text-slate-600 leading-tight">No Landlord</span>
+                          )}
+                          <span className="block text-[10px] text-slate-500 font-mono uppercase tracking-wider mt-0.5">Landlord</span>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-3 flex items-center justify-between mt-auto">
+                        <span className="font-mono text-base text-[#151936] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
+                        <Badge tone="neutral" className="font-mono text-xxs px-2.5 py-1 shrink-0">
+                          {ageDaysOf(v)}d
+                        </Badge>
                       </div>
                     </div>
-
-                    <div className="h-px bg-slate-100 my-3" />
-
-                    <div className="flex items-center justify-between mt-auto">
-                      <span className="font-mono text-sm text-[#122a20] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
-                      <Badge tone="neutral" className="font-mono text-xxs px-2.5 py-1 shrink-0">
-                        {ageDaysOf(v)}d
-                      </Badge>
-                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+
+            {/* Shared ERP Pagination */}
+            {filtered.length > 0 && (
+              <div className="pt-4 border-t border-slate-100">
+                <PaginationControls
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={filtered.length}
+                  pageSize={rowsPerPage}
+                  itemLabel="records"
+                  onPageChange={setPage}
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
@@ -1216,22 +1279,22 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                   <div
                     key={v.id}
                     onClick={() => router.push(`/admin/valuations/${v.id}`)}
-                    className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md cursor-pointer transition-all duration-200"
+                    className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs hover:shadow-xs cursor-pointer transition-all duration-200 space-y-3"
                   >
-                    <div className="flex items-center justify-between gap-2 mb-2.5">
-                      <span className="mono-data text-xs text-slate-600">{v.valuationCode}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60">{v.valuationCode}</span>
                       <Badge tone={stageTone(v.stage)}>
                         {cfg.label}
                       </Badge>
                     </div>
 
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={cn("size-10 rounded-lg border flex items-center justify-center shrink-0", subject.portfolio ? "bg-teal-50 border-teal-100 text-teal-600" : "bg-slate-50 border-slate-200 text-slate-600")}>
+                    <div className="flex items-center gap-3">
+                      <div className={cn("size-10 rounded-xl border flex items-center justify-center shrink-0 shadow-2xs", subject.portfolio ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-600")}>
                         {subject.portfolio ? <IconBuildingCommunity size={18} /> : <IconExternalLink size={18} />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-slate-900 truncate">{subject.name}</p>
-                        <p className="text-xs text-slate-500 truncate">{subject.location}</p>
+                        <p className="text-xs text-slate-500 truncate font-mono mt-0.5">{subject.location}</p>
                       </div>
                       <button
                         type="button"
@@ -1239,44 +1302,44 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                         aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
                         aria-pressed={!!v.isFeatured}
                         className={cn(
-                          "size-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
-                          v.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-slate-50 border border-slate-100 text-slate-400 hover:text-amber-500 hover:bg-amber-50"
+                          "size-8 rounded-xl flex items-center justify-center shrink-0 transition-colors cursor-pointer",
+                          v.isFeatured ? "bg-amber-400 text-[#151936]" : "bg-slate-50 border border-slate-200 text-slate-600 hover:text-amber-500 hover:bg-amber-50"
                         )}
                       >
                         {v.isFeatured ? <IconStarFilled size={14} /> : <IconStar size={14} />}
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 border-t border-slate-50 pt-3 text-xs">
+                    <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 text-xs">
                       <div>
-                        <p className="label-caps text-slate-600 mb-0.5">Landlord</p>
+                        <p className="label-caps text-slate-500 mb-0.5">Landlord</p>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (v.landlordContactId) setOwnerContactId(v.landlordContactId);
                           }}
-                          className="font-medium text-slate-700 hover:text-slate-900 transition-colors truncate max-w-full text-left"
+                          className="font-medium text-slate-900 hover:underline transition-colors truncate max-w-full text-left cursor-pointer"
                         >
                           {v.landlordName ?? "—"}
                         </button>
                       </div>
                       <div>
-                        <p className="label-caps text-slate-600 mb-0.5">Valuation Value</p>
-                        <p className="font-mono font-medium text-slate-900">
+                        <p className="label-caps text-slate-500 mb-0.5">Valuation Value</p>
+                        <p className="font-mono font-medium text-[#151936]">
                           {v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-50 pt-2.5 mt-3">
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-2">
                       <div className="flex items-center gap-2">
-                        <p className="text-xs text-slate-600">Valued by:</p>
-                        <span className="text-xs text-slate-600 font-medium truncate max-w-[120px]">{valuerLabel(v)}</span>
+                        <span className="text-xs text-slate-500">Valued by:</span>
+                        <span className="text-xs text-slate-800 font-medium truncate max-w-[140px]">{valuerLabel(v)}</span>
                       </div>
                       {score && (
-                        <span className="font-mono text-xs font-medium px-2 py-0.5 rounded-md" style={{ backgroundColor: `${score.color}18`, color: score.color }}>
-                          Fit: {score.grade} ({score.score})
+                        <span className="font-mono text-xs font-medium px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                          Fit: {score.grade} ({score.score}%)
                         </span>
                       )}
                     </div>
@@ -1287,14 +1350,14 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
 
             {/* Desktop View: Full-column table format */}
             <div className="hidden lg:block overflow-x-auto">
-              <div className="min-w-[920px]">
-                <div className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_76px] gap-2.5 px-3.5 py-2 border-b border-slate-100">
-                  <span className="label-caps text-slate-600">Property</span>
-                  <span className="label-caps text-slate-600">Landlord</span>
-                  <span className="label-caps text-slate-600">Valuer</span>
-                  <span className="label-caps text-slate-600 text-right">Valuation</span>
-                  <span className="label-caps text-slate-600">Requested</span>
-                  <span className="label-caps text-slate-600 text-center">Stage</span>
+              <div className="min-w-[960px]">
+                <div className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_76px] gap-3 px-4 py-3 border-b border-slate-200/80 bg-slate-50/70 rounded-t-2xl font-mono text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  <span>Property</span>
+                  <span>Landlord</span>
+                  <span>Valuer</span>
+                  <span className="text-right">Valuation</span>
+                  <span>Requested</span>
+                  <span className="text-center">Stage</span>
                   <span />
                 </div>
                 {visible.map((v) => {
@@ -1308,26 +1371,30 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       role="button"
                       tabIndex={0}
                       onClick={() => router.push(`/admin/valuations/${v.id}`)}
-                      className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_76px] gap-2.5 px-3.5 py-2.5 border-b border-slate-50 items-center cursor-pointer hover:bg-slate-50/80"
+                      className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_76px] gap-3 px-4 py-3 border-b border-slate-100 items-center cursor-pointer hover:bg-slate-50/90 transition-colors"
                     >
-                      <span className="flex items-center gap-2 min-w-0">
-                        <span className="relative size-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0">
+                      <span className="flex items-center gap-2.5 min-w-0">
+                        <span className="relative size-9 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0 shadow-2xs">
                           <Image
                             src={firstImage}
                             alt={subject.name}
                             fill
-                            sizes="32px"
+                            sizes="36px"
                             className="object-cover"
                           />
                         </span>
-                        <span className="text-xs font-medium text-slate-900 truncate">{subject.name}</span>
+                        <div className="min-w-0">
+                          <span className="block text-xs font-medium text-slate-900 truncate leading-snug">{subject.name}</span>
+                          <span className="block font-mono text-[10px] text-slate-500 truncate">{v.valuationCode}</span>
+                        </div>
                       </span>
+
                       <span className="truncate">
                         <div className="flex items-center gap-2 min-w-0">
                           <Avatar
                             src={v.landlordAvatarUrl ?? undefined}
                             fallback={v.landlordName ? v.landlordName.slice(0, 1) : "?"}
-                            className="size-6 bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-medium shrink-0"
+                            className="size-6 bg-slate-100 border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
                           />
                           {v.landlordName ? (
                             <button
@@ -1336,35 +1403,40 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                                 e.stopPropagation();
                                 if (v.landlordContactId) setOwnerContactId(v.landlordContactId);
                               }}
-                              className="hover:underline text-left text-xs text-slate-600 font-medium hover:text-[#151936] transition-colors truncate"
+                              className="hover:underline text-left text-xs text-slate-800 font-medium hover:text-[#151936] transition-colors truncate cursor-pointer"
                             >
                               {v.landlordName}
                             </button>
                           ) : (
-                            <span className="text-xs text-slate-600">—</span>
+                            <span className="text-xs text-slate-500">—</span>
                           )}
                         </div>
                       </span>
-                      <span className="text-xs text-slate-600 font-medium truncate flex items-center gap-2">
-                        <span className="size-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] text-slate-600 font-mono">
+
+                      <span className="text-xs text-slate-700 font-medium truncate flex items-center gap-2">
+                        <span className="size-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xxs text-slate-600 font-mono shrink-0">
                           V
                         </span>
-                        {valuerLabel(v)}
+                        <span className="truncate">{valuerLabel(v)}</span>
                       </span>
+
                       <span className="text-right">
-                        <span className="block font-mono text-xs text-slate-900 font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
+                        <span className="block font-mono text-xs text-[#151936] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
                         {score && (
-                          <span className="inline-block mt-0.5 font-mono text-xxs rounded bg-emerald-50 text-emerald-700 border border-emerald-100/50 px-1 py-0.5 leading-none">
+                          <span className="inline-block mt-0.5 font-mono text-[10px] rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-1.5 py-0.5 leading-none">
                             {score.grade} · {score.score}%
                           </span>
                         )}
                       </span>
+
                       <span className="font-mono text-xs text-slate-600">{fmtDate(v.createdAt)}</span>
+
                       <span className="text-center">
                         <Badge tone={stageTone(v.stage)}>
                           {cfg.label}
                         </Badge>
                       </span>
+
                       <span onClick={(e) => e.stopPropagation()} className="flex justify-end items-center gap-1">
                         <button
                           type="button"
@@ -1372,16 +1444,17 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                           aria-label={v.isFeatured ? "Remove from featured" : "Add to featured"}
                           aria-pressed={!!v.isFeatured}
                           className={cn(
-                            "size-7 rounded-md flex items-center justify-center transition-colors",
-                            v.isFeatured ? "bg-amber-400 text-[#151936]" : "text-slate-400 hover:text-amber-500 hover:bg-amber-50"
+                            "size-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer",
+                            v.isFeatured ? "bg-amber-400 text-[#151936]" : "text-slate-600 hover:text-amber-500 hover:bg-amber-50"
                           )}
                         >
                           {v.isFeatured ? <IconStarFilled size={13} /> : <IconStar size={13} />}
                         </button>
                         <DropdownMenu
                           label="Valuation actions"
-                          trigger={<div className="p-1.5 rounded-md text-slate-600 hover:bg-white hover:shadow-sm hover:text-slate-900 transition-all border border-transparent hover:border-slate-200"><IconDotsVertical size={16} /></div>}
+                          trigger={<div className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all cursor-pointer"><IconDotsVertical size={16} /></div>}
                           align="right"
+                          className="z-50"
                         >
                           {v.stage === "requested" && <DropdownItem icon={IconChevronRight} onClick={() => transitionStage(v, "site_visit")}>Confirm Site Visit</DropdownItem>}
                           {v.stage === "site_visit" && <DropdownItem icon={IconFileCertificate} onClick={() => setSubmittingValuation(v)}>Submit Valuation</DropdownItem>}
@@ -1405,6 +1478,20 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                 })}
               </div>
             </div>
+
+            {/* List View Shared ERP Pagination */}
+            {filtered.length > 0 && (
+              <div className="pt-4 border-t border-slate-100">
+                <PaginationControls
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={filtered.length}
+                  pageSize={rowsPerPage}
+                  itemLabel="records"
+                  onPageChange={setPage}
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -1420,88 +1507,139 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
         )}
       </div>
 
-      <div className="flex items-center gap-4 mt-2">
+      <div className="flex items-center gap-4 mt-4">
         <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-600 tracking-wider">Valuer Performance</span>
+        <span className="label-caps text-slate-600 tracking-widest font-mono text-xxs font-medium uppercase">VALUER PERFORMANCE & ANALYTICS</span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-3.5 items-start">
-        <div className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5">
-          <p className="text-title-primary mb-3.5">Valuer Leaderboard</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-4 items-start">
+        {/* Valuer Leaderboard Widget */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs p-5 hover:shadow-xs transition-all duration-300">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="size-8 rounded-xl bg-[#f3df27]/15 border border-[#f3df27]/40 text-[#151936] flex items-center justify-center shrink-0 shadow-2xs">
+                <IconAward size={18} className="text-amber-600" />
+              </span>
+              <div>
+                <h3 className="text-slate-900 text-sm font-medium leading-tight">Valuer Leaderboard</h3>
+                <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mt-0.5">Top portfolio valuers by volume</p>
+              </div>
+            </div>
+            <Badge tone="warning" className="font-mono text-xxs px-2 py-0.5">TOP PERFORMERS</Badge>
+          </div>
+
           {leaderboard.length === 0 ? (
-            <p className="text-meta-muted py-4 text-center text-xs">No valued prospects yet.</p>
+            <p className="text-slate-400 py-6 text-center text-xs font-mono">No valued prospects yet.</p>
           ) : (
             <div className="flex flex-col gap-2.5">
-              {leaderboard.map((l) => (
-                <div key={l.name} className="flex items-center gap-2.5">
-                  <span className="size-6 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center font-mono text-xs text-slate-500 shrink-0">{l.rank}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-900 truncate">{l.name}</p>
-                    <p className="text-xs text-slate-600">{l.count} valued</p>
+              {leaderboard.map((l) => {
+                const rankBadge =
+                  l.rank === 1
+                    ? "bg-amber-100 text-amber-800 border-amber-300"
+                    : l.rank === 2
+                    ? "bg-slate-100 text-slate-800 border-slate-300"
+                    : l.rank === 3
+                    ? "bg-amber-900/10 text-amber-900 border-amber-800/30"
+                    : "bg-slate-50 text-slate-600 border-slate-200";
+                const rankIcon = l.rank === 1 ? "🏆" : l.rank === 2 ? "🥈" : l.rank === 3 ? "🥉" : `#${l.rank}`;
+                return (
+                  <div key={l.name} className="flex items-center gap-3 bg-slate-50/70 border border-slate-200/60 rounded-xl p-3 hover:bg-slate-100/80 transition-colors">
+                    <span className={cn("font-mono text-xs font-medium px-2 py-0.5 rounded-lg border shadow-2xs shrink-0", rankBadge)}>
+                      {rankIcon}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-slate-900 truncate">{l.name}</p>
+                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">{l.count} prospect{l.count === 1 ? "" : "s"} valued</p>
+                    </div>
+                    <span className="font-mono text-xs font-medium text-[#151936]">{formatCompactKES(l.value)}</span>
                   </div>
-                  <span className="font-mono text-xs text-[#122a20]">{formatCompactKES(l.value)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
-        <div className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 flex flex-col">
-          <p className="text-title-primary mb-3.5">Pipeline by Manager</p>
-          <div className="flex flex-col gap-2.5">
-            {mgrPipeline.map((m) => (
-              <div key={m.name} className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center font-mono text-xs shrink-0">
-                  {m.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+
+        {/* Pipeline by Manager Widget */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs p-5 hover:shadow-xs transition-all duration-300 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="size-8 rounded-xl bg-slate-100 border border-slate-200 text-[#151936] flex items-center justify-center shrink-0 shadow-2xs">
+                  <IconUserCog size={18} />
                 </span>
-                <span className="flex-1 text-xs text-slate-600">{m.name}</span>
-                <div className="w-[76px] h-[5px] rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-[#151936]" style={{ width: `${m.barPct}%` }} />
+                <div>
+                  <h3 className="text-slate-900 text-sm font-medium leading-tight">Pipeline by Manager</h3>
+                  <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mt-0.5">Active workload distribution</p>
                 </div>
-                <span className="w-6 text-right font-mono text-xs text-slate-700">{m.count}</span>
               </div>
-            ))}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {mgrPipeline.map((m) => (
+                <div key={m.name} className="flex items-center gap-3 bg-slate-50/70 border border-slate-200/60 rounded-xl p-2.5">
+                  <span className="size-7 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center font-mono text-xxs font-medium shrink-0 border border-white/20 shadow-2xs">
+                    {m.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                  </span>
+                  <span className="flex-1 text-xs text-slate-800 font-medium truncate">{m.name}</span>
+                  <div className="w-[80px] sm:w-[100px] h-2 rounded-full bg-slate-200/70 overflow-hidden shrink-0">
+                    <div className="h-full rounded-full bg-[#151936] transition-all duration-500" style={{ width: `${m.barPct}%` }} />
+                  </div>
+                  <span className="font-mono text-xs font-medium text-slate-900 w-6 text-right shrink-0">{m.count}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
-            <span className="text-meta-muted text-xs">Completed this month</span>
-            <span className="font-mono text-xs text-[#122a20]">{completedThisMonth}</span>
+
+          <div className="mt-4 border-t border-slate-100 pt-3 flex items-center justify-between">
+            <span className="text-xs font-mono font-medium text-slate-500 uppercase tracking-wider">Mandates Signed This Month</span>
+            <span className="font-mono text-xs font-medium text-[#151936] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-lg">{completedThisMonth}</span>
           </div>
         </div>
       </div>
 
-      {/* ── Valuation Activity Logger ─────────────────────────────────────────────────── */}
-      <div className="gsap-stagger mb-8 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 mb-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
-              <IconClock size={16} className="text-slate-600" stroke={2} /> Recent Valuation Activity
-            </h3>
+      {/* ── Valuation Activity Logger ── */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs p-5 lg:p-6 mb-8 hover:shadow-xs transition-all duration-300">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5">
+              <span className="size-9 rounded-xl bg-sky-50 border border-sky-200/60 text-sky-700 flex items-center justify-center shrink-0 shadow-2xs">
+                <IconClock size={19} />
+              </span>
+              <div>
+                <h3 className="text-slate-900 text-sm font-medium leading-tight">Recent Valuation Activity</h3>
+                <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mt-0.5">Audit log of transitions & modifications</p>
+              </div>
+            </div>
+            <Badge tone="neutral" className="font-mono text-xxs px-2.5 py-0.5">
+              {filteredValuationActivity.length} LOGGED EVENTS
+            </Badge>
           </div>
 
           {/* Search & Filter bar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative flex-1">
-              <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <IconSearch size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search activity logs..."
+                placeholder="Search activity logs…"
                 value={activitySearchQuery}
                 onChange={(e) => {
                   setActivitySearchQuery(e.target.value);
                   setActivityPage(1);
                 }}
-                className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400"
+                className="w-full bg-slate-50 border border-slate-200/80 text-xs rounded-xl pl-9 pr-4 py-2 focus:bg-white focus:border-[#151936] font-mono outline-none transition-all placeholder:text-slate-400"
               />
             </div>
             <div className="relative shrink-0">
-              <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <select
                 value={activityFilter}
                 onChange={(e) => {
                   setActivityFilter(e.target.value);
                   setActivityPage(1);
                 }}
-                className="appearance-none bg-white border border-slate-200 text-sm font-medium text-slate-700 rounded-xl pl-8 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all cursor-pointer"
+                className="appearance-none bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 rounded-xl pl-8 pr-9 py-2 outline-none focus:border-[#151936] transition-all cursor-pointer"
               >
                 <option value="all">All Events</option>
                 <option value="stage_changes">Stage Changes</option>
@@ -1509,8 +1647,8 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                 <option value="valuations">Valuations</option>
                 <option value="system">System Actions</option>
               </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <IconChevronRight size={14} className="text-slate-400 rotate-90" />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <IconChevronRight size={14} className="rotate-90" />
               </div>
             </div>
           </div>
@@ -1521,21 +1659,21 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             <LoadingSpinner size="md" />
           </div>
         ) : valuationActivity.length === 0 ? (
-          <div className="flex flex-col items-center text-center gap-4 py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
-            <div className="size-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mb-1">
-              <IconMoodEmpty size={32} className="text-slate-300" />
+          <div className="flex flex-col items-center text-center gap-3 py-12 bg-slate-50/70 rounded-2xl border border-slate-200/70 border-dashed">
+            <div className="size-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center mb-1 shadow-2xs">
+              <IconMoodEmpty size={28} className="text-slate-400" />
             </div>
-            <h3 className="text-sm font-medium text-slate-700">No recorded activity yet.</h3>
-            <p className="text-slate-400 max-w-sm text-xs">Stage transitions, edits, valuations, and decisions will safely log here.</p>
+            <h3 className="text-xs font-mono font-medium text-slate-700 uppercase tracking-wider">No activity recorded yet</h3>
+            <p className="text-slate-500 max-w-sm text-xs">Stage transitions, edits, valuations, and decisions will safely log here.</p>
           </div>
         ) : paginatedValuationActivity.length === 0 ? (
           <div className="flex flex-col items-center py-12 text-center">
             <IconSearch size={24} className="text-slate-300 mb-3" />
-            <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
-            <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
+            <p className="text-xs font-mono font-medium text-slate-700 uppercase tracking-wider">No logs match your filter</p>
+            <p className="text-xs text-slate-500 mt-1">Try adjusting the search query or dropdown filter.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-6 relative ml-1">
+          <div className="flex flex-col gap-4 relative ml-1">
             <div className="absolute left-[3.5px] top-2 bottom-6 w-px bg-slate-200 z-0" />
             {paginatedValuationActivity.map((entry) => {
               const toneColor = getActivityTone(entry.summary);
@@ -1544,12 +1682,12 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                   <div className={cn("size-[8px] rounded-full mt-1.5 lg:mt-0 shrink-0 ring-4 shadow-xs", toneColor)} />
                   <Link
                     href={entry.associatedId ? `/admin/valuations/${entry.associatedId}` : "#"}
-                    className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/50 -my-1.5 -mx-3 p-1.5 px-3 rounded-xl transition-colors cursor-pointer"
+                    className="flex-1 min-w-0 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-6 hover:bg-slate-50/80 -my-1.5 -mx-3 p-2 px-3 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-slate-200/60"
                   >
-                    <p className="text-sm text-slate-500 leading-snug group-hover:text-slate-700 transition-colors flex-1 min-w-0 pr-4">
+                    <p className="text-xs text-slate-600 leading-relaxed group-hover:text-slate-900 transition-colors flex-1 min-w-0 pr-4">
                       {entry.actorName ? (
                         <>
-                          <span className="font-medium text-slate-700">{entry.actorName}</span>{" "}
+                          <span className="font-medium text-slate-900">{entry.actorName}</span>{" "}
                           {entry.summary.replace(entry.actorName, "").replace(/^ - |^ — /, "").trim()}
                         </>
                       ) : (
@@ -1557,11 +1695,11 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       )}
                     </p>
                     <div className="flex items-center gap-3 shrink-0">
-                      <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
+                      <p className="text-xs text-slate-500 font-mono tracking-wider hidden lg:block">
                         {new Date(entry.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })},{" "}
                         {new Date(entry.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                       </p>
-                      <Badge tone="neutral">
+                      <Badge tone="neutral" className="font-mono text-xxs px-2 py-0.5">
                         {relativeTime(entry.createdAt)}
                       </Badge>
                     </div>
@@ -1572,30 +1710,17 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
           </div>
         )}
 
-        {/* Pagination Controls */}
-        {activityTotalPages > 1 && (
-          <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-            <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
-              Page {safeActivityPage} of {activityTotalPages} <span className="mx-1">·</span> {filteredValuationActivity.length} logs
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setActivityPage(Math.max(1, safeActivityPage - 1))}
-                disabled={safeActivityPage <= 1}
-                className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
-              >
-                <IconChevronLeft size={15} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivityPage(Math.min(activityTotalPages, safeActivityPage + 1))}
-                disabled={safeActivityPage >= activityTotalPages}
-                className="size-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 disabled:text-slate-200 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
-              >
-                <IconChevronRight size={15} />
-              </button>
-            </div>
+        {/* Activity Logger Shared ERP Pagination Primitive */}
+        {filteredValuationActivity.length > 0 && (
+          <div className="pt-5 mt-6 border-t border-slate-100">
+            <PaginationControls
+              currentPage={safeActivityPage}
+              totalPages={activityTotalPages}
+              totalItems={filteredValuationActivity.length}
+              pageSize={ACTIVITY_PER_PAGE}
+              itemLabel="activity log entries"
+              onPageChange={setActivityPage}
+            />
           </div>
         )}
       </div>
@@ -1657,6 +1782,12 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
         managerId={managerUserId}
         properties={properties}
         onOpenProperty={() => { }}
+      />
+
+      <ActionLoadingOverlay
+        show={isSigning || isDeleting}
+        title={isSigning ? "Signing Management Mandate…" : "Deleting Valuation Prospect…"}
+        description="Updating database records and pipeline statistics."
       />
     </PageTransition>
   );

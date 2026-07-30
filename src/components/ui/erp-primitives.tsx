@@ -3,6 +3,7 @@ import type { HTMLAttributes, ReactNode } from "react";
 import type { Icon } from "@tabler/icons-react";
 import { IconArrowUpRight, IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
+import { LoadingSpinner } from "./loading-spinner";
 
 export function BoardHeader({
   eyebrow,
@@ -308,6 +309,31 @@ export function ProfileDrawerRow({
       <span className={cn("body-sm font-medium", mono && "mono-data", valueClass || "text-slate-900")}>
         {value}
       </span>
+    </div>
+  );
+}
+
+export function ActionLoadingOverlay({
+  show,
+  title = "Processing action…",
+  description = "Please wait a moment while changes are saved.",
+}: {
+  show: boolean;
+  title?: string;
+  description?: string;
+}) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#151936]/40 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xl flex flex-col items-center gap-3 text-center max-w-xs mx-4 border-t-4 border-t-[#151936]">
+        <div className="size-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-[#151936] shadow-2xs">
+          <LoadingSpinner size="md" />
+        </div>
+        <div>
+          <h4 className="text-sm font-medium text-slate-900">{title}</h4>
+          <p className="text-xs text-slate-500 font-mono mt-1">{description}</p>
+        </div>
+      </div>
     </div>
   );
 }

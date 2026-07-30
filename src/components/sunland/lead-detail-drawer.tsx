@@ -13,7 +13,6 @@ import {
   IconPhone,
   IconPlus,
   IconSearch,
-  IconX,
 } from "@tabler/icons-react";
 import { Avatar, Badge, Button, Drawer, SkeletonBlock } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
@@ -110,12 +109,14 @@ export function LeadDetailDrawer({
   };
 
   useEffect(() => {
-    setTab("activity");
-    setActivityQuery("");
-    setMarkLostOpen(false);
-    setLostReasonInput("");
-    if (leadId) load();
-    else setDetail(null);
+    Promise.resolve().then(() => {
+      setTab("activity");
+      setActivityQuery("");
+      setMarkLostOpen(false);
+      setLostReasonInput("");
+      if (leadId) load();
+      else setDetail(null);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId]);
 

@@ -42,23 +42,6 @@ const QUARTERLY = [
   { label: "Q2 '26", revenue: 33500000, expenses: 18100000, cash: 44500000 },
 ];
 
-const BIANNUAL = [
-  { label: "H1 '24", revenue: 44000000, expenses: 27000000, cash: 38000000 },
-  { label: "H2 '24", revenue: 58000000, expenses: 33000000, cash: 56000000 },
-  { label: "H1 '25", revenue: 52000000, expenses: 31600000, cash: 50000000 },
-  { label: "H2 '25", revenue: 67000000, expenses: 37500000, cash: 74500000 },
-  { label: "H1 '26", revenue: 62500000, expenses: 34100000, cash: 82500000 },
-];
-
-const ANNUAL = [
-  { label: "2021", revenue: 82000000, expenses: 49000000, cash: 68000000 },
-  { label: "2022", revenue: 97000000, expenses: 56000000, cash: 89000000 },
-  { label: "2023", revenue: 118000000, expenses: 64000000, cash: 112000000 },
-  { label: "2024", revenue: 102000000, expenses: 58000000, cash: 130500000 },
-  { label: "2025", revenue: 119000000, expenses: 69100000, cash: 124500000 },
-  { label: "2026 YTD", revenue: 62500000, expenses: 34100000, cash: 157000000 },
-];
-
 const PIE_COLORS = ["#151936", "#3f919d", "#8b5cf6", "#c96f45", "#f59e0b"];
 
 // ── Custom Tooltips ────────────────────────────────────────────────────────────

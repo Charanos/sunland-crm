@@ -6,11 +6,8 @@ import {
   IconPhone,
   IconClipboardList,
   IconMapPin,
-  IconCalendar,
   IconChevronRight,
   IconClock,
-  IconUsers,
-  IconTrendingUp,
   IconBuildingCommunity,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";

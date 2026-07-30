@@ -3,7 +3,6 @@ import { db } from "@/db";
 import { approvalRequests, settings, transactions, users } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
 import { writeAudit } from "@/lib/authz/audit";
-import { DomainValidationError } from "@/lib/authz/errors";
 import { resolveEntityId } from "@/lib/services/entity";
 import { getSecurityOverview } from "@/lib/services/identity/security";
 import type { CallerContext } from "@/lib/services/types";

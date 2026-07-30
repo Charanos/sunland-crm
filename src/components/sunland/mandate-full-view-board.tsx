@@ -234,7 +234,7 @@ export function MandateFullViewBoard({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [notifyPmOpen, setNotifyPmOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const [activeMediaIndex] = useState(0);
 
   const termMonths = useMemo(() => {
     if (!mandate || !mandate.endDate) return "Open-ended";

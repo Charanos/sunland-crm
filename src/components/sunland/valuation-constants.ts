@@ -57,8 +57,9 @@ export type BadgeTone = "primary" | "neutral" | "success" | "warning" | "risk" |
 export function stageTone(stage: ValuationStage): BadgeTone {
   switch (stage) {
     case "requested":
-    case "site_visit":
       return "neutral";
+    case "site_visit":
+      return "data";
     case "valued":
       return "brand";
     case "offer_sent":

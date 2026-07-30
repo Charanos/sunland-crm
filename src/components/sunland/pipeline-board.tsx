@@ -133,7 +133,6 @@ export function PipelineBoard() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
-  const [rowMenuId, setRowMenuId] = useState<string | null>(null);
 
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<PipelineStage | null>(null);

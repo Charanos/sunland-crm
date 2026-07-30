@@ -4,8 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   IconArrowUpRight,
-  IconBriefcase,
-  IconBuildingCommunity,
   IconCalendarEvent,
   IconClock,
   IconDotsVertical,
@@ -179,9 +177,11 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
 
   useEffect(() => {
     if (!entityId) return;
-    setLoading(true);
-    Promise.all([loadContacts(), loadOverview()]).finally(() => setLoading(false));
-    fetch("/api/auth/me").then((r) => r.json()).then((d) => setCurrentUserName(d.user?.name ?? null)).catch(() => { });
+    Promise.resolve().then(() => {
+      setLoading(true);
+      Promise.all([loadContacts(), loadOverview()]).finally(() => setLoading(false));
+      fetch("/api/auth/me").then((r) => r.json()).then((d) => setCurrentUserName(d.user?.name ?? null)).catch(() => { });
+    });
   }, [entityId, loadContacts, loadOverview]);
 
   const spotlight = useMemo(() => contacts.find((c) => c.id === spotlightId) ?? null, [contacts, spotlightId]);
@@ -520,7 +520,7 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs font-medium text-slate-700 mb-2">Today's Viewings <span className="font-mono text-[11px] text-slate-400">{overview?.viewingsToday ?? 0}</span></p>
+                <p className="text-xs font-medium text-slate-700 mb-2">Today&apos;s Viewings <span className="font-mono text-[11px] text-slate-400">{overview?.viewingsToday ?? 0}</span></p>
                 {overview && overview.todaysViewings.length > 0 ? (
                   <div className="flex flex-col gap-1.5">
                     {overview.todaysViewings.slice(0, 4).map((v) => (

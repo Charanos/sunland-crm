@@ -7,10 +7,8 @@ import {
   IconFileText,
   IconClock,
   IconChartBar,
-  IconPlus,
   IconChevronRight,
   IconUserPlus,
-  IconBuildingCommunity,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils/cn";
 
