@@ -71,6 +71,28 @@ export function BoardPanel({
   );
 }
 
+export function RailLayout({
+  children,
+  gap = "gap-6 lg:gap-8",
+  className,
+}: {
+  children: ReactNode;
+  gap?: string;
+  className?: string;
+}) {
+  // Splits a detail page into a main column + a fixed 320px context rail.
+  // Reacts to the ancestor .board-shell's actual content-box width via
+  // @board-lg (see globals.css), not the viewport - the sidebar can be
+  // 272px or 72px wide, so a plain `lg:` breakpoint measures the wrong
+  // thing here. Keeps each caller's own two inner wrapper divs as-is;
+  // this only owns the grid split itself.
+  return (
+    <div className={cn("grid grid-cols-1 @board-lg:grid-cols-[1fr_320px] items-start", gap, className)}>
+      {children}
+    </div>
+  );
+}
+
 export function KpiCard({
   href,
   icon: IconComponent,
@@ -149,7 +171,7 @@ export function KpiCard({
         )}
       </div>
       <div className="mb-3 mt-auto flex items-end justify-between">
-        <span className={cn("font-mono text-[32px] font-medium leading-none tracking-normal", tones.text)}>
+        <span className={cn("kpi-numeral tracking-normal", tones.text)}>
           {value}
         </span>
         {trend && <span className={cn("mb-0.5 text-sm font-medium", tones.text)}>{trend}</span>}

@@ -642,7 +642,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                               : "text-slate-300 hover:bg-slate-50",
                       )}
                     >
-                      <span className={cn("text-[13px]", isSelected || isToday ? "font-medium" : "font-normal")}>
+                      <span className={cn("text-sm", isSelected || isToday ? "font-medium" : "font-normal")}>
                         {format(day, "d")}
                       </span>
                       {hasEvents && (
@@ -668,7 +668,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                     type="button"
                     onClick={() => { setMonth(m); setViewMode("monthly"); }}
                     className={cn(
-                      "flex h-[3.25rem] items-center justify-center rounded-[14px] text-[13px] transition-all",
+                      "flex h-[3.25rem] items-center justify-center rounded-[14px] text-sm transition-all",
                       isSelectedMonth
                         ? "bg-[var(--sidebar)] text-white shadow-md shadow-slate-900/10 font-medium scale-105"
                         : isCurrentMonth
@@ -688,7 +688,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => { setMonth(new Date()); setSelected(new Date()); }}
-              className="flex items-center gap-2 text-[13px] font-medium text-slate-500 transition-colors hover:text-[var(--sidebar)]"
+              className="flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-[var(--sidebar)]"
             >
               <span className="flex size-5 items-center justify-center rounded-full bg-slate-100">
                 <span className="size-1.5 rounded-full bg-[var(--sidebar)]" />
@@ -729,7 +729,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   <IconCalendar size={24} stroke={1.5} aria-hidden />
                 </div>
                 <p className="text-sm font-medium text-slate-600">Your day is clear</p>
-                <p className="text-[13px] text-slate-400 mt-1 max-w-[180px]">Enjoy the free time or schedule a new event.</p>
+                <p className="text-sm text-slate-400 mt-1 max-w-[180px]">Enjoy the free time or schedule a new event.</p>
               </div>
             ) : (
               dayEvents.map((ev) => {
@@ -741,13 +741,13 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   >
                     <span className={cn("mt-[6px] size-2.5 shrink-0 rounded-full", EVENT_COLORS[ev.type])} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-medium text-slate-800 leading-snug">{ev.title}</p>
+                      <p className="text-sm font-medium text-slate-800 leading-snug">{ev.title}</p>
                       <p className="mt-1.5 flex items-center gap-1.5 font-mono text-ms font-medium tracking-tight text-slate-400">
                         <IconClock size={13} aria-hidden />
                         {timeStr}
                       </p>
                       {ev.description && (
-                        <p className="mt-2 text-[13px] leading-relaxed text-slate-500 line-clamp-2">{ev.description}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-500 line-clamp-2">{ev.description}</p>
                       )}
                       <div className="mt-3 flex items-center">
                         <Badge tone={EVENT_BADGE_TONE[ev.type]}>
@@ -793,7 +793,7 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   placeholder="Event title"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200/80 bg-slate-50/50 px-3.5 py-2.5 text-[14px] font-medium text-slate-800 placeholder:text-slate-400 placeholder:font-normal transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
+                  className="w-full rounded-xl border border-slate-200/80 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 placeholder:font-normal transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
                 />
 
                 <div className="flex gap-3">
@@ -802,12 +802,12 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                     required
                     value={form.time}
                     onChange={(e) => setForm({ ...form, time: e.target.value })}
-                    className="w-full flex-1 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 text-[13px] font-medium text-slate-700 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
+                    className="w-full flex-1 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
                   />
                   <select
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value as ApiEvent["type"] })}
-                    className="w-full flex-1 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 text-[13px] font-medium text-slate-700 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
+                    className="w-full flex-1 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
                   >
                     <option value="internal">Internal Sync</option>
                     <option value="external">External Meeting</option>
@@ -821,20 +821,20 @@ function CalendarPanel({ onClose }: { onClose: () => void }) {
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={2}
-                  className="w-full resize-none rounded-xl border border-slate-200/80 bg-slate-50/50 px-3.5 py-2.5 text-[13px] text-slate-700 placeholder:text-slate-400 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
+                  className="w-full resize-none rounded-xl border border-slate-200/80 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 transition-all focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-100/80"
                 />
 
                 <div className="mt-2 flex items-center justify-end gap-2.5">
                   <button
                     type="button"
                     onClick={() => setIsAdding(false)}
-                    className="rounded-full px-4 py-2 text-[13px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                    className="rounded-full px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex items-center gap-1.5 rounded-full bg-[var(--sidebar)] px-5 py-2 text-[13px] font-medium text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow"
+                    className="flex items-center gap-1.5 rounded-full bg-[var(--sidebar)] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow"
                   >
                     <IconCheck size={14} aria-hidden />
                     Save Event
@@ -892,7 +892,7 @@ function SearchBar() {
       </span>
       <kbd
         className={cn(
-          "pointer-events-none text-[11.5px] select-none rounded-[6px] border px-1.5 py-0.5 font-medium tracking-widest transition-opacity shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
+          "pointer-events-none text-caption select-none rounded-[6px] border px-1.5 py-0.5 font-medium tracking-widest transition-opacity shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
           focused ? "opacity-0" : "border-slate-200 bg-white text-slate-400 group-hover:border-slate-300 group-hover:text-slate-500",
         )}
       >

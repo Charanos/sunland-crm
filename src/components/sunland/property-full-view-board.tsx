@@ -47,7 +47,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { DropdownMenu, DropdownItem, Avatar, Badge } from "@/components/ui/erp-primitives";
+import { DropdownMenu, DropdownItem, Avatar, Badge, RailLayout } from "@/components/ui/erp-primitives";
 import { useToast } from "@/components/ui/toast-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PropertyFormModal } from "./property-form-modal";
@@ -487,7 +487,7 @@ export function PropertyFullViewBoard({
   };
 
   return (
-    <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+    <div className="board-shell mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
       {/* ── Unified Hero Section ── */}
       {/* ── Unified Hero Section ── */}
       <div className="flex flex-col gap-6 animate-fade-in-up stagger-1">
@@ -509,7 +509,7 @@ export function PropertyFullViewBoard({
             </div>
 
             <div className="flex items-center gap-4 flex-wrap">
-              <h1 className="text-4xl lg:text-[42px] title-serif text-slate-900 tracking-tight truncate leading-none">{property.name}</h1>
+              <h1 className="title-serif text-slate-900 tracking-tight truncate leading-none">{property.name}</h1>
               {canManage ? (
                 <DropdownMenu
                   label="Change status"
@@ -632,7 +632,7 @@ export function PropertyFullViewBoard({
               {specLine && (
                 <div className="absolute bottom-6 right-6 bg-black/40 backdrop-blur-xl border border-white/10 text-white shadow-xl rounded-full px-5 py-2.5 flex items-center gap-2">
                   <IconRuler size={16} className="text-white/70 shrink-0" aria-hidden="true" />
-                  <span className="mono-data tracking-wide text-[13px] font-medium">{specLine}</span>
+                  <span className="mono-data tracking-wide text-sm font-medium">{specLine}</span>
                 </div>
               )}
             </div>
@@ -687,7 +687,7 @@ export function PropertyFullViewBoard({
                     {v.label}
                   </span>
                   <div className="flex items-baseline gap-3 z-10 mt-0.5">
-                    <span className="font-mono font-medium text-3xl lg:text-[34px] font-medium text-slate-900 tracking-tight leading-none truncate">
+                    <span className="kpi-numeral text-slate-900 tracking-tight truncate">
                       {v.value}
                     </span>
                   </div>
@@ -740,7 +740,7 @@ export function PropertyFullViewBoard({
       <div className="h-px bg-slate-200/60 my-2 lg:my-4" />
 
       {/* ── Main: tabbed content + persistent context rail ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start animate-fade-in-up stagger-3">
+      <RailLayout gap="gap-6 lg:gap-8" className="animate-fade-in-up stagger-3">
         <div className="flex flex-col min-w-0">
           {/* ── Sub-Header Tab Navigation Bar (Mobile Responsive White Card) ── */}
           <div
@@ -847,11 +847,11 @@ export function PropertyFullViewBoard({
                         <span className="text-xs font-medium text-slate-900 truncate">
                           {property.mandate.manager?.name || "No manager assigned"}
                         </span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Assigned Manager</span>
+                        <span className="text-xxs text-slate-400 uppercase tracking-wider font-medium">Assigned Manager</span>
                       </div>
                     </div>
                     {canManage && (
-                      <button type="button" onClick={() => setAssignManagerOpen(true)} className="text-[11px] font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100/80 px-2 py-0.5 rounded-lg transition-colors">
+                      <button type="button" onClick={() => setAssignManagerOpen(true)} className="text-caption font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100/80 px-2 py-0.5 rounded-lg transition-colors">
                         {property.mandate.manager?.name ? "Change" : "Assign"}
                       </button>
                     )}
@@ -870,11 +870,11 @@ export function PropertyFullViewBoard({
                         ) : (
                           <span className="text-xs font-medium text-amber-700 truncate">No letter on file</span>
                         )}
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Legal Document</span>
+                        <span className="text-xxs text-slate-400 uppercase tracking-wider font-medium">Legal Document</span>
                       </div>
                     </div>
                     {canManage && (
-                      <button type="button" onClick={() => setMandateLetterOpen(true)} className="text-[11px] font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100/80 px-2 py-0.5 rounded-lg transition-colors">
+                      <button type="button" onClick={() => setMandateLetterOpen(true)} className="text-caption font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100/80 px-2 py-0.5 rounded-lg transition-colors">
                         {mandateLetterDoc?.url ? "Replace" : "Upload"}
                       </button>
                     )}
@@ -912,7 +912,7 @@ export function PropertyFullViewBoard({
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <h3 className="text-xs font-medium text-slate-900">No Active Mandate</h3>
-                  <p className="text-[11px] text-slate-500">Not currently under management.</p>
+                  <p className="text-caption text-slate-500">Not currently under management.</p>
                 </div>
                 <Button onClick={() => setCreateMandateOpen(true)} className="w-full justify-center bg-tertiary-gradient hover:opacity-95 transition-opacity text-white shadow-xs font-medium text-xs py-2 rounded-xl h-auto">
                   <IconPlus size={14} className="mr-1.5" /> Create Mandate
@@ -931,7 +931,7 @@ export function PropertyFullViewBoard({
             <div className="flex flex-col gap-3 pt-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-medium text-slate-400 uppercase tracking-widest">Needs Your Attention</h3>
-                <span className="size-5 rounded-full bg-rose-500 text-white font-medium mono-data text-[11px] flex items-center justify-center shadow-2xs">
+                <span className="size-5 rounded-full bg-rose-500 text-white font-medium mono-data text-caption flex items-center justify-center shadow-2xs">
                   {actionItems.length}
                 </span>
               </div>
@@ -942,9 +942,9 @@ export function PropertyFullViewBoard({
                     <div key={item.key} className={cn("flex items-center justify-between gap-3 rounded-2xl border p-3 shadow-2xs transition-all hover:translate-x-0.5", t.card)}>
                       <div className="min-w-0 flex flex-col gap-0.5">
                         <p className="text-xs font-medium text-slate-900 truncate">{item.title}</p>
-                        <p className="text-[11px] text-slate-500 font-medium truncate">{item.meta}</p>
+                        <p className="text-caption text-slate-500 font-medium truncate">{item.meta}</p>
                       </div>
-                      <button type="button" onClick={item.onClick} className={cn("shrink-0 rounded-xl px-2.5 py-1 text-[11px] font-medium transition-colors shadow-2xs", t.cta)}>
+                      <button type="button" onClick={item.onClick} className={cn("shrink-0 rounded-xl px-2.5 py-1 text-caption font-medium transition-colors shadow-2xs", t.cta)}>
                         {item.cta}
                       </button>
                     </div>
@@ -962,7 +962,7 @@ export function PropertyFullViewBoard({
                 Ownership
               </h3>
               {property.owner?.verifiedAt && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50/80 px-2 py-0.5 text-xxs font-medium text-emerald-700">
                   <IconShieldCheck size={11} aria-hidden="true" /> Verified
                 </span>
               )}
@@ -975,13 +975,13 @@ export function PropertyFullViewBoard({
                     <p className="text-xs font-medium text-slate-900 truncate">{property.owner.name || "Unknown Owner"}</p>
                     <div className="flex flex-wrap gap-1">
                       {property.owner.phone && (
-                        <a href={`tel:${property.owner.phone}`} className="inline-flex items-center gap-1 text-[10px] text-slate-600 hover:text-emerald-700 bg-slate-50 hover:bg-slate-100/80 border border-slate-100/80 px-1.5 py-0.5 rounded-lg transition-colors">
+                        <a href={`tel:${property.owner.phone}`} className="inline-flex items-center gap-1 text-xxs text-slate-600 hover:text-emerald-700 bg-slate-50 hover:bg-slate-100/80 border border-slate-100/80 px-1.5 py-0.5 rounded-lg transition-colors">
                           <IconPhone size={11} className="shrink-0 text-slate-400" aria-hidden="true" />
                           <span className="truncate">{property.owner.phone}</span>
                         </a>
                       )}
                       {property.owner.email && (
-                        <a href={`mailto:${property.owner.email}`} className="inline-flex items-center gap-1 text-[10px] text-slate-600 hover:text-emerald-700 bg-slate-50 hover:bg-slate-100/80 border border-slate-100/80 px-1.5 py-0.5 rounded-lg transition-colors">
+                        <a href={`mailto:${property.owner.email}`} className="inline-flex items-center gap-1 text-xxs text-slate-600 hover:text-emerald-700 bg-slate-50 hover:bg-slate-100/80 border border-slate-100/80 px-1.5 py-0.5 rounded-lg transition-colors">
                           <IconMail size={11} className="shrink-0 text-slate-400" aria-hidden="true" />
                           <span className="truncate">{property.owner.email}</span>
                         </a>
@@ -1045,10 +1045,10 @@ export function PropertyFullViewBoard({
                     <div key={entry.id} className="flex items-start gap-2">
                       <span className={cn("size-1.5 rounded-full shrink-0 mt-1.5", activityTone(entry.action))} aria-hidden="true" />
                       <div className="min-w-0">
-                        <p className="text-[11px] text-slate-600 leading-relaxed">
+                        <p className="text-caption text-slate-600 leading-relaxed">
                           <span className="text-slate-900 font-medium">{entry.actorName}</span> performed {readableAction}
                         </p>
-                        <p className="text-[10px] text-slate-400 mono-data mt-0.5">{formatPropertyDate(entry.occurredAt)}</p>
+                        <p className="text-xxs text-slate-400 mono-data mt-0.5">{formatPropertyDate(entry.occurredAt)}</p>
                       </div>
                     </div>
                   );
@@ -1059,7 +1059,7 @@ export function PropertyFullViewBoard({
             )}
           </div>
         </div>
-      </div>
+      </RailLayout>
 
       <PropertyFormModal open={editModalOpen} onClose={() => setEditModalOpen(false)} onSubmit={handleEditSave} mode="edit" initialData={property as unknown as Record<string, unknown>} />
 
@@ -1468,22 +1468,26 @@ interface ExecutiveMetricItem {
 
 function ExecutiveMetricStrip({ items }: { items: ExecutiveMetricItem[] }) {
   const isFour = items.length === 4;
-  const cols = isFour ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-3";
+  // Lives inside the detail page's RailLayout main column, so its real
+  // available width is content-box minus the 320px rail, not the
+  // viewport - keyed off @board-md (the container-query breakpoint),
+  // not a plain lg: viewport breakpoint.
+  const cols = isFour ? "grid-cols-2 @board-md:grid-cols-4" : "grid-cols-1 sm:grid-cols-3";
 
   return (
-    <div className={cn("bg-white border border-slate-100/80 rounded-[28px] p-6 lg:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.03)] grid gap-5 sm:gap-0 divide-y sm:divide-y-0 divide-slate-100", cols, isFour ? "lg:divide-x" : "sm:divide-x")}>
+    <div className={cn("bg-white border border-slate-100/80 rounded-[28px] p-6 lg:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.03)] grid gap-5 sm:gap-0 divide-y sm:divide-y-0 divide-slate-100", cols, isFour ? "@board-md:divide-x" : "sm:divide-x")}>
       {items.map((b, idx) => (
         <div
           key={b.label}
           className={cn(
             "flex flex-col justify-between gap-4 group relative transition-colors p-1 sm:p-0",
-            idx > 0 && (isFour ? "lg:pl-7" : "sm:pl-7"),
-            idx < items.length - 1 && (isFour ? "lg:pr-7" : "sm:pr-7"),
-            idx >= (isFour ? 2 : 1) && (isFour ? "pt-5 lg:pt-0" : "pt-5 sm:pt-0")
+            idx > 0 && (isFour ? "@board-md:pl-7" : "sm:pl-7"),
+            idx < items.length - 1 && (isFour ? "@board-md:pr-7" : "sm:pr-7"),
+            idx >= (isFour ? 2 : 1) && (isFour ? "pt-5 @board-md:pt-0" : "pt-5 sm:pt-0")
           )}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">
+            <span className="text-caption font-medium text-slate-400 uppercase tracking-widest">
               {b.label}
             </span>
             <div className={cn("size-9 rounded-xl border flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-2xs", b.iconBg || "bg-slate-50 border-slate-100/80 text-slate-500 group-hover:text-slate-900 group-hover:border-slate-200")}>
@@ -1555,7 +1559,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="font-mono font-medium text-lg font-medium text-slate-900 leading-none">{property.bedrooms}</span>
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">Bedrooms</span>
+                  <span className="text-caption font-medium text-slate-400 uppercase tracking-wider mt-1">Bedrooms</span>
                 </div>
               </div>
             )}
@@ -1567,7 +1571,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="font-mono font-medium text-lg font-medium text-slate-900 leading-none">{property.bathrooms}</span>
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">Bathrooms</span>
+                  <span className="text-caption font-medium text-slate-400 uppercase tracking-wider mt-1">Bathrooms</span>
                 </div>
               </div>
             )}
@@ -1579,7 +1583,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="font-mono font-medium text-lg font-medium text-slate-900 leading-none">{property.parkingSpaces}</span>
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">Parking</span>
+                  <span className="text-caption font-medium text-slate-400 uppercase tracking-wider mt-1">Parking</span>
                 </div>
               </div>
             )}
@@ -1591,7 +1595,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="font-mono font-medium text-lg font-medium text-slate-900 leading-none">{property.sizeSqft.toLocaleString()}</span>
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">Sq Ft</span>
+                  <span className="text-caption font-medium text-slate-400 uppercase tracking-wider mt-1">Sq Ft</span>
                 </div>
               </div>
             )}
@@ -1599,7 +1603,7 @@ function OverviewPanel({ property }: { property: PropertyDetail }) {
 
           {property.amenities && property.amenities.length > 0 && (
             <div className="flex flex-col gap-2.5 pt-2 border-t border-slate-100">
-              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">Included Amenities</span>
+              <span className="text-caption font-medium text-slate-400 uppercase tracking-widest">Included Amenities</span>
               <div className="flex flex-wrap gap-2">
                 {property.amenities.map((item) => (
                   <span key={item} className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-100 text-slate-700 text-xs px-3 py-1.5 rounded-xl font-medium">
@@ -1783,11 +1787,11 @@ function FinancialsPanel({ property }: { property: PropertyDetail }) {
 
                   <div className="flex items-center gap-6">
                     <div className="flex flex-col items-end">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Rate / unit</span>
+                      <span className="text-xxs text-slate-400 uppercase tracking-wider font-medium">Rate / unit</span>
                       <span className="mono-amount text-xs text-slate-600">{formatCompactKES(monthlyRent)}/mo</span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Total Projected</span>
+                      <span className="text-xxs text-slate-400 uppercase tracking-wider font-medium">Total Projected</span>
                       <span className="mono-amount text-xs font-medium text-emerald-700">{formatCompactKES(totalExpectedUnitRev)}/mo</span>
                     </div>
                   </div>
@@ -2006,7 +2010,7 @@ function TenancyPanel({
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-medium text-slate-400 uppercase tracking-widest">
+              <tr className="border-b border-slate-100 text-caption font-medium text-slate-400 uppercase tracking-widest">
                 <th className="pb-3 pl-2 font-medium">Tenant</th>
                 <th className="pb-3 font-medium">Term Period</th>
                 <th className="pb-3 font-medium">Status</th>
@@ -2025,7 +2029,7 @@ function TenancyPanel({
                       <div className="flex flex-col min-w-0">
                         <span className="font-medium text-slate-900 truncate">{lease.tenantName}</span>
                         {lease.tenantPhone && (
-                          <span className="mono-data text-[11px] text-slate-400 truncate">{lease.tenantPhone}</span>
+                          <span className="mono-data text-caption text-slate-400 truncate">{lease.tenantPhone}</span>
                         )}
                       </div>
                     </div>
@@ -2276,7 +2280,7 @@ function MaintenancePanel({ property, canLog, onReport }: { property: PropertyDe
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-medium text-slate-400 uppercase tracking-widest">
+              <tr className="border-b border-slate-100 text-caption font-medium text-slate-400 uppercase tracking-widest">
                 <th className="pb-3 pl-2 font-medium">Issue & Details</th>
                 <th className="pb-3 font-medium">Reported Date</th>
                 <th className="pb-3 font-medium">Priority</th>
@@ -2441,7 +2445,7 @@ function ActivityPanel({
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-medium text-slate-900 truncate">{doc.name}</span>
-                    <span className="text-[11px] text-slate-400 font-medium capitalize">{doc.status.replace("_", " ")}</span>
+                    <span className="text-caption text-slate-400 font-medium capitalize">{doc.status.replace("_", " ")}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -2493,7 +2497,7 @@ function ActivityPanel({
                 <div className="flex flex-col gap-1 min-w-0 flex-1 bg-slate-50/50 hover:bg-slate-50 border border-slate-100/60 p-3.5 rounded-2xl transition-colors">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="text-xs font-medium text-slate-900">{entry.actorName || "System Operator"}</span>
-                    <span className="mono-data text-[11px] text-slate-400 font-medium">{formatPropertyDate(entry.occurredAt)}</span>
+                    <span className="mono-data text-caption text-slate-400 font-medium">{formatPropertyDate(entry.occurredAt)}</span>
                   </div>
                   <p className="text-xs text-slate-600 font-medium leading-relaxed">{entry.action}</p>
                 </div>

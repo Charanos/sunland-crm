@@ -35,7 +35,7 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SkeletonBlock } from "@/components/ui/erp-primitives";
+import { SkeletonBlock, RailLayout } from "@/components/ui/erp-primitives";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Avatar } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown-menu";
@@ -526,7 +526,7 @@ export function LeaseFullViewBoard({
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+      <div className="board-shell mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2">
           <div className="flex flex-col gap-2">
             <SkeletonBlock className="h-8 w-72" />
@@ -535,7 +535,7 @@ export function LeaseFullViewBoard({
           <SkeletonBlock className="h-9 w-40 rounded-full" />
         </div>
         <SkeletonBlock className="rounded-[24px] min-h-[300px] lg:min-h-[340px] mt-2" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 @board-lg:grid-cols-4 gap-4 mb-4 mt-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <SkeletonBlock key={i} className="rounded-2xl h-[150px]" />
           ))}
@@ -659,7 +659,7 @@ export function LeaseFullViewBoard({
   };
 
   return (
-    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+    <PageTransition className="board-shell mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2 animate-fade-in-up">
         <div className="flex flex-col gap-2 min-w-0">
@@ -956,7 +956,7 @@ export function LeaseFullViewBoard({
       </div>
 
       {/* ── KPI Vitals Row ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 @board-lg:grid-cols-4 gap-4 mb-4 mt-2">
         {vitals.map((v) => (
           <button
             key={v.label}
@@ -1123,7 +1123,7 @@ export function LeaseFullViewBoard({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 @board-md:grid-cols-4 gap-4">
                     <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-slate-50/70 border border-slate-100 hover:border-slate-200 transition-colors">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-slate-500 uppercase tracking-wider font-mono">Monthly Rent</span>
@@ -1337,7 +1337,7 @@ export function LeaseFullViewBoard({
             {activeTab === "payments" && (
               <div className="flex flex-col gap-5 animate-fade-in-up">
                 {/* Payment Financial Summary KPI Vitals */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 @board-md:grid-cols-4 gap-4">
                   <div className="bg-white border border-slate-200/80 rounded-[20px] p-4 flex flex-col justify-between shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-slate-500 uppercase tracking-wider font-mono">Total Settled</span>
@@ -1535,7 +1535,7 @@ export function LeaseFullViewBoard({
             {activeTab === "units" && (
               <div className="flex flex-col gap-5 animate-fade-in-up">
                 {/* Vitals summary bar */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 @board-md:grid-cols-4 gap-4">
                   <div className="bg-white border border-slate-200/80 rounded-[20px] p-4 flex flex-col justify-between shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-slate-500 uppercase tracking-wider font-mono">Total Units</span>
@@ -1654,7 +1654,7 @@ export function LeaseFullViewBoard({
             {activeTab === "documents" && (
               <div className="flex flex-col gap-5 animate-fade-in-up">
                 {/* Document Summary Vitals */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 @board-md:grid-cols-4 gap-4">
                   <div className="bg-white border border-slate-200/80 rounded-[20px] p-4 flex flex-col justify-between shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-slate-500 uppercase tracking-wider font-mono">Attached Files</span>
@@ -1849,7 +1849,7 @@ export function LeaseFullViewBoard({
             {activeTab === "activity" && (
               <div className="flex flex-col gap-5 animate-fade-in-up">
                 {/* Activity Vitals Summary */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 @board-md:grid-cols-4 gap-4">
                   <div className="bg-white border border-slate-200/80 rounded-[20px] p-4 flex flex-col justify-between shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-slate-500 uppercase tracking-wider font-mono">Logged Events</span>
@@ -2010,7 +2010,7 @@ export function LeaseFullViewBoard({
                                     <span className="text-xs font-medium text-[#151936] flex items-center gap-1.5">
                                       <Avatar
                                         fallback={getInitials(entry.actorName)}
-                                        className="size-5 text-[10px] bg-[#151936] text-white"
+                                        className="size-5 text-xxs bg-[#151936] text-white"
                                       />
                                       {entry.actorName}
                                     </span>

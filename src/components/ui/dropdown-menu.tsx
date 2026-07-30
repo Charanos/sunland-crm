@@ -19,41 +19,45 @@ export function DropdownMenu({
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState<{ top: number; left?: number; right?: number }>({ top: 0 });
+  const [coords, setCoords] = useState<{ top?: number; bottom?: number; left?: number; right?: number }>({ top: 0 });
 
-  // Recompute position every time the menu opens or the window scrolls/resizes
-  useLayoutEffect(() => {
-    if (!open || !triggerRef.current) return;
+  // Anchors the menu below the trigger, unless it would run off the bottom
+  // of the viewport - a real risk for rows near the end of a long table or
+  // KPI tier - in which case it flips to open upward instead.
+  const computeCoords = () => {
+    if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
+    const menuHeight = menuRef.current?.getBoundingClientRect().height ?? 0;
+    const opensUpward = rect.bottom + 6 + menuHeight > window.innerHeight;
     setCoords({
-      top: rect.bottom + 6,
+      ...(opensUpward
+        ? { bottom: window.innerHeight - rect.top + 6 }
+        : { top: rect.bottom + 6 }),
       // align right: anchor the menu's right edge to the trigger's right edge
       // align left:  anchor the menu's left edge to the trigger's left edge
       ...(align === "right"
         ? { right: window.innerWidth - rect.right }
         : { left: rect.left }),
     });
+  };
+
+  // Recompute position every time the menu opens or the window scrolls/resizes
+  useLayoutEffect(() => {
+    if (!open) return;
+    computeCoords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, align]);
 
   // Re-position on scroll / resize while the menu is open
   useEffect(() => {
     if (!open) return;
-    const reposition = () => {
-      if (!triggerRef.current) return;
-      const rect = triggerRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + 6,
-        ...(align === "right"
-          ? { right: window.innerWidth - rect.right }
-          : { left: rect.left }),
-      });
-    };
-    window.addEventListener("scroll", reposition, true);
-    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", computeCoords, true);
+    window.addEventListener("resize", computeCoords);
     return () => {
-      window.removeEventListener("scroll", reposition, true);
-      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", computeCoords, true);
+      window.removeEventListener("resize", computeCoords);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, align]);
 
   // Close on outside pointer-down
@@ -104,7 +108,7 @@ export function DropdownMenu({
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: "fixed",
-              top: coords.top,
+              ...(coords.bottom !== undefined ? { bottom: coords.bottom } : { top: coords.top }),
               ...(coords.right !== undefined ? { right: coords.right } : { left: coords.left }),
             }}
             className="z-[200] w-56 rounded-xl border border-[var(--outline)] bg-white p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.14)]"

@@ -56,6 +56,16 @@
   --text-3xl: 26px;
   --text-4xl: 32px;
 
+  /* Named container breakpoints for board shells - these key off the
+     actual content-box width (viewport minus the collapsible sidebar
+     offset), not the viewport itself, which is what plain lg:/xl:
+     breakpoints measure. Deliberately namespaced "board-" rather than
+     overriding --container-sm/md/lg/xl, since that namespace also
+     powers max-w-sm/md/lg/xl which are already in wide use. */
+  --container-board-sm: 480px;
+  --container-board-md: 720px;
+  --container-board-lg: 900px;
+
   --z-index-header: 20;
   --z-index-nav: 30;
   --z-index-chat: 40;
@@ -123,6 +133,28 @@ button:disabled {
   font-size: clamp(24px, 2.5vw, 34px);
   font-weight: 700;
   line-height: 1.1;
+  letter-spacing: 0;
+}
+
+/* Display-tier clamps - the only two typography sizes that actually
+   need to be fluid. Body copy (.body-md/.body-sm, the --text-* scale,
+   the Finance rem utilities below) stays fixed; it's already legible
+   at every width. These replace hardcoded hero numerals like
+   `text-4xl lg:text-[42px]` and KpiCard's fixed `text-[32px]` (both now
+   removed/replaced in favour of these two classes). */
+.hero-numeral {
+  font-family: var(--font-serif), serif;
+  font-size: clamp(28px, 2.4vw + 1rem, 42px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.kpi-numeral {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: clamp(24px, 1.6vw + 1rem, 32px);
+  font-weight: 500;
+  line-height: 1;
   letter-spacing: 0;
 }
 
@@ -287,6 +319,17 @@ button:disabled {
   background: rgba(255, 255, 255, 0.76);
   box-shadow: 0 18px 48px rgba(27, 31, 23, 0.1);
   backdrop-filter: blur(24px);
+}
+
+/* ── Container-query board shell ──────────────────────── */
+/* Opts a board's outer wrapper into querying its OWN content-box
+   width via @board-sm/@board-md/@board-lg (see the --container-board-*
+   tokens above), instead of the viewport. This is what lets a board
+   react correctly to the sidebar collapsing/expanding, which no
+   viewport breakpoint can ever see. */
+.board-shell {
+  container-type: inline-size;
+  container-name: board;
 }
 
 /* ── Custom Scrollbar ─────────────────────────────────── */

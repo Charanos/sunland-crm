@@ -234,10 +234,10 @@ export function LeadDetailDrawer({
             <div className="absolute inset-0 bg-gradient-to-b from-[#0a0d1c]/35 to-[#0a0d1c]/85" />
             <div className="relative h-full flex flex-col justify-end p-5">
               <div className="flex items-center gap-1.5 mb-auto">
-                <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-medium uppercase", PRIORITY_META[detail.priority].pill)}>{PRIORITY_META[detail.priority].label}</span>
-                <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10.5px] font-medium bg-white/[0.18] text-white">{STAGE_META[detail.stage].label}</span>
+                <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xxs font-medium uppercase", PRIORITY_META[detail.priority].pill)}>{PRIORITY_META[detail.priority].label}</span>
+                <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xxs font-medium bg-white/[0.18] text-white">{STAGE_META[detail.stage].label}</span>
               </div>
-              <p className="font-mono text-[11px] text-white/70">{detail.id.slice(0, 8).toUpperCase()}</p>
+              <p className="font-mono text-caption text-white/70">{detail.id.slice(0, 8).toUpperCase()}</p>
               <p className="font-serif text-xl text-white mt-0.5 leading-tight truncate">{detail.propertyInterest}</p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export function LeadDetailDrawer({
                 <Avatar src={detail.clientAvatarUrl ?? undefined} fallback={detail.clientName.slice(0, 2).toUpperCase()} className="size-10" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-900 truncate">{detail.clientName}</p>
-                  <p className="text-[11px] text-slate-400 truncate">{detail.propertyLocation ?? "—"}</p>
+                  <p className="text-caption text-slate-400 truncate">{detail.propertyLocation ?? "—"}</p>
                 </div>
               </div>
             </div>
@@ -279,20 +279,20 @@ export function LeadDetailDrawer({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-white border border-slate-100 rounded-lg px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400 mb-0.5">Occupancy</p>
-                    <p className="font-mono text-[13px] text-slate-900">{detail.propertyPerformance.occupancyPct}%</p>
+                    <p className="text-xxs uppercase tracking-wide text-slate-400 mb-0.5">Occupancy</p>
+                    <p className="font-mono text-sm text-slate-900">{detail.propertyPerformance.occupancyPct}%</p>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-lg px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400 mb-0.5">Rent roll</p>
-                    <p className="font-mono text-[13px] text-slate-900">{formatKES(detail.propertyPerformance.rentRollKes)}/mo</p>
+                    <p className="text-xxs uppercase tracking-wide text-slate-400 mb-0.5">Rent roll</p>
+                    <p className="font-mono text-sm text-slate-900">{formatKES(detail.propertyPerformance.rentRollKes)}/mo</p>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-lg px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400 mb-0.5">Balance</p>
-                    <p className={cn("font-mono text-[13px]", detail.propertyPerformance.balanceKes === 0 ? "text-emerald-700" : "text-slate-900")}>{detail.propertyPerformance.balanceKes === 0 ? "Cleared" : formatKES(detail.propertyPerformance.balanceKes)}</p>
+                    <p className="text-xxs uppercase tracking-wide text-slate-400 mb-0.5">Balance</p>
+                    <p className={cn("font-mono text-sm", detail.propertyPerformance.balanceKes === 0 ? "text-emerald-700" : "text-slate-900")}>{detail.propertyPerformance.balanceKes === 0 ? "Cleared" : formatKES(detail.propertyPerformance.balanceKes)}</p>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-lg px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400 mb-0.5">Yield basis</p>
-                    <p className="font-mono text-[13px] text-[#122a20]">{detail.propertyPerformance.yieldPct != null ? `${detail.propertyPerformance.yieldPct}% est.` : "—"}</p>
+                    <p className="text-xxs uppercase tracking-wide text-slate-400 mb-0.5">Yield basis</p>
+                    <p className="font-mono text-sm text-[#122a20]">{detail.propertyPerformance.yieldPct != null ? `${detail.propertyPerformance.yieldPct}% est.` : "—"}</p>
                   </div>
                 </div>
               </div>
@@ -322,7 +322,7 @@ export function LeadDetailDrawer({
                     <span className="size-7.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[#151936] shrink-0"><IconBuildingCommunity size={14} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-xs font-medium text-slate-900 truncate">Property file</span>
-                      <span className="block text-[10.5px] text-slate-400 truncate">{detail.propertyInterest}</span>
+                      <span className="block text-xxs text-slate-400 truncate">{detail.propertyInterest}</span>
                     </span>
                     <IconArrowUpRight size={13} className="text-slate-300 shrink-0" />
                   </Link>
@@ -332,7 +332,7 @@ export function LeadDetailDrawer({
                     <span className="size-7.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[#151936] shrink-0"><IconFileDescription size={14} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-xs font-medium text-slate-900 truncate">Mandate & remittance</span>
-                      <span className="block text-[10.5px] text-slate-400 truncate">Real-managed portfolio property</span>
+                      <span className="block text-xxs text-slate-400 truncate">Real-managed portfolio property</span>
                     </span>
                     <IconArrowUpRight size={13} className="text-slate-300 shrink-0" />
                   </Link>
@@ -392,7 +392,7 @@ export function LeadDetailDrawer({
                     {detail.timeline.filter((e) => e.type === "note").map((n) => (
                       <div key={n.id} className="bg-slate-50/70 border border-slate-100 rounded-xl p-3">
                         <p className="text-xs text-slate-700">{n.details}</p>
-                        <p className="text-[10.5px] text-slate-400 mt-1">{n.summary} · {relativeTime(n.date)}</p>
+                        <p className="text-xxs text-slate-400 mt-1">{n.summary} · {relativeTime(n.date)}</p>
                       </div>
                     ))}
                   </div>
@@ -423,7 +423,7 @@ export function LeadDetailDrawer({
                         <IconFileDescription size={16} className="text-slate-400 shrink-0" />
                         <span className="min-w-0 flex-1">
                           <span className="block text-xs font-medium text-slate-900 truncate">{d.name}</span>
-                          <span className="block text-[10.5px] text-slate-400">{d.createdAt ? new Date(d.createdAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : ""}</span>
+                          <span className="block text-xxs text-slate-400">{d.createdAt ? new Date(d.createdAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : ""}</span>
                         </span>
                         <IconArrowUpRight size={13} className="text-slate-300 shrink-0" />
                       </a>

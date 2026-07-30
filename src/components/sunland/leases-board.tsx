@@ -884,7 +884,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
 
 
   return (
-    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-4">
+    <PageTransition className="board-shell mx-auto flex max-w-[98rem] flex-col gap-4">
       <BoardHeader
         eyebrow={<Badge tone="primary">Leases & Management Mandates</Badge>}
         title="Management Mandates & Leases"
@@ -921,7 +921,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
 
       {/* ── Executive 4-Card Dark KPI Tier ── */}
       <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-8 border border-slate-800/80">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 @board-lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
           {mode === "mandates" ? (
             <>
               {/* Card 1: Active Mandates & Coverage */}
@@ -2006,6 +2006,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                   </div>
                 ) : (
                   <div className="hidden lg:block overflow-hidden rounded-[24px] border border-slate-200/80 shadow-[0_4px_25px_rgb(0,0,0,0.02)] bg-white">
+                    <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full min-w-[900px] text-left text-body-regular">
                       <thead>
                         <tr className="border-b border-slate-200/80 bg-slate-50/60 label-caps text-slate-500 py-3.5">
@@ -2184,6 +2185,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         })}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 )}
 
@@ -2675,6 +2677,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                   </div>
                 ) : (
                   <div className="hidden lg:block overflow-hidden rounded-[24px] border border-slate-200/80 shadow-[0_4px_25px_rgb(0,0,0,0.02)] bg-white">
+                    <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full min-w-[980px] text-left text-body-regular">
                       <thead>
                         <tr className="border-b border-slate-200/80 bg-slate-50/60 label-caps text-slate-500 py-3.5">
@@ -2849,6 +2852,7 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
                         })}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 )}
 

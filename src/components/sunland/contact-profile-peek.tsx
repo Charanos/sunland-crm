@@ -69,7 +69,7 @@ export function ContactProfilePeek({
           </div>
           <div className="px-5 flex flex-col gap-4">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 mb-2">Main info</p>
+              <p className="text-caption font-medium uppercase tracking-wide text-slate-400 mb-2">Main info</p>
               <div className="flex flex-col gap-1.5">
                 {data.info.map((row) => (
                   <div key={row.label} className="flex items-center gap-2.5 bg-white border border-slate-100 rounded-full px-4 py-2">

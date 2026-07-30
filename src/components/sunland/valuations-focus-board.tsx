@@ -356,7 +356,7 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
             </div>
 
             {isStalled && (
-              <Badge tone="risk" className="text-[9px] uppercase tracking-wider px-1.5 py-0.5">
+              <Badge tone="risk" className="text-xxs uppercase tracking-wider px-1.5 py-0.5">
                 Stalled
               </Badge>
             )}
@@ -379,7 +379,7 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
         <div className="p-3.5 flex flex-col flex-1 text-left gap-2.5">
           <button type="button" onClick={() => setPeekId(v.id)} className="w-full text-left focus:outline-none cursor-pointer group/title">
             <p className="text-xs font-medium text-slate-900 truncate leading-snug group-hover/title:text-[#151936] transition-colors">{subject.name}</p>
-            <p className="text-[11px] text-slate-500 font-mono truncate mt-0.5 flex items-center gap-1">
+            <p className="text-caption text-slate-500 font-mono truncate mt-0.5 flex items-center gap-1">
               <IconMapPin size={11} className="text-amber-500 shrink-0" /> {subject.location}
             </p>
           </button>
@@ -408,7 +408,7 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-slate-100 overflow-hidden">
+    <div className="board-shell -mx-4 -mt-2 flex flex-col rounded-[24px] bg-slate-100 sm:-mx-6 lg:-mx-8 lg:-mb-8 overflow-hidden">
       {/* ── Completely Revamped Executive Focus Toolbar (Top Header) ── */}
       <div className="shrink-0 relative z-50 bg-tertiary-gradient text-white px-6 py-4 flex items-center justify-between gap-4 flex-wrap shadow-xl border-b border-slate-800/80">
         <div className="flex items-center gap-3.5 min-w-0">
@@ -509,7 +509,7 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
       )}
 
       {/* ── Board Columns Area (Strict Stacking Context Isolation) ── */}
-      <div className="flex-1 overflow-auto px-6 py-6 relative z-10">
+      <div className="overflow-x-auto px-6 py-6 relative z-10">
         {loading ? (
           <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
         ) : (
@@ -559,10 +559,10 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
                     <div className="h-px bg-slate-100 my-2" />
 
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-slate-500">TOTAL VALUE</span>
+                      <span className="text-xxs font-mono font-medium uppercase tracking-wider text-slate-500">TOTAL VALUE</span>
                       <span className="font-mono text-xs font-medium text-[#151936]">{formatCompactKES(total)}</span>
                     </div>
-                    {overWip && <p className="mt-2 text-[10px] font-mono font-medium uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-2 py-1 text-center">⚠ OVER WIP CAPACITY</p>}
+                    {overWip && <p className="mt-2 text-xxs font-mono font-medium uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-2 py-1 text-center">⚠ OVER WIP CAPACITY</p>}
                   </div>
 
                   {/* Column Drag Container */}
@@ -573,7 +573,7 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
                     {groups ? (
                       groups.map((g) => (
                         <div key={g.name} className="flex flex-col gap-2.5">
-                          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-slate-500 px-1">{g.name}</p>
+                          <p className="text-xxs font-mono font-medium uppercase tracking-wider text-slate-500 px-1">{g.name}</p>
                           {g.cards.map(renderCard)}
                         </div>
                       ))
@@ -630,11 +630,11 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
             <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-3 bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 shadow-2xs">
                 <div>
-                  <p className="text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider mb-1">Assessed Value</p>
+                  <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mb-1">Assessed Value</p>
                   <p className="font-mono text-base font-medium text-[#151936]">{peek.marketValueKes ? formatCompactKES(Number(peek.marketValueKes)) : "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider mb-1">Fit Score</p>
+                  <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mb-1">Fit Score</p>
                   <p className="font-mono text-base font-medium" style={{ color: peekScore?.color ?? "#475569" }}>{peekScore ? `${peekScore.grade} · ${peekScore.score}%` : "—"}</p>
                 </div>
               </div>
@@ -699,7 +699,7 @@ export function ValuationsFocusBoard({ entityId = "group" }: { entityId?: string
 
                       <div className="flex flex-col gap-1 min-w-0 flex-1 bg-slate-50/50 hover:bg-slate-50 border border-slate-100/60 p-3.5 rounded-2xl transition-colors">
                         <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">{new Date(a.createdAt).toLocaleString("en-KE")}</span>
+                          <span className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">{new Date(a.createdAt).toLocaleString("en-KE")}</span>
                         </div>
                         <p className="text-xs text-slate-900 font-medium leading-relaxed">{a.summary}</p>
                       </div>

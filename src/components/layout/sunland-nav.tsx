@@ -243,7 +243,7 @@ export function SunlandNav() {
       </button>
 
       {/* ── Brand + Entity Switcher ──────────────────────────── */}
-      <div className="shrink-0 border-b border-white/[0.04] px-4 pb-3 pt-6">
+      <div className="shrink-0 border-b border-white/[0.04] px-4 py-3">
         {/* Brand row */}
         <Link
           href="/admin"
@@ -377,7 +377,7 @@ export function SunlandNav() {
                           className="size-7 shrink-0"
                         />
                         <div className="min-w-0 flex-1">
-                          <p className={cn("truncate text-[12.5px]", isActive ? "font-medium text-white" : "text-white/75")}>
+                          <p className={cn("truncate text-ms", isActive ? "font-medium text-white" : "text-white/75")}>
                             {entity.name}
                           </p>
                           <p className="truncate text-sm text-white/35">{entity.subtitle}</p>

@@ -566,7 +566,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
               <IconTool size={140} stroke={1} />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Active Work Orders</span>
+              {/* <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Active Work Orders</span> */}
               <Badge tone={kpis.urgent.length > 0 ? "risk" : "success"}>
                 {kpis.urgent.length > 0 ? `${kpis.urgent.length} URGENT / CRITICAL` : "QUEUE CLEAR"}
               </Badge>
@@ -615,7 +615,6 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">{kpis.monthLabel} Spend</span>
-              <Badge tone="neutral">FINANCIAL MTD</Badge>
             </div>
             <div className="relative z-10 mt-4">
               <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(kpis.spendTotal)}</span>
@@ -632,7 +631,6 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Works Category Mix</span>
-              <Badge tone="primary">CATEGORIES</Badge>
             </div>
             <div className="relative z-10 mt-4 flex flex-col gap-2.5">
               <div className="flex h-2 rounded-full overflow-hidden gap-0.5 bg-white/10">
@@ -690,11 +688,11 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                 <div className="min-w-0 flex flex-col justify-center">
                   <div className="flex items-center gap-2 min-w-0">
                     <p className="text-xs font-medium text-slate-900 leading-snug truncate">{item.title}</p>
-                    <Badge tone={item.tone === "rose" ? "risk" : "warning"} className="shrink-0 text-[10px]">
+                    <Badge tone={item.tone === "rose" ? "risk" : "warning"} className="shrink-0 text-xxs">
                       ACTION REQUIRED
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1 font-mono truncate">{item.meta}</p>
+                  <p className="text-caption text-slate-500 mt-1 font-mono truncate">{item.meta}</p>
                 </div>
               </div>
 
@@ -747,7 +745,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                     )}
                   >
                     {f.label}
-                    <span className={cn("font-mono text-[10.5px] px-1.5 py-0.5 rounded-md", isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500")}>
+                    <span className={cn("font-mono text-xxs px-1.5 py-0.5 rounded-md", isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500")}>
                       {count}
                     </span>
                   </button>
@@ -1000,7 +998,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                   { label: "SLA Status", value: slaLineFor(detail, slaTarget).text },
                 ].map((kv) => (
                   <div key={kv.label} className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-3 min-w-0 shadow-2xs">
-                    <p className="text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider mb-1">{kv.label}</p>
+                    <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mb-1">{kv.label}</p>
                     <p className="text-xs font-medium text-slate-900 truncate">{kv.value}</p>
                   </div>
                 ))}
@@ -1015,12 +1013,12 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
 
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="bg-slate-50/70 border border-slate-200/60 rounded-xl p-3">
-                    <span className="text-slate-500 font-mono block text-[10.5px] mb-0.5">Estimated Cost</span>
+                    <span className="text-slate-500 font-mono block text-xxs mb-0.5">Estimated Cost</span>
                     <span className="font-mono text-sm font-medium text-[#151936]">{fmtKes(detail.estimatedCostKes)}</span>
                   </div>
 
                   <div className="bg-slate-50/70 border border-slate-200/60 rounded-xl p-3">
-                    <span className="text-slate-500 font-mono block text-[10.5px] mb-0.5">Approval Status</span>
+                    <span className="text-slate-500 font-mono block text-xxs mb-0.5">Approval Status</span>
                     <span className="font-medium text-slate-900 truncate block">
                       {detail.pendingApproval
                         ? `Pending ${detail.pendingApproval.requiredApproverRole.toUpperCase()}`
@@ -1134,7 +1132,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                             {entry.actorName && <span className="font-medium text-slate-900">{entry.actorName} </span>}
                             {entry.summary.replace(entry.actorName ?? "", "").replace(/^ - |^ — /, "").trim()}
                           </p>
-                          <span className="text-[10px] font-mono font-medium text-slate-400 shrink-0 whitespace-nowrap">
+                          <span className="text-xxs font-mono font-medium text-slate-400 shrink-0 whitespace-nowrap">
                             {relativeTime(entry.createdAt)}
                           </span>
                         </div>
@@ -1181,7 +1179,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-mono font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                      <label className="text-xxs font-mono font-medium uppercase tracking-wider text-slate-600 block mb-1">
                         Start Time
                       </label>
                       <input
@@ -1192,7 +1190,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono font-medium uppercase tracking-wider text-slate-600 block mb-1">
+                      <label className="text-xxs font-mono font-medium uppercase tracking-wider text-slate-600 block mb-1">
                         End Time
                       </label>
                       <input

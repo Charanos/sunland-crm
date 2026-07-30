@@ -1175,7 +1175,7 @@ export function ProfilePageContent({
           {/* Identity block */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
-              <h1 className="title-serif text-[1.75rem] text-white leading-tight">
+              <h1 className="title-serif text-white leading-tight">
                 {profile.name}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-sm label-caps bg-[#f3df27]/12 text-[#f3df27] border border-[#f3df27]/20">

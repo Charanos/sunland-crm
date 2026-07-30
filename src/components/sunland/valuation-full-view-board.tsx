@@ -676,7 +676,7 @@ export function ValuationFullViewBoard({
                           {i + 1}
                         </span>
                       ) : (
-                        <span className="size-6 rounded-full bg-slate-100 border border-slate-300 text-slate-400 font-mono text-[10px] flex items-center justify-center">
+                        <span className="size-6 rounded-full bg-slate-100 border border-slate-300 text-slate-400 font-mono text-xxs flex items-center justify-center">
                           {i + 1}
                         </span>
                       )}
@@ -705,7 +705,7 @@ export function ValuationFullViewBoard({
                   <div key={s} className="flex flex-col items-center">
                     <span
                       className={cn(
-                        "text-[11px] font-medium truncate w-full px-1",
+                        "text-caption font-medium truncate w-full px-1",
                         isCurrent
                           ? "text-[#151936] font-medium"
                           : isPast

@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { and, eq, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns, aliasedTable } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, entities, properties, users, valuations } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
@@ -52,6 +52,8 @@ export async function listValuations(ctx: CallerContext) {
   const entityId = await resolveEntityId(ctx.entityId);
   await authorize(ctx, "properties.property.read", entityId);
 
+  const valuerUsers = aliasedTable(users, "valuer_users");
+
   return db
     .select({
       ...getTableColumns(valuations),
@@ -63,11 +65,14 @@ export async function listValuations(ctx: CallerContext) {
       landlordAvatarUrl: contacts.avatarUrl,
       managerName: users.name,
       managerAvatarUrl: users.avatarUrl,
+      valuerName: valuerUsers.name,
+      valuerAvatarUrl: valuerUsers.avatarUrl,
     })
     .from(valuations)
     .leftJoin(properties, eq(valuations.propertyId, properties.id))
     .leftJoin(contacts, eq(valuations.landlordContactId, contacts.id))
     .leftJoin(users, eq(valuations.assignedManagerId, users.id))
+    .leftJoin(valuerUsers, eq(valuations.valuerId, valuerUsers.id))
     .where(eq(valuations.entityId, entityId));
 }
 

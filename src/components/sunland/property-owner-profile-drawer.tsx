@@ -154,15 +154,15 @@ export function PropertyOwnerProfileDrawer({
         {/* Portfolio Executive 3-Stat KPI Bar */}
         <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 shadow-2xs grid grid-cols-3 divide-x divide-slate-200/80 text-center">
           <div className="px-2">
-            <span className="block text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">Properties</span>
+            <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Properties</span>
             <span className="font-mono text-2xl font-medium text-slate-900 mt-1 block">{ownedProperties.length}</span>
           </div>
           <div className="px-2">
-            <span className="block text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">Active Mandates</span>
+            <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Active Mandates</span>
             <span className="font-mono text-2xl font-medium text-emerald-600 mt-1 block">{activeMandateCount}</span>
           </div>
           <div className="px-2">
-            <span className="block text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">Collected YTD</span>
+            <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Collected YTD</span>
             <span className="font-mono text-lg font-medium text-[#151936] mt-1.5 block">
               {collectedYtd != null ? formatCompactKES(collectedYtd) : "—"}
             </span>
@@ -178,7 +178,7 @@ export function PropertyOwnerProfileDrawer({
                 <IconBuildingCommunity size={15} />
               </div>
               <div className="min-w-0">
-                <span className="block text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">Company</span>
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Company</span>
                 <span className="block text-xs font-medium text-slate-900 truncate">{owner?.company || "Individual"}</span>
               </div>
             </div>
@@ -188,7 +188,7 @@ export function PropertyOwnerProfileDrawer({
                 <IconPhone size={15} />
               </div>
               <div className="min-w-0">
-                <span className="block text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">Phone</span>
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Phone</span>
                 <span className="block text-xs font-mono font-medium text-slate-900 truncate">{owner?.phone || "—"}</span>
               </div>
             </div>
@@ -198,7 +198,7 @@ export function PropertyOwnerProfileDrawer({
                 <IconMail size={15} />
               </div>
               <div className="min-w-0">
-                <span className="block text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">Email</span>
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Email</span>
                 <span className="block text-xs font-mono font-medium text-slate-900 truncate">{owner?.email || "—"}</span>
               </div>
             </div>
@@ -208,7 +208,7 @@ export function PropertyOwnerProfileDrawer({
                 <IconCalendar size={15} />
               </div>
               <div className="min-w-0">
-                <span className="block text-[10px] font-mono font-medium text-slate-500 uppercase tracking-wider">Client Since</span>
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Client Since</span>
                 <span className="block text-xs font-mono font-medium text-slate-900 truncate">
                   {owner?.clientSince ? formatPropertyDate(owner.clientSince) : "—"}
                 </span>
@@ -222,7 +222,7 @@ export function PropertyOwnerProfileDrawer({
           <div className="space-y-2 my-4">
             <div className="flex items-center justify-between px-1">
               <span className="label-caps text-slate-500">Owned Properties ({ownedProperties.length})</span>
-              <span className="text-[10px] font-mono text-slate-400">CLICK TO VIEW FILE</span>
+              <span className="text-xxs font-mono text-slate-400">CLICK TO VIEW FILE</span>
             </div>
             <div className="flex flex-col gap-4">
               {ownedProperties.map((p) => {
@@ -248,11 +248,11 @@ export function PropertyOwnerProfileDrawer({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-slate-900 group-hover/prop:text-[#151936] transition-colors truncate">{p.name}</span>
-                        <span className="font-mono text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 shrink-0">
+                        <span className="font-mono text-xxs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 shrink-0">
                           {p.propertyCode}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+                      <p className="text-caption text-slate-500 font-mono mt-0.5 truncate">
                         {p.location || "Nairobi"} · {featuredPrice(p)}
                       </p>
                     </div>

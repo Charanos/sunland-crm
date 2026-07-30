@@ -487,7 +487,7 @@ export function MaintenanceFullViewBoard({ entityId, requestId }: { entityId: st
               <span className="text-xs text-slate-400 font-medium relative z-10">{v.label}</span>
               <div className="relative z-10 flex flex-col gap-1.5">
                 <span className={cn("font-mono font-medium text-xl leading-none", VITAL_TONE_VALUE[v.tone])}>{v.value}</span>
-                {v.sub && <span className={cn("mono-data text-[10.5px] font-medium inline-flex items-center px-1.5 py-0.5 rounded-md w-fit", VITAL_TONE_BADGE_BG[v.tone])}>{v.sub}</span>}
+                {v.sub && <span className={cn("mono-data text-xxs font-medium inline-flex items-center px-1.5 py-0.5 rounded-md w-fit", VITAL_TONE_BADGE_BG[v.tone])}>{v.sub}</span>}
               </div>
             </div>
           ));

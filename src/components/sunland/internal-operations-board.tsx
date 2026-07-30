@@ -598,7 +598,7 @@ export function InternalOperationsBoard({
                         : "text-slate-700 hover:bg-slate-50"
                   )}
                 >
-                  <span className={cn("relative z-10 leading-none text-[14px] sm:text-[15px]", isSelected || isToday ? "font-medium" : "font-normal", dayEvents.length > 0 ? "mb-1.5" : "")}>{day}</span>
+                  <span className={cn("relative z-10 leading-none text-sm sm:text-base", isSelected || isToday ? "font-medium" : "font-normal", dayEvents.length > 0 ? "mb-1.5" : "")}>{day}</span>
 
                   {/* Event Indicators */}
                   {dayEvents.length > 0 && (
@@ -649,7 +649,7 @@ export function InternalOperationsBoard({
 
                     {/* Minimal Time Block with Right Border */}
                     <div className="w-16 shrink-0 flex flex-col items-center justify-center px-2 border-r border-slate-100/80 bg-slate-50/30">
-                      <span className="font-mono font-medium text-[22px] leading-none mb-1 font-medium tracking-tight">{timePart}</span>
+                      <span className="font-mono font-medium text-2xl leading-none mb-1 font-medium tracking-tight">{timePart}</span>
                       <span className="text-xxs font-medium tracking-widest opacity-70 uppercase">{periodPart ?? ""}</span>
                     </div>
 

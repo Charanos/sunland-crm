@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IconCheck, IconPlus, IconTrash } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconPlus,
+  IconTrash,
+  IconReportMoney,
+  IconFileAnalytics,
+  IconScale,
+} from "@tabler/icons-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -124,77 +131,131 @@ export function ValuationSubmitModal({
     <Modal
       open={open}
       onClose={() => !isSubmitting && onClose()}
-      title={`Submit Valuation - ${valuation.valuationCode}`}
-      description="Record the assessed value, proposed fee, and methodology"
+      title={`Submit Valuation File: ${valuation.valuationCode}`}
+      description="Record the assessed market value, proposed management fee rate, and valuation methodology."
       size="lg"
     >
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Assessed Value (KES) <span className="text-rose-500">*</span></label>
-            <input
-              type="number"
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-              placeholder="e.g. 34500000"
-              value={form.marketValueKes}
-              onChange={(e) => setForm((f) => ({ ...f, marketValueKes: e.target.value }))}
-            />
+      <div className="space-y-6 pt-1">
+        {/* Top Valuation Context Card */}
+        <div className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="size-11 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center shrink-0 text-[#151936] shadow-2xs">
+              <IconReportMoney size={22} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <p className="text-xs font-medium text-slate-900 truncate leading-snug">
+                File: {valuation.valuationCode}
+              </p>
+              <p className="text-xxs text-slate-500 truncate mt-0.5 font-mono">
+                Status: <span className="font-medium text-[#151936]">Awaiting Assessed Market Value & Fee Proposal</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Proposed Management Fee (%) <span className="text-rose-500">*</span></label>
-            <input
-              type="number"
-              step="0.1"
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-              placeholder="e.g. 8.0"
-              value={form.proposedFeeRate}
-              onChange={(e) => setForm((f) => ({ ...f, proposedFeeRate: e.target.value }))}
-            />
-          </div>
-        </div>
-        <div>
-          <label className="label-caps text-slate-400 mb-1.5 block">Methodology</label>
-          <textarea
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary resize-none h-24 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
-            placeholder="Approach used (income capitalization, direct comparison…), yield/rate assumptions, condition notes…"
-            value={form.methodology}
-            onChange={(e) => setForm((f) => ({ ...f, methodology: e.target.value }))}
-          />
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="label-caps text-slate-400">Comparable Evidence (optional)</label>
-            <button type="button" onClick={addComparable} className="text-xs font-medium text-[#151936] hover:underline flex items-center gap-1">
-              <IconPlus size={13} /> Add comparable
+        {/* Section 1: Assessed Value & Fee Rate */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-400">
+              01 · Assessed Valuation & Fee Proposal
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 block mb-1.5">
+                Assessed Market Value (KES) *
+              </label>
+              <input
+                type="number"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
+                placeholder="e.g. 34500000"
+                value={form.marketValueKes}
+                onChange={(e) => setForm((f) => ({ ...f, marketValueKes: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 block mb-1.5">
+                Proposed Management Fee Rate (%) *
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
+                placeholder="e.g. 8.0"
+                value={form.proposedFeeRate}
+                onChange={(e) => setForm((f) => ({ ...f, proposedFeeRate: e.target.value }))}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Methodology & Approach */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-400">
+              02 · Valuation Methodology & Assumptions
+            </span>
+          </div>
+
+          <div>
+            <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 block mb-1.5">
+              Valuation Approach & Technical Notes
+            </label>
+            <textarea
+              className="w-full rounded-xl border border-slate-200/90 bg-white p-3.5 text-xs text-slate-900 resize-none h-24 placeholder:text-slate-400 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
+              placeholder="Approach used (income capitalization, direct comparison…), yield/rate assumptions, condition notes…"
+              value={form.methodology}
+              onChange={(e) => setForm((f) => ({ ...f, methodology: e.target.value }))}
+            />
+          </div>
+        </div>
+
+        {/* Section 3: Comparable Evidence */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-400">
+              03 · Comparable Evidence (optional)
+            </span>
+            <button
+              type="button"
+              onClick={addComparable}
+              className="text-xs font-medium text-[#151936] hover:text-emerald-700 transition-colors flex items-center gap-1 bg-white border border-slate-200/90 px-2.5 py-1 rounded-lg shadow-2xs cursor-pointer"
+            >
+              <IconPlus size={13} /> Add Evidence Row
             </button>
           </div>
+
           {comparables.length > 0 && (
             <div className="space-y-2">
               {comparables.map((row, idx) => (
                 <div key={idx} className="grid grid-cols-[1.6fr_1fr_0.8fr_auto] gap-2 items-center">
                   <input
-                    className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40"
-                    placeholder="Comparable name"
+                    className="h-9 rounded-xl border border-slate-200/80 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#151936] shadow-2xs"
+                    placeholder="Comparable property name"
                     value={row.name}
                     onChange={(e) => updateComparable(idx, { name: e.target.value })}
                   />
                   <input
                     type="number"
-                    className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 mono-data text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40"
+                    className="h-9 rounded-xl border border-slate-200/80 bg-white px-3 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#151936] shadow-2xs"
                     placeholder="KES/sqft"
                     value={row.pricePerSqft}
                     onChange={(e) => updateComparable(idx, { pricePerSqft: e.target.value })}
                   />
                   <input
                     type="number"
-                    className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 mono-data text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40"
+                    className="h-9 rounded-xl border border-slate-200/80 bg-white px-3 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#151936] shadow-2xs"
                     placeholder="Adj. %"
                     value={row.adjustmentPct}
                     onChange={(e) => updateComparable(idx, { adjustmentPct: e.target.value })}
                   />
-                  <button type="button" onClick={() => removeComparable(idx)} className="text-slate-400 hover:text-rose-600 p-1.5">
-                    <IconTrash size={15} />
+                  <button
+                    type="button"
+                    onClick={() => removeComparable(idx)}
+                    className="text-slate-400 hover:text-rose-600 p-1.5 transition-colors cursor-pointer"
+                  >
+                    <IconTrash size={16} />
                   </button>
                 </div>
               ))}
@@ -202,13 +263,25 @@ export function ValuationSubmitModal({
           )}
         </div>
 
-        <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+        {/* Modal Footer Actions */}
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200/80">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="h-10 px-4 text-xs font-medium rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="bg-[#151936] text-white hover:bg-[#1f254e] transition-colors rounded-xl px-5 h-10 text-xs font-medium flex items-center gap-2 shadow-2xs cursor-pointer"
+          >
             {isSubmitting ? (
-              <><LoadingSpinner size="sm" /><span className="ml-2">Submitting…</span></>
+              <><LoadingSpinner size="sm" /><span>Submitting Valuation…</span></>
             ) : (
-              <><IconCheck size={14} /> Submit Valuation</>
+              <><IconCheck size={15} /> Submit Valuation File</>
             )}
           </Button>
         </div>

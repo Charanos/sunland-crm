@@ -1,6 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  IconBuildingCommunity,
+  IconBuildingSkyscraper,
+  IconBuildingBank,
+  IconUserCheck,
+  IconCalendarEvent,
+  IconNotes,
+  IconMapPin,
+  IconPlus,
+  IconShieldCheck,
+  IconUserCog,
+} from "@tabler/icons-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -182,89 +194,164 @@ export function ValuationFormModal({
     <Modal
       open={open}
       onClose={() => !isSaving && onClose()}
-      title={isEdit ? `Edit ${valuation!.valuationCode}` : "Schedule Valuation"}
-      description={isEdit ? "Update the prospect details" : "Front Office submits; the assigned property manager conducts the site visit and valuation"}
+      title={isEdit ? `Edit Valuation File: ${valuation!.valuationCode}` : "Schedule Property Valuation"}
+      description={isEdit ? "Update prospect details, assigned manager, or site visit schedule." : "Record a new prospect valuation or portfolio asset assessment into the acquisition funnel."}
       size="lg"
     >
-      <div className="space-y-5">
-        {/* Subject */}
-        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-            <h3 className="text-title-primary">Prospect Property or Land</h3>
-            <div className="flex bg-slate-100 p-1 rounded-lg">
+      <div className="space-y-6 pt-1">
+        {/* Top Contracting & Mode Preview Bar */}
+        <div className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="size-11 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center shrink-0 text-[#151936] shadow-2xs">
+              <IconBuildingSkyscraper size={22} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <p className="text-xs font-medium text-slate-900 truncate leading-snug">
+                {form.subjectMode === "portfolio"
+                  ? (properties.find((p) => p.id === form.propertyId)?.name || "Select Portfolio Asset")
+                  : (form.externalPropertyName.trim() || "New Prospect Subject")}
+              </p>
+              <p className="text-xxs text-slate-600 truncate mt-0.5 font-mono">
+                Location: <span className="font-medium text-slate-700">{form.subjectMode === "portfolio" ? (properties.find((p) => p.id === form.propertyId)?.location || "Portfolio") : (form.externalLocation.trim() || "Unspecified")}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex bg-slate-200/70 p-1 rounded-xl gap-1">
               {(["external", "portfolio"] as const).map((m) => (
                 <button
                   key={m}
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, subjectMode: m }))}
                   className={cn(
-                    "px-3 py-1 text-sm font-medium rounded-md transition-colors capitalize",
-                    form.subjectMode === m ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700",
+                    "px-3 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 cursor-pointer",
+                    form.subjectMode === m ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900",
                   )}
                 >
-                  {m === "portfolio" ? "Portfolio" : "New Prospect"}
+                  {m === "external" ? (
+                    <><IconPlus size={13} /> New Prospect</>
+                  ) : (
+                    <><IconBuildingCommunity size={13} /> Portfolio</>
+                  )}
                 </button>
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Section 1: Subject Fields */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+              01 · Subject Identification
+            </span>
+          </div>
 
           {form.subjectMode === "portfolio" ? (
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Portfolio Property</label>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+                Portfolio Property Unit *
+              </label>
               <select
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                 value={form.propertyId}
                 onChange={(e) => setForm((f) => ({ ...f, propertyId: e.target.value }))}
               >
-                <option value="">-- Select property --</option>
+                <option value="">-- Select portfolio property --</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>{p.name} · {p.location}</option>
                 ))}
               </select>
             </div>
           ) : (
-            <>
+            <div className="space-y-3.5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="label-caps text-slate-400 mb-1.5 block">Property or Land Name</label>
+                  <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+                    Property or Land Name *
+                  </label>
                   <input
-                    className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                    className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                     placeholder="e.g. Riverside Apartments, Kileleshwa"
                     value={form.externalPropertyName}
                     onChange={(e) => setForm((f) => ({ ...f, externalPropertyName: e.target.value }))}
                   />
                 </div>
                 <div>
-                  <label className="label-caps text-slate-400 mb-1.5 block">Location</label>
+                  <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+                    Location / Submarket
+                  </label>
                   <input
-                    className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                    className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                     placeholder="e.g. Kileleshwa, Nairobi"
                     value={form.externalLocation}
                     onChange={(e) => setForm((f) => ({ ...f, externalLocation: e.target.value }))}
                   />
                 </div>
               </div>
-              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer w-fit">
+
+              <label
+                onClick={() => setForm((f) => ({ ...f, isLand: !f.isLand }))}
+                className={cn(
+                  "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer shadow-2xs select-none",
+                  form.isLand ? "bg-amber-50/80 border-amber-300/80" : "bg-slate-50/40 border-slate-200/80 hover:bg-slate-100/60"
+                )}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className={cn("size-7 rounded-lg flex items-center justify-center shrink-0 border", form.isLand ? "bg-amber-100 border-amber-300 text-amber-800" : "bg-white border-slate-200 text-slate-600")}>
+                    <IconMapPin size={15} />
+                  </span>
+                  <div>
+                    <span className="block text-xs font-medium text-slate-900">Raw Land Parcel</span>
+                    <span className="block text-xxs text-slate-600 font-mono">Subject is an unbuilt plot or undeveloped land</span>
+                  </div>
+                </div>
                 <input
                   type="checkbox"
                   checked={form.isLand}
-                  onChange={(e) => setForm((f) => ({ ...f, isLand: e.target.checked }))}
-                  className="rounded border-slate-300"
+                  onChange={() => { }}
+                  className="size-4 rounded border-slate-300 text-[#151936] focus:ring-[#151936]"
                 />
-                This is raw land, not a built property
               </label>
-            </>
+            </div>
           )}
         </div>
 
-        {/* People */}
-        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
-          <h3 className="text-title-primary border-b border-slate-200 pb-2">Landlord, Manager &amp; Valuer</h3>
+        {/* Section 2: Operational Assignment */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+              02 · Stakeholder & Valuer Assignment
+            </span>
+            <div className="flex bg-slate-200/70 p-0.5 rounded-lg gap-0.5 text-xs">
+              {(["sunland", "external"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, valuerMode: m }))}
+                  className={cn(
+                    "px-2.5 py-0.5 text-xxs font-medium rounded-md transition-all flex items-center gap-1 cursor-pointer",
+                    form.valuerMode === m ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900",
+                  )}
+                >
+                  {m === "sunland" ? (
+                    <><IconBuildingBank size={12} /> Sunland Valuers</>
+                  ) : (
+                    <><IconBuildingSkyscraper size={12} /> Independent Firm</>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Landlord / Owner Contact</label>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+                Landlord / Owner Contact
+              </label>
               <select
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                 value={form.landlordContactId}
                 onChange={(e) => setForm((f) => ({ ...f, landlordContactId: e.target.value }))}
               >
@@ -275,9 +362,11 @@ export function ValuationFormModal({
               </select>
             </div>
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Assigned Property Manager</label>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+                Assigned Property Manager
+              </label>
               <select
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                 value={form.assignedManagerId}
                 onChange={(e) => setForm((f) => ({ ...f, assignedManagerId: e.target.value }))}
               >
@@ -290,60 +379,59 @@ export function ValuationFormModal({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="label-caps text-slate-400">Valuer</label>
-              <div className="flex bg-slate-100 p-1 rounded-lg">
-                {(["sunland", "external"] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, valuerMode: m }))}
-                    className={cn(
-                      "px-2.5 py-0.5 text-xs font-medium rounded-md transition-colors",
-                      form.valuerMode === m ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700",
-                    )}
-                  >
-                    {m === "sunland" ? "Sunland Valuers" : "Independent Firm"}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+              Valuer Firm / Lead Valuer
+            </label>
             {form.valuerMode === "sunland" ? (
               <select
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                 value={form.valuerId}
                 onChange={(e) => setForm((f) => ({ ...f, valuerId: e.target.value }))}
               >
                 <option value="">-- Sunland Valuers Ltd (default) --</option>
                 {managers.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name} (internal)</option>
+                  <option key={u.id} value={u.id}>{u.name} (Internal Staff)</option>
                 ))}
               </select>
             ) : (
               <input
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                 placeholder="e.g. Knight & Kale Valuers"
                 value={form.externalValuerName}
                 onChange={(e) => setForm((f) => ({ ...f, externalValuerName: e.target.value }))}
               />
             )}
           </div>
+        </div>
+
+        {/* Section 3: Schedule & Notes */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+              03 · Inspection Schedule & Notes
+            </span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Site Visit (optional)</label>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+                Site Visit Schedule (optional)
+              </label>
               <input
                 type="datetime-local"
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data text-slate-800 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                 value={form.siteVisitAt}
                 onChange={(e) => setForm((f) => ({ ...f, siteVisitAt: e.target.value }))}
               />
             </div>
           </div>
+
           <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Notes</label>
+            <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">
+              Assessment Notes & Access Details
+            </label>
             <textarea
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary resize-none h-20 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+              className="w-full rounded-xl border border-slate-200/90 bg-white p-3.5 text-xs text-slate-900 resize-none h-20 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
               placeholder="Access arrangements, how the lead came in, internal context…"
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
@@ -351,13 +439,25 @@ export function ValuationFormModal({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
-          <Button variant="secondary" onClick={onClose} disabled={isSaving}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSaving}>
+        {/* Modal Footer Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200/80">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={isSaving}
+            className="h-10 px-4 text-xs font-medium rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className="bg-[#151936] text-white hover:bg-[#1f254e] transition-colors rounded-xl px-5 h-10 text-xs font-medium flex items-center gap-2 shadow-2xs cursor-pointer"
+          >
             {isSaving ? (
-              <><LoadingSpinner size="sm" /><span className="ml-2">{isEdit ? "Saving…" : "Scheduling…"}</span></>
+              <><LoadingSpinner size="sm" /><span>{isEdit ? "Saving Changes…" : "Scheduling Prospect…"}</span></>
             ) : (
-              isEdit ? "Save Changes" : "Schedule & Assign"
+              isEdit ? "Save Changes" : "Schedule & Assign Prospect"
             )}
           </Button>
         </div>

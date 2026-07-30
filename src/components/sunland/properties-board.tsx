@@ -83,6 +83,34 @@ function isSale(property: Property): boolean {
   return property.listingType?.toLowerCase() === "sale";
 }
 
+const STAKEHOLDER_AVATARS: Record<string, string> = {
+  "Kariuki Holdings": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+  "David Omondi": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+  "Jane Wanjiru": "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&q=80",
+  "Knight & Kale Valuers": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&q=80",
+  "Tysons Ltd": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80",
+  "Sunland Valuers Ltd": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80",
+  "Kevin Mbugua": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+};
+
+const DEFAULT_AVATARS = [
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+  "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&q=80",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+  "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80",
+  "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80",
+];
+
+function getAvatarForName(name?: string | null, directUrl?: string | null): string {
+  if (directUrl && directUrl.trim().length > 0) return directUrl;
+  if (!name || name.trim().length === 0) return DEFAULT_AVATARS[0];
+  if (STAKEHOLDER_AVATARS[name]) return STAKEHOLDER_AVATARS[name];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const idx = Math.abs(hash) % DEFAULT_AVATARS.length;
+  return DEFAULT_AVATARS[idx];
+}
+
 function priceDisplay(property: Property): string {
   if (isSale(property)) {
     return property.askingPriceKes ? formatCompactKES(parseFloat(property.askingPriceKes)) : "On Request";
@@ -144,14 +172,15 @@ function StatusPill({ status }: { status: PropertyStatus }) {
 }
 
 /**
- * ImageStatusPill — same soft-pastel Badge pill as StatusPill.
- * Used on image overlays; backdrop-blur provides legibility over photos.
+ * ImageStatusPill — high-contrast badge overlay for property cards.
+ * Uses explicit text-slate-900 on backdrop-blur white background for 100% legibility.
  */
 function ImageStatusPill({ status }: { status: PropertyStatus }) {
+  const sc = STATUS_CONFIG[status] || STATUS_CONFIG.available;
   return (
-    <span className="badge-pill badge-tone-neutral backdrop-blur-sm shadow-sm" style={{ background: "rgba(255,255,255,0.82)" }}>
-      <span className={cn("size-1.5 rounded-full shrink-0 mr-1", STATUS_CONFIG[status]?.dot ?? "bg-slate-400")} />
-      {STATUS_CONFIG[status]?.label ?? status}
+    <span className="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-md text-slate-900 font-mono text-xxs font-medium uppercase tracking-wider px-2.5 py-1 rounded-xl shadow-2xs border border-slate-200/90">
+      <span className={cn("size-1.5 rounded-full shrink-0", sc.dot)} />
+      {sc.label}
     </span>
   );
 }
@@ -691,7 +720,7 @@ export function PropertiesBoard({
   }, [loadProperties, pushToast]);
 
   return (
-    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-4">
+    <PageTransition className="board-shell mx-auto flex max-w-[98rem] flex-col gap-4">
       <BoardHeader
         eyebrow={<Badge tone="primary">Estate Portfolio</Badge>}
         title="Properties & Inventory"
@@ -721,7 +750,7 @@ export function PropertiesBoard({
 
       {/* ── Executive 4-Card Dark KPI Tier ── */}
       <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-8 border border-slate-800/80">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 @board-lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
           {/* Card 1: Total Estate Portfolio */}
           <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
             <div className="absolute -bottom-10 -right-10 opacity-5 text-emerald-500 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
@@ -753,7 +782,7 @@ export function PropertiesBoard({
                         occupied: "text-slate-200",
                         under_offer: "text-amber-400",
                         maintenance: "text-rose-400",
-                        off_market: "text-slate-400",
+                        off_market: "text-slate-300",
                       };
                       return (
                         <span
@@ -821,7 +850,7 @@ export function PropertiesBoard({
                 {statusCounts.under_offer > 0 && (
                   <div className="text-right min-w-0">
                     <span className="font-mono mono-stat text-sm font-medium text-amber-300">{statusCounts.under_offer}</span>
-                    <span className="text-xxs font-medium uppercase tracking-widest text-slate-400 block mt-0.5">
+                    <span className="text-xxs font-medium uppercase tracking-widest text-slate-300 block mt-0.5">
                       UNDER OFFER
                     </span>
                   </div>
@@ -840,7 +869,7 @@ export function PropertiesBoard({
               <span className="font-mono mono-stat text-3xl font-normal text-white">
                 {formatCompactKES(kpis.rentPool)}
               </span>
-              <p className="text-xxs font-medium uppercase tracking-widest text-slate-400 mt-2">CONTRACTED ACTIVE CASHFLOW</p>
+              <p className="text-xxs font-medium uppercase tracking-widest text-slate-300 mt-2">CONTRACTED ACTIVE CASHFLOW</p>
             </div>
           </div>
         </div>
@@ -852,61 +881,68 @@ export function PropertiesBoard({
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
-      {/* ── Market Highlights Tier ── */}
-      <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Featured Properties Carousel */}
-        <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col overflow-hidden relative">
+      {/* ── Market Highlights Tier (Featured & Portfolio Mix) ── */}
+      <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Featured Properties Spotlight Card */}
+        <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col overflow-hidden relative group">
           {featuredProperties.length > 0 ? (
             <div className="flex flex-col sm:flex-row flex-1 min-h-0" key={safeFeaturedIndex}>
-              {/* ── Image panel — full width on mobile, half on sm+ ── */}
-              <div className="relative h-56 sm:h-auto sm:w-1/2 shrink-0 overflow-hidden">
-                <div className="absolute top-4 left-4 z-20">
-                  <span className="bg-[#f3df27] px-2.5 py-1 rounded-xl inline-flex items-center gap-1.5 text-[#151936] text-xs font-medium shadow-md">
-                    <IconStarFilled size={13} /> Featured
+              {/* ── Left Side: Property Image Panel ── */}
+              <div className="relative h-64 sm:h-auto sm:w-1/2 lg:w-[45%] shrink-0 overflow-hidden bg-slate-900">
+                <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+                  <span className="bg-[#151936]/90 backdrop-blur-md text-[#f3df27] inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-mono font-medium uppercase tracking-wider shadow-2xs border border-white/10">
+                    <IconStarFilled size={13} className="text-[#f3df27] shrink-0" /> Featured
                   </span>
                 </div>
+
                 {primaryImageUrl(featuredProperties[safeFeaturedIndex]) ? (
                   <Image
                     src={primaryImageUrl(featuredProperties[safeFeaturedIndex])!}
                     alt={featuredProperties[safeFeaturedIndex].name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 800px"
-                    className="object-cover transition-transform duration-700 hover:scale-105"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
                     priority
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-slate-50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
                     <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
-                    <PropertyTypeIcon type={featuredProperties[safeFeaturedIndex].propertyType} size={52} className="text-slate-300" />
+                    <PropertyTypeIcon type={featuredProperties[safeFeaturedIndex].propertyType} size={56} className="text-slate-600" />
                   </div>
                 )}
-                {/* Gradient scrim for mobile readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent sm:hidden pointer-events-none" />
+                {/* Gradient scrim for readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                 {/* Status chip — on-image overlay */}
-                <div className="absolute bottom-4 left-4">
+                <div className="absolute bottom-4 left-4 z-20">
                   <ImageStatusPill status={featuredProperties[safeFeaturedIndex].status} />
                 </div>
               </div>
 
-              {/* ── Info panel ── */}
-              <div className="flex-1 flex flex-col px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5 min-w-0 overflow-y-auto">
-                {/* Code + carousel nav */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className="label-caps text-slate-500">
+              {/* ── Right Side: Info Panel ── */}
+              <div className="flex-1 flex flex-col p-5 sm:p-6 min-w-0">
+                {/* Code + Carousel Navigation Controls */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500">
                     {featuredProperties[safeFeaturedIndex].propertyCode}
                   </span>
                   {featuredProperties.length > 1 && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 bg-slate-100/80 px-2 py-1 rounded-xl border border-slate-200/60">
                       <button
+                        type="button"
                         onClick={() => setFeaturedIndex((i) => (i === 0 ? featuredProperties.length - 1 : i - 1))}
-                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                        aria-label="Previous featured property"
+                        className="size-6 rounded-lg text-slate-600 flex items-center justify-center hover:bg-white hover:text-slate-900 transition-all cursor-pointer"
                       >
                         <IconChevronLeft size={14} />
                       </button>
-                      <span className="label-caps text-slate-600 tabular-nums">{safeFeaturedIndex + 1}&thinsp;/&thinsp;{featuredProperties.length}</span>
+                      <span className="font-mono text-xs text-slate-700 font-medium px-1 tabular-nums">
+                        {safeFeaturedIndex + 1}&thinsp;/&thinsp;{featuredProperties.length}
+                      </span>
                       <button
+                        type="button"
                         onClick={() => setFeaturedIndex((i) => (i === featuredProperties.length - 1 ? 0 : i + 1))}
-                        className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                        aria-label="Next featured property"
+                        className="size-6 rounded-lg text-slate-600 flex items-center justify-center hover:bg-white hover:text-slate-900 transition-all cursor-pointer"
                       >
                         <IconChevronRight size={14} />
                       </button>
@@ -914,22 +950,22 @@ export function PropertiesBoard({
                   )}
                 </div>
 
-                {/* Listing type + name + location */}
+                {/* Listing type + Property Title + Location */}
                 <div className="mb-4">
-                  <Badge className="inline-flex bg-slate-50 border border-slate-200/60 rounded-full px-3 py-0.5 label-caps text-slate-500 mb-2">
+                  <span className="inline-flex bg-slate-100 border border-slate-200/80 rounded-xl px-2.5 py-0.5 font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 mb-2">
                     {LISTING_TYPE_LABEL[featuredProperties[safeFeaturedIndex].listingType as keyof typeof LISTING_TYPE_LABEL]
                       ?? (isSale(featuredProperties[safeFeaturedIndex]) ? "For Sale" : "To Let")}
-                  </Badge>
-                  <h4 className="text-xl sm:text-2xl lg:text-3xl font-medium text-slate-900 leading-snug tracking-tight mb-1.5">
+                  </span>
+                  <h4 className="text-xl sm:text-2xl font-medium text-slate-900 leading-snug tracking-tight mb-1">
                     {featuredProperties[safeFeaturedIndex].name}
                   </h4>
-                  <p className="body-sm text-slate-500 flex items-center gap-1.5">
-                    <IconMapPin size={14} stroke={1.5} />
+                  <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                    <IconMapPin size={14} className="text-slate-600 shrink-0" />
                     {featuredProperties[safeFeaturedIndex].location}
                   </p>
                 </div>
 
-                {/* Spec chips row */}
+                {/* Spec Chips Row */}
                 {(featuredProperties[safeFeaturedIndex].bedrooms != null ||
                   featuredProperties[safeFeaturedIndex].bathrooms != null ||
                   featuredProperties[safeFeaturedIndex].sizeSqft != null ||
@@ -937,57 +973,49 @@ export function PropertiesBoard({
                   featuredProperties[safeFeaturedIndex].parkingSpaces != null) && (
                     <div className="flex items-center gap-2 mb-4 flex-wrap">
                       {featuredProperties[safeFeaturedIndex].bedrooms != null && (
-                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconBed size={14} stroke={1.5} className="text-slate-600" />
-                          <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].bedrooms} beds</span>
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/70 rounded-xl px-2.5 py-1 text-slate-700">
+                          <IconBed size={14} className="text-slate-500 shrink-0" />
+                          <span className="font-mono text-xs font-medium">{featuredProperties[safeFeaturedIndex].bedrooms} beds</span>
                         </div>
                       )}
                       {featuredProperties[safeFeaturedIndex].bathrooms != null && (
-                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconRuler size={14} stroke={1.5} className="text-slate-600" />
-                          <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].bathrooms} baths</span>
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/70 rounded-xl px-2.5 py-1 text-slate-700">
+                          <IconRuler size={14} className="text-slate-500 shrink-0" />
+                          <span className="font-mono text-xs font-medium">{featuredProperties[safeFeaturedIndex].bathrooms} baths</span>
                         </div>
                       )}
                       {featuredProperties[safeFeaturedIndex].sizeSqft != null && (
-                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconRuler size={14} stroke={1.5} className="text-slate-600" />
-                          <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].sizeSqft?.toLocaleString()} sqft</span>
-                        </div>
-                      )}
-                      {featuredProperties[safeFeaturedIndex].landAreaSqft != null && (
-                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconRuler size={14} stroke={1.5} className="text-slate-600" />
-                          <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].landAreaSqft?.toLocaleString()} plot sqft</span>
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/70 rounded-xl px-2.5 py-1 text-slate-700">
+                          <IconRuler size={14} className="text-slate-500 shrink-0" />
+                          <span className="font-mono text-xs font-medium">{featuredProperties[safeFeaturedIndex].sizeSqft?.toLocaleString()} sqft</span>
                         </div>
                       )}
                       {featuredProperties[safeFeaturedIndex].parkingSpaces != null && (
-                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600">
-                          <IconBuildingCommunity size={14} stroke={1.5} className="text-slate-600" />
-                          <span className="body-sm font-medium">{featuredProperties[safeFeaturedIndex].parkingSpaces} parking</span>
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/70 rounded-xl px-2.5 py-1 text-slate-700">
+                          <IconBuildingCommunity size={14} className="text-slate-500 shrink-0" />
+                          <span className="font-mono text-xs font-medium">{featuredProperties[safeFeaturedIndex].parkingSpaces} parking</span>
                         </div>
                       )}
                     </div>
                   )}
 
-                {/* ── Individual amenity tags — unique to featured panel ── */}
+                {/* Amenities & Features (Un-carded Text-SM) */}
                 {(featuredProperties[safeFeaturedIndex].amenities?.length ?? 0) > 0 && (
                   <div className="mb-4">
-                    <p className="label-caps text-slate-600 mb-2">Amenities & Features</p>
-                    <div className="flex flex-wrap gap-1.5">
+                    <p className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 my-3">Amenities & Features</p>
+                    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-sm font-medium text-slate-700">
                       {featuredProperties[safeFeaturedIndex].amenities!.map((amenity) => (
-                        <span
-                          key={amenity}
-                          className="inline-flex items-center bg-emerald-50 border border-emerald-100/80 text-emerald-800 rounded-full px-2.5 py-0.5 text-xs font-medium leading-none"
-                        >
-                          {amenity}
-                        </span>
+                        <div key={amenity} className="flex items-center gap-1.5">
+                          <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span>{amenity}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Landlord & Manager mini-cards */}
-                <div className="grid grid-cols-2 gap-2.5 sm:gap-4 mb-4">
+                {/* Stakeholder Identity Cards (Landlord & Property Manager) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
                   {(featuredProperties[safeFeaturedIndex].owner?.name || featuredProperties[safeFeaturedIndex].ownerName) && (
                     <button
                       type="button"
@@ -995,22 +1023,28 @@ export function PropertiesBoard({
                         const contactId = featuredProperties[safeFeaturedIndex].ownerContactId;
                         if (contactId) setOwnerDrawerId(contactId);
                       }}
-                      className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-[16px] px-3 py-2 text-left hover:bg-white hover:border-slate-200 transition-colors shadow-sm min-w-0"
+                      className="flex items-center gap-2.5 bg-slate-50/80 border border-slate-200/80 rounded-2xl p-2.5 text-left hover:bg-slate-100/60 hover:border-slate-300 transition-all shadow-2xs min-w-0 cursor-pointer group/card"
                     >
                       <Avatar
-                        src={featuredProperties[safeFeaturedIndex].owner?.avatarUrl || undefined}
+                        src={getAvatarForName(
+                          featuredProperties[safeFeaturedIndex].owner?.name || featuredProperties[safeFeaturedIndex].ownerName,
+                          featuredProperties[safeFeaturedIndex].owner?.avatarUrl
+                        )}
                         fallback={ownerInitials(featuredProperties[safeFeaturedIndex])}
-                        className="size-8 text-xs bg-[#151936] text-[#f3df27]"
+                        alt="Landlord"
+                        className="size-9 shrink-0 border border-slate-200/80"
                       />
-                      <span className="min-w-0">
-                        <span className="block body-sm text-slate-900 truncate">
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-medium text-slate-900 truncate group-hover/card:text-[#151936]">
                           {featuredProperties[safeFeaturedIndex].owner?.name || featuredProperties[safeFeaturedIndex].ownerName}
                         </span>
-                        <span className="block label-caps text-slate-600">Landlord</span>
-                      </span>
+                        <span className="block font-mono text-xxs font-medium uppercase tracking-wider text-slate-500">
+                          Landlord
+                        </span>
+                      </div>
                     </button>
                   )}
-                  {/* Property Manager Card */}
+
                   {featuredProperties[safeFeaturedIndex].manager?.name ? (
                     <button
                       type="button"
@@ -1018,37 +1052,50 @@ export function PropertiesBoard({
                         const managerId = featuredProperties[safeFeaturedIndex].manager?.id;
                         if (managerId) setManagerDrawerId(managerId);
                       }}
-                      className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-[16px] px-3 py-2 text-left hover:bg-white hover:border-slate-200 transition-colors shadow-sm min-w-0"
+                      className="flex items-center gap-2.5 bg-slate-50/80 border border-slate-200/80 rounded-2xl p-2.5 text-left hover:bg-slate-100/60 hover:border-slate-300 transition-all shadow-2xs min-w-0 cursor-pointer group/card"
                     >
                       <Avatar
-                        src={featuredProperties[safeFeaturedIndex].manager?.avatarUrl || undefined}
+                        src={getAvatarForName(
+                          featuredProperties[safeFeaturedIndex].manager?.name,
+                          featuredProperties[safeFeaturedIndex].manager?.avatarUrl
+                        )}
                         fallback={managerInitials(featuredProperties[safeFeaturedIndex].manager?.name)}
-                        className="size-8 text-xs bg-emerald-700 text-white"
+                        alt="Property Manager"
+                        className="size-9 shrink-0 border border-slate-200/80"
                       />
-                      <span className="min-w-0">
-                        <span className="block body-sm text-slate-900 truncate">
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-medium text-slate-900 truncate group-hover/card:text-[#151936]">
                           {featuredProperties[safeFeaturedIndex].manager?.name}
                         </span>
-                        <span className="block label-caps text-slate-600">Property Manager</span>
-                      </span>
+                        <span className="block font-mono text-xxs font-medium uppercase tracking-wider text-slate-500">
+                          Property Manager
+                        </span>
+                      </div>
                     </button>
                   ) : (
-                    <div className="flex items-center gap-2.5 bg-slate-50 border border-dashed border-slate-200 rounded-[16px] px-3 py-2 min-w-0">
-                      <span className="size-8 rounded-full bg-slate-100 text-slate-300 flex items-center justify-center shrink-0">
-                        <IconUsers size={14} />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block body-sm text-slate-600 truncate">Unassigned</span>
-                        <span className="block label-caps text-slate-300">Property Manager</span>
-                      </span>
+                    <div className="flex items-center gap-2.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl p-2.5 min-w-0">
+                      <Avatar
+                        src={getAvatarForName("Unassigned PM")}
+                        fallback="PM"
+                        alt="Unassigned"
+                        className="size-9 shrink-0 border border-slate-200/60 opacity-60"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-medium text-slate-500 truncate">Unassigned</span>
+                        <span className="block font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+                          Property Manager
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                {/* Price + CTA */}
-                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+                {/* Price Display & Action Buttons */}
+                <div className="mt-auto pt-8 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="label-caps text-slate-600 mb-1">{featuredPriceDisplay(featuredProperties[safeFeaturedIndex]).label}</p>
+                    <p className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 mb-1">
+                      {featuredPriceDisplay(featuredProperties[safeFeaturedIndex]).label}
+                    </p>
                     <p className="font-mono text-slate-900 text-2xl sm:text-3xl font-medium tracking-tight leading-none">
                       {featuredPriceDisplay(featuredProperties[safeFeaturedIndex]).value}
                     </p>
@@ -1058,88 +1105,94 @@ export function PropertiesBoard({
                       size="sm"
                       variant="secondary"
                       onClick={() => setDrawerProperty(featuredProperties[safeFeaturedIndex])}
-                      className="rounded-xl"
+                      className="rounded-xl border border-slate-200/90 text-slate-700 hover:bg-slate-50 shadow-2xs"
                     >
                       Quick View
                     </Button>
                     <a
                       href={`/admin/properties/${featuredProperties[safeFeaturedIndex].id}`}
-                      className="inline-flex items-center justify-center bg-[#151936] text-white hover:bg-[#151936]/90 transition-colors px-4 sm:px-6 py-2 rounded-xl shadow-sm body-sm font-medium whitespace-nowrap"
+                      className="inline-flex items-center justify-center bg-[#151936] text-white hover:bg-[#1f254e] transition-colors px-4.5 py-1.5 rounded-xl shadow-2xs text-xs font-medium whitespace-nowrap gap-1.5 cursor-pointer"
                     >
-                      <IconEye size={15} className="mr-1.5" /> View
+                      <IconEye size={13} /> View
                     </a>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-14 text-center text-slate-600 flex-1">
-              <div className="size-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3">
-                <IconStar size={24} className="opacity-40" />
+            <div className="flex flex-col items-center justify-center py-14 text-center text-slate-500 flex-1">
+              <div className="size-12 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center mb-3">
+                <IconStar size={24} className="text-slate-600" />
               </div>
-              <p className="body-sm text-slate-600">No featured listings currently.</p>
-              <p className="label-caps text-slate-300 mt-1">Star a property to feature it here.</p>
+              <p className="text-xs font-medium text-slate-700">No featured listings currently.</p>
+              <p className="font-mono text-xxs text-slate-600 mt-1">Star a property to feature it here.</p>
             </div>
           )}
         </div>
 
-        {/* Portfolio Mix - fully driven by STATUS_CONFIG + type breakdown */}
-        <div className="bg-white border border-slate-100 rounded-[24px] shadow-sm p-4 sm:p-6 flex flex-col">
-          <h3 className="text-base font-medium text-slate-900 flex items-center gap-2 mb-6">
-            <IconChartBar size={18} className="text-indigo-500" /> Portfolio Mix
-          </h3>
+        {/* Portfolio Mix Card */}
+        <div className="bg-white border border-slate-200/80 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgb(0,0,0,0.06)] transition-all duration-500 p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-5">
+              <h3 className="text-sm font-medium text-slate-900 flex items-center gap-2">
+                <IconChartBar size={18} className="text-[#151936]" /> Portfolio Mix
+              </h3>
+              <Badge tone="neutral">ESTATE SNAPSHOT</Badge>
+            </div>
 
-          {/* Segmented status bar using STATUS_CONFIG colors */}
-          <div className="flex h-3 w-full overflow-hidden rounded-full gap-0.5 mb-6">
-            {portfolioMix.map(({ status, pct, config }) =>
-              statusCounts[status] > 0 ? (
-                <div
-                  key={status}
-                  className={cn("h-full transition-all duration-1000", config.dot)}
-                  style={{ width: `${pct}%` }}
-                />
-              ) : null
-            )}
-            {properties.length === 0 && <div className="h-full flex-1 bg-slate-100 rounded-full" />}
-          </div>
+            {/* Segmented Status Progress Bar */}
+            <div className="flex h-2.5 w-full overflow-hidden rounded-full gap-0.5 mb-5 bg-slate-100">
+              {portfolioMix.map(({ status, pct, config }) =>
+                statusCounts[status] > 0 ? (
+                  <div
+                    key={status}
+                    className={cn("h-full transition-all duration-1000", config.dot)}
+                    style={{ width: `${pct}%` }}
+                    title={`${config.label}: ${statusCounts[status]}`}
+                  />
+                ) : null
+              )}
+              {properties.length === 0 && <div className="h-full flex-1 bg-slate-100 rounded-full" />}
+            </div>
 
-          {/* All 5 status rows from STATUS_CONFIG */}
-          <div className="space-y-3 mb-6">
-            {portfolioMix.map(({ status, count, config, pct }) => (
-              <div key={status} className="flex items-center gap-3">
-                <span className={cn("size-2.5 rounded-full shrink-0", config.dot)} />
-                <span className="text-sm font-medium text-slate-600 flex-1">{config.label}</span>
-                <div className="flex items-center gap-3">
-                  <div className="h-1.5 w-20 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className={cn("h-full rounded-full transition-all duration-700", config.dot)}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="font-mono font-medium text-slate-800 w-6 text-right text-sm">{count}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Property type breakdown */}
-          {typeMix.length > 0 && (
-            <>
-              <div className="border-t border-slate-100 pt-5 mt-auto">
-                <p className="text-xs  font-medium uppercase tracking-widest text-slate-600 mb-4">By Property Type</p>
-                <div className="space-y-2.5">
-                  {typeMix.map(({ type, count }) => (
-                    <div key={type} className="flex items-center gap-3">
-                      <div className="size-6 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shrink-0">
-                        <PropertyTypeIcon type={type} size={14} />
-                      </div>
-                      <span className="text-sm text-slate-600 flex-1">{type}</span>
-                      <span className="font-mono font-medium text-slate-800 text-sm">{count}</span>
+            {/* All Status Rows */}
+            <div className="space-y-3 mb-6">
+              {portfolioMix.map(({ status, count, config, pct }) => (
+                <div key={status} className="flex items-center gap-3">
+                  <span className={cn("size-2 rounded-full shrink-0", config.dot)} />
+                  <span className="text-xs font-medium text-slate-700 flex-1">{config.label}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-all duration-700", config.dot)}
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
-                  ))}
+                    <span className="font-mono font-medium text-slate-900 w-6 text-right text-xs">{count}</span>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Property Type Breakdown */}
+          {typeMix.length > 0 && (
+            <div className="border-t border-slate-100 pt-4 mt-auto">
+              <p className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-500 mb-3">
+                By Property Type
+              </p>
+              <div className="space-y-2">
+                {typeMix.map(({ type, count }) => (
+                  <div key={type} className="flex items-center gap-2.5">
+                    <div className="size-6 rounded-lg bg-slate-50 border border-slate-200/70 flex items-center justify-center text-slate-600 shrink-0">
+                      <PropertyTypeIcon type={type} size={13} />
+                    </div>
+                    <span className="text-xs font-medium text-slate-700 flex-1">{type}</span>
+                    <span className="font-mono font-medium text-slate-900 text-xs">{count}</span>
+                  </div>
+                ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -1661,17 +1714,17 @@ export function PropertiesBoard({
           {/* Search & Filter bar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative flex-1">
-              <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
               <input
                 type="text"
                 placeholder="Search activity logs..."
                 value={activitySearchQuery}
                 onChange={(e) => { setActivitySearchQuery(e.target.value); setActivityPage(1); }}
-                className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-400"
+                className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#151936]/20 transition-all placeholder:text-slate-600"
               />
             </div>
             <div className="relative shrink-0">
-              <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <IconFilter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
               <select
                 value={activityFilter}
                 onChange={(e) => { setActivityFilter(e.target.value); setActivityPage(1); }}
@@ -1684,7 +1737,7 @@ export function PropertiesBoard({
                 <option value="system">System Actions</option>
               </select>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <IconChevronRight size={14} className="text-slate-400 rotate-90" />
+                <IconChevronRight size={14} className="text-slate-600 rotate-90" />
               </div>
             </div>
           </div>
@@ -1700,13 +1753,13 @@ export function PropertiesBoard({
               <IconMoodEmpty size={32} className="text-slate-300" />
             </div>
             <h3 className="text-sm font-medium text-slate-700">No recorded activity yet.</h3>
-            <p className="text-slate-400 max-w-sm text-xs">Status changes, edits, mandate events, and registrations will safely log here.</p>
+            <p className="text-slate-600 max-w-sm text-xs">Status changes, edits, mandate events, and registrations will safely log here.</p>
           </div>
         ) : paginatedPropertyActivity.length === 0 ? (
           <div className="flex flex-col items-center py-12 text-center">
             <IconSearch size={24} className="text-slate-300 mb-3" />
             <p className="text-sm font-medium text-slate-700">No logs match your filter</p>
-            <p className="text-xs text-slate-400 mt-1">Try adjusting the search query or dropdown.</p>
+            <p className="text-xs text-slate-600 mt-1">Try adjusting the search query or dropdown.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-6 relative ml-1">
@@ -1728,7 +1781,7 @@ export function PropertiesBoard({
                       )}
                     </p>
                     <div className="flex items-center gap-3 shrink-0">
-                      <p className="text-xs text-slate-400 font-mono tracking-wider hidden lg:block">
+                      <p className="text-xs text-slate-600 font-mono tracking-wider hidden lg:block">
                         {new Date(entry.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })},{" "}
                         {new Date(entry.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                       </p>
@@ -1743,7 +1796,7 @@ export function PropertiesBoard({
 
         {activityTotalPages > 1 && (
           <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-            <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+            <span className="text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
               Page {safeActivityPage} of {activityTotalPages} · {filteredPropertyActivity.length} logs
             </span>
             <div className="flex items-center gap-1.5">

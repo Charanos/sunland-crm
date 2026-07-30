@@ -39,7 +39,7 @@ import {
 import { LeaseFormModal, type LeaseEditTarget } from "./lease-form-modal";
 import { UnitFormModal } from "./unit-form-modal";
 import { LeaseRenewModal, type LeaseRenewTarget } from "./lease-renew-modal";
-import { Badge, SkeletonBlock } from "@/components/ui/erp-primitives";
+import { Badge, SkeletonBlock, RailLayout } from "@/components/ui/erp-primitives";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -570,7 +570,7 @@ export function MandateFullViewBoard({
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+      <div className="board-shell mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2">
           <div className="flex flex-col gap-2">
             <SkeletonBlock className="h-8 w-72" />
@@ -579,12 +579,12 @@ export function MandateFullViewBoard({
           <SkeletonBlock className="h-9 w-40 rounded-full" />
         </div>
         <SkeletonBlock className="rounded-[28px] min-h-[300px] lg:min-h-[340px] mt-2" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 @board-lg:grid-cols-4 gap-4 mb-4 mt-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <SkeletonBlock key={i} className="rounded-2xl h-[150px]" />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-3.5 items-start">
+        <RailLayout gap="gap-6 lg:gap-3.5">
           <div className="flex flex-col gap-4 min-w-0">
             <SkeletonBlock className="h-12 w-full rounded-[16px]" />
             <SkeletonBlock className="h-64 w-full rounded-[24px]" />
@@ -594,7 +594,7 @@ export function MandateFullViewBoard({
               <SkeletonBlock key={i} className="h-40 w-full rounded-[24px]" />
             ))}
           </div>
-        </div>
+        </RailLayout>
       </div>
     );
   }
@@ -770,7 +770,7 @@ export function MandateFullViewBoard({
   const currentMonthName = new Date().toLocaleDateString("en-US", { month: "short" });
 
   return (
-    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+    <PageTransition className="board-shell mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2 animate-fade-in-up">
         <div className="flex flex-col gap-2 min-w-0">
@@ -1043,7 +1043,7 @@ export function MandateFullViewBoard({
       </div>
 
       {/* ── KPI Vitals divs Row ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 mt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 @board-lg:grid-cols-4 gap-4 mb-4 mt-2">
         {vitals.map((v) => (
           <button
             key={v.label}
@@ -1121,7 +1121,7 @@ export function MandateFullViewBoard({
       <div className="h-px bg-slate-200/60 my-2 lg:my-4" />
 
       {/* ── Main: tabbed content + context rail ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-3.5 items-start">
+      <RailLayout gap="gap-6 lg:gap-3.5">
         <div className="flex flex-col min-w-0">
           <div role="tablist" aria-label="Mandate sections" className="flex bg-white border border-slate-100 p-1.5 rounded-[16px] shadow-[0_2px_10px_rgb(0,0,0,0.02)] gap-1 overflow-x-auto flex-nowrap mb-6">
             {tabs.map((tab) => (
@@ -1157,7 +1157,7 @@ export function MandateFullViewBoard({
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 @board-md:grid-cols-4 gap-4">
                   <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-slate-50/50 border border-slate-100">
                     <p className="label-caps text-slate-600">Landlord</p>
                     <p className="body-md text-slate-800 font-medium truncate" title={mandate.landlord.name}>{mandate.landlord.name}</p>
@@ -2204,7 +2204,7 @@ export function MandateFullViewBoard({
             </div>
           </div>
         </div>
-      </div>
+      </RailLayout>
 
       {/* ── Overlays ── */}
       <LeaseDetailDrawer

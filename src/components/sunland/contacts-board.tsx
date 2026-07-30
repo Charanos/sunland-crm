@@ -401,7 +401,7 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                   ].map((s) => (
                     <div key={s.label} className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl px-3.5 py-2 min-w-[90px]">
                       <p className="font-mono text-lg text-white leading-none">{s.value}</p>
-                      <p className="text-[9.5px] uppercase tracking-wide text-white/65 mt-1">{s.label}</p>
+                      <p className="text-xxs uppercase tracking-wide text-white/65 mt-1">{s.label}</p>
                     </div>
                   ))}
                 </div>
@@ -440,7 +440,7 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                         { label: "Assigned to", value: spotlight.assignedToName ?? "Unassigned" },
                       ].map((f) => (
                         <div key={f.label}>
-                          <p className="text-[10px] text-slate-400">{f.label}</p>
+                          <p className="text-xxs text-slate-400">{f.label}</p>
                           <p className="text-xs font-medium text-slate-900 mt-0.5 truncate">{f.value}</p>
                         </div>
                       ))}
@@ -455,7 +455,7 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                       { label: "Next follow-up", value: spotlightNextAction?.nextActionAt ? new Date(spotlightNextAction.nextActionAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—" },
                     ].map((d) => (
                       <div key={d.label}>
-                        <p className="text-[10px] text-slate-400">{d.label}</p>
+                        <p className="text-xxs text-slate-400">{d.label}</p>
                         <p className="text-xs font-mono text-slate-900 mt-0.5">{d.value}</p>
                       </div>
                     ))}
@@ -488,12 +488,12 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                     <button key={lead.id} onClick={() => openPeekForLead(lead)} className="text-left rounded-2xl p-3.5 bg-[#fafbf8] border border-slate-100 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition-shadow">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="flex items-center gap-1.5 min-w-0">
-                          <Avatar fallback={initialsOf(lead.clientName)} className="size-6 text-[9px]" />
+                          <Avatar fallback={initialsOf(lead.clientName)} className="size-6 text-xxs" />
                           <span className="text-xs font-medium text-slate-900 truncate">{lead.clientName}</span>
                         </span>
                         <IconArrowUpRight size={13} className="text-slate-300 shrink-0" />
                       </div>
-                      <span className={cn("inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium uppercase", PRIORITY_PILL[lead.priority])}>{STAGE_LABELS[lead.stage] ?? lead.stage}</span>
+                      <span className={cn("inline-flex rounded-md px-2 py-0.5 text-xxs font-medium uppercase", PRIORITY_PILL[lead.priority])}>{STAGE_LABELS[lead.stage] ?? lead.stage}</span>
                     </button>
                   ))}
                 </div>
@@ -515,17 +515,17 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                     { label: "Follow-Ups Due", value: `${overview?.followUpsDueCount ?? 0}/${overview?.openLeadsCount ?? 0}`, pct: followUpsPct, color: "#f3df27" },
                   ].map((bar) => (
                     <div key={bar.label}>
-                      <div className="flex justify-between mb-1"><span className="text-[11px] text-slate-500">{bar.label}</span><span className="text-[11px] font-mono text-slate-700">{bar.value}</span></div>
+                      <div className="flex justify-between mb-1"><span className="text-caption text-slate-500">{bar.label}</span><span className="text-caption font-mono text-slate-700">{bar.value}</span></div>
                       <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${bar.pct}%`, background: bar.color }} /></div>
                     </div>
                   ))}
                 </div>
-                <p className="text-xs font-medium text-slate-700 mb-2">Today&apos;s Viewings <span className="font-mono text-[11px] text-slate-400">{overview?.viewingsToday ?? 0}</span></p>
+                <p className="text-xs font-medium text-slate-700 mb-2">Today&apos;s Viewings <span className="font-mono text-caption text-slate-400">{overview?.viewingsToday ?? 0}</span></p>
                 {overview && overview.todaysViewings.length > 0 ? (
                   <div className="flex flex-col gap-1.5">
                     {overview.todaysViewings.slice(0, 4).map((v) => (
                       <div key={v.id} className="flex items-center gap-2.5 text-xs">
-                        <span className="font-mono text-[11px] text-slate-400 w-12 shrink-0">{new Date(v.startsAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span className="font-mono text-caption text-slate-400 w-12 shrink-0">{new Date(v.startsAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</span>
                         <span className="text-slate-700 truncate">{v.title}</span>
                       </div>
                     ))}
@@ -543,7 +543,7 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                       <div key={lead.id} className="bg-[#fafbf8] border border-slate-100 rounded-2xl p-3">
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <span className="flex items-center gap-2 min-w-0">
-                            <Avatar fallback={initialsOf(lead.clientName)} className="size-6 text-[9px]" />
+                            <Avatar fallback={initialsOf(lead.clientName)} className="size-6 text-xxs" />
                             <span className="text-xs font-medium text-slate-900 truncate">{lead.clientName}</span>
                           </span>
                           <span className="flex gap-1 shrink-0">
@@ -551,8 +551,8 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                             <button onClick={() => openPeekForLead(lead)} aria-label="Open" className="size-6 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 flex items-center justify-center"><IconArrowUpRight size={11} /></button>
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 truncate">{lead.propertyInterest}</p>
-                        <p className="text-[10.5px] font-mono text-slate-400 mt-1 flex items-center gap-1"><IconClock size={11} /> {lead.nextActionAt ? new Date(lead.nextActionAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}</p>
+                        <p className="text-caption text-slate-500 truncate">{lead.propertyInterest}</p>
+                        <p className="text-xxs font-mono text-slate-400 mt-1 flex items-center gap-1"><IconClock size={11} /> {lead.nextActionAt ? new Date(lead.nextActionAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}</p>
                       </div>
                     ))}
                   </div>
@@ -572,18 +572,18 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
               {overview?.upcomingViewing ? (
                 <div className="border border-slate-100 rounded-2xl overflow-hidden bg-[#fafbf8]">
                   <div className="flex items-center justify-between px-3.5 py-2.5">
-                    <span className="inline-flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-wide text-[#151936]"><IconCalendarEvent size={13} /> Viewing</span>
-                    <span className="font-mono text-[10.5px] text-slate-400">{new Date(overview.upcomingViewing.startsAt).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short" })}</span>
+                    <span className="inline-flex items-center gap-1.5 text-xxs font-medium uppercase tracking-wide text-[#151936]"><IconCalendarEvent size={13} /> Viewing</span>
+                    <span className="font-mono text-xxs text-slate-400">{new Date(overview.upcomingViewing.startsAt).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short" })}</span>
                   </div>
                   <div className="px-3.5 pb-3.5">
                     <p className="text-xs font-medium text-slate-900 truncate">{overview.upcomingViewing.title}</p>
-                    <p className="text-[10.5px] text-slate-400 mt-0.5">{new Date(overview.upcomingViewing.startsAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</p>
+                    <p className="text-xxs text-slate-400 mt-0.5">{new Date(overview.upcomingViewing.startsAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</p>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center py-4 text-center gap-1.5 border border-dashed border-slate-150 rounded-2xl">
                   <IconMoodEmpty size={18} className="text-slate-300" />
-                  <p className="text-[11px] text-slate-400">No upcoming viewings scheduled.</p>
+                  <p className="text-caption text-slate-400">No upcoming viewings scheduled.</p>
                 </div>
               )}
 
@@ -593,13 +593,13 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
                     <button key={t.id} onClick={() => openPeekForTouch(t)} className="text-left border border-slate-50 bg-[#fafbf8] rounded-2xl px-3 py-2 hover:bg-slate-100/60 transition-colors">
                       <p className="text-xs text-slate-700 truncate">{t.summary}</p>
                       <div className="flex items-center justify-between mt-1">
-                        <span className="text-[10.5px] text-slate-400">{t.actorName ?? "System"}</span>
-                        <span className="text-[10.5px] font-mono text-slate-400">{relativeTime(t.createdAt)}</span>
+                        <span className="text-xxs text-slate-400">{t.actorName ?? "System"}</span>
+                        <span className="text-xxs font-mono text-slate-400">{relativeTime(t.createdAt)}</span>
                       </div>
                     </button>
                   ))
                 ) : (
-                  <p className="text-[11px] text-slate-400 text-center py-4">No recent touchpoints logged yet.</p>
+                  <p className="text-caption text-slate-400 text-center py-4">No recent touchpoints logged yet.</p>
                 )}
               </div>
             </div>
@@ -614,10 +614,10 @@ export function ContactsBoard({ entityId }: { entityId: string }) {
               <div className="flex flex-col gap-0.5 max-h-[420px] overflow-y-auto custom-scrollbar">
                 {directory.length > 0 ? directory.map((c) => (
                   <button key={c.id} onClick={() => setSpotlightId(c.id)} className={cn("flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors", c.id === spotlightId ? "bg-[#f4f6f0]" : "hover:bg-slate-50")}>
-                    <Avatar src={c.avatarUrl ?? undefined} fallback={initialsOf(c.displayName)} className="size-7 text-[10px]" />
+                    <Avatar src={c.avatarUrl ?? undefined} fallback={initialsOf(c.displayName)} className="size-7 text-xxs" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-xs font-medium text-slate-900 truncate">{c.displayName}</span>
-                      <span className="block text-[10.5px] text-slate-400 truncate">{TYPE_META[c.type].label} · {c.status}</span>
+                      <span className="block text-xxs text-slate-400 truncate">{TYPE_META[c.type].label} · {c.status}</span>
                     </span>
                     <span className={cn("size-2 rounded-full shrink-0", STATUS_META[c.status].dot)} />
                   </button>

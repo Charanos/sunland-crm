@@ -33,6 +33,7 @@ import {
   IconMoodEmpty,
   IconAward,
   IconUserCog,
+  IconReportAnalytics,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -51,9 +52,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageTransition } from "@/components/shared/page-transition";
 import Link from "next/link";
-import { formatCompactKES } from "@/lib/utils/format";
+import { formatCompactKES, formatKES } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/toast-provider";
+import { Modal } from "@/components/ui/modal";
 import { ValuationFormModal } from "./valuation-form-modal";
 import { type Property } from "./property-constants";
 import { ValuationSubmitModal, type ValuationSubmitTarget } from "./valuation-complete-modal";
@@ -107,6 +109,8 @@ interface Valuation {
   landlordAvatarUrl: string | null;
   managerName: string | null;
   managerAvatarUrl: string | null;
+  valuerName?: string | null;
+  valuerAvatarUrl?: string | null;
   isFeatured: boolean;
 }
 
@@ -132,6 +136,33 @@ const VALUATION_COVER_POOL = [
   "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
 ];
+
+const VALUER_AVATAR_POOL: Record<string, string> = {
+  "David Omondi": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+  "Jane Wanjiru": "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&q=80",
+  "Knight & Kale Valuers": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&q=80",
+  "Tysons Ltd": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80",
+  "Sunland Valuers Ltd": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80",
+  "Kevin Mbugua": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+  "Unassigned": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80",
+};
+
+const DEFAULT_AVATARS = [
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+  "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&q=80",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+  "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80",
+  "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80",
+];
+
+function getAvatarForName(name: string, directUrl?: string | null): string {
+  if (directUrl && directUrl.trim().length > 0) return directUrl;
+  if (VALUER_AVATAR_POOL[name]) return VALUER_AVATAR_POOL[name];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const idx = Math.abs(hash) % DEFAULT_AVATARS.length;
+  return DEFAULT_AVATARS[idx];
+}
 
 type ViewMode = "board" | "grid" | "list";
 
@@ -163,6 +194,19 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
   const [managerUserId, setManagerUserId] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
 
+  // Card pagination states
+  const [valuerPage, setValuerPage] = useState(1);
+  const [mgrPage, setMgrPage] = useState(1);
+
+  // Selected Valuer Modal target
+  const [selectedValuer, setSelectedValuer] = useState<{
+    name: string;
+    avatarUrl?: string | null;
+    value: number;
+    count: number;
+    sharePct: number;
+  } | null>(null);
+
   const loadValuations = useCallback(async (silent = false) => {
     if (!silent) Promise.resolve().then(() => setLoading(true));
     try {
@@ -181,6 +225,15 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
   useEffect(() => {
     Promise.resolve().then(() => loadValuations());
   }, [loadValuations]);
+
+  useEffect(() => {
+    fetch(`/api/properties?entityId=${entityId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.properties) setProperties(data.properties);
+      })
+      .catch(() => { });
+  }, [entityId]);
 
   // User-curated star toggle, parity with properties-board.tsx's real
   // handleToggleFeature - separate valuations.isFeatured column (not
@@ -412,40 +465,79 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
     return days === 1 ? "Yesterday" : `${days}d ago`;
   };
 
-  // ── Leaderboard + Pipeline by Manager (real aggregation over the fetched
+  // ── Valuer Performance + Pipeline by Manager (real aggregation over the fetched
   // list - never a hardcoded array) ────────────────────────────────────────
 
-  const leaderboard = useMemo(() => {
-    const byValuer = new Map<string, { name: string; value: number; count: number }>();
+  const valuerPerformance = useMemo(() => {
+    const byValuer = new Map<
+      string,
+      { name: string; value: number; count: number; avatarUrl?: string | null; valuerId?: string | null }
+    >();
     for (const v of valuations) {
       if (v.stage !== "mandate_signed" && v.stage !== "valued" && STAGE_ORDER.indexOf(v.stage) < STAGE_ORDER.indexOf("valued")) continue;
       if (!v.marketValueKes) continue;
       const name = valuerLabel(v);
-      const entry = byValuer.get(name) ?? { name, value: 0, count: 0 };
+      const entry = byValuer.get(name) ?? {
+        name,
+        value: 0,
+        count: 0,
+        avatarUrl: v.valuerAvatarUrl,
+        valuerId: v.valuerId,
+      };
       entry.value += Number(v.marketValueKes);
       entry.count += 1;
+      if (v.valuerAvatarUrl) entry.avatarUrl = v.valuerAvatarUrl;
       byValuer.set(name, entry);
     }
+    const totalVolume = Array.from(byValuer.values()).reduce((sum, item) => sum + item.value, 0) || 1;
     return Array.from(byValuer.values())
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5)
-      .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
+      .map((entry) => ({
+        ...entry,
+        sharePct: Math.round((entry.value / totalVolume) * 100),
+      }));
   }, [valuations, valuerLabel]);
 
   const mgrPipeline = useMemo(() => {
-    const byMgr = new Map<string, { name: string; count: number }>();
+    const byMgr = new Map<
+      string,
+      { name: string; count: number; avatarUrl?: string | null; managerId?: string | null }
+    >();
+    let totalWorkload = 0;
     for (const v of valuations) {
       if (v.stage === "mandate_signed" || v.stage === "declined") continue;
       const name = v.managerName ?? "Unassigned";
-      const entry = byMgr.get(name) ?? { name, count: 0 };
+      const entry = byMgr.get(name) ?? {
+        name,
+        count: 0,
+        avatarUrl: v.managerAvatarUrl,
+        managerId: v.assignedManagerId,
+      };
       entry.count += 1;
+      totalWorkload += 1;
+      if (v.managerAvatarUrl) entry.avatarUrl = v.managerAvatarUrl;
       byMgr.set(name, entry);
     }
     const maxCount = Math.max(1, ...Array.from(byMgr.values()).map((e) => e.count));
+    const safeTotal = Math.max(1, totalWorkload);
     return Array.from(byMgr.values())
       .sort((a, b) => b.count - a.count)
-      .map((entry) => ({ ...entry, barPct: Math.round((entry.count / maxCount) * 100) }));
+      .map((entry) => ({
+        ...entry,
+        barPct: Math.round((entry.count / maxCount) * 100),
+        sharePct: Math.round((entry.count / safeTotal) * 100),
+      }));
   }, [valuations]);
+
+  const valuerPageSize = 3;
+  const valuerTotalPages = Math.max(1, Math.ceil(valuerPerformance.length / valuerPageSize));
+  const safeValuerPage = Math.min(valuerPage, valuerTotalPages);
+  const paginatedValuers = valuerPerformance.slice((safeValuerPage - 1) * valuerPageSize, safeValuerPage * valuerPageSize);
+
+  const mgrPageSize = 3;
+  const mgrTotalPages = Math.max(1, Math.ceil(mgrPipeline.length / mgrPageSize));
+  const safeMgrPage = Math.min(mgrPage, mgrTotalPages);
+  const paginatedManagers = mgrPipeline.slice((safeMgrPage - 1) * mgrPageSize, safeMgrPage * mgrPageSize);
 
   const completedThisMonth = useMemo(() => {
     const now = new Date();
@@ -538,7 +630,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
         description="From site visit to signed mandate: a property manager scouts and values a prospect, Front Office sends the landlord an offer to manage, and acceptance becomes a mandate."
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={loadValuations}>
+            <Button variant="secondary" size="sm" onClick={() => loadValuations()}>
               <IconRefresh size={14} /> Refresh
             </Button>
             <Button size="sm" onClick={openCreate}>
@@ -556,9 +648,9 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
-      {/* ── Executive 5-Card Dark KPI Tier ── */}
+      {/* ── Executive 4-Card Dark KPI Tier ── */}
       <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-6 border border-slate-800/80">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-white/10 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10 relative z-10">
 
           {/* Card 1: In Pipeline */}
           <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
@@ -567,7 +659,6 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xxs font-mono font-medium text-slate-300 uppercase tracking-wider">In Pipeline</span>
-              <Badge tone="primary">SCOUTING</Badge>
             </div>
             <div className="relative z-10 mt-4">
               <span className="font-mono text-3xl font-medium text-white">{kpis.inPipeline} <span className="text-xs font-mono text-slate-300 font-normal">Prospects</span></span>
@@ -604,7 +695,6 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
           <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Prospective Value</span>
-              <Badge tone="neutral">PROSPECT POOL</Badge>
             </div>
             <div className="relative z-10 mt-4">
               <span className="font-mono text-3xl font-medium text-white">{formatCompactKES(kpis.pipelineValue)}</span>
@@ -617,7 +707,6 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
           {/* Card 3: Offer to Mandate Conversion */}
           <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Offer→Mandate</span>
               <Badge tone={kpis.convPct >= 50 ? "success" : "warning"}>
                 {kpis.convPct >= 50 ? "STRONG" : "NEEDS FOLLOW-UP"}
               </Badge>
@@ -650,23 +739,6 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             <div className="relative z-10 mt-4">
               <span className="font-mono text-3xl font-medium text-white">{kpis.signedYtd}</span>
               <p className="text-xxs text-slate-300 font-mono mt-2 uppercase tracking-wide">From this pipeline</p>
-            </div>
-          </div>
-
-          {/* Card 5: Stalled > 21 Days */}
-          <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
-            <div className="absolute -bottom-10 -right-10 opacity-5 text-rose-500 pointer-events-none transition-transform duration-700 group-hover/card:scale-110">
-              <IconClockExclamation size={140} stroke={1} />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-medium text-slate-300 uppercase tracking-wider">Stalled &gt; 21 Days</span>
-              <Badge tone={kpis.stalled > 0 ? "risk" : "success"}>
-                {kpis.stalled > 0 ? "ACTION REQD" : "ON TRACK"}
-              </Badge>
-            </div>
-            <div className="relative z-10 mt-4">
-              <span className="font-mono text-3xl font-medium text-rose-300">{kpis.stalled}</span>
-              <p className="text-xxs text-rose-300 font-mono mt-2 uppercase tracking-wide">No landlord response</p>
             </div>
           </div>
 
@@ -861,7 +933,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                         />
                         <div className="min-w-0">
                           <span className="block text-xs font-medium text-slate-900 group-hover/avatar:text-[#151936] transition-colors truncate">{featuredProspect.landlordName}</span>
-                          <span className="block text-[10px] text-slate-500 tracking-wider font-mono uppercase mt-0.5">Landlord</span>
+                          <span className="block text-xxs text-slate-500 tracking-wider font-mono uppercase mt-0.5">Landlord</span>
                         </div>
                       </button>
                     )}
@@ -881,7 +953,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                         />
                         <div className="min-w-0">
                           <span className="block text-xs font-medium text-slate-900 group-hover/avatar:text-[#151936] transition-colors truncate">{featuredProspect.managerName}</span>
-                          <span className="block text-[10px] text-slate-500 tracking-wider font-mono uppercase mt-0.5">Manager</span>
+                          <span className="block text-xxs text-slate-500 tracking-wider font-mono uppercase mt-0.5">Manager</span>
                         </div>
                       </button>
                     )}
@@ -890,7 +962,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                   {/* Financials & Action Buttons */}
                   <div className="border-t border-slate-200/70 pt-4 flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-mono font-medium tracking-wider text-slate-500 uppercase">Prospective Market Value</span>
+                      <span className="text-xxs font-mono font-medium tracking-wider text-slate-500 uppercase">Prospective Market Value</span>
                       <span className="font-mono text-2xl font-medium text-[#151936] mt-0.5">
                         {featuredProspect.marketValueKes ? formatCompactKES(Number(featuredProspect.marketValueKes)) : "—"}
                       </span>
@@ -921,9 +993,9 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                 <div className="hidden lg:flex w-[210px] shrink-0 border-l border-slate-200/70 pl-6 flex-col justify-center items-center">
                   <div className="bg-gradient-to-br from-slate-50 to-slate-100/60 border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between items-center w-full min-h-[220px] shadow-2xs relative overflow-hidden text-center">
                     <div className="absolute top-0 right-0 size-16 bg-[#151936]/5 rounded-bl-full pointer-events-none" />
-                    
-                    <span className="text-[10px] font-mono font-medium tracking-wider text-slate-500 uppercase">Methodology</span>
-                    
+
+                    <span className="text-xxs font-mono font-medium tracking-wider text-slate-500 uppercase">Methodology</span>
+
                     <div className="my-auto py-2">
                       <span className="text-xs font-medium text-slate-900 block leading-snug">
                         {featuredProspect.methodology || "Comparative Income Capitalization"}
@@ -1078,7 +1150,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                                   {subject.portfolio ? <IconBuildingCommunity size={13} /> : <IconExternalLink size={13} />}
                                 </div>
                                 {isStalled && (
-                                  <Badge tone="risk" className="text-[9px] uppercase tracking-wider px-1.5 py-0.5">
+                                  <Badge tone="risk" className="text-xxs uppercase tracking-wider px-1.5 py-0.5">
                                     Stalled
                                   </Badge>
                                 )}
@@ -1103,9 +1175,11 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                               )}
 
                               {v.managerName && (
-                                <span className="absolute bottom-2 right-2.5 size-6 rounded-full bg-[#151936] text-[#f3df27] text-xxs font-mono font-medium flex items-center justify-center border-2 border-white shadow-2xs" title={`Assigned PM: ${v.managerName}`}>
-                                  {v.managerName.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-                                </span>
+                                <Avatar
+                                  src={getAvatarForName(v.managerName, v.managerAvatarUrl)}
+                                  fallback={v.managerName.slice(0, 1)}
+                                  className="absolute bottom-2 right-2.5 size-6 rounded-full border-2 border-white shadow-2xs shrink-0"
+                                />
                               )}
                             </div>
 
@@ -1116,9 +1190,9 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                               {/* Landlord Row */}
                               <div className="flex items-center gap-2">
                                 <Avatar
-                                  src={v.landlordAvatarUrl ?? undefined}
+                                  src={getAvatarForName(v.landlordName || "Landlord", v.landlordAvatarUrl)}
                                   fallback={v.landlordName ? v.landlordName.slice(0, 1) : "?"}
-                                  className="size-5 bg-slate-100 border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
+                                  className="size-5 rounded-full border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
                                 />
                                 <span className="text-xs text-slate-600 font-medium truncate">{v.landlordName || "No Landlord"}</span>
                               </div>
@@ -1201,9 +1275,11 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       </div>
 
                       {v.managerName && (
-                        <span className="absolute bottom-3 right-3 size-8 rounded-full bg-[#151936] text-[#f3df27] text-xs font-mono font-medium flex items-center justify-center border-2 border-white shadow-md" title={`Assigned PM: ${v.managerName}`}>
-                          {v.managerName.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-                        </span>
+                        <Avatar
+                          src={getAvatarForName(v.managerName, v.managerAvatarUrl)}
+                          fallback={v.managerName.slice(0, 1)}
+                          className="absolute bottom-3 right-3 size-8 rounded-full border-2 border-white shadow-md shrink-0"
+                        />
                       )}
                     </div>
 
@@ -1218,9 +1294,9 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
 
                       <div className="bg-slate-50/80 border border-slate-200/60 rounded-xl p-2.5 flex items-center gap-2.5">
                         <Avatar
-                          src={v.landlordAvatarUrl ?? undefined}
+                          src={getAvatarForName(v.landlordName || "Landlord", v.landlordAvatarUrl)}
                           fallback={v.landlordName ? v.landlordName.slice(0, 1) : "?"}
-                          className="size-7 bg-slate-100 border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
+                          className="size-7 rounded-full border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
                         />
                         <div className="min-w-0 flex-1">
                           {v.landlordName ? (
@@ -1237,7 +1313,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                           ) : (
                             <span className="block text-xs font-medium text-slate-600 leading-tight">No Landlord</span>
                           )}
-                          <span className="block text-[10px] text-slate-500 font-mono uppercase tracking-wider mt-0.5">Landlord</span>
+                          <span className="block text-xxs text-slate-500 font-mono uppercase tracking-wider mt-0.5">Landlord</span>
                         </div>
                       </div>
 
@@ -1351,7 +1427,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             {/* Desktop View: Full-column table format */}
             <div className="hidden lg:block overflow-x-auto">
               <div className="min-w-[960px]">
-                <div className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_76px] gap-3 px-4 py-3 border-b border-slate-200/80 bg-slate-50/70 rounded-t-2xl font-mono text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                <div className="grid grid-cols-[1.6fr_1.3fr_1.1fr_1fr_1fr_1fr_76px] gap-3 px-4 py-3 border-b border-slate-200/80 bg-slate-50/70 rounded-t-2xl font-mono text-xxs font-medium text-slate-500 uppercase tracking-wider">
                   <span>Property</span>
                   <span>Landlord</span>
                   <span>Valuer</span>
@@ -1385,16 +1461,16 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                         </span>
                         <div className="min-w-0">
                           <span className="block text-xs font-medium text-slate-900 truncate leading-snug">{subject.name}</span>
-                          <span className="block font-mono text-[10px] text-slate-500 truncate">{v.valuationCode}</span>
+                          <span className="block font-mono text-xxs text-slate-500 truncate">{v.valuationCode}</span>
                         </div>
                       </span>
 
                       <span className="truncate">
                         <div className="flex items-center gap-2 min-w-0">
                           <Avatar
-                            src={v.landlordAvatarUrl ?? undefined}
+                            src={getAvatarForName(v.landlordName || "Landlord", v.landlordAvatarUrl)}
                             fallback={v.landlordName ? v.landlordName.slice(0, 1) : "?"}
-                            className="size-6 bg-slate-100 border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
+                            className="size-6 rounded-full border border-slate-200 text-slate-700 text-xxs font-medium shrink-0"
                           />
                           {v.landlordName ? (
                             <button
@@ -1414,16 +1490,18 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                       </span>
 
                       <span className="text-xs text-slate-700 font-medium truncate flex items-center gap-2">
-                        <span className="size-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xxs text-slate-600 font-mono shrink-0">
-                          V
-                        </span>
+                        <Avatar
+                          src={getAvatarForName(valuerLabel(v), v.valuerAvatarUrl)}
+                          fallback={valuerLabel(v).slice(0, 1)}
+                          className="size-6 rounded-full border border-slate-200/80 shrink-0"
+                        />
                         <span className="truncate">{valuerLabel(v)}</span>
                       </span>
 
                       <span className="text-right">
                         <span className="block font-mono text-xs text-[#151936] font-medium">{v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}</span>
                         {score && (
-                          <span className="inline-block mt-0.5 font-mono text-[10px] rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-1.5 py-0.5 leading-none">
+                          <span className="inline-block mt-0.5 font-mono text-xxs rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-1.5 py-0.5 leading-none">
                             {score.grade} · {score.score}%
                           </span>
                         )}
@@ -1454,7 +1532,6 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                           label="Valuation actions"
                           trigger={<div className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all cursor-pointer"><IconDotsVertical size={16} /></div>}
                           align="right"
-                          className="z-50"
                         >
                           {v.stage === "requested" && <DropdownItem icon={IconChevronRight} onClick={() => transitionStage(v, "site_visit")}>Confirm Site Visit</DropdownItem>}
                           {v.stage === "site_visit" && <DropdownItem icon={IconFileCertificate} onClick={() => setSubmittingValuation(v)}>Submit Valuation</DropdownItem>}
@@ -1507,55 +1584,96 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
         )}
       </div>
 
-      <div className="flex items-center gap-4 mt-4">
+      <div className="flex items-center gap-4 mt-6 mb-1">
         <hr className="flex-1 border-slate-200/60" />
-        <span className="label-caps text-slate-600 tracking-widest font-mono text-xxs font-medium uppercase">VALUER PERFORMANCE & ANALYTICS</span>
+        <span className="label-caps text-slate-500 tracking-widest font-mono text-xxs font-medium uppercase">
+          VALUER PERFORMANCE & WORKLOAD ANALYTICS
+        </span>
         <hr className="flex-1 border-slate-200/60" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-4 items-start">
-        {/* Valuer Leaderboard Widget */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs p-5 hover:shadow-xs transition-all duration-300">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="size-8 rounded-xl bg-[#f3df27]/15 border border-[#f3df27]/40 text-[#151936] flex items-center justify-center shrink-0 shadow-2xs">
-                <IconAward size={18} className="text-amber-600" />
-              </span>
-              <div>
-                <h3 className="text-slate-900 text-sm font-medium leading-tight">Valuer Leaderboard</h3>
-                <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mt-0.5">Top portfolio valuers by volume</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+        {/* Valuer Performance Widget */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs p-5 hover:shadow-xs transition-all duration-300 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="size-8 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center shrink-0 shadow-2xs">
+                  <IconReportAnalytics size={18} />
+                </span>
+                <div>
+                  <h3 className="text-slate-900 text-sm font-medium leading-tight">Valuer Output & Volume</h3>
+                  <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mt-0.5">
+                    Portfolio volume by assigned firm or valuer
+                  </p>
+                </div>
               </div>
+              <Badge tone="neutral" className="font-mono text-xxs px-2 py-0.5">
+                VOLUME SHARE
+              </Badge>
             </div>
-            <Badge tone="warning" className="font-mono text-xxs px-2 py-0.5">TOP PERFORMERS</Badge>
+
+            {valuerPerformance.length === 0 ? (
+              <p className="text-slate-400 py-8 text-center text-xs font-mono">No valued prospects recorded yet.</p>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {paginatedValuers.map((l) => {
+                  const avatarSrc = getAvatarForName(l.name, l.avatarUrl);
+                  return (
+                    <div
+                      key={l.name}
+                      onClick={() => setSelectedValuer(l)}
+                      role="button"
+                      tabIndex={0}
+                      className="flex items-center gap-3.5 bg-slate-50/70 border border-slate-200/60 rounded-xl p-3 hover:bg-slate-100/80 hover:border-slate-300 transition-all cursor-pointer group/row shadow-2xs"
+                    >
+                      <Avatar
+                        src={avatarSrc}
+                        fallback={l.name.slice(0, 1)}
+                        className="size-9 rounded-xl border border-slate-200/80 shadow-2xs shrink-0"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-medium text-slate-900 group-hover/row:text-[#151936] transition-colors truncate flex items-center gap-1.5">
+                            {l.name}
+                            <IconArrowUpRight size={12} className="text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />
+                          </p>
+                          <span className="font-mono text-xs font-medium text-[#151936] shrink-0">
+                            {formatCompactKES(l.value)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 mt-1.5">
+                          <div className="flex-1 h-1.5 rounded-full bg-slate-200/80 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-emerald-600 transition-all duration-500"
+                              style={{ width: `${Math.max(l.sharePct, 6)}%` }}
+                            />
+                          </div>
+                          <span className="text-xxs text-slate-500 font-mono tracking-tight shrink-0">
+                            {l.count} prospect{l.count === 1 ? "" : "s"} ({l.sharePct}%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {leaderboard.length === 0 ? (
-            <p className="text-slate-400 py-6 text-center text-xs font-mono">No valued prospects yet.</p>
-          ) : (
-            <div className="flex flex-col gap-2.5">
-              {leaderboard.map((l) => {
-                const rankBadge =
-                  l.rank === 1
-                    ? "bg-amber-100 text-amber-800 border-amber-300"
-                    : l.rank === 2
-                    ? "bg-slate-100 text-slate-800 border-slate-300"
-                    : l.rank === 3
-                    ? "bg-amber-900/10 text-amber-900 border-amber-800/30"
-                    : "bg-slate-50 text-slate-600 border-slate-200";
-                const rankIcon = l.rank === 1 ? "🏆" : l.rank === 2 ? "🥈" : l.rank === 3 ? "🥉" : `#${l.rank}`;
-                return (
-                  <div key={l.name} className="flex items-center gap-3 bg-slate-50/70 border border-slate-200/60 rounded-xl p-3 hover:bg-slate-100/80 transition-colors">
-                    <span className={cn("font-mono text-xs font-medium px-2 py-0.5 rounded-lg border shadow-2xs shrink-0", rankBadge)}>
-                      {rankIcon}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-slate-900 truncate">{l.name}</p>
-                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">{l.count} prospect{l.count === 1 ? "" : "s"} valued</p>
-                    </div>
-                    <span className="font-mono text-xs font-medium text-[#151936]">{formatCompactKES(l.value)}</span>
-                  </div>
-                );
-              })}
+          {/* Valuer Card Pagination */}
+          {valuerPerformance.length > 0 && (
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <PaginationControls
+                currentPage={safeValuerPage}
+                totalPages={valuerTotalPages}
+                totalItems={valuerPerformance.length}
+                pageSize={valuerPageSize}
+                itemLabel="valuers"
+                onPageChange={setValuerPage}
+              />
             </div>
           )}
         </div>
@@ -1569,31 +1687,99 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
                   <IconUserCog size={18} />
                 </span>
                 <div>
-                  <h3 className="text-slate-900 text-sm font-medium leading-tight">Pipeline by Manager</h3>
-                  <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mt-0.5">Active workload distribution</p>
+                  <h3 className="text-slate-900 text-sm font-medium leading-tight">Property Manager Pipeline</h3>
+                  <p className="text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider mt-0.5">
+                    Active workload & assignment distribution
+                  </p>
                 </div>
               </div>
+              <Badge tone="neutral" className="font-mono text-xxs px-2 py-0.5">
+                WORKLOAD SHARE
+              </Badge>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {mgrPipeline.map((m) => (
-                <div key={m.name} className="flex items-center gap-3 bg-slate-50/70 border border-slate-200/60 rounded-xl p-2.5">
-                  <span className="size-7 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center font-mono text-xxs font-medium shrink-0 border border-white/20 shadow-2xs">
-                    {m.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-                  </span>
-                  <span className="flex-1 text-xs text-slate-800 font-medium truncate">{m.name}</span>
-                  <div className="w-[80px] sm:w-[100px] h-2 rounded-full bg-slate-200/70 overflow-hidden shrink-0">
-                    <div className="h-full rounded-full bg-[#151936] transition-all duration-500" style={{ width: `${m.barPct}%` }} />
-                  </div>
-                  <span className="font-mono text-xs font-medium text-slate-900 w-6 text-right shrink-0">{m.count}</span>
-                </div>
-              ))}
-            </div>
+            {mgrPipeline.length === 0 ? (
+              <p className="text-slate-400 py-8 text-center text-xs font-mono">No active workload assigned.</p>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {paginatedManagers.map((m) => {
+                  const avatarSrc = getAvatarForName(m.name, m.avatarUrl);
+                  return (
+                    <div
+                      key={m.name}
+                      onClick={() => {
+                        if (m.managerId) {
+                          setManagerUserId(m.managerId);
+                        } else {
+                          const matchedId = valuations.find((v) => v.managerName === m.name)?.assignedManagerId;
+                          if (matchedId) setManagerUserId(matchedId);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      className="flex items-center gap-3.5 bg-slate-50/70 border border-slate-200/60 rounded-xl p-3 hover:bg-slate-100/80 hover:border-slate-300 transition-all cursor-pointer group/row shadow-2xs"
+                    >
+                      <Avatar
+                        src={avatarSrc}
+                        fallback={m.name.slice(0, 1)}
+                        className="size-9 rounded-xl border border-slate-200/80 shadow-2xs shrink-0"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-slate-900 group-hover/row:text-[#151936] transition-colors truncate flex items-center gap-1.5">
+                            {m.name}
+                            <IconArrowUpRight size={12} className="text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="font-mono text-xs font-medium text-slate-900">{m.count}</span>
+                            <span className="text-xxs text-slate-500 font-mono">active</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <div className="flex-1 h-1.5 rounded-full bg-slate-200/80 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-[#151936] transition-all duration-500"
+                              style={{ width: `${Math.max(m.barPct, 6)}%` }}
+                            />
+                          </div>
+                          <span className="text-xxs text-slate-500 font-mono shrink-0 w-8 text-right">
+                            {m.sharePct}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="mt-4 border-t border-slate-100 pt-3 flex items-center justify-between">
-            <span className="text-xs font-mono font-medium text-slate-500 uppercase tracking-wider">Mandates Signed This Month</span>
-            <span className="font-mono text-xs font-medium text-[#151936] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-lg">{completedThisMonth}</span>
+          <div>
+            <div className="mt-4 border-t border-slate-100 pt-3.5 flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-slate-500 uppercase tracking-wider">
+                Mandates Signed This Month
+              </span>
+              <span className="font-mono text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-2xs">
+                <span className="size-1.5 rounded-full bg-emerald-500" />
+                {completedThisMonth} Mandate{completedThisMonth === 1 ? "" : "s"} Signed
+              </span>
+            </div>
+
+            {/* PM Card Pagination */}
+            {mgrPipeline.length > 0 && (
+              <div className="mt-3 border-t border-slate-100 pt-2.5">
+                <PaginationControls
+                  currentPage={safeMgrPage}
+                  totalPages={mgrTotalPages}
+                  totalItems={mgrPipeline.length}
+                  pageSize={mgrPageSize}
+                  itemLabel="managers"
+                  onPageChange={setMgrPage}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1765,6 +1951,131 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
         onConfirm={handleDelete}
         onClose={() => setDeleteConfirmId(null)}
       />
+
+      {/* ── Valuer Detail Modal ── */}
+      {selectedValuer && (
+        <Modal
+          open={!!selectedValuer}
+          onClose={() => setSelectedValuer(null)}
+          title="Valuer Performance & Firm File"
+          description="Detailed breakdown of valuation volume, portfolio contribution, and assigned prospects."
+          size="lg"
+        >
+          <div className="space-y-6 pt-2">
+            {/* Header Hero Banner */}
+            <div className="flex items-center gap-4 bg-slate-50 border border-slate-200/80 rounded-2xl p-4 shadow-2xs">
+              <Avatar
+                src={getAvatarForName(selectedValuer.name, selectedValuer.avatarUrl)}
+                fallback={selectedValuer.name.slice(0, 1)}
+                className="size-14 rounded-2xl border border-slate-200/90 shadow-xs shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base font-medium text-slate-900 truncate">{selectedValuer.name}</h3>
+                  <Badge tone="primary" className="font-mono text-xxs uppercase tracking-wider">
+                    ACCREDITED VALUER
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-500 font-mono mt-1">
+                  Valuation Firm & Independent Advisory Partner
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Total Volume</span>
+                <span className="font-mono text-lg font-medium text-[#151936] block mt-0.5">
+                  {formatKES(selectedValuer.value)}
+                </span>
+              </div>
+            </div>
+
+            {/* Fact Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-3 shadow-2xs">
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Assigned Output</span>
+                <span className="font-mono text-sm font-medium text-slate-900 block mt-1">{formatCompactKES(selectedValuer.value)}</span>
+              </div>
+              <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-3 shadow-2xs">
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Volume Share</span>
+                <span className="font-mono text-sm font-medium text-emerald-700 block mt-1">{selectedValuer.sharePct}%</span>
+              </div>
+              <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-3 shadow-2xs">
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Valued Prospects</span>
+                <span className="font-mono text-sm font-medium text-slate-900 block mt-1">{selectedValuer.count} Properties</span>
+              </div>
+              <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-3 shadow-2xs">
+                <span className="block text-xxs font-mono font-medium text-slate-500 uppercase tracking-wider">Licensing Status</span>
+                <span className="font-mono text-xs font-medium text-emerald-800 block mt-1 flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-emerald-500" /> Active VRB
+                </span>
+              </div>
+            </div>
+
+            {/* Assigned Valuation Prospects List */}
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <h4 className="text-xs font-mono font-medium text-slate-700 uppercase tracking-wider">
+                  Associated Valuation Prospects ({selectedValuer.count})
+                </h4>
+              </div>
+
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {valuations
+                  .filter((v) => valuerLabel(v) === selectedValuer.name)
+                  .map((v) => {
+                    const subject = subjectOf(v);
+                    const cfg = STAGE_META[v.stage] ?? STAGE_META.requested;
+                    return (
+                      <div
+                        key={v.id}
+                        className="flex items-center justify-between gap-3 bg-white border border-slate-200/80 rounded-xl p-3 hover:border-slate-300 transition-colors shadow-2xs"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60">
+                              {v.valuationCode}
+                            </span>
+                            <span className="text-xs font-medium text-slate-900 truncate">{subject.name}</span>
+                          </div>
+                          <p className="text-xxs text-slate-500 font-mono mt-1 truncate">{subject.location}</p>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <span className="block font-mono text-xs font-medium text-[#151936]">
+                              {v.marketValueKes ? formatCompactKES(Number(v.marketValueKes)) : "—"}
+                            </span>
+                            <Badge tone={stageTone(v.stage)} className="mt-0.5 text-xxs">
+                              {cfg.label}
+                            </Badge>
+                          </div>
+
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedValuer(null);
+                              router.push(`/admin/valuations/${v.id}`);
+                            }}
+                            className="h-8 px-2.5 text-xs"
+                          >
+                            Open File <IconArrowUpRight size={13} />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end pt-4 border-t border-slate-200">
+              <Button variant="secondary" onClick={() => setSelectedValuer(null)}>
+                Close Window
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       <PropertyOwnerProfileDrawer
         open={!!ownerContactId}

@@ -386,50 +386,78 @@ export function PropertyFormModal({
       description={mode === "create" ? "Add a new managed property linked to an owner contact" : "Update property details"}
       size="xl"
     >
-      <div className="space-y-6">
+      <div className="space-y-6 pt-1">
+        {/* Top Contracting & Property Context Preview Bar */}
+        <div className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="size-11 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center shrink-0 text-[#151936] shadow-2xs">
+              <IconBuildingSkyscraper size={22} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <p className="text-xs font-medium text-slate-900 truncate leading-snug">
+                {form.name.trim() || "New Property Unit"}
+              </p>
+              <p className="text-xxs text-slate-600 truncate mt-0.5 font-mono">
+                Code: <span className="font-medium text-slate-700">{mode === "create" ? "Auto-generated" : form.propertyCode}</span> · Location: <span className="font-medium text-slate-700">{form.location.trim() || "Unspecified"}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-700 bg-white border border-slate-200/80 px-3 py-1 rounded-xl shadow-2xs">
+              {form.propertyType} · {form.listingType === "let" ? "Rental" : "Sale"}
+            </span>
+          </div>
+        </div>
+
         {/* Section 1: Core Details */}
-        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
-          <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Core Details</h3>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+              01 · Core Identification & Description
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Property ID</label>
-              <div className="flex h-10 items-center px-3 rounded-lg border border-slate-200 bg-slate-100/50 text-slate-400 mono-data shadow-sm">
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Property ID</label>
+              <div className="flex h-11 items-center px-3.5 rounded-xl border border-slate-200 bg-slate-100/60 text-slate-600 font-mono text-xs font-medium shadow-2xs">
                 {mode === "create" ? "Auto-generated" : form.propertyCode}
               </div>
             </div>
             <div className="sm:col-span-2">
-              <label className="label-caps text-slate-400 mb-1.5 block">Property Name</label>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Property Name *</label>
               <input
                 className={cn(
-                  "w-full h-10 rounded-lg border bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
-                  errors.name ? "border-red-300 bg-red-50/30" : "border-slate-200"
+                  "w-full h-11 rounded-xl border bg-white px-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs",
+                  errors.name ? "border-rose-300 bg-rose-50/30 text-rose-900" : "border-slate-200/90"
                 )}
                 placeholder="e.g. Park View Apartment 4B"
                 value={form.name}
                 onChange={(e) => updateField("name", e.target.value)}
               />
-              {errors.name && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.name}</p>}
+              {errors.name && <p className="text-xxs font-medium text-rose-600 mt-1">{errors.name}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Location</label>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Location *</label>
               <input
                 className={cn(
-                  "w-full h-10 rounded-lg border bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
-                  errors.location ? "border-red-300 bg-red-50/30" : "border-slate-200"
+                  "w-full h-11 rounded-xl border bg-white px-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs",
+                  errors.location ? "border-rose-300 bg-rose-50/30 text-rose-900" : "border-slate-200/90"
                 )}
                 placeholder="e.g. Westlands, Nairobi"
                 value={form.location}
                 onChange={(e) => updateField("location", e.target.value)}
               />
-              {errors.location && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.location}</p>}
+              {errors.location && <p className="text-xxs font-medium text-rose-600 mt-1">{errors.location}</p>}
             </div>
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Property Type</label>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Property Type</label>
               <select
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                 value={form.propertyType}
                 onChange={(e) => updateField("propertyType", e.target.value)}
               >
@@ -441,9 +469,9 @@ export function PropertyFormModal({
           </div>
 
           <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Description</label>
+            <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Description & Overview</label>
             <textarea
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-body-primary resize-none h-20 placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+              className="w-full rounded-xl border border-slate-200/90 bg-white p-3.5 text-xs text-slate-900 resize-none h-20 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
               placeholder="Short marketing/context blurb shown on the property's full view…"
               value={form.description}
               onChange={(e) => updateField("description", e.target.value)}
@@ -452,12 +480,17 @@ export function PropertyFormModal({
         </div>
 
         {/* Section 2: Ownership & Legal */}
-        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
-          <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Ownership & Legal</h3>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+              02 · Ownership & Legal Documentation
+            </span>
+          </div>
+
           <div>
-            <label className="label-caps text-slate-400 mb-1.5 block">Portfolio Owner (Landlord)</label>
+            <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Portfolio Owner (Landlord)</label>
             <select
-              className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+              className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
               value={form.ownerContactId}
               onChange={(e) => updateField("ownerContactId", e.target.value)}
             >
@@ -469,42 +502,44 @@ export function PropertyFormModal({
           </div>
 
           {form.ownerContactId && (
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm mt-4">
-              <label className="text-desc-secondary block mb-1">Landlord Documents</label>
-              <p className="text-meta-muted mb-4">Title deed, identification, and mandate paperwork for this landlord.</p>
+            <div className="rounded-2xl border border-slate-200/90 bg-slate-50/50 p-4 shadow-2xs space-y-3">
+              <div>
+                <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-700 block">Landlord Documents</label>
+                <p className="text-xxs text-slate-600 font-mono">Title deed, identification, and mandate paperwork for this landlord.</p>
+              </div>
 
               {landlordDocuments.length > 0 && (
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2">
                   {landlordDocuments.map((doc) => (
                     <a
                       key={doc.id}
                       href={doc.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-slate-200 hover:bg-slate-100/50 transition-colors group"
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white border border-slate-200/80 hover:border-slate-300 transition-colors group shadow-2xs"
                     >
-                      <div className="size-8 rounded-md bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                        <IconFileText size={16} className="text-slate-400" />
+                      <div className="size-7 rounded-lg bg-slate-50 border border-slate-200/60 flex items-center justify-center shrink-0">
+                        <IconFileText size={15} className="text-slate-600" />
                       </div>
-                      <span className="text-body-primary truncate flex-1">{doc.title}</span>
-                      <span className="text-meta-muted shrink-0 bg-white px-2 py-0.5 rounded-md border border-slate-100">
+                      <span className="text-xs font-medium text-slate-900 truncate flex-1">{doc.title}</span>
+                      <span className="text-xxs font-mono text-slate-600 shrink-0 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60">
                         {LANDLORD_DOCUMENT_TYPES.find((t) => t.value === doc.type)?.label ?? doc.type}
                       </span>
-                      <IconExternalLink size={14} className="text-slate-300 group-hover:text-slate-400 transition-colors shrink-0" />
+                      <IconExternalLink size={13} className="text-slate-600 group-hover:text-slate-600 transition-colors shrink-0" />
                     </a>
                   ))}
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center pt-1">
                 <input
-                  className="flex-1 w-full h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
+                  className="flex-1 w-full h-10 rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936]"
                   placeholder="Document title"
                   value={docTitle}
                   onChange={(e) => setDocTitle(e.target.value)}
                 />
                 <select
-                  className="w-full sm:w-[180px] h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shrink-0"
+                  className="w-full sm:w-[170px] h-10 rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-900 focus:outline-none focus:border-[#151936] shrink-0"
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
                 >
@@ -513,7 +548,7 @@ export function PropertyFormModal({
                   ))}
                 </select>
                 <input
-                  className="flex-1 w-full h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
+                  className="flex-1 w-full h-10 rounded-xl border border-slate-200/90 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936]"
                   placeholder="Document URL"
                   value={docUrl}
                   onChange={(e) => setDocUrl(e.target.value)}
@@ -523,9 +558,9 @@ export function PropertyFormModal({
                   type="button"
                   onClick={addLandlordDocument}
                   disabled={isAddingDoc || !docTitle.trim() || !docUrl.trim()}
-                  className="w-full sm:w-auto h-10 flex items-center justify-center gap-1.5 text-body-primary text-slate-700 bg-white border border-slate-200 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  className="w-full sm:w-auto h-10 flex items-center justify-center gap-1 text-xs font-medium text-slate-800 bg-white border border-slate-200/90 px-3.5 rounded-xl shadow-2xs hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
                 >
-                  {isAddingDoc ? <LoadingSpinner size="sm" /> : <><IconPlus size={16} /> Attach</>}
+                  {isAddingDoc ? <LoadingSpinner size="sm" /> : <><IconPlus size={15} /> Attach</>}
                 </button>
               </div>
             </div>
@@ -533,18 +568,23 @@ export function PropertyFormModal({
         </div>
 
         {/* Section 3: Financials & Listing */}
-        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
-          <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Financials & Listing</h3>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+              03 · Financials & Pricing Structure
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="label-caps text-slate-400 mb-1.5 block">Listing Type</label>
+              <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Listing Type</label>
               <select
-                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs"
                 value={form.listingType}
                 onChange={(e) => updateField("listingType", e.target.value as "let" | "sale")}
               >
-                <option value="let">Rent</option>
-                <option value="sale">Sale</option>
+                <option value="let">Rent / Lease</option>
+                <option value="sale">Outright Sale</option>
               </select>
             </div>
 
@@ -552,89 +592,94 @@ export function PropertyFormModal({
               {form.listingType === "let" ? (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="label-caps text-slate-400">
-                      {isMultiUnit ? "Expected Total Monthly Rent (KES)" : "Monthly Rent (KES)"}
+                    <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+                      {isMultiUnit ? "Expected Total Monthly Rent (KES)" : "Monthly Rent (KES) *"}
                     </label>
                     {isMultiUnit && (
-                      <span className="text-meta-muted italic">Auto-computed from unit mix</span>
+                      <span className="text-xxs text-slate-600 font-mono italic">Auto-computed from unit mix</span>
                     )}
                   </div>
                   <input
                     className={cn(
-                      "w-full h-10 rounded-lg border bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
-                      errors.monthlyRentKes ? "border-red-300 bg-red-50/30" : "border-slate-200",
-                      isMultiUnit ? "bg-slate-100/50 text-slate-400 cursor-not-allowed" : ""
+                      "w-full h-11 rounded-xl border bg-white px-3.5 font-mono text-xs font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs",
+                      errors.monthlyRentKes ? "border-rose-300 bg-rose-50/30 text-rose-900" : "border-slate-200/90",
+                      isMultiUnit ? "bg-slate-100/60 text-slate-600 cursor-not-allowed" : ""
                     )}
                     placeholder="e.g. 85000"
                     value={displayRent}
                     disabled={isMultiUnit}
                     onChange={(e) => updateField("monthlyRentKes", e.target.value)}
                   />
-                  {errors.monthlyRentKes && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.monthlyRentKes}</p>}
+                  {errors.monthlyRentKes && <p className="text-xxs font-medium text-rose-600 mt-1">{errors.monthlyRentKes}</p>}
                 </div>
               ) : (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="label-caps text-slate-400">
-                      {isMultiUnit ? "Expected Total Asking Price (KES)" : "Asking Price (KES)"}
+                    <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+                      {isMultiUnit ? "Expected Total Asking Price (KES)" : "Asking Price (KES) *"}
                     </label>
                     {isMultiUnit && (
-                      <span className="text-meta-muted italic">Auto-computed from unit mix</span>
+                      <span className="text-xxs text-slate-600 font-mono italic">Auto-computed from unit mix</span>
                     )}
                   </div>
                   <input
                     className={cn(
-                      "w-full h-10 rounded-lg border bg-white px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm",
-                      errors.askingPriceKes ? "border-red-300 bg-red-50/30" : "border-slate-200",
-                      isMultiUnit ? "bg-slate-100/50 text-slate-400 cursor-not-allowed" : ""
+                      "w-full h-11 rounded-xl border bg-white px-3.5 font-mono text-xs font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936] focus:ring-1 focus:ring-[#151936] transition-all shadow-2xs",
+                      errors.askingPriceKes ? "border-rose-300 bg-rose-50/30 text-rose-900" : "border-slate-200/90",
+                      isMultiUnit ? "bg-slate-100/60 text-slate-600 cursor-not-allowed" : ""
                     )}
                     placeholder="e.g. 15000000"
                     value={displayRent}
                     disabled={isMultiUnit}
                     onChange={(e) => updateField("askingPriceKes", e.target.value)}
                   />
-                  {errors.askingPriceKes && <p className="text-meta-muted-strong text-red-500 mt-1">{errors.askingPriceKes}</p>}
+                  {errors.askingPriceKes && <p className="text-xxs font-medium text-rose-600 mt-1">{errors.askingPriceKes}</p>}
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Section 4: Property Specs */}
-        <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
-          <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Property Specs</h3>
+        {/* Section 4: Property Specifications & Unit Mix */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+            <span className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600">
+              04 · Property Specifications & Unit Mix
+            </span>
+          </div>
+
           {isMultiUnit ? (
-            <div>
-              <div className="flex items-center justify-between mb-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <label className="label-caps text-slate-400 block">Unit Mix</label>
-                  <p className="text-meta-muted mt-1">
-                    Capture each unit type this property is made up of. Total: <span className="mono-amount text-slate-600 px-1 py-0.5 bg-slate-200/50 rounded">{totalUnits}</span> unit{totalUnits === 1 ? "" : "s"}.
+                  <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-700 block">Unit Mix Breakdown</label>
+                  <p className="text-xxs text-slate-600 font-mono mt-0.5">
+                    Capture each unit type. Total: <span className="font-mono text-xs font-medium text-slate-800 px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200/60">{totalUnits}</span> unit{totalUnits === 1 ? "" : "s"}.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={addUnitRow}
-                  className="flex items-center gap-1.5 text-body-primary text-[#151936] bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-slate-50 transition-colors shrink-0"
+                  className="flex items-center gap-1.5 text-xs font-medium text-[#151936] bg-white border border-slate-200/90 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-slate-50 transition-colors shrink-0 cursor-pointer"
                 >
-                  <IconPlus size={16} stroke={2} /> Add Unit Type
+                  <IconPlus size={15} /> Add Unit Type
                 </button>
               </div>
 
               {form.unitBreakdown.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-xl bg-white text-center">
-                  <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center mb-2 border border-slate-100">
-                    <IconBuildingSkyscraper size={20} className="text-slate-400" />
+                <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200/80 rounded-2xl bg-slate-50/40 text-center">
+                  <div className="size-9 rounded-xl bg-white flex items-center justify-center mb-2 border border-slate-200/80 shadow-2xs">
+                    <IconBuildingSkyscraper size={18} className="text-slate-600" />
                   </div>
-                  <p className="text-body-regular text-slate-400">No unit types added yet.</p>
-                  <p className="text-meta-muted mt-1">Click &quot;Add Unit Type&quot; to break down this property.</p>
+                  <p className="text-xs font-medium text-slate-600">No unit types added yet.</p>
+                  <p className="text-xxs text-slate-600 font-mono mt-0.5">Click &quot;Add Unit Type&quot; to break down this property.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {form.unitBreakdown.map((row, index) => (
-                    <div key={index} className="grid grid-cols-[1fr_90px_140px_40px] gap-3 items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                    <div key={index} className="grid grid-cols-[1fr_90px_140px_40px] gap-2.5 items-center bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
                       <select
-                        className="h-10 rounded-lg border border-slate-100 bg-slate-50 px-3 text-body-primary focus:outline-none focus:border-[#151936]/40 transition-colors"
+                        className="h-10 rounded-lg border border-slate-200/80 bg-slate-50 px-3 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#151936]"
                         value={row.unitType}
                         onChange={(e) => updateUnitRow(index, { unitType: e.target.value })}
                       >
@@ -645,14 +690,14 @@ export function PropertyFormModal({
                       <input
                         type="number"
                         min={1}
-                        className="h-10 rounded-lg border border-slate-100 bg-slate-50 px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors"
+                        className="h-10 rounded-lg border border-slate-200/80 bg-slate-50 px-3 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936]"
                         placeholder="Count"
                         value={row.count}
                         onChange={(e) => updateUnitRow(index, { count: e.target.value ? parseInt(e.target.value) : 0 })}
                       />
                       <input
                         type="number"
-                        className="h-10 rounded-lg border border-slate-100 bg-slate-50 px-3 mono-data placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors"
+                        className="h-10 rounded-lg border border-slate-200/80 bg-slate-50 px-3 font-mono text-xs text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-[#151936]"
                         placeholder="Rent/unit"
                         value={row.monthlyRentKes}
                         onChange={(e) => updateUnitRow(index, { monthlyRentKes: e.target.value })}
@@ -660,56 +705,56 @@ export function PropertyFormModal({
                       <button
                         type="button"
                         onClick={() => removeUnitRow(index)}
-                        className="size-10 flex items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
+                        className="size-10 flex items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 transition-colors shrink-0 cursor-pointer"
                         aria-label="Remove unit type"
                       >
-                        <IconTrash size={18} />
+                        <IconTrash size={17} />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
               {errors.unitBreakdown && (
-                <p className="text-meta-muted-strong text-red-500 mt-2">{errors.unitBreakdown}</p>
+                <p className="text-xxs font-medium text-rose-600 mt-1">{errors.unitBreakdown}</p>
               )}
 
-              <div className="mt-6 pt-4 border-t border-slate-200">
+              <div className="pt-2">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
-                    <label className="label-caps text-slate-400 mb-1.5 block">Total Size (SqFt)</label>
+                    <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Total Size (SqFt)</label>
                     <input
                       type="number"
-                      className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936] shadow-2xs"
                       placeholder="e.g. 12000"
                       value={form.sizeSqft ?? ""}
                       onChange={(e) => updateField("sizeSqft", e.target.value ? parseInt(e.target.value) : null)}
                     />
                   </div>
                   <div>
-                    <label className="label-caps text-slate-400 mb-1.5 block">Land Area (SqFt)</label>
+                    <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Land Area (SqFt)</label>
                     <input
                       type="number"
-                      className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936] shadow-2xs"
                       placeholder="e.g. 5000"
                       value={form.landAreaSqft ?? ""}
                       onChange={(e) => updateField("landAreaSqft", e.target.value ? parseInt(e.target.value) : null)}
                     />
                   </div>
                   <div>
-                    <label className="label-caps text-slate-400 mb-1.5 block">Year Built</label>
+                    <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Year Built</label>
                     <input
                       type="number"
-                      className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936] shadow-2xs"
                       placeholder="e.g. 2018"
                       value={form.yearBuilt ?? ""}
                       onChange={(e) => updateField("yearBuilt", e.target.value ? parseInt(e.target.value) : null)}
                     />
                   </div>
                   <div>
-                    <label className="label-caps text-slate-400 mb-1.5 block">Parking Spaces</label>
+                    <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Parking Spaces</label>
                     <input
                       type="number"
-                      className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                      className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936] shadow-2xs"
                       placeholder="e.g. 20"
                       value={form.parkingSpaces ?? ""}
                       onChange={(e) => updateField("parkingSpaces", e.target.value ? parseInt(e.target.value) : null)}
@@ -721,37 +766,37 @@ export function PropertyFormModal({
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <label className="label-caps text-slate-400 mb-1.5 block">Bedrooms</label>
+                <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Bedrooms</label>
                 <input
                   type="number"
-                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                  className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936] shadow-2xs"
                   placeholder="e.g. 3"
                   value={form.bedrooms ?? ""}
                   onChange={(e) => updateField("bedrooms", e.target.value ? parseInt(e.target.value) : null)}
                 />
               </div>
               <div>
-                <label className="label-caps text-slate-400 mb-1.5 block">Bathrooms</label>
+                <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Bathrooms</label>
                 <input
                   type="number"
-                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                  className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936] shadow-2xs"
                   placeholder="e.g. 2"
                   value={form.bathrooms ?? ""}
                   onChange={(e) => updateField("bathrooms", e.target.value ? parseInt(e.target.value) : null)}
                 />
               </div>
               <div>
-                <label className="label-caps text-slate-400 mb-1.5 block">Size (SqFt)</label>
+                <label className="font-mono text-xxs font-medium uppercase tracking-wider text-slate-600 block mb-1.5">Size (SqFt)</label>
                 <input
                   type="number"
-                  className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+                  className="w-full h-11 rounded-xl border border-slate-200/90 bg-white px-3.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-[#151936] shadow-2xs"
                   placeholder="e.g. 1500"
                   value={form.sizeSqft ?? ""}
                   onChange={(e) => updateField("sizeSqft", e.target.value ? parseInt(e.target.value) : null)}
                 />
               </div>
               <div>
-                <label className="label-caps text-slate-400 mb-1.5 block">Land Area (SqFt)</label>
+                <label className="label-caps text-slate-600 mb-1.5 block">Land Area (SqFt)</label>
                 <input
                   type="number"
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -761,7 +806,7 @@ export function PropertyFormModal({
                 />
               </div>
               <div>
-                <label className="label-caps text-slate-400 mb-1.5 block">Year Built</label>
+                <label className="label-caps text-slate-600 mb-1.5 block">Year Built</label>
                 <input
                   type="number"
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -771,7 +816,7 @@ export function PropertyFormModal({
                 />
               </div>
               <div>
-                <label className="label-caps text-slate-400 mb-1.5 block">Parking Spaces</label>
+                <label className="label-caps text-slate-600 mb-1.5 block">Parking Spaces</label>
                 <input
                   type="number"
                   className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 mono-data focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
@@ -785,7 +830,7 @@ export function PropertyFormModal({
 
           {/* Amenities Selector */}
           <div className="mt-6 pt-4 border-t border-slate-200">
-            <label className="label-caps text-slate-400 mb-2 block">Amenities & Features</label>
+            <label className="label-caps text-slate-600 mb-2 block">Amenities & Features</label>
             <div className="flex flex-wrap gap-2">
               {AMENITIES_LIST.map((amenity) => {
                 const isSelected = form.amenities.includes(amenity);
@@ -812,7 +857,7 @@ export function PropertyFormModal({
         {/* Section 5: Media */}
         <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-100 space-y-4">
           <h3 className="text-title-primary border-b border-slate-200 pb-2 mb-4">Media Gallery</h3>
-          <label className="label-caps text-slate-400 mb-1.5 block">Photos</label>
+          <label className="label-caps text-slate-600 mb-1.5 block">Photos</label>
 
           {form.media.length > 0 ? (
             <div className="flex flex-wrap gap-3 mb-4">
@@ -833,16 +878,16 @@ export function PropertyFormModal({
           ) : (
             <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-xl bg-white text-center mb-4">
               <div className="size-10 rounded-full bg-slate-50 flex items-center justify-center mb-2 border border-slate-100">
-                <IconPhotoUp size={20} className="text-slate-400" />
+                <IconPhotoUp size={20} className="text-slate-600" />
               </div>
-              <p className="text-body-regular text-slate-400">No photos added yet.</p>
+              <p className="text-body-regular text-slate-600">No photos added yet.</p>
               <p className="text-meta-muted mt-1">Upload images to showcase the property.</p>
             </div>
           )}
 
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <input
-              className="flex-1 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-400 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
+              className="flex-1 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-body-primary placeholder:text-slate-600 focus:outline-none focus:border-[#151936]/40 transition-colors shadow-sm"
               placeholder="Paste an image URL…"
               value={manualImageUrl}
               onChange={(e) => setManualImageUrl(e.target.value)}
@@ -871,7 +916,7 @@ export function PropertyFormModal({
             ) : (
               <span
                 title="Cloudinary isn't configured yet (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME / NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) - paste an image URL instead."
-                className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 text-body-primary text-slate-400 bg-slate-50 border border-slate-200 h-10 px-4 rounded-lg cursor-not-allowed"
+                className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 text-body-primary text-slate-600 bg-slate-50 border border-slate-200 h-10 px-4 rounded-lg cursor-not-allowed"
               >
                 <IconPhotoUp size={16} /> Upload
               </span>

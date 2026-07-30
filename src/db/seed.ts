@@ -227,6 +227,7 @@ async function runSeed() {
           name: "Jane Wanjiru",
           role: "property_manager",
           title: "Property Manager",
+          avatarUrl: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&q=80",
           primaryEntityId: resEntity.id,
         },
         // Seeded Sales / BD Agents

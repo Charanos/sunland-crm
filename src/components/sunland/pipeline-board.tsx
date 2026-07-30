@@ -384,11 +384,11 @@ export function PipelineBoard() {
             <div className="flex items-center">
               {teamStack.map((a) => (
                 <span key={a.userId} className="-ml-2 first:ml-0" title={a.name}>
-                  <Avatar src={a.avatarUrl ?? undefined} fallback={initialsOf(a.name)} className="size-7 border-2 border-[#f4f6f0] text-[10px]" />
+                  <Avatar src={a.avatarUrl ?? undefined} fallback={initialsOf(a.name)} className="size-7 border-2 border-[#f4f6f0] text-xxs" />
                 </span>
               ))}
               {teamOverflow > 0 && (
-                <span className="-ml-2 size-7 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center text-[10px] font-mono font-medium border-2 border-[#f4f6f0]">
+                <span className="-ml-2 size-7 rounded-full bg-[#151936] text-[#f3df27] flex items-center justify-center text-xxs font-mono font-medium border-2 border-[#f4f6f0]">
                   +{teamOverflow}
                 </span>
               )}
@@ -412,7 +412,7 @@ export function PipelineBoard() {
       <div className="gsap-stagger grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3">
         <div className="relative rounded-3xl overflow-hidden min-h-[170px] flex bg-gradient-to-br from-[#0c1f24] to-[#1e1b4b]">
           <div className="relative p-6 flex flex-col justify-center gap-2 max-w-[520px]">
-            <span className="self-start inline-flex items-center gap-1.5 bg-[#f3df27] rounded-lg px-2.5 py-1 text-[10.5px] font-medium uppercase tracking-wider text-[#151936]">
+            <span className="self-start inline-flex items-center gap-1.5 bg-[#f3df27] rounded-lg px-2.5 py-1 text-xxs font-medium uppercase tracking-wider text-[#151936]">
               <IconFlame size={12} /> {new Date().toLocaleDateString("en-KE", { month: "long" })} Pipeline Pulse
             </span>
             <p className="font-serif text-2xl text-white leading-tight">
@@ -434,12 +434,12 @@ export function PipelineBoard() {
               <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d1c]/85 via-[#0a0d1c]/10 to-transparent" />
-            <span className="absolute top-3 left-3 inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/90 text-[#be123c]">Hot Deal</span>
+            <span className="absolute top-3 left-3 inline-flex rounded-full px-2.5 py-1 text-xxs font-medium uppercase tracking-wider bg-white/90 text-[#be123c]">Hot Deal</span>
             <span className="absolute left-3.5 right-3.5 bottom-3">
               <span className="block text-xs font-medium text-white truncate">{hotDeal.propertyInterest}</span>
               <span className="flex items-center justify-between mt-1">
                 <span className="font-mono text-sm text-[#f3df27]">{formatCompactKES(hotDeal.budget)}</span>
-                <span className="text-[10.5px] text-white/70 flex items-center gap-1">{STAGE_META[hotDeal.stage].label} <IconArrowUpRight size={11} /></span>
+                <span className="text-xxs text-white/70 flex items-center gap-1">{STAGE_META[hotDeal.stage].label} <IconArrowUpRight size={11} /></span>
               </span>
             </span>
           </button>
@@ -481,15 +481,15 @@ export function PipelineBoard() {
                 const isGood = delta != null && ("invertDelta" in st && st.invertDelta ? delta <= 0 : delta >= 0);
                 return (
                   <div key={st.label} className="flex-1 border border-slate-50 bg-[#fafbf8] rounded-xl p-2.5 min-w-0">
-                    <p className="text-[11px] text-slate-400 truncate">{st.label}</p>
+                    <p className="text-caption text-slate-400 truncate">{st.label}</p>
                     <p className="font-mono text-lg text-slate-900 leading-none mt-1.5">{st.value}</p>
                     {delta != null ? (
-                      <p className={cn("flex items-center gap-1 text-[10.5px] font-medium mt-1.5", isGood ? "text-emerald-700" : "text-rose-600")}>
+                      <p className={cn("flex items-center gap-1 text-xxs font-medium mt-1.5", isGood ? "text-emerald-700" : "text-rose-600")}>
                         {isGood ? <IconTrendingUp size={11} /> : <IconTrendingDown size={11} />}
                         {Math.abs(delta)}{"deltaPct" in st ? "%" : "pt"} <span className="text-slate-300 font-normal">vs last month</span>
                       </p>
                     ) : (
-                      <p className="text-[10.5px] text-slate-300 mt-1.5">as of today</p>
+                      <p className="text-xxs text-slate-300 mt-1.5">as of today</p>
                     )}
                   </div>
                 );
@@ -552,7 +552,7 @@ export function PipelineBoard() {
                     <span className="flex items-center gap-2 text-sm font-medium text-slate-900">
                       <span className="size-2 rounded-full inline-block" style={{ background: cfg.color }} />
                       {cfg.label}
-                      <span className="font-mono text-[11px] text-slate-400">{columnCards.length}</span>
+                      <span className="font-mono text-caption text-slate-400">{columnCards.length}</span>
                     </span>
                   </div>
                   <div
@@ -574,8 +574,8 @@ export function PipelineBoard() {
                           className={cn("bg-white border rounded-2xl p-3 cursor-grab shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_26px_rgba(0,0,0,0.07)] transition-all", dragId === lead.id ? "border-[#f3df27] opacity-50" : "border-slate-100")}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <span className="font-mono text-[10.5px] text-slate-400">{lead.id.slice(0, 8).toUpperCase()}</span>
-                            <span className={cn("inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide", prio.pill)}>{prio.label}</span>
+                            <span className="font-mono text-xxs text-slate-400">{lead.id.slice(0, 8).toUpperCase()}</span>
+                            <span className={cn("inline-flex rounded-md px-2 py-0.5 text-xxs font-medium uppercase tracking-wide", prio.pill)}>{prio.label}</span>
                           </div>
                           <div className="relative h-[86px] rounded-xl overflow-hidden mb-2.5 bg-slate-100">
                             {lead.propertyImageUrl ? (
@@ -586,24 +586,24 @@ export function PipelineBoard() {
                             )}
                           </div>
                           <p className="text-sm font-medium text-slate-900 leading-snug truncate">{lead.propertyInterest}</p>
-                          <p className="font-mono text-[15px] text-[#122a20] mt-1">{formatCompactKES(lead.budget)}</p>
+                          <p className="font-mono text-base text-[#122a20] mt-1">{formatCompactKES(lead.budget)}</p>
                           <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-slate-50">
-                            <div className="flex justify-between"><span className="text-[10.5px] text-slate-300">Client</span><span className="text-[11px] text-slate-500 truncate">{lead.clientName}</span></div>
+                            <div className="flex justify-between"><span className="text-xxs text-slate-300">Client</span><span className="text-caption text-slate-500 truncate">{lead.clientName}</span></div>
                           </div>
                           <div className="flex items-center justify-between mt-2.5">
-                            <span title={lead.assignedAgent} className="size-[22px] rounded-full inline-flex items-center justify-center font-mono text-[9px] text-white" style={{ background: agentColor(lead.assignedAgent) }}>
+                            <span title={lead.assignedAgent} className="size-[22px] rounded-full inline-flex items-center justify-center font-mono text-xxs text-white" style={{ background: agentColor(lead.assignedAgent) }}>
                               {initialsOf(lead.assignedAgent)}
                             </span>
                             <span className="flex gap-2.5">
-                              {lead.noteCount > 0 && <span className="inline-flex items-center gap-1 text-[10.5px] text-slate-400"><IconMessageCircle size={12} /> {lead.noteCount}</span>}
-                              {lead.documentCount > 0 && <span className="inline-flex items-center gap-1 text-[10.5px] text-slate-400"><IconPaperclip size={12} /> {lead.documentCount}</span>}
+                              {lead.noteCount > 0 && <span className="inline-flex items-center gap-1 text-xxs text-slate-400"><IconMessageCircle size={12} /> {lead.noteCount}</span>}
+                              {lead.documentCount > 0 && <span className="inline-flex items-center gap-1 text-xxs text-slate-400"><IconPaperclip size={12} /> {lead.documentCount}</span>}
                             </span>
                           </div>
                         </div>
                       );
                     })}
                     {columnCards.length === 0 && dragged && canDrop && (
-                      <div className="rounded-xl p-3.5 text-center text-[11.5px] font-medium border-[1.5px] border-dashed" style={{ color: cfg.color, borderColor: `${cfg.color}66` }}>Drop here</div>
+                      <div className="rounded-xl p-3.5 text-center text-caption font-medium border-[1.5px] border-dashed" style={{ color: cfg.color, borderColor: `${cfg.color}66` }}>Drop here</div>
                     )}
                   </div>
                 </div>
@@ -643,12 +643,12 @@ export function PipelineBoard() {
                       <Avatar src={lead.clientAvatarUrl ?? undefined} fallback={initialsOf(lead.clientName)} className="size-8" />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-slate-900 truncate">{lead.clientName}</p>
-                        <p className="text-[11px] text-slate-400 font-mono">{lead.createdDate}</p>
+                        <p className="text-caption text-slate-400 font-mono">{lead.createdDate}</p>
                       </div>
                     </div>
                   </td>
                   <td className="py-3.5 px-4"><span className="text-xs font-medium" style={{ color: STAGE_META[lead.stage].color }}>{STAGE_META[lead.stage].label}</span></td>
-                  <td className="py-3.5 px-4"><span className={cn("inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium uppercase", PRIORITY_META[lead.priority].pill)}>{PRIORITY_META[lead.priority].label}</span></td>
+                  <td className="py-3.5 px-4"><span className={cn("inline-flex rounded-md px-2 py-0.5 text-xxs font-medium uppercase", PRIORITY_META[lead.priority].pill)}>{PRIORITY_META[lead.priority].label}</span></td>
                   <td className="py-3.5 px-4 text-right font-mono text-sm text-slate-800">{formatKES(lead.budget)}</td>
                   <td className="py-3.5 px-4 text-sm text-slate-600 truncate max-w-[180px]">{lead.propertyInterest}</td>
                   <td className="py-3.5 px-4 text-sm text-slate-600">{lead.assignedAgent}</td>
