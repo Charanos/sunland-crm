@@ -21,12 +21,18 @@ export type HubTabKey = "properties" | "leases" | "maintenance" | "valuations";
  */
 export function PortfolioHubNav({
   active,
+  modeOptions,
   mode,
   onModeChange,
 }: {
   active: HubTabKey;
-  mode?: "mandates" | "leases";
-  onModeChange?: (mode: "mandates" | "leases") => void;
+  /** Two-option pill switcher for the active tab (e.g. Mandates/Tenants,
+   * Managed/Intake, Pipeline/Archive) - the same "mode switcher on one
+   * board" convention, generalized so each board supplies its own labels
+   * instead of this component hardcoding one board's vocabulary. */
+  modeOptions?: { value: string; label: string }[];
+  mode?: string;
+  onModeChange?: (mode: string) => void;
 }) {
   return (
     <div className="flex items-center justify-between flex-wrap gap-4 bg-white border border-slate-100 p-4 rounded-[20px] shadow-sm">
@@ -44,7 +50,7 @@ export function PortfolioHubNav({
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === active;
 
-          if (item.key === "leases" && isActive && mode && onModeChange) {
+          if (isActive && modeOptions && modeOptions.length > 0 && mode !== undefined && onModeChange) {
             return (
               <div
                 key={item.key}
@@ -52,34 +58,26 @@ export function PortfolioHubNav({
               >
                 <div className="flex items-center pl-3 pr-2 gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                  <span className="text-xxs font-medium text-slate-300 uppercase tracking-widest">Leases</span>
+                  <span className="text-xxs font-medium text-slate-300 uppercase tracking-widest">{item.label}</span>
                 </div>
 
                 <div className="w-px h-4 bg-white/10 mx-1" />
 
                 <div className="flex items-center gap-0.5">
-                  <button
-                    onClick={() => onModeChange("mandates")}
-                    className={cn(
-                      "body-sm px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
-                      mode === "mandates"
-                        ? "bg-white/15 text-white shadow-sm"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                    )}
-                  >
-                    Mandates
-                  </button>
-                  <button
-                    onClick={() => onModeChange("leases")}
-                    className={cn(
-                      "body-sm px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5",
-                      mode === "leases"
-                        ? "bg-white/15 text-white shadow-sm"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                    )}
-                  >
-                    Tenants
-                  </button>
+                  {modeOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => onModeChange(opt.value)}
+                      className={cn(
+                        "body-sm px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap",
+                        mode === opt.value
+                          ? "bg-white/15 text-white shadow-sm"
+                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             );

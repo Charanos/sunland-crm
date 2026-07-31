@@ -308,6 +308,17 @@ The Approvals, Complaints, Support, Reports and System pages were consolidated i
 - **Derived state beats stored state.** Ticket SLA reuses `maintenance-constants.ts`'s `slaStateFor` rather than duplicating it; only the clock-stopping event differs (first response vs. resolution). The one new column, `firstRespondedAt`, exists precisely so the derivation has something real to measure.
 - **Check permission keys against the catalog.** A first cut authorized against `finance.report.*`, which does not exist — `authorize` only fails at runtime, so invented keys typecheck fine. Grep `catalog.ts` for every key you introduce.
 
+## 18. Property Gating + Acquisition Lifecycle Terminus
+
+Full decision record in **ADR 022**. The reusable patterns:
+
+- **Flip the join direction, don't add a client-side filter.** `listProperties`'s mandate `leftJoin` already had the exact right scope (`status IN ('pending_approval','active')`, at-most-one row guaranteed by a partial unique index) — "Managed" is that same join made `inner`, "Intake" is the same join with `isNull(joinedTable.id)` added. Two views, one query shape, response identical either way — no second code path for the board to branch on.
+- **A generalized mode-switcher beats three copies of one.** `PortfolioHubNav`'s pill switcher was hardcoded to Leases' "Mandates/Tenants" labels. Generalizing it to a `modeOptions: {value,label}[]` prop let Properties and Valuations reuse the identical control with their own labels, rather than three near-identical hand-rolled switchers.
+- **Read the client code before assuming a feature is wired.** The plan assumed `property-form-modal.tsx` might already create a mandate on save; it didn't — confirmed by reading the actual submit handler and `createProperty`. Building the fast-path required knowing that gap existed first.
+- **A derived condition (`isNull`/`isNotNull` on a real column) beats a duplicated check.** Archive vs. Pipeline reads `archivedAt`, not the `stage` string, so the two can never independently drift - a lesson repeated from ADR 020's SLA-derivation pattern, applied to a different feature.
+- **A UI toggle can imply a state that doesn't exist.** The valuations kanban has no column for `mandate_signed` at all - every Archive row would render in zero columns. Hiding the toggle and bouncing `viewMode` away from "board" when Archive is selected is a two-line fix once you trace why an "Archive" tab plus a "kanban" toggle is actually a contradiction.
+- **A reseed is a real regression test.** The Oversight Console's `support_ticket_messages` FK-ordering bug (ADR 020, migration `0031`) had sat unexercised since that migration landed — nobody had run `db:seed` since. First reseed after any migration that adds a child table is worth doing deliberately, not skipping because "it probably still works."
+
 ## 17. Container-Query Board Shells (Properties/Leases/Maintenance/Valuations responsive pass)
 
 Full decision record in **ADR 021**. The reusable pattern:

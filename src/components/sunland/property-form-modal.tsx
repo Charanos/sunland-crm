@@ -341,6 +341,33 @@ export function PropertyFormModal({
       if (!res.ok) throw new Error(data.error || "Failed to save property");
 
       const ret = data.property;
+
+      // A property with a landlord on file is real management stock, not a
+      // bare listing - follow up with a mandate so it lands on the Managed
+      // tab (properties.ts's innerJoin) instead of silently sitting in
+      // Intake. Deliberately not rolled back on failure: the property has
+      // already been created and is a real record either way, it just needs
+      // the mandate created separately (or via Intake later) if this fails.
+      if (mode === "create" && ret.ownerContactId) {
+        try {
+          const mandateRes = await fetch("/api/mandates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ entityId: activeEntityId, propertyId: ret.id }),
+          });
+          if (!mandateRes.ok) {
+            const mandateData = await mandateRes.json().catch(() => ({}));
+            throw new Error(mandateData.error || "Failed to create mandate");
+          }
+        } catch (mandateErr) {
+          pushToast({
+            tone: "warning",
+            title: "Property created, mandate pending",
+            body: `${form.name} was saved but a management mandate could not be created automatically${mandateErr instanceof Error ? `: ${mandateErr.message}` : ""}. Create one from the property record.`,
+          });
+        }
+      }
+
       onSubmit({
         id: ret.id,
         name: ret.name,

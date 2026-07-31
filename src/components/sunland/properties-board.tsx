@@ -388,6 +388,10 @@ export function PropertiesBoard({
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  // "managed" (default, finance-safe) = properties.ts's innerJoin on an
+  // active/pending mandate; "intake" = its exact complement (no mandate at
+  // all, or only a draft/terminated one) - see ADR 021 §4.
+  const [portfolioView, setPortfolioView] = useState<"managed" | "intake">("managed");
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -499,7 +503,7 @@ export function PropertiesBoard({
     const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
-      const res = await fetch(`/api/properties?entityId=${entityId}`);
+      const res = await fetch(`/api/properties?entityId=${entityId}&view=${portfolioView}`);
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       const data = await res.json();
       if (requestIdRef.current !== requestId) return;
@@ -511,10 +515,11 @@ export function PropertiesBoard({
     } finally {
       if (requestIdRef.current === requestId) setLoading(false);
     }
-  }, [entityId, pushToast]);
+  }, [entityId, portfolioView, pushToast]);
 
   // useEffect calling loadProperties is correct pattern per React docs - loading
   // state lives inside the async fn so no synchronous setState inside the effect.
+  // Re-fires on portfolioView change too, since it's a dep of loadProperties.
   useEffect(() => {
     if (!entityId) return;
     const timeoutId = setTimeout(() => {
@@ -739,7 +744,12 @@ export function PropertiesBoard({
         }
       />
 
-      <PortfolioHubNav active="properties" />
+      <PortfolioHubNav
+        active="properties"
+        modeOptions={[{ value: "managed", label: "Managed" }, { value: "intake", label: "Intake & Archive" }]}
+        mode={portfolioView}
+        onModeChange={(v) => { setPortfolioView(v as "managed" | "intake"); setPage(1); }}
+      />
 
 
       <div className="flex items-center gap-4 my-6">

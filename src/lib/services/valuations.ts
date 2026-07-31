@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { and, eq, getTableColumns, aliasedTable } from "drizzle-orm";
+import { and, eq, getTableColumns, aliasedTable, isNull, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, entities, properties, users, valuations } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
@@ -47,12 +47,23 @@ function toDateOrNull(value: string | null | undefined): Date | null {
   return parsed;
 }
 
-export async function listValuations(ctx: CallerContext) {
+export async function listValuations(
+  ctx: CallerContext,
+  filters: { view?: "pipeline" | "archive" } = {},
+) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(ctx.entityId);
   await authorize(ctx, "properties.property.read", entityId);
 
   const valuerUsers = aliasedTable(users, "valuer_users");
+
+  // "pipeline" (default) = still-active prospects, including "declined" -
+  // a decline can be re-opened back to "valued", it is not a terminus.
+  // "archive" = the one real terminus, "mandate_signed", identified by
+  // archivedAt rather than by stage directly so the two predicates can
+  // never silently drift out of sync with each other.
+  const view = filters.view ?? "pipeline";
+  const archiveCondition = view === "archive" ? isNotNull(valuations.archivedAt) : isNull(valuations.archivedAt);
 
   return db
     .select({
@@ -73,7 +84,7 @@ export async function listValuations(ctx: CallerContext) {
     .leftJoin(contacts, eq(valuations.landlordContactId, contacts.id))
     .leftJoin(users, eq(valuations.assignedManagerId, users.id))
     .leftJoin(valuerUsers, eq(valuations.valuerId, valuerUsers.id))
-    .where(eq(valuations.entityId, entityId));
+    .where(and(eq(valuations.entityId, entityId), archiveCondition));
 }
 
 export async function getValuation(ctx: CallerContext, valuationId: string) {
@@ -395,6 +406,7 @@ export async function signMandateFromValuation(ctx: CallerContext, valuationId: 
         stageEnteredAt: new Date(),
         propertyId,
         resultingMandateId: mandate.id,
+        archivedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(valuations.id, valuationId))

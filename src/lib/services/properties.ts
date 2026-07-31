@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { eq, and, ne, or, desc, gte, inArray, getTableColumns, SQL } from "drizzle-orm";
+import { eq, and, ne, or, desc, gte, inArray, isNull, getTableColumns, SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { properties, leases, documents, transactions, contacts, maintenanceRequests, leads, propertyMandates, approvalRequests, users, propertyUnits } from "@/db/schema";
 import { authorize } from "@/lib/authz/can";
@@ -32,7 +32,7 @@ export function toISOStringSafe(val: unknown): string | null {
 
 export async function listProperties(
   ctx: CallerContext,
-  filters: { ownerContactId?: string } = {}
+  filters: { ownerContactId?: string; view?: "managed" | "intake" } = {}
 ) {
   if (!ctx.entityId) throw new DomainValidationError("entityId is required");
   const entityId = await resolveEntityId(ctx.entityId);
@@ -43,12 +43,23 @@ export async function listProperties(
     conditions = and(conditions, eq(properties.ownerContactId, filters.ownerContactId));
   }
 
-  // Left join scoped to at-most-one in-flight mandate per property (the
-  // partial unique index on property_mandates guarantees no fan-out here) -
-  // surfaces mandateStatus on the board without a second round trip.
+  // Same in-flight mandate scope (the partial unique index guarantees
+  // at most one such row per property) either restricts the result set
+  // to properties that actually have one ("managed" - the finance-safe
+  // default) or, joined the same way but required to be absent, returns
+  // its exact complement ("intake": no mandate at all, or only a
+  // draft/terminated one) - so the two views are guaranteed disjoint and
+  // sum to the full property count without a second, differently-shaped
+  // query. "managed" flips the join to inner; "intake" adds an isNull
+  // guard on top of the existing left join.
+  const view = filters.view ?? "managed";
+  if (view === "intake") {
+    conditions = and(conditions, isNull(propertyMandates.id));
+  }
+
   // Owner contact is also left-joined here so the board/quick-view never has
   // to fall back to a raw ownerContactId label.
-  const rows = await db
+  const baseQuery = db
     .select({
       ...getTableColumns(properties),
       mandateStatus: propertyMandates.status,
@@ -66,14 +77,18 @@ export async function listProperties(
       managerEmail: users.email,
       managerAvatarUrl: users.avatarUrl,
     })
-    .from(properties)
-    .leftJoin(
-      propertyMandates,
-      and(
-        eq(propertyMandates.propertyId, properties.id),
-        inArray(propertyMandates.status, ["pending_approval", "active"]),
-      ),
-    )
+    .from(properties);
+
+  const mandateJoinCondition = and(
+    eq(propertyMandates.propertyId, properties.id),
+    inArray(propertyMandates.status, ["pending_approval", "active"]),
+  );
+
+  const rows = await (
+    view === "managed"
+      ? baseQuery.innerJoin(propertyMandates, mandateJoinCondition)
+      : baseQuery.leftJoin(propertyMandates, mandateJoinCondition)
+  )
     .leftJoin(contacts, eq(contacts.id, properties.ownerContactId))
     .leftJoin(users, eq(users.id, propertyMandates.assignedPmId))
     .where(conditions);
@@ -103,6 +118,73 @@ export async function listProperties(
       }
       : null,
   }));
+}
+
+/**
+ * Real vacancy across the managed (active-mandate) portfolio - the link
+ * between "a property just came under management" and the sales pipeline,
+ * per ADR 021 §5. Deliberately does not create leads itself: an agent
+ * creates a real one from this list when they actually have a prospect for
+ * a unit, rather than the system inventing demand that doesn't exist yet.
+ *
+ * "active" only, not "pending_approval" - a mandate awaiting sign-off is
+ * not confirmed management, so its vacancies aren't real inventory yet.
+ * A property counts as vacant either because it has real property_units
+ * rows with status = 'vacant', or - for single-unit properties with no
+ * unit rows at all - because the property itself isn't 'occupied'.
+ */
+export async function listReadyToLetProperties(ctx: CallerContext) {
+  if (!ctx.entityId) throw new DomainValidationError("entityId is required");
+  const entityId = await resolveEntityId(ctx.entityId);
+  await authorize(ctx, "properties.property.read", entityId);
+
+  const mandatedProperties = await db
+    .select({ ...getTableColumns(properties), mandateId: propertyMandates.id })
+    .from(properties)
+    .innerJoin(
+      propertyMandates,
+      and(eq(propertyMandates.propertyId, properties.id), eq(propertyMandates.status, "active")),
+    )
+    .where(eq(properties.entityId, entityId));
+
+  if (mandatedProperties.length === 0) {
+    return { properties: [], totalVacantUnits: 0, totalMandatedProperties: 0 };
+  }
+
+  const propertyIds = mandatedProperties.map((p) => p.id);
+  const units = await db
+    .select()
+    .from(propertyUnits)
+    .where(inArray(propertyUnits.propertyId, propertyIds));
+
+  const unitsByProperty = new Map<string, (typeof units)>();
+  for (const unit of units) {
+    const existing = unitsByProperty.get(unit.propertyId);
+    if (existing) existing.push(unit);
+    else unitsByProperty.set(unit.propertyId, [unit]);
+  }
+
+  const readyProperties = mandatedProperties.flatMap((property) => {
+    const propertyUnitRows = unitsByProperty.get(property.id) ?? [];
+    if (propertyUnitRows.length > 0) {
+      const vacantUnits = propertyUnitRows.filter((u) => u.status === "vacant");
+      if (vacantUnits.length === 0) return [];
+      return [{
+        ...property,
+        vacantUnitCount: vacantUnits.length,
+        vacantUnits: vacantUnits.map((u) => ({ id: u.id, unitLabel: u.unitLabel, unitType: u.unitType, monthlyRentKes: u.monthlyRentKes })),
+      }];
+    }
+    if (property.status === "occupied") return [];
+    return [{ ...property, vacantUnitCount: 1, vacantUnits: [] }];
+  });
+
+  const totalVacantUnits = readyProperties.reduce((sum, p) => sum + p.vacantUnitCount, 0);
+  return {
+    properties: readyProperties,
+    totalVacantUnits,
+    totalMandatedProperties: readyProperties.length,
+  };
 }
 
 type UnitBreakdownEntry = { unitType: string; count: number; monthlyRentKes?: string };

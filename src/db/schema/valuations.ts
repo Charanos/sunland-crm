@@ -91,6 +91,12 @@ export const valuations = pgTable(
     // separate column (not a reuse of properties.isFeatured) since an
     // external/prospect valuation has no properties row yet to toggle.
     isFeatured: boolean("is_featured").default(false).notNull(),
+    // Stamped once, alongside stage: "mandate_signed", by signMandateFromValuation -
+    // moves the row from the Pipeline tab to Archive · Converted without a
+    // second write path. Null for every other stage, including "declined" -
+    // a declined prospect stays in the active pipeline (it can still be
+    // re-opened to "valued"), it isn't archived.
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => ({
@@ -98,5 +104,6 @@ export const valuations = pgTable(
     entityIdx: index("valuations_entity_idx").on(table.entityId),
     stageIdx: index("valuations_stage_idx").on(table.stage),
     propertyIdx: index("valuations_property_idx").on(table.propertyId),
+    archivedIdx: index("valuations_archived_idx").on(table.archivedAt),
   }),
 );

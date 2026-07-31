@@ -7,9 +7,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const entityId = searchParams.get("entityId") ?? null;
+    const viewParam = searchParams.get("view");
+    const view = viewParam === "archive" ? "archive" : viewParam === "pipeline" ? "pipeline" : undefined;
 
     const ctx = await requireCallerContext(entityId, request);
-    const items = await listValuations(ctx);
+    const items = await listValuations(ctx, { view });
 
     return NextResponse.json({ valuations: items });
   } catch (error) {

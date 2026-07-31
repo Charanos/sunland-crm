@@ -171,6 +171,10 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
 
   const [valuations, setValuations] = useState<Valuation[]>([]);
   const [loading, setLoading] = useState(true);
+  // "pipeline" (default) = still-active prospects (including "declined",
+  // which can be re-opened); "archive" = converted, identified by
+  // archivedAt in listValuations rather than by stage - see ADR 021 §5.
+  const [registerView, setRegisterView] = useState<"pipeline" | "archive">("pipeline");
 
   const [viewMode, setViewMode] = useState<ViewMode>("board");
   const [query, setQuery] = useState("");
@@ -209,7 +213,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
   const loadValuations = useCallback(async (silent = false) => {
     if (!silent) Promise.resolve().then(() => setLoading(true));
     try {
-      const res = await fetch(`/api/valuations?entityId=${entityId}`);
+      const res = await fetch(`/api/valuations?entityId=${entityId}&view=${registerView}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load valuations");
       setValuations(data.valuations ?? []);
@@ -219,11 +223,22 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [entityId, pushToast]);
+  }, [entityId, registerView, pushToast]);
 
   useEffect(() => {
     Promise.resolve().then(() => loadValuations());
   }, [loadValuations]);
+
+  // The kanban's columns are the active-pipeline stages only (STAGE_ORDER +
+  // "declined") - every Archive row is "mandate_signed", which has no column
+  // of its own, so a kanban would render as a confusing wall of empty
+  // columns. Bounce back to Grid, which renders any stage, same as the
+  // board-toggle button being hidden for this view just above.
+  useEffect(() => {
+    if (registerView === "archive" && viewMode === "board") {
+      Promise.resolve().then(() => setViewMode("grid"));
+    }
+  }, [registerView, viewMode]);
 
   useEffect(() => {
     fetch(`/api/properties?entityId=${entityId}`)
@@ -639,7 +654,12 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
         }
       />
 
-      <PortfolioHubNav active="valuations" />
+      <PortfolioHubNav
+        active="valuations"
+        modeOptions={[{ value: "pipeline", label: "Pipeline" }, { value: "archive", label: "Archive · Converted" }]}
+        mode={registerView}
+        onModeChange={(v) => { setRegisterView(v as "pipeline" | "archive"); setPage(1); }}
+      />
 
       <div className="flex items-center gap-4 mt-2">
         <hr className="flex-1 border-slate-200/60" />
@@ -1027,9 +1047,11 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
             />
           </div>
           <div className="flex bg-slate-100 p-1 rounded-xl gap-1 ml-auto items-center">
-            <button onClick={() => setViewMode("board")} className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", viewMode === "board" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-700")}>
-              <IconLayoutKanban size={14} /> Pipeline
-            </button>
+            {registerView === "pipeline" && (
+              <button onClick={() => setViewMode("board")} className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", viewMode === "board" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-700")}>
+                <IconLayoutKanban size={14} /> Pipeline
+              </button>
+            )}
             <button onClick={() => setViewMode("grid")} className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", viewMode === "grid" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-700")}>
               <IconLayoutGrid size={14} /> Grid
             </button>

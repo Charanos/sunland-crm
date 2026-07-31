@@ -8,6 +8,7 @@ import {
   IconBuildingCommunity,
   IconDotsVertical,
   IconFlame,
+  IconKey,
   IconLayoutKanban,
   IconList,
   IconMessageCircle,
@@ -80,6 +81,23 @@ interface AgentPerformanceRow {
   conversionRate: number;
 }
 
+// Mirrors listReadyToLetProperties's real response shape (properties.ts) -
+// mandated (active) properties with genuine vacancy, not a fabricated list.
+interface ReadyToLetProperty {
+  id: string;
+  name: string;
+  location: string;
+  media: Array<{ url: string; alt?: string; isPrimary?: boolean }> | null;
+  vacantUnitCount: number;
+  vacantUnits: Array<{ id: string; unitLabel: string; unitType: string | null; monthlyRentKes: string | null }>;
+}
+
+interface ReadyToLetSummary {
+  properties: ReadyToLetProperty[];
+  totalVacantUnits: number;
+  totalMandatedProperties: number;
+}
+
 const SOURCE_OPTIONS = ["referral", "walk_in", "website", "social_media", "cold_call", "existing_client", "partner", "exhibition"];
 
 // Content-shaped loading state for the kanban, replacing a centered spinner -
@@ -130,6 +148,8 @@ export function PipelineBoard() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>(undefined);
+  const [createLeadPropertyId, setCreateLeadPropertyId] = useState<string | undefined>(undefined);
+  const [readyToLet, setReadyToLet] = useState<ReadyToLetSummary>({ properties: [], totalVacantUnits: 0, totalMandatedProperties: 0 });
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
@@ -156,6 +176,9 @@ export function PipelineBoard() {
       loadLeads();
       fetch("/api/auth/me").then((r) => r.json()).then((d) => setCurrentUser(d.user ?? null)).catch(() => { });
       fetch(`/api/crm/agent-performance?entityId=${activeEntityId}`).then((r) => r.json()).then((d) => setAgentPerformance(Array.isArray(d.agents) ? d.agents : [])).catch(() => { });
+      fetch(`/api/properties/ready-to-let?entityId=${activeEntityId}`).then((r) => r.json()).then((d) => {
+        if (Array.isArray(d.properties)) setReadyToLet({ properties: d.properties, totalVacantUnits: d.totalVacantUnits ?? 0, totalMandatedProperties: d.totalMandatedProperties ?? 0 });
+      }).catch(() => { });
     });
   }, [loadLeads, activeEntityId]);
 
@@ -401,7 +424,7 @@ export function PipelineBoard() {
                 <IconLayoutKanban size={14} /> Pipeline
               </span>
             </div>
-            <Button size="sm" onClick={() => { setEditingLead(undefined); setFormOpen(true); }}>
+            <Button size="sm" onClick={() => { setEditingLead(undefined); setCreateLeadPropertyId(undefined); setFormOpen(true); }}>
               <IconPlus size={14} /> New Deal
             </Button>
           </div>
@@ -447,6 +470,44 @@ export function PipelineBoard() {
           <div className="rounded-3xl min-h-[170px] border border-dashed border-slate-200 bg-white/50 flex items-center justify-center text-sm text-slate-400">No open deals yet</div>
         )}
       </div>
+
+      {/* ── Ready to Let queue - real vacancy on already-mandated stock, the
+          link between "a property just came under management" and this
+          pipeline. No leads are auto-created here; an agent picks a real
+          vacant unit and starts a real deal from it (ADR 021 §5). ── */}
+      {readyToLet.properties.length > 0 && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="size-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><IconKey size={16} /></span>
+              <div>
+                <p className="text-sm font-medium text-slate-900">Ready to Let</p>
+                <p className="text-xs text-slate-400">
+                  {readyToLet.totalVacantUnits} vacant unit{readyToLet.totalVacantUnits === 1 ? "" : "s"} across {readyToLet.totalMandatedProperties} mandated propert{readyToLet.totalMandatedProperties === 1 ? "y" : "ies"}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {readyToLet.properties.map((p) => (
+              <div key={p.id} className="shrink-0 w-56 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 flex flex-col gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-900 truncate">{p.name}</p>
+                  <p className="text-xs text-slate-400 truncate">{p.location}</p>
+                </div>
+                <Badge tone="success" className="self-start">{p.vacantUnitCount} vacant unit{p.vacantUnitCount === 1 ? "" : "s"}</Badge>
+                <button
+                  type="button"
+                  onClick={() => { setEditingLead(undefined); setCreateLeadPropertyId(p.id); setFormOpen(true); }}
+                  className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#151936] text-white px-3 py-1.5 text-xs font-medium hover:bg-[#1a1f42] transition-colors"
+                >
+                  <IconPlus size={13} /> Create Lead
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Analytics strips ── */}
       <div className="gsap-stagger grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -692,9 +753,10 @@ export function PipelineBoard() {
       <LeadFormModal
         open={formOpen}
         entityId={activeEntityId}
-        onClose={() => setFormOpen(false)}
+        onClose={() => { setFormOpen(false); setCreateLeadPropertyId(undefined); }}
         onSubmit={handleCreateOrUpdate}
         initialData={editingLead}
+        initialPropertyId={createLeadPropertyId}
       />
 
       <LeadDetailDrawer

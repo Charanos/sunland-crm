@@ -8,9 +8,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const entityId = searchParams.get("entityId") ?? null;
     const ownerContactId = searchParams.get("ownerContactId") ?? undefined;
+    const viewParam = searchParams.get("view");
+    const view = viewParam === "intake" ? "intake" : viewParam === "managed" ? "managed" : undefined;
 
     const ctx = await requireCallerContext(entityId, request);
-    const propertiesList = await listProperties(ctx, { ownerContactId });
+    const propertiesList = await listProperties(ctx, { ownerContactId, view });
 
     return NextResponse.json({ properties: propertiesList });
   } catch (error) {

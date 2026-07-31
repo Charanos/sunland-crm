@@ -911,7 +911,12 @@ export function LeasesBoard({ entityId }: { entityId: string }) {
           </div>
         }
       />
-      <PortfolioHubNav active="leases" mode={mode} onModeChange={(m) => { setMode(m); setPage(1); }} />
+      <PortfolioHubNav
+        active="leases"
+        modeOptions={[{ value: "mandates", label: "Mandates" }, { value: "leases", label: "Tenants" }]}
+        mode={mode}
+        onModeChange={(m) => { setMode(m as "mandates" | "leases"); setPage(1); }}
+      />
 
       <div className="flex items-center gap-4 my-6">
         <hr className="flex-1 border-slate-200/60" />

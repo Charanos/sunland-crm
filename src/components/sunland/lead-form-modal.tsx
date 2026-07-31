@@ -12,6 +12,10 @@ interface LeadFormModalProps {
   onClose: () => void;
   onSubmit: (data: Partial<Lead>) => void;
   initialData?: Lead;
+  /** Pre-selects a property (e.g. opened from the Ready-to-Let queue on a
+   * specific vacant unit) - a real starting point for the deal, not a
+   * restriction on which properties can be picked instead. */
+  initialPropertyId?: string;
 }
 
 interface LeadFormData {
@@ -27,10 +31,10 @@ interface LeadFormData {
 
 const PRIORITY_OPTIONS: PipelineLeadPriority[] = ["high", "medium", "low"];
 
-export function LeadFormModal({ open, entityId, onClose, onSubmit, initialData }: LeadFormModalProps) {
+export function LeadFormModal({ open, entityId, onClose, onSubmit, initialData, initialPropertyId }: LeadFormModalProps) {
   if (!open) return null;
 
-  return <LeadFormModalContent entityId={entityId} onClose={onClose} onSubmit={onSubmit} initialData={initialData} />;
+  return <LeadFormModalContent entityId={entityId} onClose={onClose} onSubmit={onSubmit} initialData={initialData} initialPropertyId={initialPropertyId} />;
 }
 
 function LeadFormModalContent({
@@ -38,11 +42,13 @@ function LeadFormModalContent({
   onClose,
   onSubmit,
   initialData,
+  initialPropertyId,
 }: {
   entityId: string;
   onClose: () => void;
   onSubmit: (data: Partial<Lead>) => void;
   initialData?: Lead;
+  initialPropertyId?: string;
 }) {
   const isEdit = !!initialData;
   const [properties, setProperties] = useState<{ id: string; name: string }[]>([]);
@@ -60,7 +66,7 @@ function LeadFormModalContent({
         priority: initialData.priority || "medium",
         notes: initialData.notes || "",
       }
-      : { clientName: "", email: "", phone: "", budget: 0, propertyId: "", assignedToId: "", priority: "medium", notes: "" },
+      : { clientName: "", email: "", phone: "", budget: 0, propertyId: initialPropertyId || "", assignedToId: "", priority: "medium", notes: "" },
   );
 
   useEffect(() => {

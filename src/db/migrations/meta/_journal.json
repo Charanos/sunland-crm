@@ -225,6 +225,13 @@
       "when": 1785147837302,
       "tag": "0031_oversight_console_system_ops",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1785491315790,
+      "tag": "0032_valuations_archived_at",
+      "breakpoints": true
     }
   ]
 }

@@ -48,6 +48,10 @@ import {
   calendarEvents,
   complaints,
   supportTickets,
+  supportTicketMessages,
+  jobRuns,
+  reportSchedules,
+  serviceHealthChecks,
   conversations,
   conversationParticipants,
   messages,
@@ -81,7 +85,13 @@ async function runSeed() {
     await db.delete(conversationParticipants);
     await db.delete(conversations);
     await db.delete(complaints);
+    // support_ticket_messages.ticketId -> support_tickets.id (added by the
+    // Oversight Console migration, 0031) - child rows first.
+    await db.delete(supportTicketMessages);
     await db.delete(supportTickets);
+    await db.delete(jobRuns);
+    await db.delete(reportSchedules);
+    await db.delete(serviceHealthChecks);
     await db.delete(calendarEvents);
     await db.delete(projects);
     await db.delete(approvalRequests);
