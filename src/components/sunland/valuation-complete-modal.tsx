@@ -6,8 +6,6 @@ import {
   IconPlus,
   IconTrash,
   IconReportMoney,
-  IconFileAnalytics,
-  IconScale,
 } from "@tabler/icons-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";

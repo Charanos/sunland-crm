@@ -5,13 +5,8 @@ import {
   IconBuildingCommunity,
   IconBuildingSkyscraper,
   IconBuildingBank,
-  IconUserCheck,
-  IconCalendarEvent,
-  IconNotes,
   IconMapPin,
   IconPlus,
-  IconShieldCheck,
-  IconUserCog,
 } from "@tabler/icons-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";

@@ -519,7 +519,7 @@ export function UnifiedMarketBoard({ initialListings = [], revenueData = [], rev
 
                   {/* Name + location over gradient */}
                   <div className="absolute bottom-0 inset-x-0 p-4">
-                    <h4 className="text-white text-md leading-snug line-clamp-1">
+                    <h4 className="text-white text-base leading-snug line-clamp-1">
                       {card.title}
                     </h4>
                     <p className="body-sm text-white/65 mt-0.5 truncate flex items-center gap-1">

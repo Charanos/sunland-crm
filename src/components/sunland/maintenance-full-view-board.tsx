@@ -23,7 +23,7 @@ import {
   IconUser,
   IconX,
 } from "@tabler/icons-react";
-import { Badge } from "@/components/ui/erp-primitives";
+import { Badge, RailLayout } from "@/components/ui/erp-primitives";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageTransition } from "@/components/shared/page-transition";
@@ -301,7 +301,7 @@ export function MaintenanceFullViewBoard({ entityId, requestId }: { entityId: st
     : null;
 
   return (
-    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+    <PageTransition className="board-shell mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
         <Link href="/admin/maintenance" className="hover:text-slate-900 transition-colors flex items-center gap-1">
@@ -463,7 +463,7 @@ export function MaintenanceFullViewBoard({ entityId, requestId }: { entityId: st
       )}
 
       {/* Vitals */}
-      <div className="gsap-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="gsap-stagger grid grid-cols-1 sm:grid-cols-2 @board-lg:grid-cols-4 gap-3.5">
         {(() => {
           const statusTone: VitalTone = request.status === "done" ? "emerald" : request.status === "awaiting_approval" ? "amber" : "neutral";
           const priorityTone: VitalTone = request.priority === "critical" ? "rose" : request.priority === "urgent" ? "amber" : "neutral";
@@ -495,7 +495,7 @@ export function MaintenanceFullViewBoard({ entityId, requestId }: { entityId: st
       </div>
 
       {/* Tabs + rail */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+      <RailLayout gap="gap-6">
         <div className="min-w-0 flex flex-col gap-4">
           <div className="flex items-center gap-1 border-b border-slate-100 pb-px overflow-x-auto">
             {([{ key: "overview", label: "Overview", icon: IconFileText }, { key: "activity", label: "Activity", icon: IconHistory }] as const).map((tab) => (
@@ -642,7 +642,7 @@ export function MaintenanceFullViewBoard({ entityId, requestId }: { entityId: st
             </div>
           </div>
         </div>
-      </div>
+      </RailLayout>
 
       {/* Reassign contractor modal */}
       {reassignOpen && (

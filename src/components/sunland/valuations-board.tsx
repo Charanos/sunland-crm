@@ -31,7 +31,6 @@ import {
   IconFilter,
   IconClock,
   IconMoodEmpty,
-  IconAward,
   IconUserCog,
   IconReportAnalytics,
 } from "@tabler/icons-react";
@@ -623,7 +622,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-5">
+    <PageTransition className="board-shell mx-auto flex max-w-[98rem] flex-col gap-5">
       <BoardHeader
         eyebrow={<Badge tone="primary">Estate Portfolio</Badge>}
         title="Valuations & Acquisition Pipeline"
@@ -650,7 +649,7 @@ export function ValuationsBoard({ entityId = "group" }: { entityId?: string }) {
 
       {/* ── Executive 4-Card Dark KPI Tier ── */}
       <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-6 border border-slate-800/80">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 @board-lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10 relative z-10">
 
           {/* Card 1: In Pipeline */}
           <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">

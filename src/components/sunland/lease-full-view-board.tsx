@@ -1077,7 +1077,7 @@ export function LeaseFullViewBoard({
       <div className="h-px bg-slate-200/60 my-2 lg:my-4" />
 
       {/* ── Main: Tabbed Content + Context Rail ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-3.5 items-start">
+      <RailLayout gap="gap-6 lg:gap-3.5">
         <div className="flex flex-col min-w-0">
           <div role="tablist" aria-label="Lease sections" className="flex bg-white border border-slate-200/80 p-1.5 rounded-[20px] shadow-[0_2px_15px_rgb(0,0,0,0.02)] gap-1 overflow-x-auto flex-nowrap mb-6">
             {tabs.map((tab) => (
@@ -2314,7 +2314,7 @@ export function LeaseFullViewBoard({
             </div>
           </div>
         </div>
-      </div>
+      </RailLayout>
 
       <ConfirmDialog
         open={deleteConfirmOpen}

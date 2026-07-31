@@ -532,7 +532,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
   const slaTarget = detail ? slaHours[detail.priority] : 72;
 
   return (
-    <PageTransition className="mx-auto flex max-w-[98rem] flex-col gap-5">
+    <PageTransition className="board-shell mx-auto flex max-w-[98rem] flex-col gap-5">
       <BoardHeader
         eyebrow={<Badge tone="primary">Estate Portfolio</Badge>}
         title="Maintenance & Works"
@@ -558,7 +558,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
 
       {/* ── Executive 4-Card Dark KPI Tier ── */}
       <div className="gsap-stagger bg-tertiary-gradient text-white rounded-[28px] shadow-2xl relative overflow-hidden group mb-6 border border-slate-800/80">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 @board-lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10 relative z-10">
 
           {/* Card 1: Active Work Orders */}
           <div className="py-6 px-6 lg:py-7 lg:px-7 flex flex-col justify-between relative overflow-hidden group/card">
@@ -724,7 +724,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
       </div>
 
       {/* ── Queue + Rail Layout ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
+      <div className="grid grid-cols-1 @board-lg:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
         <div className="min-w-0 flex flex-col gap-4">
           {/* Filters & Search Toolbar */}
           <div className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-[0_2px_15px_rgb(0,0,0,0.02)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -842,7 +842,7 @@ export function MaintenanceBoard({ entityId = "group" }: { entityId?: string }) 
         </div>
 
         {/* ── Side Rail Cards ── */}
-        <div className="flex flex-col gap-4 lg:sticky lg:top-4">
+        <div className="flex flex-col gap-4 @board-lg:sticky @board-lg:top-4">
           {/* Card 1: Crew & Vendors */}
           <div className=" flex flex-col gap-3.5">
             <div className="flex items-center justify-between">

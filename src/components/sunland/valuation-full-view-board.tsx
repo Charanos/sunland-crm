@@ -46,7 +46,7 @@ import {
   type ValuationStage,
   stageTone,
 } from "./valuation-constants";
-import { Badge } from "@/components/ui/erp-primitives";
+import { Badge, RailLayout } from "@/components/ui/erp-primitives";
 
 const VALUATION_COVER_POOL = [
   "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80",
@@ -469,7 +469,7 @@ export function ValuationFullViewBoard({
   ];
 
   return (
-    <div className="mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
+    <div className="board-shell mx-auto flex max-w-[98rem] flex-col gap-6 pb-12">
       {/* ── Standardized Executive Page Header Toolbar ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 mt-2 animate-fade-in-up">
         <div className="flex flex-col gap-2 min-w-0">
@@ -729,7 +729,7 @@ export function ValuationFullViewBoard({
       </div>
 
       {/* ── Vitals ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 @board-lg:grid-cols-4 gap-3.5">
         {vitals.map((v) => (
           <div
             key={v.label}
@@ -799,7 +799,7 @@ export function ValuationFullViewBoard({
       )}
 
       {/* ── Tabs + rail ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+      <RailLayout gap="gap-6">
         <div className="min-w-0 flex flex-col gap-4">
           <div role="tablist" aria-label="Valuation sections" className="flex bg-white border border-slate-100 p-1.5 rounded-2xl shadow-[0_2px_10px_rgb(0,0,0,0.02)] gap-1 overflow-x-auto">
             {tabs.map((t) => (
@@ -1021,7 +1021,7 @@ export function ValuationFullViewBoard({
             </div>
           )}
         </div>
-      </div>
+      </RailLayout>
 
       <ValuationFormModal
         open={editModalOpen}
